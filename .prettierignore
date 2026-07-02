@@ -1,0 +1,17 @@
+# Build output
+**/lib/
+**/dist/
+**/build/
+**/.expo/
+**/.next/
+**/.turbo/
+**/.tamagui/
+**/coverage/
+
+# Dependencies & lockfiles
+**/node_modules/
+pnpm-lock.yaml
+
+# Generated / scratch
+tmp/
+*.d.ts

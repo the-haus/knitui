@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconShoe = /*#__PURE__*/ createIcon(
+  "outline",
+  "shoe",
+  "IconShoe",
+  "M4 6h5.426a1 1 0 0 1 .863 .496l1.064 1.823a3 3 0 0 0 1.896 1.407l4.677 1.114a4 4 0 0 1 3.074 3.89v2.27a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1 M14 13l1 -2 M8 18v-1a4 4 0 0 0 -4 -4h-1 M10 12l1.5 -3",
+);
+
+export default IconShoe;

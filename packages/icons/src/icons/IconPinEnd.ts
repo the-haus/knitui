@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPinEnd = /*#__PURE__*/ createIcon(
+  "outline",
+  "pin-end",
+  "IconPinEnd",
+  "M21 11v-5a1 1 0 0 0 -1 -1h-16a1 1 0 0 0 -1 1v12a1 1 0 0 0 1 1h9 M17 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M10 13v-4h4 M14 13l-4 -4",
+);
+
+export default IconPinEnd;

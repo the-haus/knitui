@@ -1,0 +1,133 @@
+{
+  "name": "@knitui/sheet",
+  "version": "0.1.0",
+  "description": "Cross-platform bottom sheet for Knit UI.",
+  "license": "MIT",
+  "author": "The Haus <joost@the.haus>",
+  "homepage": "https://github.com/the-haus/knitui/tree/main/packages/sheet#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-haus/knitui.git",
+    "directory": "packages/sheet"
+  },
+  "bugs": {
+    "url": "https://github.com/the-haus/knitui/issues"
+  },
+  "keywords": [
+    "knitui",
+    "react-native",
+    "react-native-web",
+    "expo",
+    "cross-platform",
+    "bottom-sheet",
+    "sheet",
+    "tamagui"
+  ],
+  "source": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "react-native": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./src/*.stories": {
+      "source": "./src/*.stories.tsx",
+      "react-native": "./src/*.stories.tsx",
+      "types": "./src/*.stories.tsx",
+      "default": "./src/*.stories.tsx"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/*.test.*",
+    "!**/*.stories.*",
+    "!**/__tests__/**",
+    "!**/__mocks__/**"
+  ],
+  "scripts": {
+    "build": "bob build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rimraf lib .turbo",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "storybook": "storybook dev -p 6011",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@knitui/components": "workspace:*",
+    "@knitui/core": "workspace:*",
+    "@knitui/hooks": "workspace:*",
+    "@knitui/icons": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*",
+    "react-native-worklets": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    },
+    "react-native-gesture-handler": {
+      "optional": true
+    },
+    "react-native-reanimated": {
+      "optional": true
+    },
+    "react-native-worklets": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@storybook/addon-docs": "^10.4.1",
+    "@storybook/react-vite": "^10.4.1",
+    "@tamagui/build": "^2.3.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/jest": "^29.5.14",
+    "@types/react": "~19.2.0",
+    "@types/react-dom": "~19.2.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "babel-preset-expo": "^56.0.15",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-builder-bob": "^0.40.5",
+    "react-native-gesture-handler": "~2.31.1",
+    "react-native-reanimated": "4.3.1",
+    "react-native-web": "~0.21.0",
+    "storybook": "^10.4.1",
+    "vite": "^8.0.14"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

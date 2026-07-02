@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBinaryTree2 = /*#__PURE__*/ createIcon(
+  "outline",
+  "binary-tree-2",
+  "IconBinaryTree2",
+  "M14 6a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M7 14a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M21 14a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M14 18a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M12 8v8 M6.316 12.496l4.368 -4.992 M17.684 12.496l-4.366 -4.99",
+);
+
+export default IconBinaryTree2;

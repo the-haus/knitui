@@ -1,0 +1,15 @@
+export {
+  TreeSelect,
+  type TreeSelectDropdownProps,
+  type TreeSelectNodeChevronProps,
+  type TreeSelectNodeLabelProps,
+  type TreeSelectNodePartProps,
+  type TreeSelectNodeProps,
+  type TreeSelectProps,
+  type TreeSelectRef,
+  type TreeSelectRootProps,
+  type TreeSelectSize,
+  type TreeSelectStyles,
+  type TreeSelectTreeProps,
+  type TreeSelectTriggerProps,
+} from "./TreeSelect";

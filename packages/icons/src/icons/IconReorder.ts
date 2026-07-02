@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconReorder = /*#__PURE__*/ createIcon(
+  "outline",
+  "reorder",
+  "IconReorder",
+  "M3 16a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M10 16a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M17 16a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M5 11v-3a3 3 0 0 1 3 -3h8a3 3 0 0 1 3 3v3 M16.5 8.5l2.5 2.5l2.5 -2.5",
+);
+
+export default IconReorder;

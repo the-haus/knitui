@@ -1,0 +1,100 @@
+# =============================================================================
+# Detox iOS E2E — GUARDED SCAFFOLD (not yet fully activated)
+# =============================================================================
+# This lane wires up a Detox end-to-end run for the Expo example app
+# (@knitui/example) against an iOS simulator on a macOS runner.
+#
+# It is intentionally shipped as a GREEN, guarded scaffold: a real Detox run
+# needs a full native build (expo prebuild -> xcodebuild) plus a booted
+# simulator, which is heavy and environment-specific. Until a maintainer
+# finishes the wiring below, the build/test steps must NOT red the branch.
+#
+# ---------------------------------------------------------------------------
+# REMAINING ACTIVATION WORK (do these, then flip the flag):
+#   1. Native project: the example uses Expo CNG — ios/ is generated, not in
+#      git. A `pnpm --filter @knitui/example run prebuild:ios` step is included
+#      below (guarded) to produce ios/KnitUIExample.xcworkspace on the runner.
+#   2. Detox build config: confirm .detoxrc.js APP_NAME ("KnitUIExample") still
+#      matches the generated scheme/workspace/.app product name after prebuild
+#      (it is derived from expo.name in app.json — rename => re-check).
+#   3. Specs: add real `apps/app/e2e/*.test.js` (or .ts) Detox specs. The e2e/
+#      dir currently holds a starter test + jest.config.js + tsconfig.json.
+#   4. Flip the enable flag: set the repository variable ENABLE_E2E = 'true'
+#      (Settings -> Secrets and variables -> Actions -> Variables). Until then
+#      the heavy steps are skipped, keeping this lane green.
+#
+# ANDROID: an Android E2E lane can be added later as a separate job on an
+# `ubuntu-latest` runner using an emulator action (e.g. reactivecircus/
+# android-emulator-runner) plus the existing `android.emu.debug` Detox config
+# and the `e2e:build:android` / `e2e:test:android` scripts.
+#
+# WHY vars.ENABLE_E2E gating (instead of continue-on-error): a hard gate keeps
+# the lane fast and unambiguously green while unwired — no misleading red X and
+# no wasted native-build minutes — yet turns into a real, failing-on-regression
+# check the moment a maintainer sets the variable. The final `detox test` step
+# additionally carries `continue-on-error: true` so the very first activation
+# (before stable specs land) surfaces logs without blocking PRs.
+# =============================================================================
+
+name: E2E (Detox · iOS)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  ios:
+    name: Detox · iOS simulator
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # applesimutils is Detox's helper for driving the iOS simulator
+      # (permissions, status bar, matchers). Required for any real Detox iOS run.
+      - name: Install applesimutils
+        run: |
+          brew tap wix/brew
+          brew install applesimutils
+
+      # ----------------------------------------------------------------------
+      # HEAVY STEPS — skipped until vars.ENABLE_E2E == 'true' (see header).
+      # ----------------------------------------------------------------------
+      - name: Prebuild native iOS project (expo prebuild)
+        if: ${{ vars.ENABLE_E2E == 'true' }}
+        run: pnpm --filter @knitui/example run prebuild:ios
+
+      - name: Detox build (iOS · ios.sim.debug)
+        if: ${{ vars.ENABLE_E2E == 'true' }}
+        run: pnpm --filter @knitui/example run e2e:build:ios
+
+      - name: Detox test (iOS · ios.sim.debug)
+        if: ${{ vars.ENABLE_E2E == 'true' }}
+        # Tolerant on first activation so logs surface without blocking PRs;
+        # remove once specs are stable to make this a hard regression gate.
+        continue-on-error: true
+        run: pnpm --filter @knitui/example run e2e:test:ios
+
+      - name: E2E status
+        if: ${{ vars.ENABLE_E2E != 'true' }}
+        run: echo "E2E scaffold present but disabled. Set repo variable ENABLE_E2E=true to activate (see .github/workflows/e2e.yml header)."

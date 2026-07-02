@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconDevicesPc = /*#__PURE__*/ createIcon(
+  "outline",
+  "devices-pc",
+  "IconDevicesPc",
+  "M3 5h6v14h-6l0 -14 M12 9h10v7h-10l0 -7 M14 19h6 M17 16v3 M6 13v.01 M6 16v.01",
+);
+
+export default IconDevicesPc;

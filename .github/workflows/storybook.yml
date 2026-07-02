@@ -1,0 +1,75 @@
+# Storybook → GitHub Pages
+#
+# Builds the component Storybook and deploys it to GitHub Pages.
+#
+# ONE-TIME SETUP: Pages must be enabled in the repo under
+# Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Without that, the `deploy` job's `actions/deploy-pages` step will fail.
+#
+# Only @knitui/components has a published site here. Other packages also expose
+# a `build-storybook` script (carousel, dates, icons, map, sheet, graphics,
+# media); to publish them too, build each into a subdirectory of
+# `storybook-static/` and upload that folder instead. Kept to components for a
+# lean, reliable primary site.
+
+name: Storybook
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+  workflow_dispatch:
+
+concurrency:
+  group: storybook-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  build:
+    name: Build Storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build component Storybook
+        run: pnpm --filter @knitui/components build-storybook
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/components/storybook-static
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    # Only publish from main (never from forks / other refs).
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write # deploy to GitHub Pages
+      id-token: write # OIDC verification for deploy-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

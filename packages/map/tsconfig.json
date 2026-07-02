@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "lib/typescript",
+    "baseUrl": ".",
+    "declaration": false,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", ".storybook/**/*"],
+  "exclude": ["node_modules", "lib"]
+}

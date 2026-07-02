@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconMessageUp = /*#__PURE__*/ createIcon(
+  "outline",
+  "message-up",
+  "IconMessageUp",
+  "M8 9h8 M8 13h6 M11.99 18.606l-3.99 2.394v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v5.5 M19 22v-6 M22 19l-3 -3l-3 3",
+);
+
+export default IconMessageUp;

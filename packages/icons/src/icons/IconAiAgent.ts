@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconAiAgent = /*#__PURE__*/ createIcon(
+  "outline",
+  "ai-agent",
+  "IconAiAgent",
+  "M11 14a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M6 14a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16 14a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M13.5 9.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M8.5 9.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M13.5 18.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M8.5 18.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M3.5 18.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M18.5 18.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0",
+);
+
+export default IconAiAgent;

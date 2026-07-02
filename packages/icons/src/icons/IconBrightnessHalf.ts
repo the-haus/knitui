@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBrightnessHalf = /*#__PURE__*/ createIcon(
+  "outline",
+  "brightness-half",
+  "IconBrightnessHalf",
+  "M12 9a3 3 0 0 0 0 6v-6 M6 6h3.5l2.5 -2.5l2.5 2.5h3.5v3.5l2.5 2.5l-2.5 2.5v3.5h-3.5l-2.5 2.5l-2.5 -2.5h-3.5v-3.5l-2.5 -2.5l2.5 -2.5l0 -3.5",
+);
+
+export default IconBrightnessHalf;

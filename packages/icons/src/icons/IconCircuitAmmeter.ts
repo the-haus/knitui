@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCircuitAmmeter = /*#__PURE__*/ createIcon(
+  "outline",
+  "circuit-ammeter",
+  "IconCircuitAmmeter",
+  "M5 12a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M5 12h-3 M19 12h3 M10 14v-3c0 -1.036 .895 -2 2 -2s2 .964 2 2v3 M14 12h-4",
+);
+
+export default IconCircuitAmmeter;

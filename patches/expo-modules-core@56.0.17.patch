@@ -1,0 +1,30 @@
+diff --git a/package.json b/package.json
+index 55800ab4aa5860a59bac754e4468d8d84382abff..039bc4e4e815eae3ff36dd16606956d270dc1934 100644
+--- a/package.json
++++ b/package.json
+@@ -6,7 +6,8 @@
+   "types": "build/index.d.ts",
+   "sideEffects": [
+     "*.fx.ts",
+-    "./src/polyfill/*.ts"
++    "./src/polyfill/*.ts",
++    "./src/index.ts"
+   ],
+   "exports": {
+     "./package.json": "./package.json",
+diff --git a/src/ts-declarations/global.ts b/src/ts-declarations/global.ts
+index 1770ba7495b8d5a5bf3ed81bfc58c9cf99ef9ca8..ac4ced1e93940ac4a0184b5dbeab2c3b794478e0 100644
+--- a/src/ts-declarations/global.ts
++++ b/src/ts-declarations/global.ts
+@@ -1,7 +1,7 @@
+-import { EventEmitter } from './EventEmitter';
+-import { NativeModule } from './NativeModule';
+-import { SharedObject } from './SharedObject';
+-import { SharedRef } from './SharedRef';
++import { type EventEmitter } from './EventEmitter';
++import { type NativeModule } from './NativeModule';
++import { type SharedObject } from './SharedObject';
++import { type SharedRef } from './SharedRef';
+ 
+ type ViewConfig = {
+   validAttributes: Record<string, any>;

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCircleNumber8 = /*#__PURE__*/ createIcon(
+  "outline",
+  "circle-number-8",
+  "IconCircleNumber8",
+  "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M12 12h-1a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 0 -1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1 -1v-2a1 1 0 0 0 -1 -1",
+);
+
+export default IconCircleNumber8;

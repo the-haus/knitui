@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconFileTime = /*#__PURE__*/ createIcon(
+  "outline",
+  "file-time",
+  "IconFileTime",
+  "M14 3v4a1 1 0 0 0 1 1h4 M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2 M8 14a4 4 0 1 0 8 0a4 4 0 1 0 -8 0 M12 12.496v1.504l1 1",
+);
+
+export default IconFileTime;

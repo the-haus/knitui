@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCircuitChangeover = /*#__PURE__*/ createIcon(
+  "outline",
+  "circuit-changeover",
+  "IconCircuitChangeover",
+  "M2 12h2 M20 7h2 M4 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M20 17h2 M16 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M7.5 10.5l8.5 -3.5",
+);
+
+export default IconCircuitChangeover;

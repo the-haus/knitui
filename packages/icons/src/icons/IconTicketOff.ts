@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTicketOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "ticket-off",
+  "IconTicketOff",
+  "M15 5v2 M15 17v2 M9 5h10a2 2 0 0 1 2 2v3a2 2 0 1 0 0 4v3m-2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 1 0 0 -4v-3a2 2 0 0 1 2 -2 M3 3l18 18",
+);
+
+export default IconTicketOff;

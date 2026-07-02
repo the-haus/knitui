@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconLayersSubtract = /*#__PURE__*/ createIcon(
+  "outline",
+  "layers-subtract",
+  "IconLayersSubtract",
+  "M8 6a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -8 M16 16v2a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2h2",
+);
+
+export default IconLayersSubtract;

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconVolume2 = /*#__PURE__*/ createIcon(
+  "outline",
+  "volume-2",
+  "IconVolume2",
+  "M15 8a5 5 0 0 1 0 8 M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5",
+);
+
+export default IconVolume2;

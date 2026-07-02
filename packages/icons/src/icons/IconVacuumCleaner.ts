@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconVacuumCleaner = /*#__PURE__*/ createIcon(
+  "outline",
+  "vacuum-cleaner",
+  "IconVacuumCleaner",
+  "M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0 M14 9a2 2 0 1 1 -4 0a2 2 0 0 1 4 0 M12 16h.01",
+);
+
+export default IconVacuumCleaner;

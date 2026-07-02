@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconHelpSquareRounded = /*#__PURE__*/ createIcon(
+  "outline",
+  "help-square-rounded",
+  "IconHelpSquareRounded",
+  "M12 3c7.2 0 9 1.8 9 9c0 7.2 -1.8 9 -9 9c-7.2 0 -9 -1.8 -9 -9c0 -7.2 1.8 -9 9 -9 M12 16v.01 M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483",
+);
+
+export default IconHelpSquareRounded;

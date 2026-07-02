@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@knitui/core",
+      "@knitui/hooks",
+      "@knitui/components",
+      "@knitui/icons",
+      "@knitui/graphics",
+      "@knitui/dates"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": ["@knitui/example", "@knitui/web", "@knitui/demo"]
+}

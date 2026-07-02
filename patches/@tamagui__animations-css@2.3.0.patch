@@ -1,0 +1,52 @@
+diff --git a/dist/cjs/createAnimations.cjs b/dist/cjs/createAnimations.cjs
+index 67d722e61be70a6ee0cd1866075ec697af87f1ef..2f68db7f3b0b34a8c300ca928a9da1f8922054c7 100644
+--- a/dist/cjs/createAnimations.cjs
++++ b/dist/cjs/createAnimations.cjs
+@@ -235,7 +235,7 @@ function createAnimations(animations) {
+       });
+       (0, import_constants.useIsomorphicLayoutEffect)(() => {
+         const host = stateRef.current.host;
+-        if (isExiting || !host) return;
++        if (isExiting || !host || host.nodeType !== 1) return;
+         const computedStyle = getComputedStyle(host);
+         lastNonExitingStyleRef.current = {
+           opacity: computedStyle.opacity
+diff --git a/dist/cjs/createAnimations.native.js b/dist/cjs/createAnimations.native.js
+index 131781728983a1d8acd9b3709e895c72cb51fb5b..4391fa5c403f98cba3abafb32b79927be7407034 100644
+--- a/dist/cjs/createAnimations.native.js
++++ b/dist/cjs/createAnimations.native.js
+@@ -270,7 +270,7 @@ function createAnimations(animations) {
+       });
+       (0, import_constants.useIsomorphicLayoutEffect)(function () {
+         var host = stateRef.current.host;
+-        if (isExiting || !host) return;
++        if (isExiting || !host || host.nodeType !== 1) return;
+         var computedStyle = getComputedStyle(host);
+         lastNonExitingStyleRef.current = {
+           opacity: computedStyle.opacity
+diff --git a/dist/esm/createAnimations.mjs b/dist/esm/createAnimations.mjs
+index 8ad3fd47098a333c2b6356a5106109d061d833a1..e50c302c662f3965a513ff694ce0282f9eb43bc6 100644
+--- a/dist/esm/createAnimations.mjs
++++ b/dist/esm/createAnimations.mjs
+@@ -197,7 +197,7 @@ function createAnimations(animations) {
+       });
+       useIsomorphicLayoutEffect(() => {
+         const host = stateRef.current.host;
+-        if (isExiting || !host) return;
++        if (isExiting || !host || host.nodeType !== 1) return;
+         const computedStyle = getComputedStyle(host);
+         lastNonExitingStyleRef.current = {
+           opacity: computedStyle.opacity
+diff --git a/dist/esm/createAnimations.native.js b/dist/esm/createAnimations.native.js
+index f48d5e9eee9b50e6205f5c3000bf50465d43e6f8..0b08301681aa22360eb1b593f63f61e2969430ff 100644
+--- a/dist/esm/createAnimations.native.js
++++ b/dist/esm/createAnimations.native.js
+@@ -230,7 +230,7 @@ function createAnimations(animations) {
+       });
+       useIsomorphicLayoutEffect(function () {
+         var host = stateRef.current.host;
+-        if (isExiting || !host) return;
++        if (isExiting || !host || host.nodeType !== 1) return;
+         var computedStyle = getComputedStyle(host);
+         lastNonExitingStyleRef.current = {
+           opacity: computedStyle.opacity

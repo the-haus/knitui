@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconDeviceIpadHorizontalBolt = /*#__PURE__*/ createIcon(
+  "outline",
+  "device-ipad-horizontal-bolt",
+  "IconDeviceIpadHorizontalBolt",
+  "M13 20h-8a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v6.5 M9 17h4.5 M19 16l-2 3h4l-2 3",
+);
+
+export default IconDeviceIpadHorizontalBolt;

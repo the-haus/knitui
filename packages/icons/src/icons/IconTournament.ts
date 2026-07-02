@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTournament = /*#__PURE__*/ createIcon(
+  "outline",
+  "tournament",
+  "IconTournament",
+  "M2 4a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M18 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M2 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M2 20a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M6 12h3a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-3 M6 4h7a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-2 M14 10h4",
+);
+
+export default IconTournament;

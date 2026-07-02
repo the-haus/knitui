@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconQueuePopIn = /*#__PURE__*/ createIcon(
+  "outline",
+  "queue-pop-in",
+  "IconQueuePopIn",
+  "M8 6h-3a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2 -2v-3.357 M13 5a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-4 M13.5 10.5l-5.5 5.5 M8 11v5h5",
+);
+
+export default IconQueuePopIn;

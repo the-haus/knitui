@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconMedal2 = /*#__PURE__*/ createIcon(
+  "outline",
+  "medal-2",
+  "IconMedal2",
+  "M9 3h6l3 7l-6 2l-6 -2l3 -7 M12 12l-3 -9 M15 11l-3 -8 M12 19.5l-3 1.5l.5 -3.5l-2 -2l3 -.5l1.5 -3l1.5 3l3 .5l-2 2l.5 3.5l-3 -1.5",
+);
+
+export default IconMedal2;

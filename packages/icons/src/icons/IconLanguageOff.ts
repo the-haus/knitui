@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconLanguageOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "language-off",
+  "IconLanguageOff",
+  "M12 20l2.463 -5.541m1.228 -2.764l.309 -.695l.8 1.8 M18 18h-5.1 M8.747 8.748c-.66 2.834 -2.536 4.252 -4.747 4.252 M4 6.371l2.371 0 M5 9c0 2.144 2.252 3.908 6 4 M3 3l18 18",
+);
+
+export default IconLanguageOff;

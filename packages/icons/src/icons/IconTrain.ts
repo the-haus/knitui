@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTrain = /*#__PURE__*/ createIcon(
+  "outline",
+  "train",
+  "IconTrain",
+  "M21 13c0 -3.87 -3.37 -7 -10 -7h-8 M3 15h16a2 2 0 0 0 2 -2 M3 6v5h17.5 M3 11v4 M8 11v-5 M13 11v-4.5 M3 19h18",
+);
+
+export default IconTrain;

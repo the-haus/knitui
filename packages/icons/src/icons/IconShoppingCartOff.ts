@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconShoppingCartOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "shopping-cart-off",
+  "IconShoppingCartOff",
+  "M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M17 17a2 2 0 1 0 2 2 M17 17h-11v-11 M9.239 5.231l10.761 .769l-1 7h-2m-4 0h-7 M3 3l18 18",
+);
+
+export default IconShoppingCartOff;

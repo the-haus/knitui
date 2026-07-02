@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconGrape = /*#__PURE__*/ createIcon(
+  "outline",
+  "grape",
+  "IconGrape",
+  "M13 3a14.5 14.5 0 0 0 -1 6 M12 8.9s-2.77 .52 -4.1 -.8s-.8 -4 -.8 -4s2.57 -.53 3.88 .8s1.02 4 1.02 4 M14 19a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M14 17a2 2 0 1 1 0 -4a2 2 0 0 1 0 4 M10 17a2 2 0 1 1 0 -4a2 2 0 0 1 0 4 M12 13a2 2 0 1 1 0 -4a2 2 0 0 1 0 4 M16 13a2 2 0 1 1 0 -4a2 2 0 0 1 0 4 M8 13a2 2 0 1 1 0 -4a2 2 0 0 1 0 4",
+);
+
+export default IconGrape;

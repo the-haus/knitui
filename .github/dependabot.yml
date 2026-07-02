@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # npm ecosystem (pnpm lockfile supported) at the repo root.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # Batch all non-major (minor + patch) bumps into a single PR to reduce noise.
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep GitHub Actions used in workflows up to date.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"

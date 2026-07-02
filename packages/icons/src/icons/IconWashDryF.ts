@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconWashDryF = /*#__PURE__*/ createIcon(
+  "outline",
+  "wash-dry-f",
+  "IconWashDryF",
+  "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M10 16v-8h4 M13 12h-3",
+);
+
+export default IconWashDryF;

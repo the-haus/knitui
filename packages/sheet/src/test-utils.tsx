@@ -1,0 +1,23 @@
+/**
+ * Shared test helper. Re-exports @testing-library/react and overrides `render`
+ * so every component tree is wrapped in the kit's <Provider> (Tamagui theming +
+ * the Portal host the modal sheet teleports into).
+ *
+ *   import { render, screen, fireEvent } from "./test-utils";
+ */
+import * as React from "react";
+
+import { type RenderOptions, render as rtlRender } from "@testing-library/react";
+
+import { Provider } from "@knitui/core";
+
+function Wrapper({ children }: { children: React.ReactNode }) {
+  return <Provider defaultColorScheme="light">{children}</Provider>;
+}
+
+function render(ui: React.ReactElement, options?: Omit<RenderOptions, "wrapper">) {
+  return rtlRender(ui, { wrapper: Wrapper, ...options });
+}
+
+export * from "@testing-library/react";
+export { render };

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconMusicDiscount = /*#__PURE__*/ createIcon(
+  "outline",
+  "music-discount",
+  "IconMusicDiscount",
+  "M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M9 17v-13h10v9 M9 8h10 M16 21l5 -5 M21 21v.01 M16 16v.01",
+);
+
+export default IconMusicDiscount;

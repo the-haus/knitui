@@ -1,0 +1,99 @@
+# dependencies
+node_modules/
+
+# build output
+**/dist/
+**/lib/
+**/.turbo/
+
+# test / visual-regression output
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/.playwright/
+
+# next.js
+**/.next/
+**/next-env.d.ts
+
+# expo
+.expo/
+**/.expo/
+*.orig.*
+web-build/
+
+# tamagui compiler cache (generated)
+**/.tamagui/
+
+# native
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+ios/Pods/
+android/.gradle/
+android/app/build/
+
+# expo continuous native generation (regenerated via `expo prebuild`)
+apps/app/ios/
+apps/app/android/
+
+# detox e2e artifacts (screenshots, logs, recordings from test runs)
+artifacts/
+**/artifacts/
+
+# misc
+.DS_Store
+*.log
+.idea/
+*.iml
+
+# reference fork (kept local, not part of the library)
+/tmp/
+
+# UI-kit build loop artifacts
+.ui-kit-progress
+.ui-kit-logs/
+.ui-kit-journal.md
+.ui-kit-plan.md
+.ui-kit-recommendations.md
+
+.ui-kit-rules.md
+
+# Stories + tests loop artifacts
+.stories-tests-progress
+.stories-tests-logs/
+.stories-tests-journal.md
+.stories-tests-plan.md
+.stories-tests-recommendations.md
+.stories-tests-rules.md
+
+# Component specification reflection loop artifacts
+.component-reflect-progress
+.component-reflect-logs/
+.component-reflect-journal.md
+
+# Storybook build output
+storybook-static/
+
+zip-project.sh
+/.dates-kit-journal.md
+/.dates-kit-progress
+/.dates-kit-recommendations.md
+/.dates-kit-plan.md
+/.dates-kit-logs/
+
+# Dates test-coverage loop artifacts
+/.dates-test-journal.md
+/.dates-test-progress
+/.dates-test-recommendations.md
+/.dates-test-plan.md
+/.dates-test-rules.md
+/.dates-test-logs/
+
+# Dates per-component improvement loop artifacts
+/.dates-improve-progress
+/.dates-improve-logs/
+
+.playwright-mcp/

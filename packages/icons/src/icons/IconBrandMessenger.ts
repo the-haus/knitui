@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBrandMessenger = /*#__PURE__*/ createIcon(
+  "outline",
+  "brand-messenger",
+  "IconBrandMessenger",
+  "M3 20l1.3 -3.9a9 8 0 1 1 3.4 2.9l-4.7 1 M8 13l3 -2l2 2l3 -2",
+);
+
+export default IconBrandMessenger;

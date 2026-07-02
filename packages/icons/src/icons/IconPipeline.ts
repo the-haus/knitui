@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPipeline = /*#__PURE__*/ createIcon(
+  "outline",
+  "pipeline",
+  "IconPipeline",
+  "M3 4h8 M4 4v5a6 6 0 0 0 6 6h3a1 1 0 0 1 1 1v4 M10 4v4a1 1 0 0 0 1 1h3a6 6 0 0 1 6 6v5 M13 20h8 M12 9v6",
+);
+
+export default IconPipeline;

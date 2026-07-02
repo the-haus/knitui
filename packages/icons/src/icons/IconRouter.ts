@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconRouter = /*#__PURE__*/ createIcon(
+  "outline",
+  "router",
+  "IconRouter",
+  "M3 15a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -4 M17 17l0 .01 M13 17l0 .01 M15 13l0 -2 M11.75 8.75a4 4 0 0 1 6.5 0 M8.5 6.5a8 8 0 0 1 13 0",
+);
+
+export default IconRouter;

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconChartCandle = /*#__PURE__*/ createIcon(
+  "outline",
+  "chart-candle",
+  "IconChartCandle",
+  "M4 7a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -3 M6 4l0 2 M6 11l0 9 M10 15a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -3 M12 4l0 10 M12 19l0 1 M16 6a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -4 M18 4l0 1 M18 11l0 9",
+);
+
+export default IconChartCandle;

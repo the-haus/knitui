@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPlayCard5 = /*#__PURE__*/ createIcon(
+  "outline",
+  "play-card-5",
+  "IconPlayCard5",
+  "M19 5v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2 M8 6h.01 M16 18h.01 M10 15h3a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-3v-3h4",
+);
+
+export default IconPlayCard5;

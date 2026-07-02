@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconFilter2Up = /*#__PURE__*/ createIcon(
+  "outline",
+  "filter-2-up",
+  "IconFilter2Up",
+  "M4 6h16 M6 12h12 M9 18h3 M19 22v-6m0 0l3 3m-3 -3l-3 3",
+);
+
+export default IconFilter2Up;

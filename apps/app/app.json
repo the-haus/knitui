@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Knit UI Example",
+    "slug": "knitui-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "knitui",
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.thehaus.knituiexample"
+    },
+    "android": {
+      "package": "com.thehaus.knituiexample"
+    },
+    "plugins": [
+      [
+        "@config-plugins/detox",
+        {
+          "skipProguard": false,
+          "subdomains": [
+            "10.0.2.2",
+            "localhost"
+          ]
+        }
+      ],
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
+          "enableBackgroundPlayback": true
+        }
+      ],
+      "@maplibre/maplibre-react-native"
+    ]
+  }
+}

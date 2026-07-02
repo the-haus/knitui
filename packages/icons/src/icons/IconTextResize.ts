@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTextResize = /*#__PURE__*/ createIcon(
+  "outline",
+  "text-resize",
+  "IconTextResize",
+  "M3 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M17 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M3 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M17 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M5 7v10 M7 5h10 M7 19h10 M19 7v10 M10 10h4 M12 14v-4",
+);
+
+export default IconTextResize;

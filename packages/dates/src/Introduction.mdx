@@ -1,0 +1,39 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Dates/Introduction" />
+
+# @knitui/dates
+
+Cross-platform calendars, date & time pickers. The public API mirrors
+[`@mantine/dates`](https://mantine.dev/dates/getting-started/) (prop names,
+compound parts, controlled / uncontrolled value props), but the implementation is
+our own: built on **@knitui/components + @knitui/core** primitives (Tamagui
+internalized) with **dayjs** for date math, so every component runs on **web +
+native** from one source.
+
+## Value format
+
+All date values are **`YYYY-MM-DD` strings** (not `Date` objects). Time values are
+`HH:mm` / `HH:mm:ss` strings. The selection shape follows the picker `type`:
+
+| `type`       | Value shape                              |
+| ------------ | ---------------------------------------- |
+| `"default"`  | `string \| null`                         |
+| `"range"`    | `[string \| null, string \| null]`       |
+| `"multiple"` | `string[]`                               |
+
+## Components in this catalogue
+
+- **Calendar** — the level state machine (day ↔ month ↔ year ↔ decade). Display only.
+- **DatePicker** / **DatePickerInput** — inline & input-trigger day pickers.
+- **MonthPicker** / **MonthPickerInput** — month selection.
+- **YearPicker** / **YearPickerInput** — year selection.
+- **TimeInput** — standalone `HH:mm[:ss]` text field.
+- **MiniCalendar** — compact horizontal day strip.
+
+## Sizing & theming
+
+Every component takes a `size` token (`xxs … xxl`, default `md`; inputs default
+`sm`). Accent color comes from the active Tamagui theme — toggle light / dark with
+the **Scheme** control in the toolbar. Wrap an app in `DatesProvider` to set the
+`locale`, `firstDayOfWeek`, and `weekendDays` once at the root.

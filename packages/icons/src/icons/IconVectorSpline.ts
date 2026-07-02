@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconVectorSpline = /*#__PURE__*/ createIcon(
+  "outline",
+  "vector-spline",
+  "IconVectorSpline",
+  "M17 4a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M3 18a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M17 5c-6.627 0 -12 5.373 -12 12",
+);
+
+export default IconVectorSpline;

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconNavigationX = /*#__PURE__*/ createIcon(
+  "outline",
+  "navigation-x",
+  "IconNavigationX",
+  "M16.622 13.02l-4.622 -10.02l-7.97 17.275c-.07 .2 -.017 .424 .135 .572c.15 .148 .374 .193 .57 .116l7.265 -2.463l1.563 .53 M22 22l-5 -5 M17 22l5 -5",
+);
+
+export default IconNavigationX;

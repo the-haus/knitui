@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconFishHookOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "fish-hook-off",
+  "IconFishHookOff",
+  "M16 9v3m-.085 3.924a5 5 0 0 1 -9.915 -.924v-4l3 3 M14 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 5v-2 M3 3l18 18",
+);
+
+export default IconFishHookOff;

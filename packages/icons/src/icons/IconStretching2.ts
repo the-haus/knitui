@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconStretching2 = /*#__PURE__*/ createIcon(
+  "outline",
+  "stretching-2",
+  "IconStretching2",
+  "M6.5 21l3.5 -5 M5 11l7 -2 M16 21l-4 -7v-5l7 -4 M9.007 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+);
+
+export default IconStretching2;

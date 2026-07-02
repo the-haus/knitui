@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTipJarPound = /*#__PURE__*/ createIcon(
+  "outline",
+  "tip-jar-pound",
+  "IconTipJarPound",
+  "M17 4v1.882c0 .685 .387 1.312 1 1.618s1 .933 1 1.618v8.882a3 3 0 0 1 -3 3h-8a3 3 0 0 1 -3 -3v-8.882c0 -.685 .387 -1.312 1 -1.618s1 -.933 1 -1.618v-1.882 M6 4h12l-12 0 M14 10h-1a2 2 0 0 0 -2 2v2c0 1.105 -.395 2 -1.5 2h4.5 M10 13h3",
+);
+
+export default IconTipJarPound;

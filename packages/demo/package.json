@@ -1,0 +1,82 @@
+{
+  "name": "@knitui/demo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cross-platform showcase app for Knit UI — demo sections auto-generated from each package's Storybook stories.",
+  "license": "MIT",
+  "source": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "react-native": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "bob build",
+    "generate:sections": "node ../../scripts/generate-demo-sections.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rimraf lib .turbo"
+  },
+  "dependencies": {
+    "@knitui/carousel": "workspace:*",
+    "@knitui/components": "workspace:*",
+    "@knitui/core": "workspace:*",
+    "@knitui/dates": "workspace:*",
+    "@knitui/graphics": "workspace:*",
+    "@knitui/icons": "workspace:*",
+    "@knitui/map": "workspace:*",
+    "@knitui/media": "workspace:*",
+    "@knitui/sheet": "workspace:*"
+  },
+  "peerDependencies": {
+    "@maplibre/maplibre-react-native": "*",
+    "@shopify/react-native-skia": "*",
+    "expo-document-picker": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*"
+  },
+  "peerDependenciesMeta": {
+    "@maplibre/maplibre-react-native": {
+      "optional": true
+    },
+    "@shopify/react-native-skia": {
+      "optional": true
+    },
+    "expo-document-picker": {
+      "optional": true
+    },
+    "react-native-web": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "expo-document-picker": "~13.1.6",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-builder-bob": "^0.40.5"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      "typescript"
+    ]
+  }
+}

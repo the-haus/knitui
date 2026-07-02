@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconUserScan = /*#__PURE__*/ createIcon(
+  "outline",
+  "user-scan",
+  "IconUserScan",
+  "M10 9a2 2 0 1 0 4 0a2 2 0 0 0 -4 0 M8 16a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2 M3 7v-2a2 2 0 0 1 2 -2h2 M3 17v2a2 2 0 0 0 2 2h2 M17 3h2a2 2 0 0 1 2 2v2 M17 21h2a2 2 0 0 0 2 -2v-2",
+);
+
+export default IconUserScan;

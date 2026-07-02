@@ -1,0 +1,13 @@
+diff --git a/android/src/main/java/com/teleport/managers/TeleportViewManager.kt b/android/src/main/java/com/teleport/managers/TeleportViewManager.kt
+index c286932aaeafb20fe12b784f2861d91c2d71fb84..19586c20d2a72ddb772ac8edef7325ee14da3b37 100644
+--- a/android/src/main/java/com/teleport/managers/TeleportViewManager.kt
++++ b/android/src/main/java/com/teleport/managers/TeleportViewManager.kt
+@@ -19,7 +19,7 @@ abstract class TeleportViewManager : ReactViewManager() {
+   override fun prepareToRecycleView(
+     reactContext: ThemedReactContext,
+     view: ReactViewGroup,
+-  ): ReactViewGroup? {
++  ): ReactViewGroup {
+     super.prepareToRecycleView(reactContext, view)
+     forceBoxNone(view)
+     return view

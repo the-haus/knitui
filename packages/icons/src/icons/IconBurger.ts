@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBurger = /*#__PURE__*/ createIcon(
+  "outline",
+  "burger",
+  "IconBurger",
+  "M4 15h16a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4 M12 4c3.783 0 6.953 2.133 7.786 5h-15.572c.833 -2.867 4.003 -5 7.786 -5 M5 12h14",
+);
+
+export default IconBurger;

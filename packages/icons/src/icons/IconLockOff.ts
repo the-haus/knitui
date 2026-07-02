@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconLockOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "lock-off",
+  "IconLockOff",
+  "M15 11h2a2 2 0 0 1 2 2v2m0 4a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2h4 M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0 M8 11v-3m.719 -3.289a4 4 0 0 1 7.281 2.289v4 M3 3l18 18",
+);
+
+export default IconLockOff;

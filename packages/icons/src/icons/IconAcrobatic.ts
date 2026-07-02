@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconAcrobatic = /*#__PURE__*/ createIcon(
+  "outline",
+  "acrobatic",
+  "IconAcrobatic",
+  "M13.207 3l-6.735 2.462a1 1 0 0 0 -.364 1.646l1.892 1.892 M10.5 8.25l1.5 -.25h3.174a2 2 0 0 1 1.411 .583l1.422 1.417 M8 9c0 4.5 1.781 5.14 3 5.5 M13.007 21h-1a1 1 0 0 1 -1 -1l-.007 -5.5 M12.007 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+);
+
+export default IconAcrobatic;

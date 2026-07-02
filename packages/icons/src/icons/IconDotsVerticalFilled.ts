@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconDotsVerticalFilled = /*#__PURE__*/ createIcon(
+  "filled",
+  "dots-vertical-filled",
+  "IconDotsVerticalFilled",
+  "M14 12a2 2 0 1 1 -4 0q 0 -.053 .005 -.102a1.996 1.996 0 0 1 1.995 -1.898a2 2 0 0 1 2 2 M14 19a2 2 0 1 1 -4 0q 0 -.052 .005 -.102a1.996 1.996 0 0 1 1.995 -1.898a2 2 0 0 1 2 2 M14 5a2 2 0 1 1 -4 0q 0 -.053 .005 -.102a1.996 1.996 0 0 1 1.995 -1.898a2 2 0 0 1 2 2",
+);
+
+export default IconDotsVerticalFilled;

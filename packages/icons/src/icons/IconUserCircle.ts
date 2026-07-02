@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconUserCircle = /*#__PURE__*/ createIcon(
+  "outline",
+  "user-circle",
+  "IconUserCircle",
+  "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M9 10a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855",
+);
+
+export default IconUserCircle;

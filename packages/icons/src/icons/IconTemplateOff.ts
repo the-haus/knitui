@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTemplateOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "template-off",
+  "IconTemplateOff",
+  "M8 4h11a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-7m-4 0h-3a1 1 0 0 1 -1 -1v-2c0 -.271 .108 -.517 .283 -.697 M4 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6 M16 12h4 M14 16h2 M14 20h6 M3 3l18 18",
+);
+
+export default IconTemplateOff;

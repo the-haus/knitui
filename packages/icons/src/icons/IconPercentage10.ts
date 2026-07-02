@@ -1,0 +1,13 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPercentage10 = /*#__PURE__*/ createIcon(
+  "outline",
+  "percentage-10",
+  "IconPercentage10",
+  [
+    { d: "M12 3c1.92 0 3.7 .601 5.16 1.626l-5.16 7.374v-9", fill: "currentColor", stroke: "none" },
+    { d: "M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" },
+  ],
+);
+
+export default IconPercentage10;

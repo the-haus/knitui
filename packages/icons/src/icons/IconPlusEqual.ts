@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPlusEqual = /*#__PURE__*/ createIcon(
+  "outline",
+  "plus-equal",
+  "IconPlusEqual",
+  "M4 7h6 M7 4v6 M20 16h-6 M20 19h-6 M5 19l14 -14",
+);
+
+export default IconPlusEqual;

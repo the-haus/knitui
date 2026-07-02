@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconTextCaption = /*#__PURE__*/ createIcon(
+  "outline",
+  "text-caption",
+  "IconTextCaption",
+  "M4 15h16 M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4 M4 20h12",
+);
+
+export default IconTextCaption;

@@ -1,0 +1,60 @@
+name: Feature request
+description: Suggest an idea or enhancement for Knit UI
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! Please describe the problem you're
+        trying to solve before jumping to a solution.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this solve? What are you trying to do that's hard or impossible today?
+      placeholder: I'm always frustrated when…
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: A clear and concise description of what you want to happen, including any proposed API.
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected package(s)
+      description: Which "@knitui/*" package(s) would this touch?
+      multiple: true
+      options:
+        - "@knitui/core"
+        - "@knitui/components"
+        - "@knitui/hooks"
+        - "@knitui/icons"
+        - "@knitui/graphics"
+        - "@knitui/dates"
+        - "@knitui/carousel"
+        - "@knitui/map"
+        - "@knitui/media"
+        - "@knitui/sheet"
+        - "@knitui/plugins"
+        - "New package / not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative solutions or workarounds you've considered.
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context, mockups, or references here.
+    validations:
+      required: false

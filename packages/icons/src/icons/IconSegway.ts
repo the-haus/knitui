@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconSegway = /*#__PURE__*/ createIcon(
+  "outline",
+  "segway",
+  "IconSegway",
+  "M11 3h3q -2.25 5 .75 11 M8 17a4 4 0 1 0 8 0a4 4 0 1 0 -8 0 M12 17.01v.01",
+);
+
+export default IconSegway;

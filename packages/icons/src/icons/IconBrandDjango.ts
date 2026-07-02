@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBrandDjango = /*#__PURE__*/ createIcon(
+  "outline",
+  "brand-django",
+  "IconBrandDjango",
+  "M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12 M12 7v8.5l-2.015 .201a2.715 2.715 0 1 1 0 -5.402l2.015 .201 M16 7v.01 M16 10v5.586c0 .905 -.36 1.774 -1 2.414",
+);
+
+export default IconBrandDjango;

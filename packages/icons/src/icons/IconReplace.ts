@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconReplace = /*#__PURE__*/ createIcon(
+  "outline",
+  "replace",
+  "IconReplace",
+  "M3 4a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4 M15 16a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4 M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3 M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3",
+);
+
+export default IconReplace;

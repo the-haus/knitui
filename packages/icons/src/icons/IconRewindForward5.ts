@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconRewindForward5 = /*#__PURE__*/ createIcon(
+  "outline",
+  "rewind-forward-5",
+  "IconRewindForward5",
+  "M9 18a6 6 0 1 1 0 -12h11 M13 20h2a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-2v-3h3 M17 9l3 -3l-3 -3",
+);
+
+export default IconRewindForward5;

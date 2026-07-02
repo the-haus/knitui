@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconNavigationWest = /*#__PURE__*/ createIcon(
+  "outline",
+  "navigation-west",
+  "IconNavigationWest",
+  "M9 3l1 6l2 -3.75l2 3.75l1 -6 M16 21l-4 -8l-4 8l4 -2l4 2",
+);
+
+export default IconNavigationWest;

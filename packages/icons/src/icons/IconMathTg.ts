@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconMathTg = /*#__PURE__*/ createIcon(
+  "outline",
+  "math-tg",
+  "IconMathTg",
+  "M7 8h4 M9 8v8 M18 8h-2a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2v-4h-1",
+);
+
+export default IconMathTg;

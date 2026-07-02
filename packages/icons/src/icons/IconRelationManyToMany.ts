@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconRelationManyToMany = /*#__PURE__*/ createIcon(
+  "outline",
+  "relation-many-to-many",
+  "IconRelationManyToMany",
+  "M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10 M15 14v-4l3 4v-4 M6 14v-4l3 4v-4 M12 10.5l0 .01 M12 13.5l0 .01",
+);
+
+export default IconRelationManyToMany;

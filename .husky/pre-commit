@@ -1,0 +1,17 @@
+#!/bin/sh
+# Knit UI pre-commit: brand-naming guardrail + format check on staged files.
+
+node scripts/check-naming.mjs || exit 1
+
+# Prettier --check on staged, formattable files (fast; full lint runs in CI).
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR \
+  | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|json|md|yml|yaml)$' \
+  | grep -vE '(^|/)(node_modules|lib|dist|\.turbo|\.next|\.expo)/' || true)
+
+if [ -n "$STAGED" ]; then
+  echo "$STAGED" | xargs pnpm exec prettier --check || {
+    echo ""
+    echo "✖ Formatting check failed. Run: pnpm format"
+    exit 1
+  }
+fi

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBikeOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "bike-off",
+  "IconBikeOff",
+  "M2 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M16.437 16.44a3 3 0 0 0 4.123 4.123m1.44 -2.563a3 3 0 0 0 -3 -3 M12 19v-4l-3 -3l1.665 -1.332m2.215 -1.772l1.12 -.896l2 3h3 M16 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M3 3l18 18",
+);
+
+export default IconBikeOff;

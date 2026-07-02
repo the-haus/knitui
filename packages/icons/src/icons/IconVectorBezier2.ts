@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconVectorBezier2 = /*#__PURE__*/ createIcon(
+  "outline",
+  "vector-bezier-2",
+  "IconVectorBezier2",
+  "M3 4a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M17 18a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M7 5l7 0 M10 19l7 0 M8 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M14 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M7 5.5a5 6.5 0 0 1 5 6.5a5 6.5 0 0 0 5 6.5",
+);
+
+export default IconVectorBezier2;

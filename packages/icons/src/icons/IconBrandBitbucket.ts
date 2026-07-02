@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBrandBitbucket = /*#__PURE__*/ createIcon(
+  "outline",
+  "brand-bitbucket",
+  "IconBrandBitbucket",
+  "M3.648 4a.64 .64 0 0 0 -.64 .744l3.14 14.528c.07 .417 .43 .724 .852 .728h10a.644 .644 0 0 0 .642 -.539l3.35 -14.71a.641 .641 0 0 0 -.64 -.744l-16.704 -.007 M14 15h-4l-1 -6h6l-1 6",
+);
+
+export default IconBrandBitbucket;

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconFirewallCheck = /*#__PURE__*/ createIcon(
+  "outline",
+  "firewall-check",
+  "IconFirewallCheck",
+  "M9 3v18 M3 9h18 M3 15h10 M15 3v10 M11 21h-6a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8 M15 19l2 2l4 -4",
+);
+
+export default IconFirewallCheck;

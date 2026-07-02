@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconEscalatorUp = /*#__PURE__*/ createIcon(
+  "outline",
+  "escalator-up",
+  "IconEscalatorUp",
+  "M19.5 7h-2.672a2 2 0 0 0 -1.414 .586l-8.414 8.414h-2.5a2.5 2.5 0 1 0 0 5h3.672a2 2 0 0 0 1.414 -.586l8.414 -8.414h1.5a2.5 2.5 0 1 0 0 -5 M6 10v-7 M3 6l3 -3l3 3",
+);
+
+export default IconEscalatorUp;

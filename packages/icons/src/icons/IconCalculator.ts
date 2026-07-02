@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCalculator = /*#__PURE__*/ createIcon(
+  "outline",
+  "calculator",
+  "IconCalculator",
+  "M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14 M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1 M8 14l0 .01 M12 14l0 .01 M16 14l0 .01 M8 17l0 .01 M12 17l0 .01 M16 17l0 .01",
+);
+
+export default IconCalculator;

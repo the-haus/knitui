@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCarouselVertical = /*#__PURE__*/ createIcon(
+  "outline",
+  "carousel-vertical",
+  "IconCarouselVertical",
+  "M19 8v8a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1 M7 22v-1a1 1 0 0 1 1 -1h8a1 1 0 0 1 1 1v1 M17 2v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1",
+);
+
+export default IconCarouselVertical;

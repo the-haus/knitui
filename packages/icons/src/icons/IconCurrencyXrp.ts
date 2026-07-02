@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCurrencyXrp = /*#__PURE__*/ createIcon(
+  "outline",
+  "currency-xrp",
+  "IconCurrencyXrp",
+  "M5 5l3.585 3.585a4.83 4.83 0 0 0 6.83 0l3.585 -3.585 M5 19l3.585 -3.585a4.83 4.83 0 0 1 6.83 0l3.585 3.584",
+);
+
+export default IconCurrencyXrp;

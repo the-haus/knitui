@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPlaystationSquare = /*#__PURE__*/ createIcon(
+  "outline",
+  "playstation-square",
+  "IconPlaystationSquare",
+  "M12 21a9 9 0 0 0 9 -9a9 9 0 0 0 -9 -9a9 9 0 0 0 -9 9a9 9 0 0 0 9 9 M8 9a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -6",
+);
+
+export default IconPlaystationSquare;

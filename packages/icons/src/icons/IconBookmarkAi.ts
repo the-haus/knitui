@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBookmarkAi = /*#__PURE__*/ createIcon(
+  "outline",
+  "bookmark-ai",
+  "IconBookmarkAi",
+  "M10.02 18.32l-4.02 2.68v-14a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v4.5 M14 21v-4a2 2 0 1 1 4 0v4 M14 19h4 M21 15v6",
+);
+
+export default IconBookmarkAi;

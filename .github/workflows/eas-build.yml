@@ -1,0 +1,101 @@
+# EAS native build lane for @knitui/example (apps/app).
+#
+# One-time maintainer setup to activate this lane:
+#   1. Create an Expo account (https://expo.dev) and, from apps/app, run
+#      `eas init` (or `eas build:configure`) to create/link the EAS project.
+#      This writes `extra.eas.projectId` into apps/app/app.json — commit it.
+#   2. Generate an access token at https://expo.dev/settings/access-tokens
+#      and add it to this repo as the `EXPO_TOKEN` secret
+#      (Settings -> Secrets and variables -> Actions).
+#   3. Ensure apps/app/app.json has `extra.eas.projectId` set (from step 1).
+#
+# Until EXPO_TOKEN exists, the build job is skipped so forks / unconfigured
+# repos stay green. (The `secrets` context is not available in a job-level
+# `if:`, so token presence is detected in the `guard` job and passed on via
+# `needs`.)
+
+name: EAS Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build
+        type: choice
+        default: all
+        options:
+          - all
+          - ios
+          - android
+      profile:
+        description: EAS build profile
+        type: choice
+        default: preview
+        options:
+          - preview
+          - production
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: eas-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Check EXPO_TOKEN
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Detect EXPO_TOKEN secret
+        id: check
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -n "$EXPO_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "EXPO_TOKEN secret not set - skipping EAS build." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  build:
+    name: EAS Build
+    needs: guard
+    if: ${{ needs.guard.outputs.enabled == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build with EAS
+        run: |
+          eas build \
+            --platform "${{ github.event.inputs.platform || 'all' }}" \
+            --profile "${{ github.event.inputs.profile || 'production' }}" \
+            --non-interactive \
+            --no-wait

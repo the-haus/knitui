@@ -1,0 +1,33 @@
+{
+  "name": "@knitui/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@knitui/components": "workspace:*",
+    "@knitui/core": "workspace:*",
+    "@knitui/demo": "workspace:*",
+    "@knitui/graphics": "workspace:*",
+    "@knitui/hooks": "workspace:*",
+    "@knitui/map": "workspace:*",
+    "@knitui/plugins": "workspace:*",
+    "@shopify/react-native-skia": "2.6.6",
+    "maplibre-gl": "^5.0.0",
+    "next": "^15.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native-reanimated": "4.3.1",
+    "react-native-teleport": "^1.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/react": "~19.2.0",
+    "@types/react-dom": "~19.2.0",
+    "typescript": "~5.8.3"
+  }
+}

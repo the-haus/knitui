@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconChartBarOff = /*#__PURE__*/ createIcon(
+  "outline",
+  "chart-bar-off",
+  "IconChartBarOff",
+  "M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6 M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10 M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4 M4 20h14 M3 3l18 18",
+);
+
+export default IconChartBarOff;

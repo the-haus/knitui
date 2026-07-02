@@ -1,0 +1,7 @@
+# build output
+dist/
+lib/
+.turbo/
+
+# tamagui compiler cache
+.tamagui

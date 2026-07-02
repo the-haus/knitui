@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconGitPullRequest = /*#__PURE__*/ createIcon(
+  "outline",
+  "git-pull-request",
+  "IconGitPullRequest",
+  "M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M6 8l0 8 M11 6h5a2 2 0 0 1 2 2v8 M14 9l-3 -3l3 -3",
+);
+
+export default IconGitPullRequest;

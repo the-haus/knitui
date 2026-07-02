@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconFlask2 = /*#__PURE__*/ createIcon(
+  "outline",
+  "flask-2",
+  "IconFlask2",
+  "M6.1 15h11.8 M14 3v7.342a6 6 0 0 1 1.318 10.658h-6.635a6 6 0 0 1 1.317 -10.66v-7.34h4 M9 3h6",
+);
+
+export default IconFlask2;

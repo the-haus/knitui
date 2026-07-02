@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconDiaboloPlus = /*#__PURE__*/ createIcon(
+  "outline",
+  "diabolo-plus",
+  "IconDiaboloPlus",
+  "M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0 M4 6v.143a1 1 0 0 0 .048 .307l1.952 5.55l-1.964 5.67a1 1 0 0 0 -.036 .265v.065c0 1.657 3.582 3 8 3c.17 0 .34 -.002 .508 -.006m5.492 -8.994l1.952 -5.55a1 1 0 0 0 .048 -.307v-.143 M6 12c0 1.105 2.686 2 6 2s6 -.895 6 -2 M16 19h6 M19 16v6",
+);
+
+export default IconDiaboloPlus;

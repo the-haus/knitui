@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconClothesRack = /*#__PURE__*/ createIcon(
+  "outline",
+  "clothes-rack",
+  "IconClothesRack",
+  "M10 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M12 7v14 M9 21h6 M7.757 9.243a6 6 0 0 0 8.486 0",
+);
+
+export default IconClothesRack;

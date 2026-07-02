@@ -1,0 +1,937 @@
+diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..e24a771763056cc18edb1adb4583285b34d18f30 100644
+--- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
++++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
+@@ -1,19 +1,20 @@
+ package expo.modules.audio
+ 
+-import android.Manifest
+ import android.content.Context
+-import android.content.pm.PackageManager
+-import android.media.audiofx.Visualizer
+-import android.util.Log
+-import androidx.core.content.ContextCompat
+ import androidx.media3.common.AudioAttributes
+ import androidx.media3.common.C
+ import androidx.media3.common.PlaybackException
+ import androidx.media3.common.PlaybackParameters
+ import androidx.media3.common.Player
++import androidx.media3.common.audio.AudioProcessor
+ import androidx.media3.common.util.UnstableApi
+ import androidx.media3.exoplayer.DefaultLoadControl
++import androidx.media3.exoplayer.DefaultRenderersFactory
+ import androidx.media3.exoplayer.ExoPlayer
++import androidx.media3.exoplayer.RenderersFactory
++import androidx.media3.exoplayer.audio.AudioSink
++import androidx.media3.exoplayer.audio.DefaultAudioSink
++import androidx.media3.exoplayer.audio.TeeAudioProcessor
+ import androidx.media3.exoplayer.source.MediaSource
+ import androidx.media3.session.MediaSession
+ import expo.modules.audio.service.AudioPlaybackServiceConnection
+@@ -21,6 +22,8 @@ import expo.modules.audio.service.ServiceBindingState
+ import expo.modules.kotlin.AppContext
+ import expo.modules.kotlin.exception.Exceptions
+ import java.lang.ref.WeakReference
++import java.nio.ByteBuffer
++import java.nio.ByteOrder
+ 
+ private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
+ private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
+@@ -32,9 +35,14 @@ class AudioPlayer(
+   appContext: AppContext,
+   source: MediaSource?,
+   updateInterval: Double,
+-  bufferDurationMs: Long = 0
++  bufferDurationMs: Long = 0,
++  // PATCH: a PCM tap installed in the ExoPlayer audio pipeline. Replaces the
++  // `android.media.audiofx.Visualizer` sampler, which required RECORD_AUDIO.
++  // Reading the already-decoded playback PCM via an ExoPlayer AudioProcessor
++  // needs no microphone permission. Defaulted so the call site is unchanged.
++  private val samplingSink: SamplingAudioBufferSink = SamplingAudioBufferSink()
+ ) : BaseAudioPlayer(
+-  player = ExoPlayer.Builder(context)
++  player = ExoPlayer.Builder(context, buildSamplingRenderersFactory(context, samplingSink))
+     .setLooper(context.mainLooper)
+     .setAudioAttributes(AudioAttributes.DEFAULT, false)
+     .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
+@@ -76,8 +84,6 @@ class AudioPlayer(
+       return if (offset == C.TIME_UNSET) null else offset / 1000.0
+     }
+ 
+-  private var samplingEnabled = false
+-  private var visualizer: Visualizer? = null
+   private val context by lazy {
+     appContext.reactContext
+       ?: throw Exceptions.ReactContextLost()
+@@ -85,6 +91,12 @@ class AudioPlayer(
+ 
+   init {
+     installPlayerListeners()
++    // The PCM tap runs on ExoPlayer's audio thread — must NOT touch `ref` here
++    // (wrong-thread access throws). `timestampMs` is derived from a frame counter
++    // by the sink, so this callback only forwards data to JS.
++    samplingSink.onSample = { channels, timestampMs ->
++      sendAudioSampleUpdate(channels, timestampMs)
++    }
+     source?.let {
+       setMediaSource(source)
+     }
+@@ -164,20 +176,10 @@ class AudioPlayer(
+   }
+ 
+   fun setSamplingEnabled(enabled: Boolean) {
+-    appContext?.reactContext?.let {
+-      if (ContextCompat.checkSelfPermission(it, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+-        Log.d(TAG, "\'android.permission.RECORD_AUDIO\' is required to use audio sampling. Please request this permission and try again.")
+-        return
+-      }
+-    }
+-
+-    samplingEnabled = enabled
+-    if (enabled) {
+-      createVisualizer()
+-    } else {
+-      visualizer?.release()
+-      visualizer = null
+-    }
++    // PATCH: no RECORD_AUDIO check. Sampling now reads decoded PCM from the
++    // ExoPlayer audio pipeline (an AudioProcessor tap), which the OS does not
++    // gate behind a recording permission — unlike the old Visualizer effect.
++    samplingSink.enabled = enabled
+   }
+ 
+   override fun setPlaybackRate(rate: Float) {
+@@ -186,11 +188,6 @@ class AudioPlayer(
+     ref.playbackParameters = PlaybackParameters(playbackRate, pitch)
+   }
+ 
+-  private fun extractAmplitudes(chunk: ByteArray): List<Float> = chunk.map { byte ->
+-    val unsignedByte = byte.toInt() and 0xFF
+-    ((unsignedByte - 128).toDouble() / 128.0).toFloat()
+-  }
+-
+   override fun currentStatus(): Map<String, Any?> {
+     val isMuted = ref.volume == 0f
+     val isLooping = ref.repeatMode == Player.REPEAT_MODE_ONE
+@@ -224,12 +221,10 @@ class AudioPlayer(
+     mediaSession = buildBasicMediaSession(context, ref)
+   }
+ 
+-  private fun sendAudioSampleUpdate(sample: List<Float>) {
++  private fun sendAudioSampleUpdate(channels: List<List<Float>>, timestampMs: Long) {
+     val body = mapOf(
+-      "channels" to listOf(
+-        mapOf("frames" to sample)
+-      ),
+-      "timestamp" to ref.currentPosition
++      "channels" to channels.map { mapOf("frames" to it) },
++      "timestamp" to timestampMs
+     )
+     emit(AUDIO_SAMPLE_UPDATE, body)
+   }
+@@ -244,33 +239,6 @@ class AudioPlayer(
+     }
+   }
+ 
+-  private fun createVisualizer() {
+-    // It must only be created once, otherwise the app will crash
+-    if (visualizer == null) {
+-      visualizer = Visualizer(ref.audioSessionId).apply {
+-        captureSize = Visualizer.getCaptureSizeRange()[1]
+-        setDataCaptureListener(
+-          object : Visualizer.OnDataCaptureListener {
+-            override fun onWaveFormDataCapture(visualizer: Visualizer?, waveform: ByteArray?, samplingRate: Int) {
+-              waveform?.let {
+-                if (samplingEnabled && ref.isPlaying) {
+-                  val data = extractAmplitudes(it)
+-                  sendAudioSampleUpdate(data)
+-                }
+-              }
+-            }
+-
+-            override fun onFftDataCapture(visualizer: Visualizer?, fft: ByteArray?, samplingRate: Int) = Unit
+-          },
+-          Visualizer.getMaxCaptureRate() / 2,
+-          true,
+-          false
+-        )
+-        enabled = true
+-      }
+-    }
+-  }
+-
+   override fun sharedObjectDidRelease() {
+     serviceConnection.release()
+     super.sharedObjectDidRelease()
+@@ -282,7 +250,8 @@ class AudioPlayer(
+       serviceConnection.playbackServiceBinder?.service?.unregisterPlayer()
+     }
+     serviceConnection.unbind()
+-    visualizer?.release()
++    samplingSink.enabled = false
++    samplingSink.onSample = null
+     super.releasePlayer()
+   }
+ 
+@@ -290,3 +259,104 @@ class AudioPlayer(
+     val TAG = AudioPlayer::class.simpleName
+   }
+ }
++
++/**
++ * Builds a [RenderersFactory] whose audio sink carries [sink] as a
++ * [TeeAudioProcessor] tap. The tap sees the decoded PCM on its way to the
++ * speaker, so a visualizer can read the waveform WITHOUT the `RECORD_AUDIO`
++ * permission that `android.media.audiofx.Visualizer` requires. The tap is
++ * always present but silent until [SamplingAudioBufferSink.enabled] is set.
++ */
++@UnstableApi
++private fun buildSamplingRenderersFactory(
++  context: Context,
++  sink: SamplingAudioBufferSink
++): RenderersFactory {
++  val tee = TeeAudioProcessor(sink)
++  return object : DefaultRenderersFactory(context) {
++    override fun buildAudioSink(
++      context: Context,
++      enableFloatOutput: Boolean,
++      enableAudioTrackPlaybackParams: Boolean
++    ): AudioSink =
++      DefaultAudioSink.Builder(context)
++        .setEnableFloatOutput(enableFloatOutput)
++        .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
++        .setAudioProcessors(arrayOf<AudioProcessor>(tee))
++        .build()
++  }
++}
++
++/**
++ * A [TeeAudioProcessor.AudioBufferSink] that forwards decoded PCM windows to JS
++ * as normalized per-channel float frames. Lives in the ExoPlayer audio pipeline
++ * and is invoked on the playback thread, so it must touch neither the React
++ * bridge nor the ExoPlayer instance directly — it only normalizes bytes and
++ * hands them to [onSample], which the player wires to its event emitter.
++ */
++@UnstableApi
++class SamplingAudioBufferSink : TeeAudioProcessor.AudioBufferSink {
++  /** Gate. The tap stays installed but emits nothing until a visualizer arms it. */
++  @Volatile
++  var enabled = false
++
++  /** `(channels, timestampMs) -> Unit`, set by the owning player. */
++  @Volatile
++  var onSample: ((List<List<Float>>, Long) -> Unit)? = null
++
++  private var sampleRateHz = 44_100
++  private var channelCount = 2
++  private var pcmEncoding = C.ENCODING_PCM_16BIT
++  private var framesEmittedTotal = 0L
++  private var lastEmitNanos = 0L
++
++  override fun flush(sampleRateHz: Int, channelCount: Int, encoding: Int) {
++    this.sampleRateHz = sampleRateHz
++    this.channelCount = if (channelCount > 0) channelCount else 1
++    this.pcmEncoding = encoding
++    framesEmittedTotal = 0L
++    lastEmitNanos = 0L
++  }
++
++  override fun handleBuffer(buffer: ByteBuffer) {
++    val cb = onSample
++    if (!enabled || cb == null || channelCount <= 0) return
++
++    // Throttle to ~60 Hz so the bridge isn't flooded at the audio-buffer rate.
++    val now = System.nanoTime()
++    if (now - lastEmitNanos < MIN_EMIT_INTERVAL_NANOS) return
++    lastEmitNanos = now
++
++    val pcm = buffer.order(ByteOrder.LITTLE_ENDIAN)
++    val channels = ArrayList<ArrayList<Float>>(channelCount).apply {
++      repeat(channelCount) { add(ArrayList(MAX_FRAMES_PER_CHANNEL)) }
++    }
++
++    var frames = 0
++    loop@ while (frames < MAX_FRAMES_PER_CHANNEL) {
++      for (ch in 0 until channelCount) {
++        val v = when (pcmEncoding) {
++          C.ENCODING_PCM_16BIT ->
++            if (pcm.remaining() >= 2) pcm.short / 32_768f else break@loop
++          C.ENCODING_PCM_FLOAT ->
++            if (pcm.remaining() >= 4) pcm.float else break@loop
++          C.ENCODING_PCM_8BIT ->
++            if (pcm.remaining() >= 1) ((pcm.get().toInt() and 0xFF) - 128) / 128f else break@loop
++          else -> return // unsupported encoding (e.g. 24/32-bit) — skip silently
++        }
++        channels[ch].add(v)
++      }
++      frames++
++    }
++    if (frames == 0) return
++
++    framesEmittedTotal += frames
++    val timestampMs = framesEmittedTotal * 1_000L / sampleRateHz
++    cb(channels, timestampMs)
++  }
++
++  private companion object {
++    const val MAX_FRAMES_PER_CHANNEL = 2048
++    const val MIN_EMIT_INTERVAL_NANOS = 16_000_000L // ~60 Hz
++  }
++}
+diff --git a/build/AudioPlayer.web.js b/build/AudioPlayer.web.js
+index 89bc87297090c5003d7ca2036e66b2dedf61e7b4..715e9e4aa7179081d0115bb14bb224ad4f6a7757 100644
+--- a/build/AudioPlayer.web.js
++++ b/build/AudioPlayer.web.js
+@@ -137,7 +137,10 @@ export class AudioPlayerWeb extends globalThis.expo.SharedObject {
+             this.sourceNode.disconnect();
+             this.sourceNode.connect(this.analyser);
+             this.analyser.connect(ctx.destination);
+-            this.samplingBuffer = new Float32Array(this.analyser.frequencyBinCount);
++            // getFloatTimeDomainData fills a *waveform* buffer, which must be fftSize
++            // long. Sizing it to frequencyBinCount (fftSize/2) truncated every frame to
++            // the first half-window, so the downstream FFT got garbled bins on web.
++            this.samplingBuffer = new Float32Array(this.analyser.fftSize);
+             this.samplingEnabled = true;
+             if (this.isPlaying) {
+                 this.startSampling();
+diff --git a/build/AudioRecorder.web.js b/build/AudioRecorder.web.js
+index 580b0284ae6298b70de76fb928e2a79b611c849d..9d574b656307d92603d144ec0383fef2fb2b4ae7 100644
+--- a/build/AudioRecorder.web.js
++++ b/build/AudioRecorder.web.js
+@@ -147,7 +147,10 @@ export class AudioRecorderWeb extends globalThis.expo.SharedObject {
+             this.analyser = ctx.createAnalyser();
+             this.analyser.fftSize = 2048;
+             this.analyserSource.connect(this.analyser);
+-            this.analyserBuffer = new Float32Array(this.analyser.frequencyBinCount);
++            // getFloatTimeDomainData fills a *waveform* buffer, which must be fftSize
++            // long; frequencyBinCount (fftSize/2) truncated the metering window to its
++            // first half. Match the player's sampling buffer fix.
++            this.analyserBuffer = new Float32Array(this.analyser.fftSize);
+             this.meteringEnabled = true;
+         }
+         const defaults = RecordingPresets.HIGH_QUALITY.web;
+diff --git a/ios/AudioPlayer.swift b/ios/AudioPlayer.swift
+index 074294321e872bb53c0b2d41044dac3c612f14f0..d730329bace6bbc1aa88a27e0f66c9b46fcbb5dc 100644
+--- a/ios/AudioPlayer.swift
++++ b/ios/AudioPlayer.swift
+@@ -54,9 +54,28 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+   weak var owningRegistry: AudioComponentRegistry?
+   var onPlaybackComplete: (() -> Void)?
+ 
++  // Length (seconds) computed from the MP3 header for a REMOTE source whose
++  // duration AVFoundation reports as `.indefinite`. iOS won't measure a
++  // progressive MP3 served without `Accept-Ranges` (no byte-range scan; no
++  // proactive download while paused), so we fetch just the file's first bytes and
++  // parse the frame header ourselves — Xing/Info gives an exact VBR length,
++  // otherwise we estimate from the CBR bitrate + `Content-Length` (matching how
++  // Android surfaces it). `0` until resolved (see `estimateDurationFromHeader`).
++  private var estimatedDurationSeconds: Double = 0
++  private var isEstimatingDuration = false
++  // Whether the header-based duration estimate has finished (resolved OR failed).
++  // Until it has, an indefinite duration means "not measured YET", not "live" — so
++  // we don't flash the LIVE badge on every remote track during the brief
++  // load/estimate window.
++  private var didAttemptDurationEstimate = false
++
+   var duration: Double {
+     let seconds = ref.currentItem?.duration.seconds ?? 0.0
+-    return seconds.isNaN ? 0.0 : seconds
++    if !seconds.isNaN, seconds > 0 {
++      return seconds
++    }
++    // AVFoundation couldn't measure it — use our header-derived value if we have one.
++    return estimatedDurationSeconds
+   }
+ 
+   var currentTime: Double {
+@@ -65,7 +84,48 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+   }
+ 
+   var isLive: Bool {
+-    ref.currentItem?.duration.isIndefinite ?? false
++    // A finite player-item duration (or a finite header estimate) means NOT live.
++    if let item = ref.currentItem, !item.duration.isIndefinite, !item.duration.seconds.isNaN {
++      return false
++    }
++    if estimatedDurationSeconds > 0 {
++      return false
++    }
++    // Still loading or estimating the length — don't claim "live" prematurely
++    // (that's the LIVE-badge flash a finite remote track would otherwise show
++    // before its duration resolves). Only a genuinely indefinite stream that
++    // survives a completed estimate attempt is treated as live.
++    guard didAttemptDurationEstimate, !isEstimatingDuration else { return false }
++    return ref.currentItem?.duration.isIndefinite ?? false
++  }
++
++  /// When the player item's duration is `.indefinite`, fetch just the leading
++  /// bytes of the source and derive the length from the MP3 header (Xing/Info for
++  /// exact VBR, else CBR bitrate × `Content-Length`), then re-emit status so a
++  /// length shows at rest — matching Android. Streams only the header (cancels
++  /// after the first frame), never the whole file. No-op once resolved/in-flight.
++  private func estimateDurationFromHeader() {
++    guard let item = ref.currentItem, item.duration.isIndefinite, let url = source?.uri,
++      estimatedDurationSeconds == 0, !isEstimatingDuration
++    else {
++      return
++    }
++    isEstimatingDuration = true
++    let headers = source?.headers
++    Task { [weak self] in
++      let seconds = await MP3Duration.fetchAndEstimate(url: url, headers: headers)
++      await MainActor.run {
++        guard let self else { return }
++        self.isEstimatingDuration = false
++        self.didAttemptDurationEstimate = true
++        if let seconds, seconds > 0 {
++          self.estimatedDurationSeconds = seconds
++        }
++        // Re-emit either way: on success the length appears; on failure `isLive`
++        // can now settle to its real value (truly indefinite → live).
++        self.updateStatus(with: [:])
++      }
++    }
+   }
+ 
+   var currentOffsetFromLive: Double? {
+@@ -207,6 +267,8 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+           self.updateStatus(with: [
+             "isLoaded": true
+           ])
++          // iOS can't measure remote-MP3 length at rest — derive it from the header.
++          self.estimateDurationFromHeader()
+           if self.isLooping {
+             self.enqueueNextLoopItem()
+           }
+@@ -238,6 +300,24 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+         }
+       }
+       .store(in: &cancellables)
++
++    // iOS resolves `AVPlayerItem.duration` ASYNCHRONOUSLY — typically a beat AFTER
++    // the item reports `.readyToPlay` — and upstream emits no status when it lands
++    // (it observes `currentItem.status`, not `currentItem.duration`, and only the
++    // periodic time observer re-reads duration, and that runs solely DURING
++    // playback). So a loaded-but-paused player reports duration `0` forever, which
++    // is why the UI shows no track length at rest on iOS while Android (duration
++    // known at prepare) is fine. Observe the item's duration directly and re-emit
++    // the full status the moment it becomes known, so the length appears without
++    // requiring playback.
++    ref.publisher(for: \.currentItem?.duration)
++      .sink { [weak self] _ in
++        guard let self, self.isLoaded else {
++          return
++        }
++        self.updateStatus(with: [:])
++      }
++      .store(in: &cancellables)
+   }
+ 
+   func replaceWithPreloadedItem(_ item: AVPlayerItem?) {
+@@ -262,6 +342,9 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+ 
+   func replaceCurrentSource(source: AudioSource) {
+     self.source = source
++    estimatedDurationSeconds = 0
++    isEstimatingDuration = false
++    didAttemptDurationEstimate = false
+     let wasPlaying = ref.timeControlStatus == .playing
+     let wasSamplingEnabled = samplingEnabled
+     removeQueuedLoopItems()
+@@ -309,6 +392,9 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+ 
+   private func replacePlayer(with source: AudioSource, restoreSampling: Bool) {
+     teardownPlayer()
++    estimatedDurationSeconds = 0
++    isEstimatingDuration = false
++    didAttemptDurationEstimate = false
+ 
+     ref = AudioUtils.createAVPlayer(from: source)
+     setupPublisher()
+@@ -517,3 +603,155 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+     audioProcessor = nil
+   }
+ }
++
++/// Minimal MP3 duration estimator. Fetches only the leading bytes of a remote
++/// source and derives the track length from the first frame header — a Xing/Info
++/// VBR header gives an exact length, otherwise we estimate from the CBR bitrate and
++/// the total `Content-Length`. Used only when AVFoundation reports `.indefinite`
++/// for a progressive remote MP3 (e.g. a server without `Accept-Ranges`), where iOS
++/// otherwise shows no length at rest while Android does.
++enum MP3Duration {
++  /// Hard cap on the leading bytes pulled while probing (covers a large ID3v2 tag
++  /// with embedded artwork plus the first audio frame), so we never stream the file.
++  private static let maxProbeBytes = 1_000_000
++
++  static func fetchAndEstimate(url: URL, headers: [String: String]?) async -> Double? {
++    var request = URLRequest(url: url)
++    headers?.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
++    guard let (bytes, response) = try? await URLSession.shared.bytes(for: request) else {
++      return nil
++    }
++    let totalBytes = (response as? HTTPURLResponse)?.expectedContentLength ?? -1
++    var buffer = [UInt8]()
++    buffer.reserveCapacity(64 * 1024)
++    var needed = 8 * 1024  // grows once an ID3v2 tag size is known
++    var checkedID3 = false
++    do {
++      for try await byte in bytes {
++        buffer.append(byte)
++        if !checkedID3, buffer.count >= 10 {
++          checkedID3 = true
++          if buffer[0] == 0x49, buffer[1] == 0x44, buffer[2] == 0x33 {  // "ID3"
++            let tagSize =
++              (Int(buffer[6]) << 21) | (Int(buffer[7]) << 14) | (Int(buffer[8]) << 7)
++              | Int(buffer[9])
++            needed = min(maxProbeBytes, 10 + tagSize + 4 * 1024)
++          }
++        }
++        if buffer.count >= needed { break }
++      }
++    } catch {
++      // Use whatever we managed to read before the stream errored.
++    }
++    return estimate(bytes: buffer, totalBytes: totalBytes)
++  }
++
++  /// Parse the file's leading `bytes` for the first MP3 frame and return the track
++  /// length in seconds, or `nil` if it can't be determined.
++  static func estimate(bytes: [UInt8], totalBytes: Int64) -> Double? {
++    var offset = 0
++    // Skip an ID3v2 tag if present (its syncsafe size lives in bytes 6...9).
++    if bytes.count >= 10, bytes[0] == 0x49, bytes[1] == 0x44, bytes[2] == 0x33 {
++      let tagSize =
++        (Int(bytes[6]) << 21) | (Int(bytes[7]) << 14) | (Int(bytes[8]) << 7) | Int(bytes[9])
++      offset = 10 + tagSize
++    }
++    // Scan for the first frame sync (11 set bits) and parse its header.
++    while offset + 4 <= bytes.count {
++      if bytes[offset] == 0xFF, (bytes[offset + 1] & 0xE0) == 0xE0,
++        let frame = Frame(bytes, at: offset)
++      {
++        // Exact VBR length from a Xing/Info header in the first frame, if present.
++        if let frameCount = frame.xingFrameCount(bytes, frameOffset: offset), frameCount > 0 {
++          return Double(frameCount) * Double(frame.samplesPerFrame) / Double(frame.sampleRate)
++        }
++        // Otherwise a CBR estimate from the total byte count.
++        guard totalBytes > 0, frame.bitrate > 0 else { return nil }
++        let audioBytes = Double(totalBytes) - Double(offset)
++        guard audioBytes > 0 else { return nil }
++        return audioBytes * 8.0 / Double(frame.bitrate)
++      }
++      offset += 1
++    }
++    return nil
++  }
++
++  /// A parsed MPEG audio frame header.
++  private struct Frame {
++    let bitrate: Int  // bits/sec
++    let sampleRate: Int  // Hz
++    let samplesPerFrame: Int
++    let channelMode: Int  // 0 stereo, 1 joint, 2 dual, 3 mono
++    let version: Int  // 3 = MPEG1, 2 = MPEG2, 0 = MPEG2.5
++    let layer: Int  // 3 = Layer I, 2 = Layer II, 1 = Layer III
++
++    init?(_ b: [UInt8], at o: Int) {
++      guard o + 4 <= b.count else { return nil }
++      version = Int((b[o + 1] >> 3) & 0x03)
++      layer = Int((b[o + 1] >> 1) & 0x03)
++      let bitrateIndex = Int((b[o + 2] >> 4) & 0x0F)
++      let sampleRateIndex = Int((b[o + 2] >> 2) & 0x03)
++      channelMode = Int((b[o + 3] >> 6) & 0x03)
++      guard version != 1, layer != 0, bitrateIndex != 0, bitrateIndex != 15, sampleRateIndex != 3,
++        let br = Frame.bitrate(version: version, layer: layer, index: bitrateIndex),
++        let sr = Frame.sampleRate(version: version, index: sampleRateIndex)
++      else {
++        return nil
++      }
++      bitrate = br * 1000
++      sampleRate = sr
++      if layer == 3 {  // Layer I
++        samplesPerFrame = 384
++      } else if layer == 2 {  // Layer II
++        samplesPerFrame = 1152
++      } else {  // Layer III
++        samplesPerFrame = version == 3 ? 1152 : 576
++      }
++    }
++
++    /// Frame count from a Xing/Info VBR header after the side-info block, if any.
++    func xingFrameCount(_ b: [UInt8], frameOffset: Int) -> Int? {
++      let sideInfo: Int
++      if version == 3 {  // MPEG1
++        sideInfo = channelMode == 3 ? 17 : 32
++      } else {  // MPEG2 / 2.5
++        sideInfo = channelMode == 3 ? 9 : 17
++      }
++      let tag = frameOffset + 4 + sideInfo
++      guard tag + 12 <= b.count else { return nil }
++      let isXing =
++        (b[tag] == 0x58 && b[tag + 1] == 0x69 && b[tag + 2] == 0x6E && b[tag + 3] == 0x67)  // "Xing"
++        || (b[tag] == 0x49 && b[tag + 1] == 0x6E && b[tag + 2] == 0x66 && b[tag + 3] == 0x6F)  // "Info"
++      guard isXing, Int(b[tag + 7]) & 0x01 == 0x01 else { return nil }  // frames-present flag
++      let p = tag + 8
++      return (Int(b[p]) << 24) | (Int(b[p + 1]) << 16) | (Int(b[p + 2]) << 8) | Int(b[p + 3])
++    }
++
++    private static func bitrate(version: Int, layer: Int, index: Int) -> Int? {
++      let mpeg1L1 = [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0]
++      let mpeg1L2 = [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 0]
++      let mpeg1L3 = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0]
++      let mpeg2L1 = [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256, 0]
++      let mpeg2L23 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0]  // L2 & L3
++      let table: [Int]
++      if version == 3 {  // MPEG1
++        table = layer == 3 ? mpeg1L1 : (layer == 2 ? mpeg1L2 : mpeg1L3)
++      } else {  // MPEG2 / 2.5
++        table = layer == 3 ? mpeg2L1 : mpeg2L23
++      }
++      let value = table[index]
++      return value > 0 ? value : nil
++    }
++
++    private static func sampleRate(version: Int, index: Int) -> Int? {
++      let table: [Int]
++      switch version {
++      case 3: table = [44100, 48000, 32000]  // MPEG1
++      case 2: table = [22050, 24000, 16000]  // MPEG2
++      case 0: table = [11025, 12000, 8000]  // MPEG2.5
++      default: return nil
++      }
++      return index >= 0 && index < table.count ? table[index] : nil
++    }
++  }
++}
+diff --git a/ios/AudioResourceLoaderDelegate.swift b/ios/AudioResourceLoaderDelegate.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..c1f531234d2616ba6cd959e472ef00634f80f3c7
+--- /dev/null
++++ b/ios/AudioResourceLoaderDelegate.swift
+@@ -0,0 +1,284 @@
++import AVFoundation
++import Foundation
++import ObjectiveC
++import UniformTypeIdentifiers
++
++/// Associated-object key binding an `AudioResourceLoaderDelegate`'s lifetime to
++/// the `AVURLAsset` it serves.
++private var lifetimeTokenKey: UInt8 = 0
++
++/// Routes a progressive remote audio source through AVFoundation's resource
++/// loader so we can *synthesize* byte-range access for it.
++///
++/// A server that responds without `Accept-Ranges` makes AVFoundation treat the
++/// asset as `.indefinite` — no duration at rest, no scrubbing — even though the
++/// bytes are a finite MP3/AAC file (Android resolves it fine). The fix is to let
++/// this delegate answer the asset's *content-information* request with the real
++/// `Content-Length` and `isByteRangeAccessSupported = true`. AVFoundation then
++/// computes the true duration (and enables seeking), and satisfies the byte
++/// ranges it subsequently asks for through this delegate.
++///
++/// We don't pre-download the file. Each AVFoundation range request is proxied to
++/// the origin with a `Range` header:
++///  - If the origin honors it (`206`) we stream those bytes straight through —
++///    range-capable servers behave just like the native path, no full download.
++///  - If the origin ignores it (`200`, the broken case) it streams from byte 0;
++///    we discard the prefix up to the requested offset and forward the rest.
++///    A mid-file seek then refetches from 0, which is the unavoidable cost of a
++///    server with no range support — but playback and duration are correct.
++///
++/// This supersedes the MP3-header duration estimator: it works for every
++/// container AVFoundation understands and restores seeking, not just the number.
++final class AudioResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDataDelegate {
++  /// Scheme prefix we swap in for `http`/`https` so `AVURLAsset` hands loading to
++  /// us instead of fetching the URL itself. The real scheme is appended so it can
++  /// be restored, e.g. `https://h/a.mp3` -> `knitui-audio-loader.https://h/a.mp3`.
++  private static let schemePrefix = "knitui-audio-loader"
++
++  private let originURL: URL
++  private let headers: [String: String]?
++  private var session: URLSession!
++
++  /// Per-task state for one in-flight `AVAssetResourceLoadingRequest`.
++  private final class Pending {
++    let loadingRequest: AVAssetResourceLoadingRequest
++    /// Absolute byte offset the data request starts at (0 for info-only).
++    let requestedOffset: Int64
++    /// Bytes still to deliver; `.max` means "to the end of the resource".
++    var remaining: Int64
++    /// Bytes the origin has sent from offset 0 so far — used to skip the prefix
++    /// when the server ignored our `Range` header.
++    var receivedFromZero: Int64 = 0
++    /// True once the origin confirms a ranged response (`206`); then bytes arrive
++    /// already offset and need no skipping.
++    var rangeHonored = false
++    /// True when the request only needs content info (no data to stream).
++    let infoOnly: Bool
++
++    init(_ request: AVAssetResourceLoadingRequest, offset: Int64, length: Int64, infoOnly: Bool) {
++      self.loadingRequest = request
++      self.requestedOffset = offset
++      self.remaining = length
++      self.infoOnly = infoOnly
++    }
++  }
++
++  /// Guards `pending`, which is written from the resource-loader queue and
++  /// read/cleared from the URLSession delegate queue.
++  private let lock = NSLock()
++  private var pending: [URLSessionTask: Pending] = [:]
++
++  private init(originURL: URL, headers: [String: String]?) {
++    self.originURL = originURL
++    self.headers = headers
++    super.init()
++    let queue = OperationQueue()
++    // Serial: callbacks for all tasks are non-overlapping, so a `Pending`'s
++    // fields can be mutated inside a callback without an extra per-object lock.
++    queue.maxConcurrentOperationCount = 1
++    self.session = URLSession(configuration: .default, delegate: self, delegateQueue: queue)
++  }
++
++  /// Tears down the session. Required because `URLSession` retains its delegate
++  /// (this object) strongly until invalidated — without this the session and the
++  /// delegate keep each other alive forever and `deinit` never runs. Driven by
++  /// `LifetimeToken` below, which is released when the owning asset deallocates.
++  private func invalidate() {
++    session.invalidateAndCancel()
++  }
++
++  /// Ties the delegate's lifetime to the asset: the asset retains this token via
++  /// an associated object, and the token is the *only* owner of the delegate that
++  /// sits outside the session<->delegate cycle. When the asset deallocates, the
++  /// token deallocates and breaks the cycle, letting the delegate go too.
++  private final class LifetimeToken {
++    let delegate: AudioResourceLoaderDelegate
++    init(_ delegate: AudioResourceLoaderDelegate) { self.delegate = delegate }
++    deinit { delegate.invalidate() }
++  }
++
++  /// Builds an asset whose loading is routed through a freshly created delegate
++  /// and whose lifetime is bound to the asset. Returns `nil` for non-http(s)
++  /// sources (local files, `data:` URLs), which need no interception and should
++  /// use a plain `AVURLAsset`.
++  static func makeAsset(
++    originURL: URL,
++    headers: [String: String]?,
++    assetOptions: [String: Any]
++  ) -> AVURLAsset? {
++    guard var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false),
++      let scheme = components.scheme?.lowercased(),
++      scheme == "http" || scheme == "https" else {
++      return nil
++    }
++    // Never intercept streaming manifests. HLS/DASH resolve segment and
++    // sub-playlist URLs relative to the manifest; under a custom scheme those
++    // would inherit it and be misrouted to this single origin URL, breaking
++    // playback. These are also genuinely indefinite, so the duration fix is moot.
++    let ext = originURL.pathExtension.lowercased()
++    if ext == "m3u8" || ext == "mpd" {
++      return nil
++    }
++    components.scheme = "\(schemePrefix).\(scheme)"
++    guard let proxyURL = components.url else {
++      return nil
++    }
++
++    let delegate = AudioResourceLoaderDelegate(originURL: originURL, headers: headers)
++    let asset = AVURLAsset(url: proxyURL, options: assetOptions)
++    asset.resourceLoader.setDelegate(delegate, queue: DispatchQueue(label: "expo.audio.resourceLoader"))
++    objc_setAssociatedObject(asset, &lifetimeTokenKey, LifetimeToken(delegate), .OBJC_ASSOCIATION_RETAIN)
++    return asset
++  }
++
++  // MARK: - AVAssetResourceLoaderDelegate
++
++  func resourceLoader(
++    _ resourceLoader: AVAssetResourceLoader,
++    shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
++  ) -> Bool {
++    let dataRequest = loadingRequest.dataRequest
++    let infoOnly = dataRequest == nil
++
++    let offset = dataRequest?.requestedOffset ?? 0
++    let length: Int64
++    if let dataRequest {
++      length = dataRequest.requestsAllDataToEndOfResource ? .max : Int64(dataRequest.requestedLength)
++    } else {
++      length = 0
++    }
++
++    var request = URLRequest(url: originURL)
++    headers?.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
++    if infoOnly {
++      // Cheap probe: we only need the response headers (length, type, range).
++      request.setValue("bytes=0-1", forHTTPHeaderField: "Range")
++    } else if length == .max {
++      request.setValue("bytes=\(offset)-", forHTTPHeaderField: "Range")
++    } else {
++      request.setValue("bytes=\(offset)-\(offset + length - 1)", forHTTPHeaderField: "Range")
++    }
++
++    let task = session.dataTask(with: request)
++    let context = Pending(loadingRequest, offset: offset, length: length, infoOnly: infoOnly)
++    lock.withLock { pending[task] = context }
++    task.resume()
++    return true
++  }
++
++  func resourceLoader(
++    _ resourceLoader: AVAssetResourceLoader,
++    didCancel loadingRequest: AVAssetResourceLoadingRequest
++  ) {
++    lock.withLock {
++      for (task, context) in pending where context.loadingRequest === loadingRequest {
++        task.cancel()
++        pending[task] = nil
++      }
++    }
++  }
++
++  // MARK: - URLSessionDataDelegate
++
++  func urlSession(
++    _ session: URLSession,
++    dataTask: URLSessionDataTask,
++    didReceive response: URLResponse,
++    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
++  ) {
++    guard let context = lock.withLock({ pending[dataTask] }),
++      let http = response as? HTTPURLResponse else {
++      completionHandler(.cancel)
++      return
++    }
++
++    context.rangeHonored = http.statusCode == 206
++
++    if let info = context.loadingRequest.contentInformationRequest {
++      info.isByteRangeAccessSupported = true
++      info.contentLength = Self.totalLength(from: http)
++      if let mime = http.mimeType, let uti = UTType(mimeType: mime)?.identifier {
++        info.contentType = uti
++      }
++    }
++
++    // An info-only request has its answer now; nothing to stream.
++    if context.infoOnly {
++      context.loadingRequest.finishLoading()
++      finish(dataTask)
++      completionHandler(.cancel)
++      return
++    }
++    completionHandler(.allow)
++  }
++
++  func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
++    guard let context = lock.withLock({ pending[dataTask] }) else {
++      return
++    }
++
++    var payload = data
++    if !context.rangeHonored {
++      // Origin ignored our `Range` and is streaming from byte 0 — drop everything
++      // before the requested offset.
++      let alreadySeen = context.receivedFromZero
++      context.receivedFromZero += Int64(data.count)
++      let skip = context.requestedOffset - alreadySeen
++      if skip >= Int64(data.count) {
++        return  // whole chunk is still inside the prefix
++      }
++      if skip > 0 {
++        payload = data.subdata(in: Int(skip)..<data.count)
++      }
++    }
++
++    if context.remaining != .max {
++      if Int64(payload.count) > context.remaining {
++        payload = payload.subdata(in: 0..<Int(context.remaining))
++      }
++      context.remaining -= Int64(payload.count)
++    }
++
++    if !payload.isEmpty {
++      context.loadingRequest.dataRequest?.respond(with: payload)
++    }
++
++    if context.remaining == 0 {
++      context.loadingRequest.finishLoading()
++      finish(dataTask)
++      dataTask.cancel()
++    }
++  }
++
++  func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
++    guard let context = lock.withLock({ pending[task] }) else {
++      return  // already finished by a range/info completion above
++    }
++    if let error, (error as? URLError)?.code != .cancelled {
++      context.loadingRequest.finishLoading(with: error)
++    } else {
++      // A `200` "to end" stream ends here; treat a clean close as success.
++      context.loadingRequest.finishLoading()
++    }
++    finish(task)
++  }
++
++  // MARK: - Helpers
++
++  private func finish(_ task: URLSessionTask) {
++    lock.withLock { pending[task] = nil }
++  }
++
++  /// Total resource length: prefer the total from a `Content-Range`
++  /// (`bytes 0-1/12345`), falling back to `Content-Length` — which is the full
++  /// length only on a `200` response, exactly the case where `Content-Range` is
++  /// absent, so the fallback is correct.
++  private static func totalLength(from response: HTTPURLResponse) -> Int64 {
++    if let contentRange = response.value(forHTTPHeaderField: "Content-Range"),
++      let totalPart = contentRange.split(separator: "/").last,
++      let total = Int64(totalPart) {
++      return total
++    }
++    return response.expectedContentLength
++  }
++}
+diff --git a/ios/AudioUtils.swift b/ios/AudioUtils.swift
+index 79c7c0b256581a768c42a0291bf84bdff4c4b142..19345d010a3989eda86f4f07fb8dcbc04507c6f8 100644
+--- a/ios/AudioUtils.swift
++++ b/ios/AudioUtils.swift
+@@ -84,9 +84,34 @@ struct AudioUtils {
+       url
+     }
+ 
+-    var options: [String: Any]?
++    // Force AVFoundation to determine the asset's PRECISE duration and timing.
++    // Without this key it defaults to `false` for progressive/remote assets and
++    // leaves `duration` as `.indefinite` for MP3s whose length it can't read
++    // cheaply (VBR without a Xing/Info header, or a server that omits
++    // `Content-Length`). That makes a finite remote MP3 look like a LIVE stream on
++    // iOS (`isLive` is derived from `duration.isIndefinite`) and hides the track
++    // length — even though Android resolves it fine. Setting it true makes iOS
++    // scan as needed so a normal MP3 reports its real duration.
++    var options: [String: Any] = [AVURLAssetPreferPreciseDurationAndTimingKey: true]
+     if let headers = source.headers {
+-      options = ["AVURLAssetHTTPHeaderFieldsKey": headers]
++      options["AVURLAssetHTTPHeaderFieldsKey"] = headers
++    }
++
++    // Remote http(s) sources are routed through a resource loader that
++    // synthesizes byte-range access. Some servers omit `Accept-Ranges`, which
++    // leaves AVFoundation unable to seek and makes it report a finite MP3 as
++    // `.indefinite` (no duration, looks LIVE on iOS while Android resolves it).
++    // The delegate answers with the real length + `isByteRangeAccessSupported`
++    // so AVFoundation derives the true duration and enables scrubbing; for
++    // range-capable servers it transparently proxies the `Range` requests. The
++    // delegate is retained for the asset's lifetime (handled inside makeAsset).
++    // Local files and `data:` URLs fall through to the plain `AVURLAsset` path.
++    if let asset = AudioResourceLoaderDelegate.makeAsset(
++      originURL: finalUrl,
++      headers: source.headers,
++      assetOptions: options
++    ) {
++      return AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: [.tracks, .duration])
+     }
+ 
+     let asset = AVURLAsset(url: finalUrl, options: options)

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBrandMailgun = /*#__PURE__*/ createIcon(
+  "outline",
+  "brand-mailgun",
+  "IconBrandMailgun",
+  "M17 12a2 2 0 1 0 4 0a9 9 0 1 0 -2.987 6.697 M7 12a5 5 0 1 0 10 0a5 5 0 1 0 -10 0 M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0",
+);
+
+export default IconBrandMailgun;

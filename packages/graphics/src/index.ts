@@ -1,0 +1,103 @@
+// The graphics kit is intentionally small: a Skia loader/provider, a `GraphicCanvas`,
+// the `View` effects wrapper, and everything else re-exported straight from Skia.
+
+export {
+  AudioBars,
+  AudioDots,
+  AudioLine,
+  AudioRadial,
+  AudioVisualizer,
+  type AudioVisualizerHandle,
+  type AudioVisualizerPresetProps,
+  type AudioVisualizerProps,
+  AudioWaveform,
+  bars,
+  createSpectrumMapper,
+  dots,
+  fftToBands,
+  type LevelTransition,
+  type LevelTransitionOptions,
+  line,
+  mirror,
+  radial,
+  registerVisualizerVariant,
+  resolveVariant,
+  type SpectrumFrame,
+  type SpectrumInput,
+  type SpectrumMapper,
+  type SpectrumMapperOptions,
+  useLevelTransition,
+  type VariantOptions,
+  type VisualizerCircle,
+  type VisualizerEffects,
+  type VisualizerGradient,
+  type VisualizerLine,
+  type VisualizerRect,
+  type VisualizerShape,
+  type VisualizerVariant,
+  type VisualizerVariantName,
+  visualizerVariantNames,
+  wave,
+} from "./components/AudioViz";
+export {
+  type BlurredImageEffect,
+  type BorderEffect,
+  type CheckerboardEffect,
+  type DottedGridEffect,
+  type EffectKind,
+  type EffectLayer,
+  type EffectPlacement,
+  EffectView,
+  type FillEffect,
+  type FrameGlow,
+  type FrameShadowSpec,
+  type GlowEffect,
+  type GradientBorderSpec,
+  type ImageEffect,
+  type NoiseEffect,
+  type ShadowEffect,
+  type ViewProps,
+} from "./components/EffectView";
+export {
+  firstGradientColor,
+  GradientShader,
+  type GradientShaderProps,
+  hasGradientColors,
+} from "./components/gradients/GradientShader";
+export type {
+  ConicalGradientFill,
+  GradientFill,
+  GradientFillBase,
+  GradientType,
+  LinearGradientFill,
+  RadialGradientFill,
+  SweepGradientFill,
+} from "./components/gradients/types";
+export { type ShadowProps, ShadowView, type ShadowViewProps } from "./components/ShadowView";
+export {
+  GraphicsContext,
+  type GraphicsContextValue,
+  GraphicsProvider,
+  type GraphicsProviderProps,
+  useGraphics,
+  useGraphicsReady,
+} from "./provider";
+export type {
+  CanvasLength,
+  Fit,
+  GradientStop,
+  GradientStops,
+  GraphicCanvasProps,
+  ImageSource,
+  PaintStyle,
+  Point,
+  Radius,
+  RectLike,
+  Size,
+  SkiaColor,
+  TileMode,
+} from "./types";
+// Everything else — Canvas, Group, Path, Image, Rect, the gradient shaders, the
+// shadow/blur/mask nodes, hooks (useImage, useSVG), Skia, … — comes straight from
+// Skia. Our named exports above win over any same-named Skia export.
+export * from "@shopify/react-native-skia";

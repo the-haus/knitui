@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconChartTreemap = /*#__PURE__*/ createIcon(
+  "outline",
+  "chart-treemap",
+  "IconChartTreemap",
+  "M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12 M12 4v16 M4 15h8 M12 12h8 M16 12v8 M16 16h4",
+);
+
+export default IconChartTreemap;

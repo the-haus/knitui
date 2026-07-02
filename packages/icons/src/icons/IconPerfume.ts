@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconPerfume = /*#__PURE__*/ createIcon(
+  "outline",
+  "perfume",
+  "IconPerfume",
+  "M10 6v3 M14 6v3 M5 11a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2l0 -8 M10 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M9 3h6v3h-6l0 -3",
+);
+
+export default IconPerfume;

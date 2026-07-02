@@ -1,0 +1,134 @@
+{
+  "name": "@knitui/plugins",
+  "version": "0.1.0",
+  "description": "Pre-configured Tamagui build-tool plugins for the knitui UI kit (babel, metro, next, vite, webpack) plus the Next.js SSR provider.",
+  "license": "MIT",
+  "author": "The Haus <joost@the.haus>",
+  "homepage": "https://github.com/the-haus/knitui/tree/main/packages/plugins#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-haus/knitui.git",
+    "directory": "packages/plugins"
+  },
+  "bugs": {
+    "url": "https://github.com/the-haus/knitui/issues"
+  },
+  "keywords": [
+    "knitui",
+    "react-native",
+    "react-native-web",
+    "expo",
+    "cross-platform",
+    "babel",
+    "metro",
+    "plugin",
+    "tamagui"
+  ],
+  "exports": {
+    "./babel-plugin": {
+      "source": "./src/babel-plugin.js",
+      "types": "./lib/typescript/commonjs/babel-plugin.d.ts",
+      "default": "./lib/commonjs/babel-plugin.js"
+    },
+    "./next": {
+      "source": "./src/next.tsx",
+      "types": "./lib/typescript/module/next.d.ts",
+      "import": "./lib/module/next.js",
+      "require": "./lib/commonjs/next.js",
+      "default": "./lib/module/next.js"
+    },
+    "./next-plugin": {
+      "source": "./src/next-plugin.js",
+      "types": "./lib/typescript/commonjs/next-plugin.d.ts",
+      "default": "./lib/commonjs/next-plugin.js"
+    },
+    "./metro": {
+      "source": "./src/metro.js",
+      "types": "./lib/typescript/commonjs/metro.d.ts",
+      "default": "./lib/commonjs/metro.js"
+    },
+    "./vite": {
+      "source": "./src/vite.mjs",
+      "types": "./lib/typescript/module/vite.d.mts",
+      "import": "./lib/module/vite.mjs",
+      "default": "./lib/module/vite.mjs"
+    },
+    "./webpack": {
+      "source": "./src/webpack.js",
+      "types": "./lib/typescript/commonjs/webpack.d.ts",
+      "default": "./lib/commonjs/webpack.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/*.test.*",
+    "!**/*.stories.*",
+    "!**/__tests__/**",
+    "!**/__mocks__/**"
+  ],
+  "scripts": {
+    "build": "bob build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "jest",
+    "clean": "rimraf lib .turbo"
+  },
+  "dependencies": {
+    "@knitui/core": "workspace:*",
+    "@tamagui/babel-plugin": "^2.3.0"
+  },
+  "optionalDependencies": {
+    "@tamagui/metro-plugin": "^2.3.0",
+    "@tamagui/next-plugin": "^2.3.0",
+    "@tamagui/vite-plugin": "^2.3.0",
+    "tamagui-loader": "^2.3.0"
+  },
+  "peerDependencies": {
+    "next": "*",
+    "react": "*",
+    "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@types/jest": "^29.5.12",
+    "@types/react": "~19.2.0",
+    "babel-jest": "^29.7.0",
+    "babel-preset-expo": "^56.0.15",
+    "jest": "^29.7.0",
+    "next": "^15.1.6",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-builder-bob": "^0.40.5",
+    "react-native-web": "~0.21.0",
+    "typescript": "~5.8.3"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

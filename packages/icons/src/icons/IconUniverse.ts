@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconUniverse = /*#__PURE__*/ createIcon(
+  "outline",
+  "universe",
+  "IconUniverse",
+  "M7.027 11.477a5 5 0 1 0 5.496 -4.45a4.951 4.951 0 0 0 -3.088 .681 M5.636 5.636a9 9 0 1 0 3.555 -2.188 M17 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M8 16a1 1 0 1 0 2 0a1 1 0 1 0 -2 0",
+);
+
+export default IconUniverse;

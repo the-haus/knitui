@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCashBanknote = /*#__PURE__*/ createIcon(
+  "outline",
+  "cash-banknote",
+  "IconCashBanknote",
+  "M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M3 8a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -8 M18 12h.01 M6 12h.01",
+);
+
+export default IconCashBanknote;

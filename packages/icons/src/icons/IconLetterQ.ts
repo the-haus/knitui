@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconLetterQ = /*#__PURE__*/ createIcon(
+  "outline",
+  "letter-q",
+  "IconLetterQ",
+  "M18 9a5 5 0 0 0 -5 -5h-2a5 5 0 0 0 -5 5v6a5 5 0 0 0 5 5h2a5 5 0 0 0 5 -5v-6 M13 15l5 5",
+);
+
+export default IconLetterQ;

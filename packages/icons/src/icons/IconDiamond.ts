@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconDiamond = /*#__PURE__*/ createIcon(
+  "outline",
+  "diamond",
+  "IconDiamond",
+  "M6 5h12l3 5l-8.5 9.5a.7 .7 0 0 1 -1 0l-8.5 -9.5l3 -5 M10 12l-2 -2.2l.6 -1",
+);
+
+export default IconDiamond;

@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconDotsCircleHorizontal = /*#__PURE__*/ createIcon(
+  "outline",
+  "dots-circle-horizontal",
+  "IconDotsCircleHorizontal",
+  "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M8 12l0 .01 M12 12l0 .01 M16 12l0 .01",
+);
+
+export default IconDotsCircleHorizontal;

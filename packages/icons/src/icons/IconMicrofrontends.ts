@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconMicrofrontends = /*#__PURE__*/ createIcon(
+  "outline",
+  "microfrontends",
+  "IconMicrofrontends",
+  "M7.5 7.5l4.5 4.5l4.5 -4.5 M6 16v-4 M18 16v-4 M16 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+);
+
+export default IconMicrofrontends;

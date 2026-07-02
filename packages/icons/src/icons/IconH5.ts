@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconH5 = /*#__PURE__*/ createIcon(
+  "outline",
+  "h-5",
+  "IconH5",
+  "M17 18h2a2 2 0 1 0 0 -4h-2v-4h4 M4 6v12 M12 6v12 M11 18h2 M3 18h2 M4 12h8 M3 6h2 M11 6h2",
+);
+
+export default IconH5;

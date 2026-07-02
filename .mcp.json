@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rn-debug": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "rn-debug-mcp"
+      ],
+      "env": {}
+    }
+  }
+}

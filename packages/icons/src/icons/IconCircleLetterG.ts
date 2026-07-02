@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCircleLetterG = /*#__PURE__*/ createIcon(
+  "outline",
+  "circle-letter-g",
+  "IconCircleLetterG",
+  "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M14 8h-2a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2v-4h-1",
+);
+
+export default IconCircleLetterG;

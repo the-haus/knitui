@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconCurling = /*#__PURE__*/ createIcon(
+  "outline",
+  "curling",
+  "IconCurling",
+  "M4 13a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v2a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4l0 -2 M4 14h16 M8 5h6a2 2 0 0 1 2 2v2",
+);
+
+export default IconCurling;

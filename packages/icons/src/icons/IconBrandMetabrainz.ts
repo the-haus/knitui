@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBrandMetabrainz = /*#__PURE__*/ createIcon(
+  "outline",
+  "brand-metabrainz",
+  "IconBrandMetabrainz",
+  "M3 7v10l7 4v-18l-7 4 M21 7v10l-7 4v-18l7 4",
+);
+
+export default IconBrandMetabrainz;

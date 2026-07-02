@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconChartRadar = /*#__PURE__*/ createIcon(
+  "outline",
+  "chart-radar",
+  "IconChartRadar",
+  "M12 3l9.5 7l-3.5 11h-12l-3.5 -11l9.5 -7 M12 7.5l5.5 4l-2.5 5.5h-6.5l-2 -5.5l5.5 -4 M2.5 10l9.5 3l9.5 -3 M12 3v10l6 8 M6 21l6 -8",
+);
+
+export default IconChartRadar;

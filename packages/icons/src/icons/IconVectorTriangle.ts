@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconVectorTriangle = /*#__PURE__*/ createIcon(
+  "outline",
+  "vector-triangle",
+  "IconVectorTriangle",
+  "M10 5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M3 18a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M17 18a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M6.5 17.1l5 -9.1 M17.5 17.1l-5 -9.1 M7 19l10 0",
+);
+
+export default IconVectorTriangle;

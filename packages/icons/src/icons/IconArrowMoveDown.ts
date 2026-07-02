@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconArrowMoveDown = /*#__PURE__*/ createIcon(
+  "outline",
+  "arrow-move-down",
+  "IconArrowMoveDown",
+  "M12 11v10 M9 18l3 3l3 -3 M10 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+);
+
+export default IconArrowMoveDown;

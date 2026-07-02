@@ -1,0 +1,10 @@
+import { createIcon } from "../internal/create-icon";
+
+export const IconBellCode = /*#__PURE__*/ createIcon(
+  "outline",
+  "bell-code",
+  "IconBellCode",
+  "M11.5 17h-7.5a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6a2 2 0 1 1 4 0a7 7 0 0 1 4 6v2 M9 17v1a3 3 0 0 0 2.498 2.958 M20 21l2 -2l-2 -2 M17 17l-2 2l2 2",
+);
+
+export default IconBellCode;
