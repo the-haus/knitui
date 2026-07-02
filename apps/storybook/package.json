@@ -1,0 +1,22 @@
+{
+  "name": "@knitui/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Aggregate Storybook composing every @knitui package's stories — the GitHub Pages build.",
+  "license": "MIT",
+  "scripts": {
+    "storybook": "storybook dev -p 6100",
+    "build-storybook": "node scripts/build-all.mjs",
+    "clean": "rimraf storybook-static .turbo"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "^10.4.1",
+    "@storybook/react-vite": "^10.4.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "rimraf": "^6.0.1",
+    "storybook": "^10.4.1",
+    "vite": "^8.0.14"
+  }
+}

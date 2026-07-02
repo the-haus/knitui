@@ -1,16 +1,15 @@
 # Storybook → GitHub Pages
 #
-# Builds the component Storybook and deploys it to GitHub Pages.
+# Builds the AGGREGATE Storybook (apps/storybook) — one site composing every
+# @knitui package's stories — and deploys it to GitHub Pages.
 #
-# ONE-TIME SETUP: Pages must be enabled in the repo under
-# Settings → Pages → Build and deployment → Source: "GitHub Actions".
-# Without that, the `deploy` job's `actions/deploy-pages` step will fail.
+# `@knitui/storybook`'s build (scripts/build-all.mjs) builds the root manager
+# into apps/storybook/storybook-static/ and each package's own Storybook into a
+# subfolder, which the root's relative `refs` stitch together.
 #
-# Only @knitui/components has a published site here. Other packages also expose
-# a `build-storybook` script (carousel, dates, icons, map, sheet, graphics,
-# media); to publish them too, build each into a subdirectory of
-# `storybook-static/` and upload that folder instead. Kept to components for a
-# lean, reliable primary site.
+# ONE-TIME SETUP (repo owner): Settings → Pages → Build and deployment →
+# Source: "GitHub Actions". Without that, the `deploy` job's
+# `actions/deploy-pages` step fails with "Pages site not found".
 
 name: Storybook
 
@@ -19,11 +18,22 @@ on:
     branches: [main]
     paths:
       - "packages/**"
+      - "apps/storybook/**"
+      - ".github/workflows/storybook.yml"
   workflow_dispatch:
 
+# GITHUB_TOKEN grants for the whole workflow: read the repo, deploy Pages, and
+# mint the OIDC token `deploy-pages` verifies with.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Serialise Pages deploys; never cancel an in-flight deploy (GitHub's
+# recommended settings for the Pages environment).
 concurrency:
-  group: storybook-${{ github.ref }}
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 env:
   TURBO_TELEMETRY_DISABLED: 1
@@ -32,7 +42,11 @@ jobs:
   build:
     name: Build Storybook
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
+    env:
+      # The components Storybook (~1,100 stories) is memory-hungry to bundle;
+      # give Node headroom so the build doesn't OOM on the runner.
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - uses: actions/checkout@v4
 
@@ -48,24 +62,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build component Storybook
-        run: pnpm --filter @knitui/components build-storybook
+      - name: Build aggregate Storybook
+        run: pnpm --filter @knitui/storybook build-storybook
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/components/storybook-static
+          path: apps/storybook/storybook-static
 
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-    # Only publish from main (never from forks / other refs).
+    # Only publish from main (workflow_dispatch on another branch just builds).
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      pages: write # deploy to GitHub Pages
-      id-token: write # OIDC verification for deploy-pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

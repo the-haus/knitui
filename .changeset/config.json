@@ -16,5 +16,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@knitui/example", "@knitui/web", "@knitui/demo"]
+  "ignore": ["@knitui/example", "@knitui/web", "@knitui/demo", "@knitui/storybook"]
 }
