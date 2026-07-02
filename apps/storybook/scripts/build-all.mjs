@@ -36,6 +36,14 @@ const run = (cmd, cwd) => {
 console.log(`Cleaning ${OUT}`);
 rmSync(OUT, { recursive: true, force: true });
 
+// 0. Build lib-shipping workspace deps. Most @knitui packages src-ship (their
+// `main` resolves to `./src/*.ts`), but @knitui/hooks lib-ships — its `main`
+// points at `lib/`, which does NOT exist in a fresh checkout/CI. Story source
+// imports it (e.g. components/src/internal/motion.ts), so without this the
+// Storybook bundler fails with "Rolldown failed to resolve import @knitui/hooks".
+// turbo builds it (and its dep chain) and caches the result.
+run("pnpm exec turbo run build --filter=@knitui/hooks", repoRoot);
+
 // 1. Root composition manager → storybook-static/
 run(`pnpm exec storybook build --output-dir ${JSON.stringify(OUT)}`, appDir);
 
