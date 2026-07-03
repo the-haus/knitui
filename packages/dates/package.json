@@ -1,6 +1,6 @@
 {
   "name": "@knitui/dates",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Date and time components for Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
