@@ -2,7 +2,7 @@ import { type GetProps, styled, withStaticProperties } from "@knitui/core";
 
 import { Box } from "../Box";
 import { renderTextChild } from "../internal/render-text-child";
-import { focusRingStyle, webCursor } from "../internal/style-props";
+import { focusRingStyle, webButton, webButtonTextReset, webCursor } from "../internal/style-props";
 import { Text } from "../Text";
 
 /**
@@ -42,18 +42,22 @@ export interface UnstyledButtonProps extends UnstyledButtonFrameProps {
  */
 const UnstyledButtonComponent = UnstyledButtonFrame.styleable<UnstyledButtonProps>(
   function UnstyledButton(props, ref) {
-    const { children, disabled, ...rest } = props;
-    // `type` is a runtime-only `<button>` attribute outside Tamagui's style types;
-    // narrow via a precise local object (spread → no excess-prop check).
-    const elementProps: { type: string } = { type: "button" };
+    const { children, disabled, style, ...rest } = props;
+    // On web the semantic `<button>` host carries a UA `text-align: center` that
+    // would centre text content — diverging from native, where a pressable's text
+    // starts at the inline edge. `webButtonTextReset()` neutralises that (web-only)
+    // ahead of the caller's `style`, so the default matches native while explicit
+    // alignment still overrides. It has to ride `style` rather than the frame
+    // config because Tamagui filters `textAlign` off a View frame (see the helper).
+    const style_ = [webButtonTextReset(), style] as UnstyledButtonFrameProps["style"];
     return (
       <UnstyledButtonFrame
         ref={ref}
         disabled={disabled}
         {...rest}
         aria-disabled={disabled || undefined}
-        render="button"
-        {...elementProps}
+        {...webButton()}
+        style={style_}
       >
         {renderTextChild(children, Text)}
       </UnstyledButtonFrame>

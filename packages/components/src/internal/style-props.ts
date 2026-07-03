@@ -484,6 +484,23 @@ export const webButton = (): { render?: "button"; type?: string } =>
   isWeb ? { render: "button", type: "button" } : {};
 
 /**
+ * Web-only reset for the native `<button>` user-agent `text-align: center`.
+ * Returned as a raw `style` fragment to spread onto the element's `style` prop —
+ * NOT a `styled()` config value: Tamagui classifies `textAlign` as a Text style
+ * and FILTERS it out of a View/Stack-based `styled()` frame (verified: a frame's
+ * `maxWidth` survives to the DOM but its `textAlign` does not), so the element's
+ * forwarded `style` is the only reliable channel. `undefined` on native, where a
+ * pressable's text already starts at the inline edge and View style has no
+ * `textAlign` — spread it into a `style` array so the native `undefined` entry is
+ * simply ignored. Place it BEFORE the caller's `style` so explicit alignment
+ * still wins. Mirrors {@link webButton} / {@link webCursorStyle} web-gating; pair
+ * the two on any pressable that renders a real `<button>` and hosts text content
+ * (e.g. `UnstyledButton`), so web text matches native's start-aligned default.
+ */
+export const webButtonTextReset = (): { textAlign: "left" } | undefined =>
+  isWeb ? { textAlign: "left" } : undefined;
+
+/**
  * Mantine's `direction` (flex main-axis) cannot be a styled variant: Tamagui
  * reserves `direction` for the CSS writing-direction style prop (`"ltr" | "rtl"
  * | …`), whose type wins over any same-named variant. Components expose it via a

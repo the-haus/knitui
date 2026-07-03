@@ -22,6 +22,16 @@ describe("UnstyledButton", () => {
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
   });
 
+  it("resets the browser button's UA text-align so web matches native", () => {
+    render(<UnstyledButton>Go</UnstyledButton>);
+    expect(screen.getByRole("button")).toHaveStyle({ textAlign: "left" });
+  });
+
+  it("lets a caller override the text-align reset", () => {
+    render(<UnstyledButton style={{ textAlign: "center" }}>Go</UnstyledButton>);
+    expect(screen.getByRole("button")).toHaveStyle({ textAlign: "center" });
+  });
+
   it("fires onPress when pressed", () => {
     const onPress = jest.fn();
     render(<UnstyledButton onPress={onPress}>Go</UnstyledButton>);
