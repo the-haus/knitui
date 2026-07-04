@@ -153,23 +153,16 @@ The slot keys for a component are captured by its exported `…Styles` type (e.g
 `slotStyles` so an unknown slot key throws rather than being silently ignored.
 The slot machinery itself (`createSlot`, `defineSlots`) lives in `@knitui/core`.
 
-### Component defaults
+### Theming & customization
 
-Set default props (and theming) per component through `createTheme` in
-`@knitui/core` — merged **under** caller props, so the call site always wins:
+Brand the whole kit with `createTheme` / `extendTheme` from `@knitui/core` and
+feed the result to `<Provider config={…}>` — see the
+[`@knitui/core` README](../core/README.md#custom-branding--createtheme).
 
-```tsx
-import { createTheme, Provider } from "@knitui/core";
-
-export const config = createTheme({
-  components: {
-    Button: { defaults: { size: "lg", variant: "light" } },
-    Card: { template: "surface1" },
-  },
-});
-
-export const App = ({ children }) => <Provider config={config}>{children}</Provider>;
-```
+> A per-component defaults/theming layer (`components` in `createTheme`,
+> `defineComponentDefaults`) is planned but **not yet implemented**. For now,
+> recolor with the theme system (`theme="teal"` / `<Theme name="teal">`) and set
+> default props by wrapping your own thin component.
 
 ### Control-system contract
 
