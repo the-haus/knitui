@@ -6,9 +6,9 @@ export type { DemoSection };
 
 /**
  * Hand-written sections that aren't mirrored from a Storybook story. The icons
- * browser lives here (not in `sections.generated.tsx`) because the icons package
- * is excluded from the generator — see `IconsSection` and
- * `scripts/generate-demo-sections.mjs`.
+ * and emoji browsers live here (not in `sections.generated.tsx`) because those
+ * packages are excluded from the generator — see `IconsSection`, `EmojiSection`
+ * and `scripts/generate-demo-sections.mjs`.
  */
 const manualSections: DemoSection[] = [
   {
@@ -17,6 +17,13 @@ const manualSections: DemoSection[] = [
     group: "Icons",
     fullBleed: false,
     Component: lazy(() => import("./IconsSection").then((m) => ({ default: m.IconsSection }))),
+  },
+  {
+    id: "emoji",
+    title: "Emoji",
+    group: "Emoji",
+    fullBleed: false,
+    Component: lazy(() => import("./EmojiSection").then((m) => ({ default: m.EmojiSection }))),
   },
 ];
 

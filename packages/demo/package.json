@@ -35,10 +35,12 @@
     "@knitui/components": "workspace:*",
     "@knitui/core": "workspace:*",
     "@knitui/dates": "workspace:*",
+    "@knitui/emoji": "workspace:*",
     "@knitui/graphics": "workspace:*",
     "@knitui/icons": "workspace:*",
     "@knitui/map": "workspace:*",
     "@knitui/media": "workspace:*",
+    "@knitui/mediaquery": "workspace:*",
     "@knitui/sheet": "workspace:*"
   },
   "peerDependencies": {

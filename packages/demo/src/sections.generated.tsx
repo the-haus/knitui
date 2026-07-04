@@ -1530,6 +1530,17 @@ export const demoSections: DemoSection[] = [
     ),
   },
   {
+    id: "MediaQuery",
+    title: "Playground",
+    group: "MediaQuery",
+    fullBleed: false,
+    Component: lazy(() =>
+      import("@knitui/mediaquery/src/MediaQuery.stories").then((m) => ({
+        default: () => <StorySection mod={m as Record<string, unknown>} title="Playground" />,
+      })),
+    ),
+  },
+  {
     id: "Accordion",
     title: "Accordion",
     group: "Navigation",
