@@ -7,11 +7,5 @@
     "declaration": false
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "lib",
-    ".storybook/**/*",
-    "src/**/*.stories.*",
-    "src/**/*.test.*"
-  ]
+  "exclude": ["node_modules", "lib", ".storybook/**/*", "src/**/*.stories.*", "src/**/*.test.*"]
 }

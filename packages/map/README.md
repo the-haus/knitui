@@ -40,7 +40,12 @@ export function CitiesMap() {
         <CircleLayer
           id="city-circles"
           source="cities"
-          style={{ circleRadius: 8, circleColor: "#4264fb", circleStrokeColor: "#fff", circleStrokeWidth: 2 }}
+          style={{
+            circleRadius: 8,
+            circleColor: "#4264fb",
+            circleStrokeColor: "#fff",
+            circleStrokeWidth: 2,
+          }}
         />
       </GeoJSONSource>
     </Map>
@@ -83,13 +88,13 @@ pnpm --filter @knitui/map storybook   # http://localhost:6007
 
 ## Scripts
 
-| Script      | Description                          |
-| ----------- | ------------------------------------ |
-| `typecheck` | `tsc --noEmit`                       |
-| `lint`      | `eslint .`                           |
-| `test`      | `vitest run` (helpers + registry)    |
-| `storybook` | Storybook dev server                 |
-| `build`     | `bob build`                          |
+| Script      | Description                       |
+| ----------- | --------------------------------- |
+| `typecheck` | `tsc --noEmit`                    |
+| `lint`      | `eslint .`                        |
+| `test`      | `vitest run` (helpers + registry) |
+| `storybook` | Storybook dev server              |
+| `build`     | `bob build`                       |
 
 ---
 

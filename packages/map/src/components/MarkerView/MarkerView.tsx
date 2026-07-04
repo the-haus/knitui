@@ -38,6 +38,11 @@ export const MarkerView = memo(function MarkerView({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const onPressRef = useRef(onPress);
   onPressRef.current = onPress;
+  // Keep the coordinate in a ref so the click effect doesn't depend on the
+  // (usually inline, new-every-render) `lngLat` array — otherwise the DOM click
+  // listener is torn down and re-added on every parent render.
+  const lngLatRef = useRef(lngLat);
+  lngLatRef.current = lngLat;
 
   // Create stable DOM elements once
   if (!containerRef.current) {
@@ -77,14 +82,14 @@ export const MarkerView = memo(function MarkerView({
 
       handler({
         id: id ?? "",
-        lngLat: markerLngLat ? [markerLngLat.lng, markerLngLat.lat] : lngLat,
+        lngLat: markerLngLat ? [markerLngLat.lng, markerLngLat.lat] : lngLatRef.current,
         point: [e.clientX, e.clientY],
       });
     };
 
     container.addEventListener("click", handleClick);
     return () => container.removeEventListener("click", handleClick);
-  }, [id, lngLat]);
+  }, [id]);
 
   // --- Create/destroy marker ---
   useEffect(() => {
@@ -112,9 +117,17 @@ export const MarkerView = memo(function MarkerView({
   }, [ready, map]);
 
   // --- Update position incrementally ---
+  // Keyed on the numeric coordinates (not the array identity) and guarded, so an
+  // inline `lngLat` array that's re-created each render doesn't re-run setLngLat.
   useEffect(() => {
-    markerRef.current?.setLngLat([lngLat[0], lngLat[1]]);
-  }, [lngLat]);
+    const marker = markerRef.current;
+    if (!marker) return;
+    const current = marker.getLngLat();
+    if (current.lng !== lngLat[0] || current.lat !== lngLat[1]) {
+      marker.setLngLat([lngLat[0], lngLat[1]]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lngLat[0], lngLat[1]]);
 
   // --- Update offset incrementally ---
   useEffect(() => {
