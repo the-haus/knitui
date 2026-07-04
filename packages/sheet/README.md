@@ -83,19 +83,19 @@ the DOM node whenever `offset` changes (`view/animated.web.tsx` subscribing via
 
 See `src/types.ts` for the full `SheetProps`. Key props:
 
-| Prop | Default | Notes |
-| --- | --- | --- |
-| `opened` / `defaultOpened` / `onClose` | — / `false` / — | Controlled / uncontrolled open state (kit house style). |
-| `position` / `defaultPosition` / `onPositionChange` | — / `0` / — | Current snap index. |
-| `snapPoints` | `[80, 10]` | % of screen, most-visible → least-visible. |
-| `dismissOnOverlayPress` | `true` | Tap the scrim to close. |
-| `dismissOnSnapToBottom` | `false` | Fling past the lowest snap to close. |
-| `disableDrag` | `false` | Disable all drag handling. |
-| `modal` | `true` | Teleport to the app root vs. render inline. |
-| `animationConfig` | — | reanimated `withSpring` config override. |
-| `moveOnKeyboardChange` | `false` | Lift above the soft keyboard (native). |
-| `size` | `"lg"` | Top-corner rounding scale. |
-| `styles` | — | Per-slot overrides: `root` / `overlay` / `handle`. |
+| Prop                                                | Default         | Notes                                                   |
+| --------------------------------------------------- | --------------- | ------------------------------------------------------- |
+| `opened` / `defaultOpened` / `onClose`              | — / `false` / — | Controlled / uncontrolled open state (kit house style). |
+| `position` / `defaultPosition` / `onPositionChange` | — / `0` / —     | Current snap index.                                     |
+| `snapPoints`                                        | `[80, 10]`      | % of screen, most-visible → least-visible.              |
+| `dismissOnOverlayPress`                             | `true`          | Tap the scrim to close.                                 |
+| `dismissOnSnapToBottom`                             | `false`         | Fling past the lowest snap to close.                    |
+| `disableDrag`                                       | `false`         | Disable all drag handling.                              |
+| `modal`                                             | `true`          | Teleport to the app root vs. render inline.             |
+| `animationConfig`                                   | —               | reanimated `withSpring` config override.                |
+| `moveOnKeyboardChange`                              | `false`         | Lift above the soft keyboard (native).                  |
+| `size`                                              | `"lg"`          | Top-corner rounding scale.                              |
+| `styles`                                            | —               | Per-slot overrides: `root` / `overlay` / `handle`.      |
 
 An imperative `ref` exposes `{ open(), close(), snapTo(index) }`.
 

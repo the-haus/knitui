@@ -4,6 +4,7 @@
 
 > **Implementation note.** Phases 0–5 landed. Two deviations from the proposal,
 > both for the better:
+>
 > - **Gap C used the token route (§3.1 option a), not the dark-`Theme` wrapper.**
 >   A dark theme's `$color11` (≈#b4b4b4) would dim the glyphs; theme-independent
 >   `OVER_MEDIA` tokens in `@knitui/core` `themes.ts` (`$mediaOnScrim`/`$mediaScrim`/
@@ -12,10 +13,10 @@
 > - **The scrim is ONE cross-platform `backgroundImage` linear-gradient** (not a
 >   web-only `style` + native flat fallback): Tamagui 2.3 maps `backgroundImage` to
 >   RN's `experimental_backgroundImage`, so the gradient renders on native too.
-> A `control-size.ts` bridge (`MediaSize`/`clampMediaSize`) holds the size logic.
-> Guardrail tests added: `components/src/__tests__/control-system.test.ts` (export
-> shape) and `media/src/__tests__/no-color-literals.test.ts`. Visual verification on
-> web + native sim (§5.3) remains the one manual step.
+>   A `control-size.ts` bridge (`MediaSize`/`clampMediaSize`) holds the size logic.
+>   Guardrail tests added: `components/src/__tests__/control-system.test.ts` (export
+>   shape) and `media/src/__tests__/no-color-literals.test.ts`. Visual verification on
+>   web + native sim (§5.3) remains the one manual step.
 
 Goal: bring `packages/media` (Audio / Video players, Playlist, Recorder, and all
 chrome/controls) into line with the `@knitui/components` architecture for its
@@ -44,7 +45,7 @@ The package is **not** starting from zero. It already does the hardest part righ
 - **Compound parts via `withStaticProperties`.** `Audio.PlayPause`, `Video.Scrubber`,
   etc. are real behavioural sub-components reading controller/state from context —
   the **Combobox model** (`Combobox.Option`), which is a sanctioned canonical
-  pattern. (See §6 — we are *not* converting these to marker slots.)
+  pattern. (See §6 — we are _not_ converting these to marker slots.)
 
 So this plan is about **closing four specific gaps**, not a rewrite.
 
@@ -52,12 +53,12 @@ So this plan is about **closing four specific gaps**, not a rewrite.
 
 ## 2. The four gaps
 
-| # | Gap | Canonical source of truth | Media today |
-|---|-----|---------------------------|-------------|
-| A | **Size scale** | `SizeKey = xxs…xxl` (7 keys), `controlMetrics` | `"xs"\|"sm"\|"md"\|"lg"\|"xl"` (5 keys), **re-declared 3×** (`AudioSize`, `VideoSize`, `AudioRecorderSize`) |
-| B | **Icon sizing** | `CONTROL_ICON_SIZE` (14/14/16/20/24/28/32) + `controlIconSize()` | own `CONTROL_ICON_SIZE` (14/16/18/22/26) re-declared per domain; manual `size={iconSize}` on each icon |
-| C | **Color / variant** | `variant-colors.ts` ladders (`VARIANT_FILL`/`_INTERACTION`/`_FOREGROUND_*`), theme-driven, `ControlIconProvider` | video hardcodes `ON_DARK = "white"` + `rgba(0,0,0,0.x)` literals (menus, scrim, overlays, captions); no `variant` prop, no on-dark token story |
-| D | **Motion** | `motionPresets` + `useMotionPreset` + `usePressScale` (reduced-motion safe) | **none** — control-bar auto-hide, `BigPlay`, buffering/error overlays animate ad-hoc or not at all |
+| #   | Gap                 | Canonical source of truth                                                                                        | Media today                                                                                                                                    |
+| --- | ------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| A   | **Size scale**      | `SizeKey = xxs…xxl` (7 keys), `controlMetrics`                                                                   | `"xs"\|"sm"\|"md"\|"lg"\|"xl"` (5 keys), **re-declared 3×** (`AudioSize`, `VideoSize`, `AudioRecorderSize`)                                    |
+| B   | **Icon sizing**     | `CONTROL_ICON_SIZE` (14/14/16/20/24/28/32) + `controlIconSize()`                                                 | own `CONTROL_ICON_SIZE` (14/16/18/22/26) re-declared per domain; manual `size={iconSize}` on each icon                                         |
+| C   | **Color / variant** | `variant-colors.ts` ladders (`VARIANT_FILL`/`_INTERACTION`/`_FOREGROUND_*`), theme-driven, `ControlIconProvider` | video hardcodes `ON_DARK = "white"` + `rgba(0,0,0,0.x)` literals (menus, scrim, overlays, captions); no `variant` prop, no on-dark token story |
+| D   | **Motion**          | `motionPresets` + `useMotionPreset` + `usePressScale` (reduced-motion safe)                                      | **none** — control-bar auto-hide, `BigPlay`, buffering/error overlays animate ad-hoc or not at all                                             |
 
 ### 2.1 The blocking constraint (must solve first)
 
@@ -69,7 +70,7 @@ is re-exported). Media consumes `@knitui/components` exclusively through its pub
 barrel (19 import sites, all `from "@knitui/components"`).
 
 **Therefore media physically cannot reach the canonical ladders today, which is
-*why* it re-declares them.** Any real alignment requires first exposing these
+_why_ it re-declares them.** Any real alignment requires first exposing these
 primitives. This is the linchpin — see §3.
 
 ---
@@ -84,26 +85,26 @@ We need one shared, importable home for the control-system primitives. Three opt
   `controlMetrics`, `CONTROL_ICON_SIZE`, `controlIconSize`, `ControlIconProvider`,
   and the read-only color ladders (`VARIANT_FILL`, `VARIANT_INTERACTION`,
   `VARIANT_FOREGROUND_EMPHASIS`, `VARIANT_KEYS`).
-  - *Why:* media already depends on `@knitui/components`; these are component-kit
+  - _Why:_ media already depends on `@knitui/components`; these are component-kit
     concerns (they reference Tamagui theme + `IconProvider`), so they belong with
     the kit, not in `@knitui/core`. Lowest-risk, no dependency-graph change.
-  - *Cost:* commits us to these as public API (versioning surface). Mitigate by
+  - _Cost:_ commits us to these as public API (versioning surface). Mitigate by
     grouping them under a clearly-named `control-system` subpath documented as
     "the contract sized controls share."
 
 - **Option 2 — Promote to `@knitui/core`.**
   Follows the precedent of `slots`, `slot-styles`, and motion tokens
   (`config/motion.ts`) already living in core.
-  - *Why not (primary):* `variant-colors` + `ControlIconProvider` depend on
+  - _Why not (primary):_ `variant-colors` + `ControlIconProvider` depend on
     Tamagui theme resolution and `IconProvider` — moving them drags
     component-kit + icon concerns into core, which today stays primitive. Bigger
     blast radius (every `internal/*` consumer in components must be repointed).
-  - *Viable for the pure-data tables only* (`controlMetrics`, `CONTROL_ICON_SIZE`,
+  - _Viable for the pure-data tables only_ (`controlMetrics`, `CONTROL_ICON_SIZE`,
     `SizeKey`) if we want a stricter separation later.
 
 - **Option 3 — Do nothing; reconcile values by hand.**
   Keep media's own ladders but hand-edit them to match canonical numbers.
-  - *Why not:* leaves four duplicate sources of truth that silently drift the next
+  - _Why not:_ leaves four duplicate sources of truth that silently drift the next
     time someone retunes `controlMetrics`. Explicitly rejected.
 
 > **OPEN DECISION (needs sign-off):** Option 1 vs Option 2. Recommendation: **Option 1**
@@ -119,12 +120,14 @@ No behaviour change to `@knitui/components` itself — pure re-export.
 ## 4. Work plan (phased, each phase shippable)
 
 ### Phase 0 — Foundation (gate for everything else)
+
 1. Add the `control-system` public export to `@knitui/components` (§3, Option 1).
 2. Add a guardrail test asserting the export shape is stable.
 
 ### Phase 1 — Unify the size scale (Gap A)
+
 1. Replace the three local `type AudioSize / VideoSize / AudioRecorderSize =
-   "xs"|…|"xl"` with `SizeKey` from the new export. Keep domain aliases as
+"xs"|…|"xl"` with `SizeKey` from the new export. Keep domain aliases as
    `export type AudioSize = SizeKey` so public type names don't churn.
 2. Decide the **supported subset**: media controls realistically use `xs…xl`.
    Adopt the full `SizeKey` type but document/clamp unsupported keys (`xxs`,`xxl`)
@@ -137,15 +140,18 @@ No behaviour change to `@knitui/components` itself — pure re-export.
    scrubber that should render one size smaller than its bar.
 
 ### Phase 2 — Icon auto-wiring (Gap B + half of C)
+
 1. Delete media's per-domain `CONTROL_ICON_SIZE` re-declarations and `iconSizeFor()`
    helpers; import `controlIconSize` / `CONTROL_ICON_SIZE` from the new export.
 2. Wrap each control's icon content in **`ControlIconProvider size={size}
-   variant={…}`** instead of manually threading `size={iconSize}` and
+variant={…}`** instead of manually threading `size={iconSize}` and
    `color={ON_DARK}` onto every `<Icon>`. This makes icons auto-size **and**
    auto-color, and is the mechanism that fixes the "on-dark" color story (next phase).
 
 ### Phase 3 — Color / variant system (Gap C)
+
 This is the largest and is **video-specific** (audio is already fully tokenized).
+
 1. **Introduce an on-dark surface story.** Video chrome sits on top of video pixels,
    so it can't use the normal `$colorN` ramp the way a card does. Define the
    over-media palette as **theme tokens**, not literals:
@@ -175,6 +181,7 @@ This is the largest and is **video-specific** (audio is already fully tokenized)
    without surfacing a confusing 9-way prop. (Mark as a follow-up, not in scope.)
 
 ### Phase 4 — Motion (Gap D)
+
 1. Adopt `usePressScale()` on the custom control buttons that don't already inherit
    it from `ActionIcon`/`Button` (most do — audit and only add where a raw frame is
    pressable).
@@ -186,6 +193,7 @@ This is the largest and is **video-specific** (audio is already fully tokenized)
    no change, just confirm it composes with the preset-driven fade.
 
 ### Phase 5 — Verification & docs
+
 1. Add/extend `Styles` stories per component (the kit convention — every public
    component has a `Styles` demo) proving per-slot overrides + `theme="…"` recolor.
 2. Add a guardrail test: **no `rgba(`/hardcoded color literals** in
@@ -234,6 +242,9 @@ This is the largest and is **video-specific** (audio is already fully tokenized)
 - **Video on-dark recolor regressions** — the dark-`Theme` wrapper is the riskiest
   change; verify pixel output on iOS sim specifically (cf. the prior
   `shadowColor`/`dropShadowColor` iOS alpha-drop incident — RN-reserved style names
-  + token alpha on iOS have bitten this kit before).
+  - token alpha on iOS have bitten this kit before).
 - **Size-key clamping** for `xxs`/`xxl` must not change existing `xs…xl` rendering.
+
+```
+
 ```

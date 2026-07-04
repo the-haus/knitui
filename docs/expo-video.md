@@ -1,10 +1,10 @@
 ---
 title: Video (expo-video)
 description: A library that provides an API to implement video playback in apps.
-sourceCodeUrl: 'https://github.com/expo/expo/tree/sdk-56/packages/expo-video'
-packageName: 'expo-video'
-iconUrl: '/static/images/packages/expo-video.png'
-platforms: ['android', 'ios', 'web', 'tvos', 'expo-go']
+sourceCodeUrl: "https://github.com/expo/expo/tree/sdk-56/packages/expo-video"
+packageName: "expo-video"
+iconUrl: "/static/images/packages/expo-video.png"
+platforms: ["android", "ios", "web", "tvos", "expo-go"]
 ---
 
 <AgentInstructions>
@@ -72,37 +72,37 @@ You can configure `expo-video` using its built-in [config plugin](/config-plugin
           "supportsPictureInPicture": true
         }
       ]
-    ],
+    ]
   }
 }
 ```
 
 ### Configurable properties
 
-| Name | Default | Description |
-| --- | --- | --- |
+| Name                         | Default     | Description                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `supportsBackgroundPlayback` | `undefined` | A boolean value to enable background playback support. If `true`, on iOS, the `audio` key is added to the `UIBackgroundModes` array in the **Info.plist** file. If `false`, the key is removed. When `undefined`, the key is not modified. On Android, when `true` adds foreground service permissions and creates a expo-video foreground service in AndroidManifest.xml. |
-| `supportsPictureInPicture` | `undefined` | A boolean value to enable Picture-in-Picture on Android and iOS. If `true`, enables the `android:supportsPictureInPicture` property on Android and adds the `audio` key to the `UIBackgroundModes` array in the **Info.plist** file on iOS. If `false`, the key is removed. When `undefined`, the configuration is not modified. |
+| `supportsPictureInPicture`   | `undefined` | A boolean value to enable Picture-in-Picture on Android and iOS. If `true`, enables the `android:supportsPictureInPicture` property on Android and adds the `audio` key to the `UIBackgroundModes` array in the **Info.plist** file on iOS. If `false`, the key is removed. When `undefined`, the configuration is not modified.                                           |
 
 ## Usage
 
 Here's a simple example of a video with a play and pause button.
 
 ```jsx
-import { useEvent } from 'expo';
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { StyleSheet, View, Button } from 'react-native';
+import { useEvent } from "expo";
+import { useVideoPlayer, VideoView } from "expo-video";
+import { StyleSheet, View, Button } from "react-native";
 
 const videoSource =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
 export default function VideoScreen() {
-  const player = useVideoPlayer(videoSource, player => {
+  const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.play();
   });
 
-  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
 
   return (
     <View style={styles.contentContainer}>
@@ -114,7 +114,7 @@ export default function VideoScreen() {
       />
       <View style={styles.controlsContainer}>
         <Button
-          title={isPlaying ? 'Pause' : 'Play'}
+          title={isPlaying ? "Pause" : "Play"}
           onPress={() => {
             if (isPlaying) {
               player.pause();
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 50,
   },
   video: {
@@ -155,10 +155,10 @@ The changes in properties of the [`VideoPlayer`](/versions/latest/sdk/video.md#v
 Creates a listener that will return a stateful value that can be used in a component. It also cleans up automatically when the component unmounts.
 
 ```tsx
-import { useEvent } from 'expo';
+import { useEvent } from "expo";
 // ... Other imports, definition of the component, creating the player etc.
 
-const { status, error } = useEvent(player, 'statusChange', { status: player.status });
+const { status, error } = useEvent(player, "statusChange", { status: player.status });
 // Rest of the component...
 ```
 
@@ -167,13 +167,13 @@ const { status, error } = useEvent(player, 'statusChange', { status: player.stat
 Built around the `Player.addListener` and `Player.removeListener` methods, creates an event listener with automatic cleanup.
 
 ```tsx
-import { useEventListener } from 'expo';
+import { useEventListener } from "expo";
 // ...Other imports, definition of the component, creating the player etc.
 
-useEventListener(player, 'statusChange', ({ status, error }) => {
+useEventListener(player, "statusChange", ({ status, error }) => {
   setPlayerStatus(status);
   setPlayerError(error);
-  console.log('Player status changed: ', status);
+  console.log("Player status changed: ", status);
 });
 // Rest of the component...
 ```
@@ -186,10 +186,10 @@ Most flexible way to listen to events, but requires manual cleanup and more boil
 // ...Imports, definition of the component, creating the player etc.
 
 useEffect(() => {
-  const subscription = player.addListener('statusChange', ({ status, error }) => {
+  const subscription = player.addListener("statusChange", ({ status, error }) => {
     setPlayerStatus(status);
     setPlayerError(error);
-    console.log('Player status changed: ', status);
+    console.log("Player status changed: ", status);
   });
 
   return () => {
@@ -204,15 +204,15 @@ useEffect(() => {
 `expo-video` supports playing local media loaded using the `require` function. You can use the result as a source directly, or assign it to the `assetId` parameter of a [`VideoSource`](/versions/latest/sdk/video.md#videosource) if you also want to configure other properties.
 
 ```tsx
-import { VideoSource } from 'expo-video';
+import { VideoSource } from "expo-video";
 
-const assetId = require('./assets/bigbuckbunny.mp4');
+const assetId = require("./assets/bigbuckbunny.mp4");
 
 const videoSource: VideoSource = {
   assetId,
   metadata: {
-    title: 'Big Buck Bunny',
-    artist: 'The Open Movie Project',
+    title: "Big Buck Bunny",
+    artist: "The Open Movie Project",
   },
 };
 
@@ -229,19 +229,19 @@ To play a video from the media library, you should obtain an [`Asset`](/versions
 On iOS make sure **not** to use the `localUri` property of the asset info, as it does not contain the necessary permissions to read the asset.
 
 ```tsx
-import * as MediaLibrary from 'expo-media-library/legacy';
-import { VideoSource, useVideoPlayer, VideoView } from 'expo-video';
+import * as MediaLibrary from "expo-media-library/legacy";
+import { VideoSource, useVideoPlayer, VideoView } from "expo-video";
 
 // ...Definition of the component, creating the player etc.
 
 const loadAssetAndReplace = async () => {
-  const { granted } = await MediaLibrary.requestPermissionsAsync(false, ['video']);
+  const { granted } = await MediaLibrary.requestPermissionsAsync(false, ["video"]);
   if (!granted) {
     return;
   }
 
   const pagedAssets = await MediaLibrary.getAssetsAsync({
-    mediaType: 'video',
+    mediaType: "video",
   });
 
   if (pagedAssets.assets.length > 0) {
@@ -273,22 +273,22 @@ In some cases, it is beneficial to preload a video later in the screen lifecycle
 Here is an example of how to preload a video:
 
 ```tsx
-import { useVideoPlayer, VideoView, VideoSource } from 'expo-video';
-import { useState, useCallback } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useVideoPlayer, VideoView, VideoSource } from "expo-video";
+import { useState, useCallback } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const bigBuckBunnySource: VideoSource =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
 const elephantsDreamSource: VideoSource =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4';
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4";
 
 export default function PreloadingVideoPlayerScreen() {
-  const player1 = useVideoPlayer(bigBuckBunnySource, player => {
+  const player1 = useVideoPlayer(bigBuckBunnySource, (player) => {
     player.play();
   });
 
-  const player2 = useVideoPlayer(elephantsDreamSource, player => {
+  const player2 = useVideoPlayer(elephantsDreamSource, (player) => {
     player.currentTime = 20;
   });
 
@@ -321,23 +321,23 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 50,
   },
   button: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 3,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#4630ec',
+    backgroundColor: "#4630ec",
   },
   buttonText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#eeeeee',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#eeeeee",
+    textAlign: "center",
   },
   video: {
     width: 300,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
 In most cases, the [`useVideoPlayer`](/versions/latest/sdk/video.md#usevideoplayersource-setup) hook should be used to create a `VideoPlayer` instance. It manages the player's lifecycle and ensures that it is properly disposed of when the component is unmounted. However, in some advanced use cases, it might be necessary to create a `VideoPlayer` that does not get automatically destroyed when the component is unmounted. In those cases, the `VideoPlayer` can be created using the [`createVideoPlayer`](/versions/latest/sdk/video.md#videocreatevideoplayersource) function. You need be aware of the risks that come with this approach, as it is your responsibility to call the [`release()`](/versions/latest/sdk/expo.md#release) method when the player is no longer needed. If not handled properly, this approach may lead to memory leaks.
 
 ```tsx
-import { createVideoPlayer } from 'expo-video';
+import { createVideoPlayer } from "expo-video";
 const player = createVideoPlayer(videoSource);
 ```
 
@@ -370,9 +370,9 @@ The cache functions offline. If a portion or the entirety of a video is cached, 
 
 ### Managing the cache
 
--   The preferred cache size in bytes can be defined using the [`setVideoCacheSizeAsync`](/versions/latest/sdk/video.md#videosetvideocachesizeasyncsizebytes) function. The default cache size is 1GB.
--   The [`getCurrentVideoCacheSize`](/versions/latest/sdk/video.md#videogetcurrentvideocachesize) can be used to get the current storage occupied by the cache in bytes.
--   All cached videos can be cleared using the [`clearVideoCacheAsync`](/versions/latest/sdk/video.md#videoclearvideocacheasync) function.
+- The preferred cache size in bytes can be defined using the [`setVideoCacheSizeAsync`](/versions/latest/sdk/video.md#videosetvideocachesizeasyncsizebytes) function. The default cache size is 1GB.
+- The [`getCurrentVideoCacheSize`](/versions/latest/sdk/video.md#videogetcurrentvideocachesize) can be used to get the current storage occupied by the cache in bytes.
+- All cached videos can be cleared using the [`clearVideoCacheAsync`](/versions/latest/sdk/video.md#videoclearvideocacheasync) function.
 
 ### Intercepting native asset loading
 
@@ -394,25 +394,25 @@ The main customization points are the fields on `VideoAssetTransportProvider` an
 
 `VideoAssetTransportProvider` lets you control the following properties:
 
-| Property | Description |
-| --- | --- |
-| `identifier` | A stable name for the provider. It is used when replacing or unregistering a provider. |
-| `priority` | Which provider wins if multiple providers match the same source. Higher values take precedence. |
+| Property             | Description                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `identifier`         | A stable name for the provider. It is used when replacing or unregistering a provider.                                      |
+| `priority`           | Which provider wins if multiple providers match the same source. Higher values take precedence.                             |
 | `makeLoadPlan(for:)` | The matching and configuration entry point. Return `nil` to ignore a source, or return a `VideoAssetLoadPlan` to handle it. |
 
 `VideoAssetLoadPlan` lets you control how `expo-video` constructs and manages the asset via the following properties:
 
-| Property | Description |
-| --- | --- |
-| `assetURL` | The URL used to initialize the underlying `AVURLAsset`. This can be the original source URL or a transport-specific replacement such as a rewritten scheme, local proxy URL, or generated playlist URL. |
-| `assetOptions` | Optional `AVURLAsset` initialization options. Use this to override the default options that `expo-video` would normally derive from the source. |
-| `reportedContentTypeHint` | An optional content type that describes the effective playback format of `assetURL`. Set this when the transport changes the source type, such as translating DASH into HLS. |
-| `resourceLoaderDelegate` | An optional `AVAssetResourceLoaderDelegate` that should be attached to the asset's resource loader. |
-| `resourceLoaderQueue` | Optional dispatch queue on which `resourceLoaderDelegate` should receive callbacks. |
-| `prepareAsset` | Optional async work to run before `expo-video` eagerly loads asset properties. Use this for transport bootstrap such as fetching manifests or starting a local server. |
-| `retainedObjects` | Optional array of helper objects that must stay alive for the lifetime of the asset, such as local HTTP servers, parsers, or transport state owners. |
-| `attachErrorHandler` | An optional hook that lets the transport forward asynchronous errors back into `expo-video` after the load plan has been applied. |
-| `onAssetDeinit` | Optional cleanup to run when the `VideoAsset` is deallocated. |
+| Property                  | Description                                                                                                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `assetURL`                | The URL used to initialize the underlying `AVURLAsset`. This can be the original source URL or a transport-specific replacement such as a rewritten scheme, local proxy URL, or generated playlist URL. |
+| `assetOptions`            | Optional `AVURLAsset` initialization options. Use this to override the default options that `expo-video` would normally derive from the source.                                                         |
+| `reportedContentTypeHint` | An optional content type that describes the effective playback format of `assetURL`. Set this when the transport changes the source type, such as translating DASH into HLS.                            |
+| `resourceLoaderDelegate`  | An optional `AVAssetResourceLoaderDelegate` that should be attached to the asset's resource loader.                                                                                                     |
+| `resourceLoaderQueue`     | Optional dispatch queue on which `resourceLoaderDelegate` should receive callbacks.                                                                                                                     |
+| `prepareAsset`            | Optional async work to run before `expo-video` eagerly loads asset properties. Use this for transport bootstrap such as fetching manifests or starting a local server.                                  |
+| `retainedObjects`         | Optional array of helper objects that must stay alive for the lifetime of the asset, such as local HTTP servers, parsers, or transport state owners.                                                    |
+| `attachErrorHandler`      | An optional hook that lets the transport forward asynchronous errors back into `expo-video` after the load plan has been applied.                                                                       |
+| `onAssetDeinit`           | Optional cleanup to run when the `VideoAsset` is deallocated.                                                                                                                                           |
 
 #### Implementation and usage
 
@@ -482,13 +482,13 @@ public final class CustomVideoTransportModule: Module {
 
 You can use the following complete examples for a better grasp of how to use this API.
 
--   [Basic DASH support provider](https://github.com/expo/expo/tree/main/apps/bare-expo/modules/expo-video-dash-support-module) - a local module in Bare Expo that provides limited DASH support for `expo-video` on iOS.
--   [`expo-video` iOS caching](https://github.com/expo/expo/blob/main/packages/expo-video/ios/Cache/CacheVideoAssetTransportProvider.swift) - the built-in cache provider implementation.
+- [Basic DASH support provider](https://github.com/expo/expo/tree/main/apps/bare-expo/modules/expo-video-dash-support-module) - a local module in Bare Expo that provides limited DASH support for `expo-video` on iOS.
+- [`expo-video` iOS caching](https://github.com/expo/expo/blob/main/packages/expo-video/ios/Cache/CacheVideoAssetTransportProvider.swift) - the built-in cache provider implementation.
 
 ## API
 
 ```js
-import { VideoView, useVideoPlayer } from 'expo-video';
+import { VideoView, useVideoPlayer } from "expo-video";
 ```
 
 ## Components
@@ -689,7 +689,7 @@ Determines whether the player should use the default ExoPlayer shutter that cove
 
 #### Inherited Props
 
--   [ViewProps](https://reactnative.dev/docs/view#props)
+- [ViewProps](https://reactnative.dev/docs/view#props)
 
 ### `VideoAirPlayButton`
 
@@ -745,7 +745,7 @@ The color of the button icon while AirPlay sharing is not active.
 
 #### Inherited Props
 
--   [Omit](https://www.typescriptlang.org/docs/handbook/utility-types.html#omittype-keys)<[ViewProps](https://reactnative.dev/docs/view#props), 'children'\>
+- [Omit](https://www.typescriptlang.org/docs/handbook/utility-types.html#omittype-keys)<[ViewProps](https://reactnative.dev/docs/view#props), 'children'\>
 
 ## Component Methods
 
@@ -791,13 +791,11 @@ Returns: `Promise<void>`
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `source` | [VideoSource](#videosource) | A video source that is used to initialize the player. |
-| `setup`(optional) | (player: [VideoPlayer](#videoplayer)) => void | A function that allows setting up the player. It will run after the player is created. |
+| Parameter                        | Type                                          | Description                                                                              |
+| -------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `source`                         | [VideoSource](#videosource)                   | A video source that is used to initialize the player.                                    |
+| `setup`(optional)                | (player: [VideoPlayer](#videoplayer)) => void | A function that allows setting up the player. It will run after the player is created.   |
 | `playerBuilderOptions`(optional) | [PlayerBuilderOptions](#playerbuilderoptions) | Options to apply to the Android player builder before the native constructor is invoked. |
-
-
 
 Creates a `VideoPlayer`, which will be automatically cleaned up when the component is unmounted.
 
@@ -1099,12 +1097,10 @@ VideoPlayer Methods
 
 Supported platforms: Android, iOS.
 
-| Parameter | Type |
-| --- | --- |
-| `times` | `number | number[]` |
+| Parameter           | Type                                            |
+| ------------------- | ----------------------------------------------- | --------- |
+| `times`             | `number                                         | number[]` |
 | `options`(optional) | [VideoThumbnailOptions](#videothumbnailoptions) |
-
-
 
 Generates thumbnails from the currently played asset. The thumbnails are references to native images, thus they can be used as a source of the `Image` component from `expo-image`.
 
@@ -1130,12 +1126,10 @@ Returns: `void`
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Parameter | Type |
-| --- | --- |
-| `source` | [VideoSource](#videosource) |
-| `disableWarning`(optional) | `boolean` |
-
-
+| Parameter                  | Type                        |
+| -------------------------- | --------------------------- |
+| `source`                   | [VideoSource](#videosource) |
+| `disableWarning`(optional) | `boolean`                   |
 
 Replaces the current source with a new one.
 
@@ -1149,11 +1143,9 @@ Returns: `void`
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Parameter | Type |
-| --- | --- |
-| `source` | [VideoSource](#videosource) |
-
-
+| Parameter | Type                        |
+| --------- | --------------------------- |
+| `source`  | [VideoSource](#videosource) |
 
 Replaces the current source with a new one, while offloading loading of the asset to a different thread.
 
@@ -1173,11 +1165,9 @@ Returns: `void`
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Parameter | Type |
-| --- | --- |
+| Parameter | Type     |
+| --------- | -------- |
 | `seconds` | `number` |
-
-
 
 Seeks the playback by the given number of seconds. The time to which the player seeks may differ from the specified requested time for efficiency, depending on the encoding and what is currently buffered by the player. Use this function to implement playback controls that seek by specific amount of time, in which case, the actual time usually does not have to be precise. For frame accurate seeking, use the [`currentTime`](#currenttime) property.
 
@@ -1251,12 +1241,10 @@ A promise that fulfills after the cache has been cleaned.
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `source` | [VideoSource](#videosource) | A video source that is used to initialize the player. |
+| Parameter                        | Type                                          | Description                                                                              |
+| -------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `source`                         | [VideoSource](#videosource)                   | A video source that is used to initialize the player.                                    |
 | `playerBuilderOptions`(optional) | [PlayerBuilderOptions](#playerbuilderoptions) | Options to apply to the Android player builder before the native constructor is invoked. |
-
-
 
 Creates a direct instance of `VideoPlayer` that doesn't release automatically.
 
@@ -1286,11 +1274,9 @@ A `boolean` which is `true` if the device supports PiP mode, and `false` otherwi
 
 Supported platforms: Android, iOS.
 
-| Parameter | Type |
-| --- | --- |
+| Parameter   | Type     |
+| ----------- | -------- |
 | `sizeBytes` | `number` |
-
-
 
 Sets desired video cache size in bytes. The default video cache size is 1GB. Value set by this function is persistent. The cache size is not guaranteed to be exact and the actual cache size may be slightly larger. The cache is evicted on a least-recently-used basis.
 
@@ -1310,10 +1296,10 @@ Literal Type: `string`
 
 Specifies the audio mode that the player should use. Audio mode is set on per-app basis, if there are multiple players playing and have different a `AudioMode` specified, the highest priority mode will be used. Priority order: 'doNotMix' > 'auto' > 'duckOthers' > 'mixWithOthers'.
 
--   `mixWithOthers`: The player will mix its audio output with other apps.
--   `duckOthers`: The player will lower the volume of other apps if any of the active players is outputting audio.
--   `auto`: The player will allow other apps to keep playing audio only when it is muted. On iOS it will always interrupt other apps when `showNowPlayingNotification` is `true` due to system requirements.
--   `doNotMix`: The player will pause playback in other apps, even when it's muted.
+- `mixWithOthers`: The player will mix its audio output with other apps.
+- `duckOthers`: The player will lower the volume of other apps if any of the active players is outputting audio.
+- `auto`: The player will allow other apps to keep playing audio only when it is muted. On iOS it will always interrupt other apps when `showNowPlayingNotification` is `true` due to system requirements.
+- `doNotMix`: The player will pause playback in other apps, even when it's muted.
 
 > On iOS, the Now Playing notification is dependent on the audio mode. If the audio mode is different from `doNotMix` or `auto` this feature will not work.
 
@@ -1323,14 +1309,14 @@ Acceptable values are: `'mixWithOthers'` | `'duckOthers'` | `'auto'` | `'doNotMi
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Property | Type | Description |
-| --- | --- | --- |
+| Property             | Type      | Description                                                                                                        |
+| -------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
 | autoSelect(optional) | `boolean` | Supported platforms: Android, iOS. Indicates whether this track should be auto-selected based on user preferences. |
-| id(optional) | `string` | Supported platforms: Android. A string used by expo-video to identify the audio track. |
-| isDefault(optional) | `boolean` | Supported platforms: Android, iOS. Indicates whether this is the default audio track. |
-| label | `string` | Label of the audio track in the language of the device. |
-| language | `string` | Language of the audio track. For example, 'en', 'pl', 'de'. |
-| name(optional) | `string` | Supported platforms: Android, iOS. Name of the audio track as specified in the media source. |
+| id(optional)         | `string`  | Supported platforms: Android. A string used by expo-video to identify the audio track.                             |
+| isDefault(optional)  | `boolean` | Supported platforms: Android, iOS. Indicates whether this is the default audio track.                              |
+| label                | `string`  | Label of the audio track in the language of the device.                                                            |
+| language             | `string`  | Language of the audio track. For example, 'en', 'pl', 'de'.                                                        |
+| name(optional)       | `string`  | Supported platforms: Android, iOS. Name of the audio track as specified in the media source.                       |
 
 ### `BufferOptions`
 
@@ -1338,13 +1324,13 @@ Supported platforms: Android, iOS.
 
 Specifies buffer options which will be used by the player when buffering the video.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| maxBufferBytes(optional) | `number | null` | Supported platforms: Android. The maximum number of bytes that the player can buffer from the network. When 0 the player will automatically decide appropriate buffer size. Default: `0` |
-| minBufferForPlayback(optional) | `number` | Supported platforms: Android. Minimum duration of the buffer in seconds required to continue playing after the player has been paused or started buffering. This property will be ignored if preferredForwardBufferDuration is lower. Default: `2` |
-| preferredForwardBufferDuration(optional) | `number` | Supported platforms: Android, iOS. The duration in seconds which determines how much media the player should buffer ahead of the current playback time. On iOS when set to `0` the player will automatically decide appropriate buffer duration. Equivalent to [`AVPlayerItem.preferredForwardBufferDuration`](https://developer.apple.com/documentation/avfoundation/avplayeritem/1643630-preferredforwardbufferduration). Default: `Android: 20, iOS: 0` |
-| prioritizeTimeOverSizeThreshold(optional) | `boolean` | Supported platforms: Android. A Boolean value which determines whether the player should prioritize time over size when buffering media. Default: `false` |
-| waitsToMinimizeStalling(optional) | `boolean` | Supported platforms: iOS. A Boolean value that indicates whether the player should automatically delay playback in order to minimize stalling. Equivalent to [`AVPlayer.automaticallyWaitsToMinimizeStalling`](https://developer.apple.com/documentation/avfoundation/avplayer/1643482-automaticallywaitstominimizestal). Default: `true` |
+| Property                                  | Type      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| maxBufferBytes(optional)                  | `number   | null`                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Supported platforms: Android. The maximum number of bytes that the player can buffer from the network. When 0 the player will automatically decide appropriate buffer size. Default: `0` |
+| minBufferForPlayback(optional)            | `number`  | Supported platforms: Android. Minimum duration of the buffer in seconds required to continue playing after the player has been paused or started buffering. This property will be ignored if preferredForwardBufferDuration is lower. Default: `2`                                                                                                                                                                                                         |
+| preferredForwardBufferDuration(optional)  | `number`  | Supported platforms: Android, iOS. The duration in seconds which determines how much media the player should buffer ahead of the current playback time. On iOS when set to `0` the player will automatically decide appropriate buffer duration. Equivalent to [`AVPlayerItem.preferredForwardBufferDuration`](https://developer.apple.com/documentation/avfoundation/avplayeritem/1643630-preferredforwardbufferduration). Default: `Android: 20, iOS: 0` |
+| prioritizeTimeOverSizeThreshold(optional) | `boolean` | Supported platforms: Android. A Boolean value which determines whether the player should prioritize time over size when buffering media. Default: `false`                                                                                                                                                                                                                                                                                                  |
+| waitsToMinimizeStalling(optional)         | `boolean` | Supported platforms: iOS. A Boolean value that indicates whether the player should automatically delay playback in order to minimize stalling. Equivalent to [`AVPlayer.automaticallyWaitsToMinimizeStalling`](https://developer.apple.com/documentation/avfoundation/avplayer/1643482-automaticallywaitstominimizestal). Default: `true`                                                                                                                  |
 
 ### `ButtonOptions`
 
@@ -1354,19 +1340,20 @@ Configuration for controlling the visibility of player control buttons.
 
 > The fullscreen button should be controlled with [`fullscreenOptions.enable`](#fullscreenoptions).
 
-| Property | Type | Description |
-| --- | --- | --- |
-| showBottomBar(optional) | `boolean` | Whether to show the bottom control bar (containing time, progress bar, and buttons). When set to `false`, the entire bottom bar including the progress bar will be hidden. Note: The bottom bar is always visible in fullscreen mode to allow users to exit fullscreen. Default: `true` |
-| showNext(optional) | `boolean` | Whether to show the next button. Default: `false` |
-| showPlayPause(optional) | `boolean` | Whether to show the play/pause button. Default: `true` |
-| showPrevious(optional) | `boolean` | Whether to show the previous button. Default: `false` |
-| showSeekBackward(optional) | `boolean` | Whether to show the seek backward button. Default: `true` |
-| showSeekForward(optional) | `boolean` | Whether to show the seek forward button. Default: `true` |
-| showSettings(optional) | `boolean` | Whether to show the settings button. Default: `true` |
-| showSubtitles(optional) | `boolean | null` | Whether to show the subtitles button.
--   `true`: Button is always visible
--   `false`: Button is never visible
--   `undefined`: Button is visible only when subtitles are available (default behavior)
+| Property                   | Type      | Description                                                                                                                                                                                                                                                                             |
+| -------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| showBottomBar(optional)    | `boolean` | Whether to show the bottom control bar (containing time, progress bar, and buttons). When set to `false`, the entire bottom bar including the progress bar will be hidden. Note: The bottom bar is always visible in fullscreen mode to allow users to exit fullscreen. Default: `true` |
+| showNext(optional)         | `boolean` | Whether to show the next button. Default: `false`                                                                                                                                                                                                                                       |
+| showPlayPause(optional)    | `boolean` | Whether to show the play/pause button. Default: `true`                                                                                                                                                                                                                                  |
+| showPrevious(optional)     | `boolean` | Whether to show the previous button. Default: `false`                                                                                                                                                                                                                                   |
+| showSeekBackward(optional) | `boolean` | Whether to show the seek backward button. Default: `true`                                                                                                                                                                                                                               |
+| showSeekForward(optional)  | `boolean` | Whether to show the seek forward button. Default: `true`                                                                                                                                                                                                                                |
+| showSettings(optional)     | `boolean` | Whether to show the settings button. Default: `true`                                                                                                                                                                                                                                    |
+| showSubtitles(optional)    | `boolean  | null`                                                                                                                                                                                                                                                                                   | Whether to show the subtitles button. |
+
+- `true`: Button is always visible
+- `false`: Button is never visible
+- `undefined`: Button is visible only when subtitles are available (default behavior)
 
 . Default: `undefined` |
 
@@ -1378,11 +1365,11 @@ Literal Type: `string`
 
 Specifies the content type of the source.
 
--   `auto`: The player will automatically determine the content type of the video.
--   `progressive`: The player will use progressive download content type. This is the default `ContentType` when the uri does not contain an extension.
--   `hls`: The player will use HLS content type.
--   `dash`: The player will use DASH content type (Android-only).
--   `smoothStreaming`: The player will use SmoothStreaming content type (Android-only).
+- `auto`: The player will automatically determine the content type of the video.
+- `progressive`: The player will use progressive download content type. This is the default `ContentType` when the uri does not contain an extension.
+- `hls`: The player will use HLS content type.
+- `dash`: The player will use DASH content type (Android-only).
+- `smoothStreaming`: The player will use SmoothStreaming content type (Android-only).
 
 Default: `` `auto` ``
 
@@ -1394,15 +1381,15 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Specifies DRM options which will be used by the player while loading the video.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| base64CertificateData(optional) | `string` | Supported platforms: iOS. Specifies the base64 encoded certificate data for the FairPlay DRM. When this property is set, the `certificateUrl` property is ignored. |
-| certificateUrl(optional) | `string` | Supported platforms: iOS. Specifies the certificate URL for the FairPlay DRM. |
-| contentId(optional) | `string` | Supported platforms: iOS. Specifies the content ID of the stream. |
-| headers(optional) | `Record<string, string>` | Determines headers sent to the license server on license requests. |
-| licenseServer | `string` | Determines the license server URL. |
-| multiKey(optional) | `boolean` | Supported platforms: Android. Specifies whether the DRM is a multi-key DRM. |
-| type | [DRMType](#drmtype) | Determines which type of DRM to use. |
+| Property                        | Type                     | Description                                                                                                                                                        |
+| ------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| base64CertificateData(optional) | `string`                 | Supported platforms: iOS. Specifies the base64 encoded certificate data for the FairPlay DRM. When this property is set, the `certificateUrl` property is ignored. |
+| certificateUrl(optional)        | `string`                 | Supported platforms: iOS. Specifies the certificate URL for the FairPlay DRM.                                                                                      |
+| contentId(optional)             | `string`                 | Supported platforms: iOS. Specifies the content ID of the stream.                                                                                                  |
+| headers(optional)               | `Record<string, string>` | Determines headers sent to the license server on license requests.                                                                                                 |
+| licenseServer                   | `string`                 | Determines the license server URL.                                                                                                                                 |
+| multiKey(optional)              | `boolean`                | Supported platforms: Android. Specifies whether the DRM is a multi-key DRM.                                                                                        |
+| type                            | [DRMType](#drmtype)      | Determines which type of DRM to use.                                                                                                                               |
 
 ### `DRMType`
 
@@ -1412,8 +1399,8 @@ Literal Type: `string`
 
 Specifies which type of DRM to use:
 
--   Android supports ClearKey, PlayReady and Widevine.
--   iOS supports FairPlay.
+- Android supports ClearKey, PlayReady and Widevine.
+- iOS supports FairPlay.
 
 Acceptable values are: `'clearkey'` | `'fairplay'` | `'playready'` | `'widevine'`
 
@@ -1421,9 +1408,9 @@ Acceptable values are: `'clearkey'` | `'fairplay'` | `'playready'` | `'widevine'
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| isExternalPlaybackActive | `boolean` | The current external playback status. |
+| Property                              | Type      | Description                            |
+| ------------------------------------- | --------- | -------------------------------------- |
+| isExternalPlaybackActive              | `boolean` | The current external playback status.  |
 | oldIsExternalPlaybackActive(optional) | `boolean` | The previous external playback status. |
 
 ### `MutedChangeEventPayload`
@@ -1432,10 +1419,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`mutedChange`](#videoplayerevents) event.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| muted | `boolean` | Boolean value whether the player is currently muted. |
-| oldMuted(optional) | `boolean` | Previous value of the `isMuted` property. |
+| Property           | Type      | Description                                          |
+| ------------------ | --------- | ---------------------------------------------------- |
+| muted              | `boolean` | Boolean value whether the player is currently muted. |
+| oldMuted(optional) | `boolean` | Previous value of the `isMuted` property.            |
 
 ### `PlaybackRateChangeEventPayload`
 
@@ -1443,10 +1430,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`playbackRateChange`](#videoplayerevents) event.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| oldPlaybackRate(optional) | `number` | Previous value of the `playbackRate` property. |
-| playbackRate | `number` | Float value indicating the current playback speed of the player. |
+| Property                  | Type     | Description                                                      |
+| ------------------------- | -------- | ---------------------------------------------------------------- |
+| oldPlaybackRate(optional) | `number` | Previous value of the `playbackRate` property.                   |
+| playbackRate              | `number` | Float value indicating the current playback speed of the player. |
 
 ### `PlayerBuilderOptions`
 
@@ -1454,10 +1441,10 @@ Supported platforms: Android.
 
 Options to apply to the player builder before the native constructor is invoked
 
-| Property | Type | Description |
-| --- | --- | --- |
+| Property                        | Type     | Description                                                                                                             |
+| ------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
 | seekBackwardIncrement(optional) | `number` | Supported platforms: Android. Seek backward increment in seconds. Values will be clamped between 0.001 and 999 seconds. |
-| seekForwardIncrement(optional) | `number` | Supported platforms: Android. Seek forward increment in seconds. Values will be clamped between 0.001 and 999 seconds. |
+| seekForwardIncrement(optional)  | `number` | Supported platforms: Android. Seek forward increment in seconds. Values will be clamped between 0.001 and 999 seconds.  |
 
 ### `PlayerError`
 
@@ -1465,9 +1452,9 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Contains information about any errors that the player encountered during the playback
 
-| Property | Type | Description |
-| --- | --- | --- |
-| message | `string` | - |
+| Property | Type     | Description |
+| -------- | -------- | ----------- |
+| message  | `string` | -           |
 
 ### `PlayingChangeEventPayload`
 
@@ -1475,10 +1462,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`playingChange`](#videoplayerevents) event.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| isPlaying | `boolean` | Boolean value whether the player is currently playing. |
-| oldIsPlaying(optional) | `boolean` | Previous value of the `isPlaying` property. |
+| Property               | Type      | Description                                            |
+| ---------------------- | --------- | ------------------------------------------------------ |
+| isPlaying              | `boolean` | Boolean value whether the player is currently playing. |
+| oldIsPlaying(optional) | `boolean` | Previous value of the `isPlaying` property.            |
 
 ### `ScrubbingModeOptions`
 
@@ -1486,13 +1473,13 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Defines scrubbing mode options used by a [`VideoPlayer`](#videoplayer).
 
-| Property | Type | Description |
-| --- | --- | --- |
-| allowSkippingMediaCodecFlush(optional) | `boolean` | Supported platforms: Android. Sets whether to avoid flushing the decoder (where possible) in scrubbing mode. When `true`, avoids flushing the decoder when a new seek starts decoding from a key-frame in compatible content. Default: `true` |
-| enableDynamicScheduling(optional) | `boolean` | Supported platforms: Android. Sets whether ExoPlayer's dynamic scheduling should be enabled in scrubbing mode. This can result in available output buffers being handled more quickly when seeking. Default: `true` |
-| increaseCodecOperatingRate(optional) | `boolean` | Supported platforms: Android. Whether the codec operating rate should be increased in scrubbing mode. Default: `true` |
-| scrubbingModeEnabled(optional) | `boolean` | Supported platforms: Android, iOS. Whether the codec operating rate should be increased in scrubbing mode. You should only enable this when the player is receiving a large number of seeks in a short period of time. For less frequent seeks, fine-tuning the [`SeekTolerance`](#seektolerance-1) may be sufficient. On Android, the player may consume more resources in this mode, so it should only be used for short periods of time in response to user interaction (for example, dragging on a progress bar UI element). On Android, when `scrubbingModeEnabled` is `true`, the playback is suppressed. You should set this property back to `false` when the user interaction ends to allow the playback to resume. For best results, on iOS you should pause the playback when scrubbing. For best scrubbing performance, consider also increasing the seeking tolerance using the SeekTolerance property. Other scrubbing mode options will have no effect when this is false. Default: `false` |
-| useDecodeOnlyFlag(optional) | `boolean` | Supported platforms: Android. Sets whether to use `MediaCodec.BUFFER_FLAG_DECODE_ONLY` in scrubbing mode. When playback is using MediaCodec on API 34+, this flag can speed up seeking by signalling that the decoded output of buffers between the previous keyframe and the target frame is not needed by the player. Default: `true` |
+| Property                               | Type      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| allowSkippingMediaCodecFlush(optional) | `boolean` | Supported platforms: Android. Sets whether to avoid flushing the decoder (where possible) in scrubbing mode. When `true`, avoids flushing the decoder when a new seek starts decoding from a key-frame in compatible content. Default: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| enableDynamicScheduling(optional)      | `boolean` | Supported platforms: Android. Sets whether ExoPlayer's dynamic scheduling should be enabled in scrubbing mode. This can result in available output buffers being handled more quickly when seeking. Default: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| increaseCodecOperatingRate(optional)   | `boolean` | Supported platforms: Android. Whether the codec operating rate should be increased in scrubbing mode. Default: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| scrubbingModeEnabled(optional)         | `boolean` | Supported platforms: Android, iOS. Whether the codec operating rate should be increased in scrubbing mode. You should only enable this when the player is receiving a large number of seeks in a short period of time. For less frequent seeks, fine-tuning the [`SeekTolerance`](#seektolerance-1) may be sufficient. On Android, the player may consume more resources in this mode, so it should only be used for short periods of time in response to user interaction (for example, dragging on a progress bar UI element). On Android, when `scrubbingModeEnabled` is `true`, the playback is suppressed. You should set this property back to `false` when the user interaction ends to allow the playback to resume. For best results, on iOS you should pause the playback when scrubbing. For best scrubbing performance, consider also increasing the seeking tolerance using the SeekTolerance property. Other scrubbing mode options will have no effect when this is false. Default: `false` |
+| useDecodeOnlyFlag(optional)            | `boolean` | Supported platforms: Android. Sets whether to use `MediaCodec.BUFFER_FLAG_DECODE_ONLY` in scrubbing mode. When playback is using MediaCodec on API 34+, this flag can speed up seeking by signalling that the decoded output of buffers between the previous keyframe and the target frame is not needed by the player. Default: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ### `SeekTolerance`
 
@@ -1502,9 +1489,9 @@ Determines the time that the actual position seeked to may precede or exceed the
 
 > If you are trying to optimize for scrubbing (many frequent seeks), also see [`ScrubbingModeOptions`](#scrubbingmodeoptions-1).
 
-| Property | Type | Description |
-| --- | --- | --- |
-| toleranceAfter(optional) | `number` | The maximum time that the actual position seeked to may exceed the requested seek position, in seconds. Must be non-negative. Default: `0` |
+| Property                  | Type     | Description                                                                                                                                 |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| toleranceAfter(optional)  | `number` | The maximum time that the actual position seeked to may exceed the requested seek position, in seconds. Must be non-negative. Default: `0`  |
 | toleranceBefore(optional) | `number` | The maximum time that the actual position seeked to may precede the requested seek position, in seconds. Must be non-negative. Default: `0` |
 
 ### `SourceChangeEventPayload`
@@ -1513,10 +1500,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`sourceChange`](#videoplayerevents) event.
 
-| Property | Type | Description |
-| --- | --- | --- |
+| Property            | Type                        | Description                    |
+| ------------------- | --------------------------- | ------------------------------ |
 | oldSource(optional) | [VideoSource](#videosource) | Previous source of the player. |
-| source | [VideoSource](#videosource) | New source of the player. |
+| source              | [VideoSource](#videosource) | New source of the player.      |
 
 ### `SourceLoadEventPayload`
 
@@ -1524,13 +1511,13 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`sourceLoad`](#videoplayerevents) event, contains information about the video source that has finished loading.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| availableAudioTracks | [AudioTrack[]](#audiotrack) | Audio tracks available for the loaded video source. |
-| availableSubtitleTracks | [SubtitleTrack[]](#subtitletrack) | Subtitle tracks available for the loaded video source. |
-| availableVideoTracks | [VideoTrack[]](#videotrack) | Video tracks available for the loaded video source. On iOS, when using a HLS source, make sure that the uri contains .m3u8 extension or that the contentType property of the VideoSource has been set to 'hls'. Otherwise, the video tracks will not be available. |
-| duration | `number` | Duration of the video source in seconds. |
-| videoSource | [VideoSource](#videosource) | null | The video source that has been loaded. |
+| Property                | Type                              | Description                                                                                                                                                                                                                                                        |
+| ----------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| availableAudioTracks    | [AudioTrack[]](#audiotrack)       | Audio tracks available for the loaded video source.                                                                                                                                                                                                                |
+| availableSubtitleTracks | [SubtitleTrack[]](#subtitletrack) | Subtitle tracks available for the loaded video source.                                                                                                                                                                                                             |
+| availableVideoTracks    | [VideoTrack[]](#videotrack)       | Video tracks available for the loaded video source. On iOS, when using a HLS source, make sure that the uri contains .m3u8 extension or that the contentType property of the VideoSource has been set to 'hls'. Otherwise, the video tracks will not be available. |
+| duration                | `number`                          | Duration of the video source in seconds.                                                                                                                                                                                                                           |
+| videoSource             | [VideoSource](#videosource)       | null                                                                                                                                                                                                                                                               | The video source that has been loaded. |
 
 ### `StatusChangeEventPayload`
 
@@ -1538,33 +1525,33 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`statusChange`](#videoplayerevents) event.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| error(optional) | [PlayerError](#playererror) | Error object containing information about the error that occurred. |
-| oldStatus(optional) | [VideoPlayerStatus](#videoplayerstatus) | Previous status of the player. |
-| status | [VideoPlayerStatus](#videoplayerstatus) | New status of the player. |
+| Property            | Type                                    | Description                                                        |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------------ |
+| error(optional)     | [PlayerError](#playererror)             | Error object containing information about the error that occurred. |
+| oldStatus(optional) | [VideoPlayerStatus](#videoplayerstatus) | Previous status of the player.                                     |
+| status              | [VideoPlayerStatus](#videoplayerstatus) | New status of the player.                                          |
 
 ### `SubtitleTrack`
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Property | Type | Description |
-| --- | --- | --- |
+| Property             | Type      | Description                                                                                                        |
+| -------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
 | autoSelect(optional) | `boolean` | Supported platforms: Android, iOS. Indicates whether this track should be auto-selected based on user preferences. |
-| id(optional) | `string` | Supported platforms: Android. A string used by `expo-video` to identify the subtitle track. |
-| isDefault(optional) | `boolean` | Supported platforms: Android, iOS. Indicates whether this is the default subtitle track. |
-| label | `string` | Label of the subtitle track in the language of the device. |
-| language | `string` | Language of the subtitle track. For example, `en`, `pl`, `de`. |
-| name(optional) | `string` | Supported platforms: Android, iOS. Name of the subtitle track as specified in the media source. |
+| id(optional)         | `string`  | Supported platforms: Android. A string used by `expo-video` to identify the subtitle track.                        |
+| isDefault(optional)  | `boolean` | Supported platforms: Android, iOS. Indicates whether this is the default subtitle track.                           |
+| label                | `string`  | Label of the subtitle track in the language of the device.                                                         |
+| language             | `string`  | Language of the subtitle track. For example, `en`, `pl`, `de`.                                                     |
+| name(optional)       | `string`  | Supported platforms: Android, iOS. Name of the subtitle track as specified in the media source.                    |
 
 ### `SubtitleTrackChangeEventPayload`
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| oldSubtitleTrack(optional) | [SubtitleTrack](#subtitletrack) | null | Previous subtitle track of the player. |
-| subtitleTrack | [SubtitleTrack](#subtitletrack) | null | New subtitle track of the player. |
+| Property                   | Type                            | Description |
+| -------------------------- | ------------------------------- | ----------- | -------------------------------------- |
+| oldSubtitleTrack(optional) | [SubtitleTrack](#subtitletrack) | null        | Previous subtitle track of the player. |
+| subtitleTrack              | [SubtitleTrack](#subtitletrack) | null        | New subtitle track of the player.      |
 
 ### `SurfaceType`
 
@@ -1574,8 +1561,8 @@ Literal Type: `string`
 
 Describes the type of the surface used to render the video.
 
--   `surfaceView`: Uses the `SurfaceView` to render the video. This value should be used in the majority of cases. Provides significantly lower power consumption, better performance, and more features.
--   `textureView`: Uses the `TextureView` to render the video. Should be used in cases where the SurfaceView is not supported or causes issues (for example, overlapping video views).
+- `surfaceView`: Uses the `SurfaceView` to render the video. This value should be used in the majority of cases. Provides significantly lower power consumption, better performance, and more features.
+- `textureView`: Uses the `TextureView` to render the video. Should be used in cases where the SurfaceView is not supported or causes issues (for example, overlapping video views).
 
 You can learn more about surface types in the official [ExoPlayer documentation](https://developer.android.com/media/media3/ui/playerview#surfacetype).
 
@@ -1587,12 +1574,12 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`timeUpdate`](#videoplayerevents) event, contains information about the current playback progress.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| bufferedPosition | `number` | Supported platforms: Android, iOS. Float value indicating how far the player has buffered the video in seconds. Same as the [`bufferedPosition`](#bufferedPosition) property. |
-| currentLiveTimestamp | `number | null` | Supported platforms: Android, iOS. The exact timestamp when the currently displayed video frame was sent from the server, based on the `EXT-X-PROGRAM-DATE-TIME` tag in the livestream metadata. Same as the [`currentLiveTimestamp`](#currentlivetimestamp) property. |
-| currentOffsetFromLive | `number | null` | Supported platforms: Android, iOS. Float value indicating the latency of the live stream in seconds. Same as the [`currentOffsetFromLive`](#currentoffsetfromlive) property. |
-| currentTime | `number` | Float value indicating the current playback time in seconds. Same as the [`currentTime`](#currenttime) property. |
+| Property              | Type     | Description                                                                                                                                                                   |
+| --------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bufferedPosition      | `number` | Supported platforms: Android, iOS. Float value indicating how far the player has buffered the video in seconds. Same as the [`bufferedPosition`](#bufferedPosition) property. |
+| currentLiveTimestamp  | `number  | null`                                                                                                                                                                         | Supported platforms: Android, iOS. The exact timestamp when the currently displayed video frame was sent from the server, based on the `EXT-X-PROGRAM-DATE-TIME` tag in the livestream metadata. Same as the [`currentLiveTimestamp`](#currentlivetimestamp) property. |
+| currentOffsetFromLive | `number  | null`                                                                                                                                                                         | Supported platforms: Android, iOS. Float value indicating the latency of the live stream in seconds. Same as the [`currentOffsetFromLive`](#currentoffsetfromlive) property.                                                                                           |
+| currentTime           | `number` | Float value indicating the current playback time in seconds. Same as the [`currentTime`](#currenttime) property.                                                              |
 
 ### `VideoContentFit`
 
@@ -1602,9 +1589,9 @@ Literal Type: `string`
 
 Describes how a video should be scaled to fit in a container.
 
--   `contain`: The video maintains its aspect ratio and fits inside the container, with possible letterboxing/pillarboxing.
--   `cover`: The video maintains its aspect ratio and covers the entire container, potentially cropping some portions.
--   `fill`: The video stretches/squeezes to completely fill the container, potentially causing distortion.
+- `contain`: The video maintains its aspect ratio and fits inside the container, with possible letterboxing/pillarboxing.
+- `cover`: The video maintains its aspect ratio and covers the entire container, potentially cropping some portions.
+- `fill`: The video stretches/squeezes to completely fill the container, potentially causing distortion.
 
 Acceptable values are: `'contain'` | `'cover'` | `'fill'`
 
@@ -1614,11 +1601,11 @@ Supported platforms: Android, iOS.
 
 Contains information that will be displayed in the now playing notification when the video is playing.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| artist(optional) | `string` | Supported platforms: Android, iOS. Secondary text that will be displayed under the title. |
-| artwork(optional) | `string` | Supported platforms: Android, iOS. The uri of the video artwork. |
-| title(optional) | `string` | Supported platforms: Android, iOS. The title of the video. |
+| Property          | Type     | Description                                                                               |
+| ----------------- | -------- | ----------------------------------------------------------------------------------------- |
+| artist(optional)  | `string` | Supported platforms: Android, iOS. Secondary text that will be displayed under the title. |
+| artwork(optional) | `string` | Supported platforms: Android, iOS. The uri of the video artwork.                          |
+| title(optional)   | `string` | Supported platforms: Android, iOS. The title of the video.                                |
 
 ### `VideoPlayerEvents`
 
@@ -1626,23 +1613,23 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Handlers for events which can be emitted by the player.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| audioTrackChange | `(payload: AudioTrackChangeEventPayload) => void` | Handler for an event emitted when the current audio track changes. |
-| availableAudioTracksChange | `(payload: AvailableAudioTracksChangeEventPayload) => void` | Handler for an event emitted when the available audio tracks change. |
-| availableSubtitleTracksChange | `(payload: AvailableSubtitleTracksChangeEventPayload) => void` | Handler for an event emitted when the available subtitle tracks change. |
-| isExternalPlaybackActiveChange | (payload: [IsExternalPlaybackActiveChangeEventPayload](#isexternalplaybackactivechangeeventpayload)) => void | Supported platforms: iOS. Handler for an event emitted when the video player starts or stops sharing the video via AirPlay. |
-| mutedChange | (payload: [MutedChangeEventPayload](#mutedchangeeventpayload)) => void | Handler for an event emitted when the `muted` property of the player changes |
-| playbackRateChange | (payload: [PlaybackRateChangeEventPayload](#playbackratechangeeventpayload)) => void | Handler for an event emitted when the `playbackRate` property of the player changes. |
-| playingChange | (payload: [PlayingChangeEventPayload](#playingchangeeventpayload)) => void | Handler for an event emitted when the player starts or stops playback. |
-| playToEnd | `() => void` | Handler for an event emitted when the player plays to the end of the current source. |
-| sourceChange | (payload: [SourceChangeEventPayload](#sourcechangeeventpayload)) => void | Handler for an event emitted when the current media source of the player changes. |
-| sourceLoad | (payload: [SourceLoadEventPayload](#sourceloadeventpayload)) => void | Handler for an event emitted when the player has finished loading metadata for the current video source. This event is emitted when the player has finished metadata for a [`VideoSource`](#videosource), but it doesn't mean that there is enough data buffered to start the playback. |
-| statusChange | (payload: [StatusChangeEventPayload](#statuschangeeventpayload)) => void | Handler for an event emitted when the status of the player changes. |
-| subtitleTrackChange | (payload: [SubtitleTrackChangeEventPayload](#subtitletrackchangeeventpayload)) => void | Handler for an event emitted when the current subtitle track changes. |
-| timeUpdate | (payload: [TimeUpdateEventPayload](#timeupdateeventpayload)) => void | Handler for an event emitted in a given interval specified by the `timeUpdateEventInterval`. |
-| videoTrackChange | (payload: [VideoTrackChangeEventPayload](#videotrackchangeeventpayload)) => void | Handler for an event emitted when the current video track changes. |
-| volumeChange | (payload: [VolumeChangeEventPayload](#volumechangeeventpayload)) => void | Handler for an event emitted when the `volume` of `muted` property of the player changes. |
+| Property                       | Type                                                                                                         | Description                                                                                                                                                                                                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| audioTrackChange               | `(payload: AudioTrackChangeEventPayload) => void`                                                            | Handler for an event emitted when the current audio track changes.                                                                                                                                                                                                                      |
+| availableAudioTracksChange     | `(payload: AvailableAudioTracksChangeEventPayload) => void`                                                  | Handler for an event emitted when the available audio tracks change.                                                                                                                                                                                                                    |
+| availableSubtitleTracksChange  | `(payload: AvailableSubtitleTracksChangeEventPayload) => void`                                               | Handler for an event emitted when the available subtitle tracks change.                                                                                                                                                                                                                 |
+| isExternalPlaybackActiveChange | (payload: [IsExternalPlaybackActiveChangeEventPayload](#isexternalplaybackactivechangeeventpayload)) => void | Supported platforms: iOS. Handler for an event emitted when the video player starts or stops sharing the video via AirPlay.                                                                                                                                                             |
+| mutedChange                    | (payload: [MutedChangeEventPayload](#mutedchangeeventpayload)) => void                                       | Handler for an event emitted when the `muted` property of the player changes                                                                                                                                                                                                            |
+| playbackRateChange             | (payload: [PlaybackRateChangeEventPayload](#playbackratechangeeventpayload)) => void                         | Handler for an event emitted when the `playbackRate` property of the player changes.                                                                                                                                                                                                    |
+| playingChange                  | (payload: [PlayingChangeEventPayload](#playingchangeeventpayload)) => void                                   | Handler for an event emitted when the player starts or stops playback.                                                                                                                                                                                                                  |
+| playToEnd                      | `() => void`                                                                                                 | Handler for an event emitted when the player plays to the end of the current source.                                                                                                                                                                                                    |
+| sourceChange                   | (payload: [SourceChangeEventPayload](#sourcechangeeventpayload)) => void                                     | Handler for an event emitted when the current media source of the player changes.                                                                                                                                                                                                       |
+| sourceLoad                     | (payload: [SourceLoadEventPayload](#sourceloadeventpayload)) => void                                         | Handler for an event emitted when the player has finished loading metadata for the current video source. This event is emitted when the player has finished metadata for a [`VideoSource`](#videosource), but it doesn't mean that there is enough data buffered to start the playback. |
+| statusChange                   | (payload: [StatusChangeEventPayload](#statuschangeeventpayload)) => void                                     | Handler for an event emitted when the status of the player changes.                                                                                                                                                                                                                     |
+| subtitleTrackChange            | (payload: [SubtitleTrackChangeEventPayload](#subtitletrackchangeeventpayload)) => void                       | Handler for an event emitted when the current subtitle track changes.                                                                                                                                                                                                                   |
+| timeUpdate                     | (payload: [TimeUpdateEventPayload](#timeupdateeventpayload)) => void                                         | Handler for an event emitted in a given interval specified by the `timeUpdateEventInterval`.                                                                                                                                                                                            |
+| videoTrackChange               | (payload: [VideoTrackChangeEventPayload](#videotrackchangeeventpayload)) => void                             | Handler for an event emitted when the current video track changes.                                                                                                                                                                                                                      |
+| volumeChange                   | (payload: [VolumeChangeEventPayload](#volumechangeeventpayload)) => void                                     | Handler for an event emitted when the `volume` of `muted` property of the player changes.                                                                                                                                                                                               |
 
 ### `VideoPlayerStatus`
 
@@ -1652,10 +1639,10 @@ Literal Type: `string`
 
 Describes the current status of the player.
 
--   `idle`: The player is not playing or loading any videos.
--   `loading`: The player is loading video data from the provided source
--   `readyToPlay`: The player has loaded enough data to start playing or to continue playback.
--   `error`: The player has encountered an error while loading or playing the video.
+- `idle`: The player is not playing or loading any videos.
+- `loading`: The player is loading video data from the provided source
+- `readyToPlay`: The player has loaded enough data to start playing or to continue playback.
+- `error`: The player has encountered an error while loading or playing the video.
 
 Acceptable values are: `'idle'` | `'loading'` | `'readyToPlay'` | `'error'`
 
@@ -1667,9 +1654,9 @@ Literal Type: `string`
 
 Specifies the dynamic range of the video content.
 
--   `sdr`: Standard Dynamic Range video.
--   `hlg`: Hybrid Log-Gamma - HDR backward-compatible with SDR displays
--   `pq`: Perceptual Quantizer - Formats like HDR10 and Dolby Vision
+- `sdr`: Standard Dynamic Range video.
+- `hlg`: Hybrid Log-Gamma - HDR backward-compatible with SDR displays
+- `pq`: Perceptual Quantizer - Formats like HDR10 and Dolby Vision
 
 Acceptable values are: `'sdr'` | `'hlg'` | `'pq'`
 
@@ -1679,10 +1666,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Specifies the size of a video track.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| height | `number` | Height of the video track in pixels. |
-| width | `number` | Width of the video track in pixels. |
+| Property | Type     | Description                          |
+| -------- | -------- | ------------------------------------ |
+| height   | `number` | Height of the video track in pixels. |
+| width    | `number` | Width of the video track in pixels.  |
 
 ### `VideoSource`
 
@@ -1696,15 +1683,15 @@ Acceptable values are: `string` | `number` | `null` | [VideoSourceObject](#video
 
 Supported platforms: Android, iOS, tvOS, Web.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| assetId(optional) | `number` | The asset ID of a local video asset, acquired with the `require` function. This property is exclusive with the `uri` property. When both are present, the `assetId` will be ignored. |
-| contentType(optional) | [ContentType](#contenttype) | Supported platforms: Android, iOS. Specifies the content type of the video source. When set to `'auto'`, the player will try to automatically determine the content type. You should use this property when playing HLS, SmoothStreaming or DASH videos from an uri, which does not contain a standardized extension for the corresponding media type. Default: `'auto'` |
-| drm(optional) | [DRMOptions](#drmoptions) | Specifies the DRM options which will be used by the player while loading the video. |
-| headers(optional) | `Record<string, string>` | Supported platforms: Android, iOS. Specifies headers sent with the video request. For DRM license headers use the headers field of DRMOptions. |
-| metadata(optional) | [VideoMetadata](#videometadata) | Supported platforms: Android, iOS. Specifies information which will be displayed in the now playing notification. When undefined the player will display information contained in the video metadata. |
-| uri(optional) | `string` | The URI of the video. On iOS, `PHAsset` URIs are supported, but can only be loaded using the [`replaceAsync`](#replaceasyncsource) method or the default [`VideoPlayer`](#videoplayer) constructor. This property is exclusive with the `assetId` property. When both are present, the `assetId` will be ignored. |
-| useCaching(optional) | `boolean` | Supported platforms: Android, iOS. Specifies whether the player should use caching for the video. Due to platform limitations, the cache cannot be used with HLS video sources on iOS. Caching DRM-protected videos is not supported on Android and iOS. Default: `false` |
+| Property              | Type                            | Description                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| assetId(optional)     | `number`                        | The asset ID of a local video asset, acquired with the `require` function. This property is exclusive with the `uri` property. When both are present, the `assetId` will be ignored.                                                                                                                                                                                     |
+| contentType(optional) | [ContentType](#contenttype)     | Supported platforms: Android, iOS. Specifies the content type of the video source. When set to `'auto'`, the player will try to automatically determine the content type. You should use this property when playing HLS, SmoothStreaming or DASH videos from an uri, which does not contain a standardized extension for the corresponding media type. Default: `'auto'` |
+| drm(optional)         | [DRMOptions](#drmoptions)       | Specifies the DRM options which will be used by the player while loading the video.                                                                                                                                                                                                                                                                                      |
+| headers(optional)     | `Record<string, string>`        | Supported platforms: Android, iOS. Specifies headers sent with the video request. For DRM license headers use the headers field of DRMOptions.                                                                                                                                                                                                                           |
+| metadata(optional)    | [VideoMetadata](#videometadata) | Supported platforms: Android, iOS. Specifies information which will be displayed in the now playing notification. When undefined the player will display information contained in the video metadata.                                                                                                                                                                    |
+| uri(optional)         | `string`                        | The URI of the video. On iOS, `PHAsset` URIs are supported, but can only be loaded using the [`replaceAsync`](#replaceasyncsource) method or the default [`VideoPlayer`](#videoplayer) constructor. This property is exclusive with the `assetId` property. When both are present, the `assetId` will be ignored.                                                        |
+| useCaching(optional)  | `boolean`                       | Supported platforms: Android, iOS. Specifies whether the player should use caching for the video. Due to platform limitations, the cache cannot be used with HLS video sources on iOS. Caching DRM-protected videos is not supported on Android and iOS. Default: `false`                                                                                                |
 
 ### `VideoThumbnailOptions`
 
@@ -1712,10 +1699,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Additional options for video thumbnails generation.
 
-| Property | Type | Description |
-| --- | --- | --- |
+| Property            | Type     | Description                                                                                                                                 |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | maxHeight(optional) | `number` | Supported platforms: Android, iOS. If provided, the generated thumbnail will not exceed this height in pixels, preserving its aspect ratio. |
-| maxWidth(optional) | `number` | Supported platforms: Android, iOS. If provided, the generated thumbnail will not exceed this width in pixels, preserving its aspect ratio. |
+| maxWidth(optional)  | `number` | Supported platforms: Android, iOS. If provided, the generated thumbnail will not exceed this width in pixels, preserving its aspect ratio.  |
 
 ### `VideoTrack`
 
@@ -1723,18 +1710,18 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Specifies a VideoTrack loaded from a [`VideoSource`](#videosource).
 
-| Property | Type | Description |
-| --- | --- | --- |
-| averageBitrate | `number | null` | Specifies the average bitrate in bits per second or null if the value is unknown. |
-| bitrate | `number | null` | Deprecated: Use peakBitrate or averageBitrate instead. . Specifies the bitrate in bits per second. This is the peak bitrate if known, or else the average bitrate if known, or else null. |
-| frameRate | `number | null` | Specifies the frame rate of the video track in frames per second. |
-| id | `string` | The id of the video track. This field is platform-specific and may return different depending on the operating system. |
-| isSupported | `boolean` | Supported platforms: Android. Indicates whether the video track format is supported by the device. |
-| mimeType | `string | null` | MimeType of the video track or null if unknown. |
-| peakBitrate | `number | null` | Specifies the average bitrate in bits per second or null if the value is unknown. |
-| size | [VideoSize](#videosize) | Size of the video track. |
-| url | `string | null` | The URL of the `VideoTrack` for HLS video sources. `null` for other source types. |
-| videoRange | [VideoRange](#videorange) | Specifies the video range of the video track. |
+| Property       | Type                      | Description                                                                                                            |
+| -------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| averageBitrate | `number                   | null`                                                                                                                  | Specifies the average bitrate in bits per second or null if the value is unknown.                                                                                                         |
+| bitrate        | `number                   | null`                                                                                                                  | Deprecated: Use peakBitrate or averageBitrate instead. . Specifies the bitrate in bits per second. This is the peak bitrate if known, or else the average bitrate if known, or else null. |
+| frameRate      | `number                   | null`                                                                                                                  | Specifies the frame rate of the video track in frames per second.                                                                                                                         |
+| id             | `string`                  | The id of the video track. This field is platform-specific and may return different depending on the operating system. |
+| isSupported    | `boolean`                 | Supported platforms: Android. Indicates whether the video track format is supported by the device.                     |
+| mimeType       | `string                   | null`                                                                                                                  | MimeType of the video track or null if unknown.                                                                                                                                           |
+| peakBitrate    | `number                   | null`                                                                                                                  | Specifies the average bitrate in bits per second or null if the value is unknown.                                                                                                         |
+| size           | [VideoSize](#videosize)   | Size of the video track.                                                                                               |
+| url            | `string                   | null`                                                                                                                  | The URL of the `VideoTrack` for HLS video sources. `null` for other source types.                                                                                                         |
+| videoRange     | [VideoRange](#videorange) | Specifies the video range of the video track.                                                                          |
 
 ### `VideoTrackChangeEventPayload`
 
@@ -1742,10 +1729,10 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`videoTrackChange`](#videoplayerevents) event, contains information about the video track which is currently being played.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| oldVideoTrack(optional) | [VideoTrack](#videotrack) | null | Previous video track of the player. |
-| videoTrack | [VideoTrack](#videotrack) | null | New video track of the player. |
+| Property                | Type                      | Description |
+| ----------------------- | ------------------------- | ----------- | ----------------------------------- |
+| oldVideoTrack(optional) | [VideoTrack](#videotrack) | null        | Previous video track of the player. |
+| videoTrack              | [VideoTrack](#videotrack) | null        | New video track of the player.      |
 
 ### `VolumeChangeEventPayload`
 
@@ -1753,7 +1740,7 @@ Supported platforms: Android, iOS, tvOS, Web.
 
 Data delivered with the [`volumeChange`](#videoplayerevents) event.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| oldVolume(optional) | `number` | Previous value of the `volume` property. |
-| volume | `number` | Float value indicating the current volume of the player. |
+| Property            | Type     | Description                                              |
+| ------------------- | -------- | -------------------------------------------------------- |
+| oldVolume(optional) | `number` | Previous value of the `volume` property.                 |
+| volume              | `number` | Float value indicating the current volume of the player. |

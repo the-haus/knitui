@@ -8,8 +8,8 @@ the per-field-channel change, what problem it solves, and how to consume it.
 Every `@knitui/media` controller (player, recorder, playlist, video) keeps ONE immutable
 state snapshot behind a typed emitter (`StatefulEmitter`). `setState(patch)` merges
 copy-on-write and fires a single coarse `"change"` event. Before this change, a player's
-chrome stayed cheap **only at the React render level**: `useMediaSelector` re-ran *every*
-mounted leaf's selector on *every* change and bailed the re-render when the selected slice
+chrome stayed cheap **only at the React render level**: `useMediaSelector` re-ran _every_
+mounted leaf's selector on _every_ change and bailed the re-render when the selected slice
 was `isEqual` to the previous value.
 
 That meant a 60 Hz `currentTime` tick still:
@@ -21,8 +21,8 @@ That meant a 60 Hz `currentTime` tick still:
 5. and only then bailed all but the scrubber/timecode in `isEqual`.
 
 The waveform/spectrum path (`sampleUpdate`) already showed the right discipline — it's a
-granular event kept *off* the snapshot, gated on `hasListeners`, driving a ref + rAF loop
-with **zero** React work per frame. The goal of this change was to give *state* the same
+granular event kept _off_ the snapshot, gated on `hasListeners`, driving a ref + rAF loop
+with **zero** React work per frame. The goal of this change was to give _state_ the same
 discipline: a change to one field should reach only the components that read that field,
 **at the store level**, not merely the render level.
 
@@ -110,17 +110,16 @@ Nothing changed for consumers — the win is automatic:
 
 ```ts
 // In the chrome — unchanged call, now state-isolated:
-const muted = useAudioState((s) => s.muted);      // woken ONLY by a muted change
-const { currentTime } = useAudioState(
-  (s) => ({ currentTime: s.currentTime }),
-  shallowEqual,
-);                                                 // woken ONLY by a currentTime tick
+const muted = useAudioState((s) => s.muted); // woken ONLY by a muted change
+const { currentTime } = useAudioState((s) => ({ currentTime: s.currentTime }), shallowEqual); // woken ONLY by a currentTime tick
 ```
 
 Imperative consumers keep using the granular events:
 
 ```ts
-controller.on("volumeChange", ({ volume, muted }) => { /* … */ });
+controller.on("volumeChange", ({ volume, muted }) => {
+  /* … */
+});
 ```
 
 And the low-level field channel is available directly if ever needed:
@@ -133,8 +132,8 @@ const off = controller.subscribeKeys(["currentTime"], () => paint(controller.sta
 
 - **Tier-2 "zero-render playback"**: moving `currentTime` / caption text / metering off the
   snapshot entirely onto an rAF channel (like `sampleUpdate`) so active playback causes
-  *zero* React renders. The scrubber/timecode still re-render per tick — but now they are
-  the *only* things that do. This is a possible follow-up; it requires rewriting the hot
+  _zero_ React renders. The scrubber/timecode still re-render per tick — but now they are
+  the _only_ things that do. This is a possible follow-up; it requires rewriting the hot
   chrome leaves to be imperative.
 - The playlist still doesn't surface backend `error` into `status` (pre-existing gap,
   unrelated to this change).

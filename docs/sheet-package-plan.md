@@ -16,20 +16,20 @@ per-slot `styles` prop follow the exact conventions used across the kit.
 The target feature set (from the Tamagui Sheet API the request is modelled on) maps onto this
 codebase as follows:
 
-| Feature | How we deliver it |
-| --- | --- |
-| Lightweight drag-to-open/close | Pure-TS snap engine + shared RNGH `Gesture.Pan` (carousel `useDragGesture` template) |
-| Multiple snap points | `snapPoints: number[]` (% of screen) → offsets in the engine; velocity-aware settle |
-| Handle | `Sheet.Handle` chrome part; tap cycles snap points (overridable `onPress`) |
-| Auto-adjusts to screen size | Snap offsets computed from measured viewport height (`onLayout`/window) |
-| Animations / themes / sizes | Reanimated spring/timing (`animationConfig`); Tamagui theme tokens; `size` ladder |
-| Overlay + tap-to-dismiss | Reuse `Overlay` scrim + `ModalBase` outside-press; opacity tracks drag offset |
-| Controlled / uncontrolled open | `opened` / `defaultOpened` / `onClose` (kit Modal house style) |
-| Modal vs inline | `modal` prop → teleport to `"root"` host (Portal) or render in place |
-| Scroll inside sheet | `Sheet.ScrollView` with scroll↔drag handoff (RNGH `simultaneous`/`blocksExternalGesture`) |
-| Dismiss-on-snap-to-bottom | Engine appends a `0` offset; settling there fires close |
-| Keyboard aware (native) | `moveOnKeyboardChange` → `KeyboardAvoidingView` (kit already has the platform split) |
-| Web body scroll lock | Inherited from `ModalBase` (`document.body.style.overflow`) |
+| Feature                        | How we deliver it                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| Lightweight drag-to-open/close | Pure-TS snap engine + shared RNGH `Gesture.Pan` (carousel `useDragGesture` template)      |
+| Multiple snap points           | `snapPoints: number[]` (% of screen) → offsets in the engine; velocity-aware settle       |
+| Handle                         | `Sheet.Handle` chrome part; tap cycles snap points (overridable `onPress`)                |
+| Auto-adjusts to screen size    | Snap offsets computed from measured viewport height (`onLayout`/window)                   |
+| Animations / themes / sizes    | Reanimated spring/timing (`animationConfig`); Tamagui theme tokens; `size` ladder         |
+| Overlay + tap-to-dismiss       | Reuse `Overlay` scrim + `ModalBase` outside-press; opacity tracks drag offset             |
+| Controlled / uncontrolled open | `opened` / `defaultOpened` / `onClose` (kit Modal house style)                            |
+| Modal vs inline                | `modal` prop → teleport to `"root"` host (Portal) or render in place                      |
+| Scroll inside sheet            | `Sheet.ScrollView` with scroll↔drag handoff (RNGH `simultaneous`/`blocksExternalGesture`) |
+| Dismiss-on-snap-to-bottom      | Engine appends a `0` offset; settling there fires close                                   |
+| Keyboard aware (native)        | `moveOnKeyboardChange` → `KeyboardAvoidingView` (kit already has the platform split)      |
+| Web body scroll lock           | Inherited from `ModalBase` (`document.body.style.overflow`)                               |
 
 ---
 
@@ -132,29 +132,39 @@ the babel plugin strips the directive on web/jest. **Unit-tested directly**, the
 // engine/snap.ts
 // snapPoints are 0–100 (% of available height), ordered most-visible → least-visible.
 // We convert to translateY offsets where 0 = fully at the resting top, larger = pushed down.
-export function snapOffsets(snapPoints: number[], maxHeight: number): number[]
-export function resolveSnapHeight(snapPoint: number, maxHeight: number): number
-export function clampOffset(offset: number, offsets: number[], overdrag: number): number
-export function nearestSnapIndex(offset: number, offsets: number[]): number
+export function snapOffsets(snapPoints: number[], maxHeight: number): number[];
+export function resolveSnapHeight(snapPoint: number, maxHeight: number): number;
+export function clampOffset(offset: number, offsets: number[], overdrag: number): number;
+export function nearestSnapIndex(offset: number, offsets: number[]): number;
 
 // engine/settle.ts  — the heart: where does a release land?
 export interface SettleInput {
-  offset: number;          // current translateY
-  velocity: number;        // px/s (down = +)
-  offsets: number[];       // sorted snap offsets (incl. dismiss 0-height if enabled)
-  dismissIndex: number;    // -1 if dismissOnSnapToBottom is off
+  offset: number; // current translateY
+  velocity: number; // px/s (down = +)
+  offsets: number[]; // sorted snap offsets (incl. dismiss 0-height if enabled)
+  dismissIndex: number; // -1 if dismissOnSnapToBottom is off
   flickThreshold?: number; // default 300 px/s
-  projection?: number;     // velocity projection factor, default 0.2
+  projection?: number; // velocity projection factor, default 0.2
 }
-export interface SettleResult { index: number; offset: number; dismiss: boolean }
-export function settle(input: SettleInput): SettleResult
+export interface SettleResult {
+  index: number;
+  offset: number;
+  dismiss: boolean;
+}
+export function settle(input: SettleInput): SettleResult;
 
 // engine/overlay.ts
 // Overlay fully opaque at the most-open snap, fades to 0 at the dismiss/closed offset.
-export function overlayOpacity(offset: number, openOffset: number, closedOffset: number, max: number): number
+export function overlayOpacity(
+  offset: number,
+  openOffset: number,
+  closedOffset: number,
+  max: number,
+): number;
 ```
 
 Notes
+
 - "Auto-adjust to screen size" lives here: callers pass measured `maxHeight`; engine stays unitless.
 - Rubber-band overdrag past the most-open snap mirrors carousel's `value * 0.5` damping.
 - `settle` projects the release point with velocity (carousel's `velocity * 2` analogue) then snaps to
@@ -165,26 +175,30 @@ Notes
 ## 5. L2 — Motion + gesture (platform edges)
 
 ### Offset SharedValue + controller (`motion/useSheetMotion.ts`)
+
 Owns `offset = useSharedValue(closedOffset)`. Resolves `animationConfig` (spring vs timing).
 Exposes an imperative controller (snapping is just `animate(offset → offsets[index])`):
 
 ```ts
 interface SheetController {
-  snapTo(index: number): void;   // programmatic snap (Handle tap, `position` prop, keyboard)
-  open(): void; close(): void;
-  offset: SharedValue<number>;   // for painters / derived overlay
+  snapTo(index: number): void; // programmatic snap (Handle tap, `position` prop, keyboard)
+  open(): void;
+  close(): void;
+  offset: SharedValue<number>; // for painters / derived overlay
 }
 ```
 
 ### Programmatic animation (`motion/animate.ts`)
+
 Lifted straight from carousel's `animateOffset`/`applySettle` — generalized, not carousel-specific:
 
 ```ts
 export function animateOffset(
-  offset: SharedValue<number>, target: number,
+  offset: SharedValue<number>,
+  target: number,
   config: WithSpringConfig | WithTimingConfig | undefined,
-  onFinished?: () => void,   // scheduleOnRN hop → fires onOpenChange/onPositionChange
-): void
+  onFinished?: () => void, // scheduleOnRN hop → fires onOpenChange/onPositionChange
+): void;
 ```
 
 `animationConfig` prop → `withSpring(target, config, cb)`; default → `withTiming` with the kit's
@@ -192,12 +206,14 @@ motion-token easing. On settle-to-dismiss, `onFinished` flips `open=false` (unco
 calls `onOpenChange(false)` (controlled) **after** the close animation, then unmounts.
 
 ### Drag gesture (`input/useSheetDrag.ts`)
+
 One `Gesture.Pan()` for **both platforms** (carousel proved RNGH Pan works identically on web).
 `onUpdate`: `offset.value = clampOffset(start + e.translationY, offsets, overdrag)` (rubber-band
 past the open edge). `onEnd`: call `settle({...})`, then `animateOffset` to the result; if
 `result.dismiss`, run close. Disabled when `disableDrag`.
 
 ### Native vs web rendering (the carousel pattern, 1:1)
+
 - **Native** (`Frame.tsx`, `Overlay.tsx`): `Reanimated.View` + `useAnimatedStyle` →
   `transform:[{translateY: offset.value}]`; overlay `opacity` via `useDerivedValue(overlayOpacity)`.
   Declarative, UI-thread.
@@ -211,7 +227,9 @@ that reanimated drives — animated frame is its own `Reanimated.View`/`Animated
 styling sits on a child or via props, not a shared animated node.
 
 ### Scroll ↔ drag handoff (`Sheet.ScrollView`)
+
 The marquee native-feel feature. Use RNGH composition:
+
 - `Gesture.Native()` for the inner ScrollView, `Gesture.Pan()` for the sheet drag.
 - `Gesture.Simultaneous(...)` + a worklet guard: the sheet drag only engages when the ScrollView is at
   `scrollY <= 0` and the drag direction is **down** (or when the sheet isn't at its top snap). Otherwise
@@ -224,6 +242,7 @@ The marquee native-feel feature. Use RNGH composition:
 ## 6. L3 — Chrome, slots, per-slot styles, public API
 
 ### Chrome (`chrome.tsx`) — follows the kit convention exactly
+
 `styled(Box, …)` parts, **`position:"relative"` on the frame** (the documented Tamagui-vs-RN-View
 default gotcha — invisible to jsdom, must verify in a real browser):
 
@@ -239,16 +258,18 @@ export const SheetScrollFrame = styled(Box, { name: "SheetScrollView", flex: 1 }
 ```
 
 ### Slots (`@knitui/core` `defineSlots`)
+
 ```ts
 export const SheetSlots = defineSlots({
   Overlay: createSlot<"Overlay">("Overlay"),
-  Handle:  createSlot<"Handle">("Handle"),
-  Frame:   createSlot<"Frame">("Frame"),
-})
+  Handle: createSlot<"Handle">("Handle"),
+  Frame: createSlot<"Frame">("Frame"),
+});
 // collected at render: SheetSlots.collect(children, { displayName: "Sheet" })
 ```
 
 Anatomy stays identical to the requested API:
+
 ```tsx
 <Sheet open={open} onOpenChange={setOpen} snapPoints={[80, 40]}>
   <Sheet.Overlay />
@@ -258,6 +279,7 @@ Anatomy stays identical to the requested API:
 ```
 
 ### Per-slot `styles` prop (`@knitui/core` `slotStyles`)
+
 ```ts
 export interface SheetStyles {
   root?: GetProps<typeof SheetFrame>;
@@ -265,8 +287,9 @@ export interface SheetStyles {
   handle?: GetProps<typeof SheetHandle>;
   scrollView?: GetProps<typeof SheetScrollFrame>;
 }
-export const SHEET_SLOT_KEYS = ["root","overlay","handle","scrollView"] as const
+export const SHEET_SLOT_KEYS = ["root", "overlay", "handle", "scrollView"] as const;
 ```
+
 Resolve with `slotStyles<SheetStyles>(props.styles, SHEET_SLOT_KEYS, "Sheet")`; use `s.get(k)` where
 there is no competing prop, `s.merge(k, explicit)` where one exists. Precedence
 (low→high): `defaults < styles[slot] < explicit props < inline props on the composed part`. A
@@ -274,9 +297,11 @@ there is no competing prop, `s.merge(k, explicit)` where one exists. Precedence
 authored as children. This is the same mechanism carousel's `chrome.tsx` uses.
 
 ### Compound assembly
+
 `withStaticProperties(Sheet, { Overlay, Frame, Handle, ScrollView, Slots: SheetSlots, Styles })`.
 
 ### Public API (`types.ts`)
+
 Match the requested feature contract while staying consistent with the kit. **Decided:** the
 controlled/uncontrolled surface uses the kit's Modal house style — `opened` / `onClose` (+
 `defaultOpened`) — for consistency across `@knitui/components`. The sheet-specific surface keeps the
@@ -284,19 +309,23 @@ Tamagui spec names (`snapPoints`, `position`, `dismissOnSnapToBottom`, `modal`, 
 
 ```ts
 interface SheetProps {
-  opened?: boolean; defaultOpened?: boolean; onClose?: () => void;
+  opened?: boolean;
+  defaultOpened?: boolean;
+  onClose?: () => void;
   // onClose() fires for any dismissal (overlay press, drag-to-dismiss, Escape, snap-to-bottom).
-  position?: number; defaultPosition?: number; onPositionChange?: (i: number) => void;
-  snapPoints?: number[];                 // default [80, 10] — % of screen, most→least visible
-  dismissOnOverlayPress?: boolean;       // default true
-  dismissOnSnapToBottom?: boolean;       // appends a 0 snap that closes
+  position?: number;
+  defaultPosition?: number;
+  onPositionChange?: (i: number) => void;
+  snapPoints?: number[]; // default [80, 10] — % of screen, most→least visible
+  dismissOnOverlayPress?: boolean; // default true
+  dismissOnSnapToBottom?: boolean; // appends a 0 snap that closes
   disableDrag?: boolean;
-  modal?: boolean;                       // teleport to root host vs inline
-  animationConfig?: WithSpringConfig;    // spring passed to animate layer
-  moveOnKeyboardChange?: boolean;        // native KeyboardAvoidingView
-  disableRemoveScroll?: boolean;         // web body-scroll-lock opt-out
+  modal?: boolean; // teleport to root host vs inline
+  animationConfig?: WithSpringConfig; // spring passed to animate layer
+  moveOnKeyboardChange?: boolean; // native KeyboardAvoidingView
+  disableRemoveScroll?: boolean; // web body-scroll-lock opt-out
   zIndex?: number;
-  size?: SizeKey;                        // border-radius / handle scale
+  size?: SizeKey; // border-radius / handle scale
   styles?: SlotStyles<SheetStyles>;
   children: React.ReactNode;
 }
@@ -311,13 +340,14 @@ interface SheetProps {
 ## 7. Overlay / modal integration (reuse, don't rebuild)
 
 `SheetBase.tsx` reuses, from `packages/components/src/internal/modal-base.tsx` and friends:
+
 - **Portal** to the `"root"` host (`@knitui/components` Portal, react-native-teleport) when `modal`,
   wrapped in `<Theme>` so tokens survive the boundary; inline render otherwise.
 - **Web body scroll-lock** (`document.body.style.overflow`) gated by `!disableRemoveScroll`.
 - **Escape to close** (web document keydown) and **outside/overlay press** (`dismissOnOverlayPress`).
 - **Focus trap** + **return-focus** via `useFocusTrap` (no-op native).
 
-What SheetBase does *differently* from ModalBase: it does **not** use `AnimatePresence`/motion presets
+What SheetBase does _differently_ from ModalBase: it does **not** use `AnimatePresence`/motion presets
 for show/hide. Mount on open; on close, run the reanimated close animation and unmount in the settle
 `onFinished`. The overlay opacity is derived from the live `offset` (fades with the drag), which
 `AnimatePresence` can't express.

@@ -25,7 +25,7 @@ auditable:
    declares both as deps.
 2. **`react-native-web` is already in the web bundle.** Every view file imports
    `View`/`Text` from `react-native` (→ RNW on web via the jest/metro alias), so
-   `styled(Box)` adds *no new* RNW dependency — the §7 risk is smaller than
+   `styled(Box)` adds _no new_ RNW dependency — the §7 risk is smaller than
    stated. The pure `engine/` + `painter.web.ts` stay RNW-free regardless.
 3. **`progress` is always available internally.** `useCarouselCore` owns a
    `progress` SharedValue (`motion/useCarouselCore.ts:132`, returned at `:313`)
@@ -56,9 +56,9 @@ the entire design:
 > Reanimated worklets (native) / an imperative rAF painter (web). They must NOT
 > become Tamagui `styled()` nodes.** (See [§4](#4-the-hard-constraint).)
 
-So the integration is *not* "make everything Tamagui." It is: **wrap every
+So the integration is _not_ "make everything Tamagui." It is: **wrap every
 animated node in a thin plain host that owns only `transform`/`opacity`/`zIndex`,
-and put a Tamagui `styled()` Box *inside* it that owns all the themeable visuals.**
+and put a Tamagui `styled()` Box _inside_ it that owns all the themeable visuals.**
 On top of that, adopt the two existing composition primitives verbatim:
 
 - **Slots (Pillar A)** — `createSlot` / `defineSlots` from `@knitui/core`.
@@ -70,16 +70,16 @@ On top of that, adopt the two existing composition primitives verbatim:
 
 ### 2.1 What it renders
 
-| Part | File | Element today | Styling today |
-|------|------|---------------|---------------|
-| Root region | `view/Carousel.tsx:144` | RN `View` | inline array: `{overflow,flexDirection}` + `touchAction` + `props.style` |
-| Content container | `view/Carousel.tsx:157` | RN `View` | `{flex:1,pointerEvents:"box-none"}` + `props.contentContainerStyle` |
-| Track | `view/Track.tsx` | Fragment (no element) | — |
-| Slide host (native) | `view/Item.tsx:47` | `Animated.View` | `{position:"absolute"}` + dimension + **`animatedStyle` (worklet)** |
-| Slide host (web) | `view/Item.web.tsx:54` | RN `View` + rAF painter | `{position:"absolute"}` + dimension + **painter writes transform** |
-| Live region (web a11y) | `view/Carousel.tsx:181` | RN `View` + `Text` | `VISUALLY_HIDDEN` |
-| Pagination container | `pagination/Pagination.tsx:138` | RN `View` | `{flexDirection,alignSelf,alignItems}` + `containerStyle` |
-| Dot | `pagination/Pagination.tsx:82` | `Pressable` → `Animated.View` | `DEFAULT_DOT` (**hardcoded `#11181C`**) + `dotStyle`/`activeDotStyle` + **`animatedStyle` (worklet)** |
+| Part                   | File                            | Element today                 | Styling today                                                                                         |
+| ---------------------- | ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Root region            | `view/Carousel.tsx:144`         | RN `View`                     | inline array: `{overflow,flexDirection}` + `touchAction` + `props.style`                              |
+| Content container      | `view/Carousel.tsx:157`         | RN `View`                     | `{flex:1,pointerEvents:"box-none"}` + `props.contentContainerStyle`                                   |
+| Track                  | `view/Track.tsx`                | Fragment (no element)         | —                                                                                                     |
+| Slide host (native)    | `view/Item.tsx:47`              | `Animated.View`               | `{position:"absolute"}` + dimension + **`animatedStyle` (worklet)**                                   |
+| Slide host (web)       | `view/Item.web.tsx:54`          | RN `View` + rAF painter       | `{position:"absolute"}` + dimension + **painter writes transform**                                    |
+| Live region (web a11y) | `view/Carousel.tsx:181`         | RN `View` + `Text`            | `VISUALLY_HIDDEN`                                                                                     |
+| Pagination container   | `pagination/Pagination.tsx:138` | RN `View`                     | `{flexDirection,alignSelf,alignItems}` + `containerStyle`                                             |
+| Dot                    | `pagination/Pagination.tsx:82`  | `Pressable` → `Animated.View` | `DEFAULT_DOT` (**hardcoded `#11181C`**) + `dotStyle`/`activeDotStyle` + **`animatedStyle` (worklet)** |
 
 ### 2.2 Customization API today
 
@@ -140,9 +140,9 @@ const s = slotStyles<ButtonStyles>(styles, BUTTON_SLOT_KEYS, "Button");
 ```
 
 Precedence (the one rule): `defaults < styles[slot] < explicit xxxProps < inline`.
-`merge(key, explicit)` spreads sugar *under* explicit. Dev-warns unknown keys.
+`merge(key, explicit)` spreads sugar _under_ explicit. Dev-warns unknown keys.
 `pick(styles, keys)` forwards a subset of slots into a child (avoids its dev-warn).
-For parts rendered by *child* compound components, distribute `styles` via a
+For parts rendered by _child_ compound components, distribute `styles` via a
 React context (the `Tabs` pattern: `TabsSlotStylesContext` + `useTabsSlots`).
 
 ### 3.3 Styled + attachment
@@ -175,14 +175,14 @@ components:
 - **Slide host** — native uses `useAnimatedStyle` on `Animated.View`
   (`Item.tsx:37`); web uses an imperative rAF painter writing
   `el.style.transform` directly (`Item.web.tsx:35`, `painter.web.ts`). The web
-  path exists *specifically because* `useAnimatedStyle` doesn't re-run under this
+  path exists _specifically because_ `useAnimatedStyle` doesn't re-run under this
   repo's Vite tooling.
 - **Dot** — `useAnimatedStyle` scale/opacity on `Animated.View`
   (`Pagination.tsx:64`).
 
 Repo memory is explicit that sharing a node between a Tamagui animation driver
 and Reanimated breaks (`loop-animation-reanimated-host`:
-*"never share a node with a Tamagui animation driver"*; `reanimated-singleton-override`).
+_"never share a node with a Tamagui animation driver"_; `reanimated-singleton-override`).
 Making these `styled(Animated.View)` would also force a `react-native-web`
 dependency into the web bundle, which the engine deliberately avoids.
 
@@ -204,33 +204,33 @@ every animated part (slides and dots).
 
 ### 5.1 New styled chrome (all in `@knitui/core` `styled()`)
 
-| Styled part | Base | Owns | Animated? |
-|-------------|------|------|-----------|
-| `CarouselFrame` | `styled(Box)` | region: overflow, flex-direction, size tokens, theme | no |
-| `CarouselViewport` | `styled(Box)` | `flex:1`, `pointerEvents:"box-none"` | no |
-| `SlideBox` | `styled(Box)` | per-slide padding/radius/bg/border/shadow | no (child of the animated host) |
-| `CarouselControls` | `styled(Box)` | absolute overlay row holding nav buttons | no |
-| `CarouselDots` | `styled(XStack/Box)` | dots row/column container | no |
-| `CarouselDot` | `styled(Box)` | dot size/color/radius tokens; `active` variant | no (child of the animated `Animated.View`) |
+| Styled part        | Base                 | Owns                                                 | Animated?                                  |
+| ------------------ | -------------------- | ---------------------------------------------------- | ------------------------------------------ |
+| `CarouselFrame`    | `styled(Box)`        | region: overflow, flex-direction, size tokens, theme | no                                         |
+| `CarouselViewport` | `styled(Box)`        | `flex:1`, `pointerEvents:"box-none"`                 | no                                         |
+| `SlideBox`         | `styled(Box)`        | per-slide padding/radius/bg/border/shadow            | no (child of the animated host)            |
+| `CarouselControls` | `styled(Box)`        | absolute overlay row holding nav buttons             | no                                         |
+| `CarouselDots`     | `styled(XStack/Box)` | dots row/column container                            | no                                         |
+| `CarouselDot`      | `styled(Box)`        | dot size/color/radius tokens; `active` variant       | no (child of the animated `Animated.View`) |
 
 Nav buttons are **not** new primitives — reuse `ActionIcon` from
 `@knitui/components` with `@knitui/icons` chevrons (matches `icons-in-components`).
 
 `CarouselFrame` becoming `styled(Box)` means the public component accepts Tamagui
-props (`width`, `height`, `$theme` tokens, `bg`, …) *and* still accepts `style`
+props (`width`, `height`, `$theme` tokens, `bg`, …) _and_ still accepts `style`
 (Tamagui merges `style` last). This subsumes the current `style` prop without
 removing it.
 
 ### 5.2 Slot system — two layers, used for different things
 
-**Marker slots** (`defineSlots`) for *optional, consumer-placed chrome* — this is
+**Marker slots** (`defineSlots`) for _optional, consumer-placed chrome_ — this is
 where the carousel is children-driven rather than data-driven:
 
 ```ts
 const CarouselSlots = defineSlots({
-  Controls:   createSlot<"Controls">("Controls"),    // custom prev/next cluster
-  Indicators: createSlot<"Indicators">("Indicators"),// custom pagination cluster
-  Overlay:    createSlot<"Overlay">("Overlay"),      // arbitrary absolute overlay
+  Controls: createSlot<"Controls">("Controls"), // custom prev/next cluster
+  Indicators: createSlot<"Indicators">("Indicators"), // custom pagination cluster
+  Overlay: createSlot<"Overlay">("Overlay"), // arbitrary absolute overlay
 });
 ```
 
@@ -246,22 +246,30 @@ Attached as statics so consumers can compose:
 > needs the data model); we do **not** turn slides into `<Carousel.Slide>`
 > children. Marker slots are for the chrome around the track only.
 
-**Per-slot `styles`** (`slotStyles`) for *styling the parts the carousel owns*:
+**Per-slot `styles`** (`slotStyles`) for _styling the parts the carousel owns_:
 
 ```ts
 export interface CarouselStyles {
-  root?:        GetProps<typeof CarouselFrame>;
-  viewport?:    GetProps<typeof CarouselViewport>;
-  slide?:       GetProps<typeof SlideBox>;       // applied to every slide's SlideBox
-  controls?:    GetProps<typeof CarouselControls>;
-  control?:     ActionIconProps;                 // each nav button
-  dots?:        GetProps<typeof CarouselDots>;
-  dot?:         GetProps<typeof CarouselDot>;
-  activeDot?:   GetProps<typeof CarouselDot>;
-  liveRegion?:  GetProps<typeof Box>;
+  root?: GetProps<typeof CarouselFrame>;
+  viewport?: GetProps<typeof CarouselViewport>;
+  slide?: GetProps<typeof SlideBox>; // applied to every slide's SlideBox
+  controls?: GetProps<typeof CarouselControls>;
+  control?: ActionIconProps; // each nav button
+  dots?: GetProps<typeof CarouselDots>;
+  dot?: GetProps<typeof CarouselDot>;
+  activeDot?: GetProps<typeof CarouselDot>;
+  liveRegion?: GetProps<typeof Box>;
 }
 const CAROUSEL_SLOT_KEYS = [
-  "root","viewport","slide","controls","control","dots","dot","activeDot","liveRegion",
+  "root",
+  "viewport",
+  "slide",
+  "controls",
+  "control",
+  "dots",
+  "dot",
+  "activeDot",
+  "liveRegion",
 ] as const satisfies readonly (keyof CarouselStyles)[];
 ```
 
@@ -290,9 +298,15 @@ slot value down. Two equivalent options; prefer **context** (the `Tabs` pattern)
 to avoid widening `Track`/`Item` prop contracts:
 
 ```ts
-const CarouselStylesContext = React.createContext<SlotStyles<CarouselStyles> | undefined>(undefined);
-const useCarouselSlots = () => slotStyles<CarouselStyles>(
-  React.useContext(CarouselStylesContext), CAROUSEL_SLOT_KEYS, "Carousel");
+const CarouselStylesContext = React.createContext<SlotStyles<CarouselStyles> | undefined>(
+  undefined,
+);
+const useCarouselSlots = () =>
+  slotStyles<CarouselStyles>(
+    React.useContext(CarouselStylesContext),
+    CAROUSEL_SLOT_KEYS,
+    "Carousel",
+  );
 // Item: const s = useCarouselSlots(); <SlideBox {...s.get("slide")}>{renderItem(...)}</SlideBox>
 ```
 
@@ -300,7 +314,7 @@ const useCarouselSlots = () => slotStyles<CarouselStyles>(
 
 ```ts
 export const Carousel = withStaticProperties(CarouselComponent, {
-  ...CarouselSlots.markers,   // Controls, Indicators, Overlay
+  ...CarouselSlots.markers, // Controls, Indicators, Overlay
   Frame: CarouselFrame,
   Viewport: CarouselViewport,
   Slide: SlideBox,
@@ -322,7 +336,7 @@ export const Carousel = withStaticProperties(CarouselComponent, {
 2. **Static chrome → Tamagui.** Convert `CarouselFrame`/`CarouselViewport`/live
    region to `styled(Box)`. Keep `style`/`contentContainerStyle` working
    (Tamagui merges `style` last). No behavior change. Add `styles.root/viewport`.
-3. **Two-layer slides.** Introduce `SlideBox` *inside* the existing
+3. **Two-layer slides.** Introduce `SlideBox` _inside_ the existing
    `Animated.View`/painted `View` (host keeps owning transform). Add
    `styles.slide` via `CarouselStylesContext`. **Do not touch the painter or
    `useAnimatedStyle`.** Verify web rAF transforms still apply to the host, not
@@ -345,11 +359,11 @@ export const Carousel = withStaticProperties(CarouselComponent, {
 ## 7. Risks & open questions
 
 - **Web painter coupling (highest risk).** `painter.web.ts` selects the host
-  `el` via the registered ref and writes `transform`. `SlideBox` must sit *under*
+  `el` via the registered ref and writes `transform`. `SlideBox` must sit _under_
   that node; confirm the painter still targets the right element and that adding a
   styled child doesn't introduce an extra `react-native-web` wrapper that shifts
   layout. Pixel-verify a parallax/stack fling on web.
-- **`react-native-web` in the web bundle.** *Re-assessed (audit #2): low.* The
+- **`react-native-web` in the web bundle.** _Re-assessed (audit #2): low._ The
   view layer already imports `View`/`Text` from `react-native` (→ RNW on web), so
   `styled(Box)` adds no new RNW dependency — only Tamagui's style runtime, which
   every other kit already ships. The engine/painter stay RNW-free regardless.
@@ -376,5 +390,5 @@ export const Carousel = withStaticProperties(CarouselComponent, {
 4. Add marker slots `Controls`/`Indicators`/`Overlay` + opt-in `withControls`/
    `withIndicators` built on `ActionIcon` + `@knitui/icons`.
 5. Attach everything via `withStaticProperties(..., { ...CarouselSlots.markers,
-   Frame, Viewport, Slide, Controls, Dots, Dot })`.
+Frame, Viewport, Slide, Controls, Dots, Dot })`.
 6. Never let a Reanimated/painter node be a Tamagui styled node.

@@ -96,6 +96,7 @@ for consumers).
 
    Apps (`@knitui/example`, `@knitui/web`) and `@knitui/demo` are private and are
    in the changesets `ignore` list — they don't need changesets.
+
 5. Commit (Conventional Commits) and open a PR. CI must pass (`verify` job: naming
    → lint → typecheck → test → build).
 

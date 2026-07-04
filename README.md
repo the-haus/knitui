@@ -39,19 +39,19 @@ iOS, Android, and the web — powered by [Tamagui](https://tamagui.dev),
 Everything lives in one pnpm + Turborepo monorepo. The published scope is
 `@knitui/*`.
 
-| Package | What it is |
-| ------- | ---------- |
-| [`@knitui/core`](packages/core) | Design tokens, theme (`createTheme`), the `<Provider>`, and the styling/motion engine. The foundation every other package builds on. |
-| [`@knitui/components`](packages/components) | The main component kit — ~100 cross-platform components (Button, Card, Combobox, Modal, Drawer, …). |
-| [`@knitui/hooks`](packages/hooks) | Shared cross-platform React hooks (state, layout, timing, platform) usable standalone. |
-| [`@knitui/icons`](packages/icons) | Hybrid React + React Native icon kit generated from [`@tabler/icons`](https://tabler.io/icons). |
-| [`@knitui/graphics`](packages/graphics) | Skia-powered graphics primitives, effects, and an audio-visualizer engine. |
-| [`@knitui/dates`](packages/dates) | Calendars, date/time pickers, and inputs, built on `@knitui/components` + [dayjs](https://day.js.org). |
-| [`@knitui/carousel`](packages/carousel) | Cross-platform carousel with an Embla-style engine (web rAF / native Reanimated). |
-| [`@knitui/map`](packages/map) | Cross-platform [MapLibre](https://maplibre.org) map surface. |
-| [`@knitui/media`](packages/media) | Audio & video players, playlists, and visualizers behind one controller contract. |
-| [`@knitui/sheet`](packages/sheet) | Cross-platform bottom sheet with a pure-TS snap engine. |
-| [`@knitui/plugins`](packages/plugins) | Pre-configured Tamagui build-tool plugins (babel, metro, next, vite, webpack) + the Next.js SSR provider. |
+| Package                                     | What it is                                                                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| [`@knitui/core`](packages/core)             | Design tokens, theme (`createTheme`), the `<Provider>`, and the styling/motion engine. The foundation every other package builds on. |
+| [`@knitui/components`](packages/components) | The main component kit — ~100 cross-platform components (Button, Card, Combobox, Modal, Drawer, …).                                  |
+| [`@knitui/hooks`](packages/hooks)           | Shared cross-platform React hooks (state, layout, timing, platform) usable standalone.                                               |
+| [`@knitui/icons`](packages/icons)           | Hybrid React + React Native icon kit generated from [`@tabler/icons`](https://tabler.io/icons).                                      |
+| [`@knitui/graphics`](packages/graphics)     | Skia-powered graphics primitives, effects, and an audio-visualizer engine.                                                           |
+| [`@knitui/dates`](packages/dates)           | Calendars, date/time pickers, and inputs, built on `@knitui/components` + [dayjs](https://day.js.org).                               |
+| [`@knitui/carousel`](packages/carousel)     | Cross-platform carousel with an Embla-style engine (web rAF / native Reanimated).                                                    |
+| [`@knitui/map`](packages/map)               | Cross-platform [MapLibre](https://maplibre.org) map surface.                                                                         |
+| [`@knitui/media`](packages/media)           | Audio & video players, playlists, and visualizers behind one controller contract.                                                    |
+| [`@knitui/sheet`](packages/sheet)           | Cross-platform bottom sheet with a pure-TS snap engine.                                                                              |
+| [`@knitui/plugins`](packages/plugins)       | Pre-configured Tamagui build-tool plugins (babel, metro, next, vite, webpack) + the Next.js SSR provider.                            |
 
 Not published (workspace-internal): **`@knitui/demo`** (the showcase whose
 sections feed the example apps), **`@knitui/example`** (`apps/app`, Expo), and
@@ -105,7 +105,7 @@ and layers onto a complete default:
 import { createTheme, Provider } from "@knitui/core";
 
 export const config = createTheme({
-  brand: "#7C3AED",          // a hex (light/dark auto-derived), a Radix name, or full ramps
+  brand: "#7C3AED", // a hex (light/dark auto-derived), a Radix name, or full ramps
   radius: "rounded",
   fonts: { body: "Inter", heading: "Sora" },
 });
@@ -118,10 +118,10 @@ See [`@knitui/core`](packages/core/README.md) for the full theming API
 
 ## Platform support
 
-| Target | Renderer | Notes |
-| ------ | -------- | ----- |
-| iOS / Android | React Native (Expo SDK 56, RN 0.85) | Metro consumes the packages' TypeScript source directly. |
-| Web | React Native Web | Use the Next.js / Vite / webpack integration from [`@knitui/plugins`](packages/plugins). |
+| Target        | Renderer                            | Notes                                                                                    |
+| ------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| iOS / Android | React Native (Expo SDK 56, RN 0.85) | Metro consumes the packages' TypeScript source directly.                                 |
+| Web           | React Native Web                    | Use the Next.js / Vite / webpack integration from [`@knitui/plugins`](packages/plugins). |
 
 > **Packages src-ship.** Their `main`/`types` resolve to `./src/*.ts` (see
 > [`docs/ci-cd-plan.md` §3](docs/ci-cd-plan.md)). Expo/Metro works out of the

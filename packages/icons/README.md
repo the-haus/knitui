@@ -58,11 +58,11 @@ Expo/Metro consume it out of the box, and Next.js picks it up via the
 
 ## Peer dependencies
 
-| Package            | When required        |
-| ------------------ | -------------------- |
-| `react`            | always (`>=18`)      |
-| `react-native`     | native targets only  |
-| `react-native-svg` | native targets only  |
+| Package            | When required       |
+| ------------------ | ------------------- |
+| `react`            | always (`>=18`)     |
+| `react-native`     | native targets only |
+| `react-native-svg` | native targets only |
 
 `@tabler/icons` is a **dev**-only dependency — it is read at generate time and
 never bundled into the published output.

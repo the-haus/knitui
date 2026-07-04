@@ -8,6 +8,7 @@
 - Native: `useVideoController.native.tsx:23-37` creates an `expo-video` player via `useVideoPlayer` and wraps it in one `ExpoVideoController` per player; that controller owns `player` (`expo-controller.native.ts:53`), bound to the `VideoView` in `VideoSurface.native.tsx:35-47`.
 
 Where the actual playback element is created / rendered:
+
 - **Web `<video>` element**: `surface/VideoSurface.tsx:35-60` — a raw DOM `<video ref={html.attachRef} …>` inside `VideoSurfaceFrame`.
 - **Native `VideoView`**: `surface/VideoSurface.native.tsx:35-47` — `<VideoView player={expo.player} …>`.
 - **Per-component controller instantiation**: `hooks/useVideoController.tsx:20` (web), `hooks/useVideoController.native.tsx:33-37` (native).
@@ -24,9 +25,11 @@ The same nuance from audio applies, **plus a visual one**: audio's `<audio>` is 
 Mirror the audio design exactly:
 
 1. **`SharedVideoSession`** owns ONE real `VideoController` (an unchanged `HtmlVideoController` on web / `ExpoVideoController` on native). It tracks `activeId: string | null` and a per-id registry of descriptors:
+
    ```
    { source, config, textTracks, metadata?, lastPosition, lastDuration, lastError }
    ```
+
    Key methods:
    - `register(id, descriptor)` / `update(id, patch)` / `unregister(id)`.
    - `activate(id)`: if `id === activeId` no-op; else (a) capture the outgoing active player's `currentTime`/`duration` into its descriptor (`lastPosition`/`lastDuration`), (b) call `controller.replace(newDescriptor.source)`, (c) re-apply that descriptor's config (loop/muted/volume/playbackRate, textTracks) and `seekTo(lastPosition)`, (d) set `activeId = id`, (e) notify subscribers.
@@ -64,17 +67,20 @@ This is the part with no audio analogue. There are two viable shapes; the recomm
 The repo already has the exact primitive: `@knitui/components` re-exports `react-native-teleport` as `Portal`/`PortalHost`/`PortalProvider` (`packages/components/src/Portal/index.ts:20`). Crucially, the doc comment states it performs **real native view re-parenting** — "real Fabric portals on iOS/Android, `createPortal` + DOM `moveBefore` on web" (`Portal/index.ts:6-9`). `moveBefore` re-parents the live DOM node **without unmounting it**, which is exactly what a playing `<video>` needs (a remount would tear down the media element and lose buffered data / playback).
 
 Design:
+
 - `VideoEngineProvider` (and the lazy-singleton host it renders) mounts the **single** `VideoSurface` once, wrapped in a `<Portal name="knitui-video-surface" hostName={activeHostName}>`. `activeHostName` is the session's active player's host name (e.g. `video-host:<activeId>`), or a hidden offscreen parking host when `activeId == null`.
 - Each `<Video>` root, instead of rendering `<VideoSurface>` directly (`Video.tsx:368-378`), renders a **`<PortalHost name={"video-host:" + id}/>`** sized to fill its `VideoSurfaceFrame`. The active player's host receives the teleported surface; inactive players render a **poster/placeholder** in the same frame.
 - When `session.activate(id)` flips `activeId`, the Portal's `hostName` changes, and `react-native-teleport` re-parents the live `<video>` node into the newly-active player's host — no remount, playback state preserved.
 
 Why this is cleanest:
+
 - One real media element, guaranteed (verifiable: exactly one `<video>` in the DOM).
 - No remount on switch → no buffer/decoder churn, position continuity is automatic for the active element (and remembered positions handle the inactive ones).
 - Reuses an established, tested kit primitive rather than inventing a re-parenting mechanism.
 - The chrome already overlays the `VideoSurfaceFrame` absolutely (`Video.tsx:380-437`), so it stays per-player and on top of the teleported surface naturally.
 
 Trade-offs / risks to handle:
+
 - **Fullscreen target**: `HtmlVideoController.setFullscreenContainer` (`html-controller.ts:94`) is registered by each root with its own frame (`Video.tsx:266-272`). With a shared element, only the **active** player's frame should be the fullscreen target. Fix: the facade forwards `setFullscreenContainer` to the real controller **only while active**; on `activate`, the session re-points the fullscreen target to the new active frame. Keep `setFullscreenContainer` on the facade so the feature-detect in `Video.tsx:65` still passes.
 - **`attachRef` ownership**: today the web surface calls `html.attachRef` (`VideoSurface.tsx:36`). With one shared surface bound to the shared controller, `attachRef` binds **once** to the single element — correct, since there is one controller. The facade does NOT expose `attachRef` (only the real controller, mounted by the provider, binds). Confirm `Video.tsx` never reads `attachRef` (it doesn't — only the surface does).
 - **`<track>` / textTracks and poster are per-source**: the single `<video>` must re-render its `<track>` children and `poster` when the active descriptor changes. The surface reads them from the session's active descriptor (the provider passes the active descriptor's `textTracks`/`poster`/`contentFit`), not from a single static prop. `contentFit` (object-fit, `VideoSurface.tsx:14-18`) likewise follows the active player.
@@ -90,6 +96,7 @@ Each player renders its own `<video>`, but only the active player's element is `
 ## Files to change
 
 ### New files
+
 - `packages/video/src/session/SharedVideoSession.shared.ts` — the `SharedVideoSession` class (platform-free: owns a `VideoController`, the descriptor registry, `activate`, `snapshotFor` with per-id memoization, subscribe via `TypedEmitter`). Mirror `audio/src/session/` location.
 - `packages/video/src/session/VideoControllerFacade.shared.ts` — the per-player facade implementing `VideoController` by delegating to a `SharedVideoSession` + id. (Could live in the same file as the session; keep separate to mirror audio.)
 - `packages/video/src/session/getSharedVideoSession.ts` + `.native.ts` — module-level lazy singleton (`HtmlVideoController` on web, an `ExpoVideoController`-backed session on native). Platform-split because each constructs a different real controller.
@@ -98,6 +105,7 @@ Each player renders its own `<video>`, but only the active player's element is `
 - `packages/video/src/session/SharedVideoSession.test.ts` — unit tests (see Verification).
 
 ### Edited files
+
 - `packages/video/src/hooks/useVideoController.tsx` (web) — rewrite to resolve session, derive id, register descriptor, build facade, `useSyncExternalStore`, unregister on unmount. The existing declarative-sync effects (`:42-64`) become `session.update(id, …)`.
 - `packages/video/src/hooks/useVideoController.native.tsx` — same rewrite. Note: today it creates the player via `useVideoPlayer` (`:23`). The shared player must move into the session/provider; the hook stops calling `useVideoPlayer` and instead registers a descriptor. The session owns the one player.
 - `packages/video/src/hooks/useVideoController.shared.ts` — add `id?: string` to `UseVideoControllerOptions` (`:15`); types of the result stay identical.
@@ -107,6 +115,7 @@ Each player renders its own `<video>`, but only the active player's element is `
 - `packages/video/src/index.ts` — export `VideoEngineProvider`, `getSharedVideoSession`, `SharedVideoSession` type, `useVideoEngine`. (`:58-89`)
 
 ## Reuse (don't reinvent)
+
 - **`Portal` / `PortalHost` / `PortalProvider`** from `@knitui/components` (`packages/components/src/Portal/index.ts:20`) for the surface re-parenting — DOM `moveBefore` keeps the `<video>` alive across the switch. The root `"root"` `PortalHost` is already mounted by `@knitui/core`'s `<Provider>` (`Portal/index.ts:22-26`), and named hosts work as shown in `Portal.stories.tsx:79-97`.
 - **`BaseVideoController` + the two real adapters** (`controller.shared.ts`, `html-controller.ts`, `expo-controller.native.ts`) — UNCHANGED. The session wraps one instance; `replace()` (`html-controller.ts:437`, `expo-controller.native.ts:416`) is the exact seam `activate` uses to switch source.
 - **`TypedEmitter`** (`engine/emitter.ts`) for the session's change fan-out — same primitive the controllers use.
@@ -115,6 +124,7 @@ Each player renders its own `<video>`, but only the active player's element is `
 - The `VideoController` interface itself (`controller.shared.ts:23-74`) is the facade's contract — implement every method so the chrome/keyboard stay untouched.
 
 ## Edge cases / best practices
+
 - **Idle snapshot memoization per id** — return the SAME object until that descriptor changes, or `useSyncExternalStore` infinite-loops. Audio's plan calls this out explicitly; the same risk exists here.
 - **Subscription filtering** — an inactive player must NOT re-render on the active player's `timeUpdate` torrent (`html-controller.ts:175` fires per frame). The facade's `subscribe` should only notify when the active player's `change` matters to it OR when its own descriptor / the `activeId` changes.
 - **Position capture on switch** — capture the outgoing player's `currentTime`/`duration` BEFORE `controller.replace()` resets them (`replace` zeroes `currentTime`/`duration`: `html-controller.ts:439-446`). After replace + metadata load, `seekTo(lastPosition)`; note seeking before `loadedmetadata` clamps — re-apply on `loadedmetadata`/`canplay` or store `lastPosition` and seek in the `sourceLoad` handler path.
@@ -127,6 +137,7 @@ Each player renders its own `<video>`, but only the active player's element is `
 - **Native player ownership** — moving the `expo-video` player out of `useVideoPlayer` (currently in `useVideoController.native.tsx:23`) into the session means the session must create and release the player (its own lifecycle). Confirm `expo-video` allows creating a `VideoPlayer` outside the hook (it does, via `createVideoPlayer`), and dispose it when the provider/singleton tears down.
 
 ## Verification
+
 - **Unit test** `session/SharedVideoSession.test.ts` (Jest, jsdom — package already uses jsdom per `html-controller.test.ts`): register two ids A and B; `activate(A)`, advance A to t=12s, `activate(B)` → assert (1) `controller.replace` called with B's source, (2) A's descriptor `lastPosition≈12`, (3) `snapshotFor(A)` returns idle snapshot with `currentTime≈12` and `playing:false`, (4) `snapshotFor(B)` returns live state, (5) re-`activate(A)` calls `seekTo(12)`. Assert `snapshotFor(id)` returns a **stable reference** across calls while the descriptor is unchanged (the loop-guard). Use a fake `VideoController` test double (the test can pass a stub controller into the session constructor) so it stays DOM-light, following the existing controller test style.
 - **Storybook two-player manual check (Playwright MCP)** — add a `TwoPlayers` story to `Video.stories.tsx` rendering two `<Video>` with `SAMPLE` and `SAMPLE_2` (both constants already exist, `Video.stories.tsx:9-10`). Video Storybook runs on **port 6009** (`packages/video/package.json:36`). Steps: start `pnpm --filter @knitui/video storybook` (run-only; do not commit), navigate Playwright to `http://localhost:6009/?path=/story/media-video--two-players`, then:
   1. `browser_evaluate` `document.querySelectorAll('video').length` → assert **exactly 1**.
@@ -136,6 +147,7 @@ Each player renders its own `<video>`, but only the active player's element is `
   5. Re-assert `document.querySelectorAll('video').length === 1` throughout.
 
 ## Critical files for implementation
+
 - `packages/video/src/hooks/useVideoController.tsx`
 - `packages/video/src/controller/html-controller.ts`
 - `packages/video/src/Video.tsx`

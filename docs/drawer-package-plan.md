@@ -14,7 +14,7 @@ drag-to-dismiss primitive are defined in the Modal plan (§2 and §3); this plan
 ## 1. Goal & guardrails
 
 - `@knitui/drawer` exposes the same `Drawer` compound component, the `position` (left/right/top/bottom)
-  + `size` + `offset` + `radius` props, slots, and per-slot `styles` as today — a drop-in replacement.
+  - `size` + `offset` + `radius` props, slots, and per-slot `styles` as today — a drop-in replacement.
 - Keep the existing **per-edge Tamagui CSS slide** (`ENTER_OFFSET[position]` + `AnimatePresence` exit)
   as the **default** (exact parity, zero regression).
 - **Add** an opt-in `dragToDismiss` layer: drag the panel **toward its own edge** to dismiss, reusing
@@ -77,6 +77,7 @@ left/right, height for top/bottom) / `radius` / **`offset`** (gap from the viewp
 `animation` / `duration` / `styles` + a11y (`aria-label`/`aria-describedby`).
 
 **New, additive:**
+
 - `dragToDismiss?: boolean` (default `false`) — enable the per-edge drag-to-dismiss layer.
 - `dragThreshold?: number` (default ~0.3 of the panel extent) — release past this dismisses.
 - `animationConfig?: WithSpringConfig` — spring for the drag settle.
@@ -105,23 +106,25 @@ single place edges are expressed; chrome, motion, and the drag primitive all rea
 ```ts
 // Where the panel sits in the full-cover layer (ModalBaseInner flex), moved verbatim:
 const LAYOUT = {
-  left:   { direction: "row",    justify: "flex-start" },
-  right:  { direction: "row",    justify: "flex-end"   },
-  top:    { direction: "column", justify: "flex-start" },
-  bottom: { direction: "column", justify: "flex-end"   },
+  left: { direction: "row", justify: "flex-start" },
+  right: { direction: "row", justify: "flex-end" },
+  top: { direction: "column", justify: "flex-start" },
+  bottom: { direction: "column", justify: "flex-end" },
 } as const;
 
 // Default CSS enter/exit nudge (parity with today's ENTER_OFFSET):
 const ENTER_OFFSET = {
-  left:   { x: -DISTANCES.enter }, right:  { x: DISTANCES.enter },
-  top:    { y: -DISTANCES.enter }, bottom: { y: DISTANCES.enter },
+  left: { x: -DISTANCES.enter },
+  right: { x: DISTANCES.enter },
+  top: { y: -DISTANCES.enter },
+  bottom: { y: DISTANCES.enter },
 } as const;
 
 // NEW — drag-to-dismiss axis + the sign that travels OFF-SCREEN (toward the edge):
 const DRAG = {
-  left:   { axis: "x", sign: -1 }, // drag left  → dismiss
-  right:  { axis: "x", sign: +1 }, // drag right → dismiss
-  top:    { axis: "y", sign: -1 }, // drag up    → dismiss
+  left: { axis: "x", sign: -1 }, // drag left  → dismiss
+  right: { axis: "x", sign: +1 }, // drag right → dismiss
+  top: { axis: "y", sign: -1 }, // drag up    → dismiss
   bottom: { axis: "y", sign: +1 }, // drag down  → dismiss
 } as const;
 ```
@@ -140,11 +143,13 @@ const DRAG = {
 ## 7. Animation — default unchanged + opt-in drag
 
 ### Default (parity)
+
 `defaultMotion` keyed to `position` (`enterStyle`/`exitStyle` = `opacity:0` + `ENTER_OFFSET[position]`,
 `animateOnly:["transform","opacity"]`), via `useMotionPreset(animation ?? defaultMotion, { duration })`,
 spread onto `DrawerContentFrame`; `AnimatePresence` plays exit; overlay fades in lockstep. **No change.**
 
 ### Opt-in `dragToDismiss`
+
 As §6: per-edge single-axis drag using the shared primitive. The panel still **enters** via the CSS
 slide preset; drag governs interactive dismiss. Close-by-button/escape/outside still uses the preset
 exit (`AnimatePresence`), unchanged.
@@ -154,6 +159,7 @@ exit (`AnimatePresence`), unchanged.
 ## 8. Migration
 
 Same shape as the Modal plan §8:
+
 1. Foundation exports land in `@knitui/components` (shared with Modal — do once).
 2. Create `@knitui/drawer`, move `Drawer.tsx`/stories/tests, repoint imports to the foundation.
 3. Remove `Drawer` (+ `DrawerProps` etc.) from `@knitui/components`' barrel.
