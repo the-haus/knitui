@@ -37,6 +37,9 @@ export const ShapeSource = memo(
     } = useMapContext();
     const map = mapEngine as MLMap | null;
     const addedRef = useRef(false);
+    // Latest source config, kept current so a style replay (setStyle) re-adds the
+    // source with the up-to-date `data` rather than the value it had at mount.
+    const configRef = useRef<Record<string, unknown>>({});
     const propsRef = useRef({ onPress });
     propsRef.current = { onPress };
 
@@ -69,13 +72,16 @@ export const ShapeSource = memo(
       try {
         if (!map.getSource(id)) {
           map.addSource(id, sourceConfig as Parameters<MLMap["addSource"]>[1]);
-          addedRef.current = true;
         }
+        // Mark added whether we created it or it already existed, so the data
+        // update effect below isn't permanently short-circuited.
+        addedRef.current = true;
       } catch {
         // Map style not yet available
         return;
       }
 
+      configRef.current = sourceConfig;
       registerSource({ id, type: "geojson", config: sourceConfig });
 
       return () => {
@@ -120,8 +126,11 @@ export const ShapeSource = memo(
 
       if (data) {
         source.setData(data);
+        // Keep the registry entry current so a later style replay uses this data.
+        configRef.current = { ...configRef.current, data };
+        registerSource({ id, type: "geojson", config: configRef.current });
       }
-    }, [ready, map, id, data]);
+    }, [ready, map, id, data, registerSource]);
 
     // --- onPress: click handler for features in this source ---
 

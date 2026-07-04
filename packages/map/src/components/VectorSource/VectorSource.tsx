@@ -40,8 +40,13 @@ export const VectorSource = memo(
       if (scheme !== undefined) sourceConfig.scheme = scheme;
       if (attribution) sourceConfig.attribution = attribution;
 
-      if (!map.getSource(id)) {
-        map.addSource(id, sourceConfig as Parameters<MLMap["addSource"]>[1]);
+      try {
+        if (!map.getSource(id)) {
+          map.addSource(id, sourceConfig as Parameters<MLMap["addSource"]>[1]);
+        }
+      } catch {
+        // Map style not yet available (e.g. mid style-swap)
+        return;
       }
       registerSource({ id, type: "vector", config: sourceConfig });
 

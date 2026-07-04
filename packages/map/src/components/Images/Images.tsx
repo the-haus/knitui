@@ -24,6 +24,17 @@ function isSdf(entry: ImageEntry): boolean {
   return false;
 }
 
+/**
+ * `map.hasImage` / `removeImage` dereference `map.style`, which maplibre sets to
+ * undefined once the map (or its current style) is torn down. Our image call
+ * sites run async (`img.onload`) or at cleanup time, so they can fire after that
+ * point — probe the style first so an unmount / StrictMode remount / style
+ * reload can't throw `Cannot read properties of undefined (reading 'getImage')`.
+ */
+function styleAlive(map: MLMap): boolean {
+  return Boolean((map as unknown as { style?: unknown }).style);
+}
+
 export const Images = memo(function Images({ images, onImageMissing }: ImagesProps) {
   const { mapEngine, ready, registerImage, unregisterImage } = useMapContext();
   const map = mapEngine as MLMap | null;
@@ -56,7 +67,7 @@ export const Images = memo(function Images({ images, onImageMissing }: ImagesPro
       const nextUrl = nextEntry ? resolveImageUrl(nextEntry) : null;
 
       if (!nextKeys.has(key) || nextUrl !== prevUrl) {
-        if (map.hasImage(key)) {
+        if (styleAlive(map) && map.hasImage(key)) {
           map.removeImage(key);
         }
         unregisterImage(key);
@@ -78,7 +89,9 @@ export const Images = memo(function Images({ images, onImageMissing }: ImagesPro
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        // Guard: map may have been removed between load start and completion
+        // Guard: the map (or its style) may have been torn down between load
+        // start and completion — `hasImage` itself throws once the style is gone.
+        if (!styleAlive(map)) return;
         if (!map.hasImage(key)) {
           try {
             map.addImage(key, img, { sdf });
@@ -101,8 +114,9 @@ export const Images = memo(function Images({ images, onImageMissing }: ImagesPro
   useEffect(() => {
     return () => {
       if (!map) return;
+      const alive = styleAlive(map);
       for (const [key] of loadedRef.current) {
-        if (map.hasImage(key)) {
+        if (alive && map.hasImage(key)) {
           map.removeImage(key);
         }
         unregisterImage(key);

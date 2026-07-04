@@ -28,9 +28,16 @@ export const ImageSource = memo(function ImageSource({
     if (resolvedUrl) sourceConfig.url = resolvedUrl;
     if (coordinates) sourceConfig.coordinates = coordinates;
 
-    if (!map.getSource(id)) {
-      map.addSource(id, sourceConfig as Parameters<MLMap["addSource"]>[1]);
+    try {
+      if (!map.getSource(id)) {
+        map.addSource(id, sourceConfig as Parameters<MLMap["addSource"]>[1]);
+      }
+      // Mark added whether we created it or it already existed, so the
+      // updateImage/setCoordinates effect below isn't permanently short-circuited.
       addedRef.current = true;
+    } catch {
+      // Map style not yet available
+      return;
     }
     registerSource({ id, type: "image", config: sourceConfig });
 
