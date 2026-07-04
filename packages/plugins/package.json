@@ -1,6 +1,6 @@
 {
   "name": "@knitui/plugins",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pre-configured Tamagui build-tool plugins for the knitui UI kit (babel, metro, next, vite, webpack) plus the Next.js SSR provider.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",

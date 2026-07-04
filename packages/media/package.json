@@ -1,6 +1,6 @@
 {
   "name": "@knitui/media",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Audio and video players, playlists and visualizers for Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
