@@ -64,8 +64,8 @@ return <Vertices vertices={staticVertices} colors={colors} indices={staticIndice
 ### What works — animate a path by building it in a derived value
 
 ```tsx
-const levels = useSharedValue<number[]>(zeros);   // DATA in the SV
-levels.value = nextLevels;                         // JS-thread write (e.g. an rAF loop)
+const levels = useSharedValue<number[]>(zeros); // DATA in the SV
+levels.value = nextLevels; // JS-thread write (e.g. an rAF loop)
 
 // Build the SkPath INSIDE the derived value — never assign an SkPath to an SV.
 // Explicit deps are required on web (no worklets Babel plugin under Vite).
@@ -134,8 +134,9 @@ element.
 Data arrives on the JS thread. Compute and publish there.
 
 ```tsx
-const width = useMeasuredWidth();                 // from onLayout, see Pattern C
-const vertices = React.useMemo(                   // static geometry, recomputed on resize
+const width = useMeasuredWidth(); // from onLayout, see Pattern C
+const vertices = React.useMemo(
+  // static geometry, recomputed on resize
   () => buildVertexGrid(width, height, cols, rows),
   [width, height, cols, rows],
 );
@@ -143,8 +144,8 @@ const colors = useSharedValue<number[]>(fillColors(cols * rows, floor));
 
 React.useEffect(() => {
   const off = controller.on("sampleUpdate", (sample) => {
-    const next = computeColors(sample);           // plain JS — cheap
-    colors.value = next;                          // publish → repaint
+    const next = computeColors(sample); // plain JS — cheap
+    colors.value = next; // publish → repaint
   });
   return off;
 }, [controller, colors]);
@@ -205,7 +206,7 @@ Height is almost always a fixed prop; only width needs measuring for a
 
 ```tsx
 function canvasKitReady() {
-  if (!isWeb) return true;                          // native is always ready
+  if (!isWeb) return true; // native is always ready
   return typeof (globalThis as { CanvasKit?: unknown }).CanvasKit !== "undefined";
 }
 const ready = useGraphicsReady() && canvasKitReady();
@@ -278,7 +279,8 @@ screen, assign it, and flip.
 const bufRef = React.useRef([makeBuffer(), makeBuffer()]);
 const flip = React.useRef(0);
 // per frame:
-const i = flip.current; flip.current = i ^ 1;
+const i = flip.current;
+flip.current = i ^ 1;
 sv.value = writeInto(bufRef.current[i], data); // mutate off-screen buffer, then assign
 ```
 
@@ -305,13 +307,18 @@ healthy average fps. Instead, split it:
 
 ```tsx
 // data handler — cheap, no paint:
-target.current = reduce(sample); lastSample.current = now(); startLoop();
+target.current = reduce(sample);
+lastSample.current = now();
+startLoop();
 // rAF loop — display-paced:
 const tick = () => {
   if (now() - lastSample.current > IDLE_MS) target.current.fill(0); // audio stopped → decay out
-  const eased = smoother(target.current);          // ease toward the live target
-  sv.value = buildInto(buffer(), eased);            // repaint (double-buffered)
-  if (atRest(target.current) && atRest(eased)) { running.current = false; return; } // idle → suspend
+  const eased = smoother(target.current); // ease toward the live target
+  sv.value = buildInto(buffer(), eased); // repaint (double-buffered)
+  if (atRest(target.current) && atRest(eased)) {
+    running.current = false;
+    return;
+  } // idle → suspend
   raf(tick);
 };
 ```
@@ -370,7 +377,12 @@ entirely.
 
 ```tsx
 <Vertices vertices={staticGrid} textures={texcoords /* SV: x = value */} indices={staticIndices}>
-  <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={rampColors} positions={rampStops} />
+  <LinearGradient
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 0 }}
+    colors={rampColors}
+    positions={rampStops}
+  />
 </Vertices>
 ```
 

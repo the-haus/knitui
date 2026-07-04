@@ -28,18 +28,18 @@ here). Reference impl for the gesture/animation approach: `docs/sheet-package-pl
 Modal and Drawer are both thin chrome over one foundation that is currently **internal-only** in
 `@knitui/components/src/internal/`:
 
-| Foundation piece | File | Status today |
-| --- | --- | --- |
-| `ModalBase` (portal + scrim + escape + scroll-lock + focus-trap + return-focus + `AnimatePresence`) | `internal/modal-base.tsx` | internal |
-| `ModalBaseInner` (+`.native`) positioning layer | `internal/modal-base-inner.tsx` | internal |
-| `ModalBaseSharedProps` | `internal/modal-base.tsx` | internal |
-| `ModalChromeStyles` / `ModalChromeSlots` / `resolveModalChromeSlots` / `MODAL_CHROME_SLOTS` | `internal/modal-base.tsx` | internal |
-| `modalSizeVariant` / `panelWidthVariant` / `radiusVariant` / `shadowVariant` | `internal/style-props.ts` | internal |
-| `renderTextChild` | `internal/render-text-child.tsx` | internal |
-| motion (`useMotionPreset`, `MotionPreset(Name)`, `DISTANCES`, …) | `internal/motion.ts` | **already public** ✅ |
-| `Box`, `Text`, `CloseButton`, `Overlay`, `Portal`, `ScrollArea` | various | **already public** ✅ |
-| `slotStyles` / `SlotStyles` / `styled` / `GetProps` / `withStaticProperties` / `Theme` / `useThemeName` / `isWeb` / `AnimatePresence` | `@knitui/core` | **already public** ✅ |
-| `useId` / `useFocusTrap` / `useReducedMotion` | `@knitui/hooks` | **already public** ✅ |
+| Foundation piece                                                                                                                      | File                             | Status today          |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | --------------------- |
+| `ModalBase` (portal + scrim + escape + scroll-lock + focus-trap + return-focus + `AnimatePresence`)                                   | `internal/modal-base.tsx`        | internal              |
+| `ModalBaseInner` (+`.native`) positioning layer                                                                                       | `internal/modal-base-inner.tsx`  | internal              |
+| `ModalBaseSharedProps`                                                                                                                | `internal/modal-base.tsx`        | internal              |
+| `ModalChromeStyles` / `ModalChromeSlots` / `resolveModalChromeSlots` / `MODAL_CHROME_SLOTS`                                           | `internal/modal-base.tsx`        | internal              |
+| `modalSizeVariant` / `panelWidthVariant` / `radiusVariant` / `shadowVariant`                                                          | `internal/style-props.ts`        | internal              |
+| `renderTextChild`                                                                                                                     | `internal/render-text-child.tsx` | internal              |
+| motion (`useMotionPreset`, `MotionPreset(Name)`, `DISTANCES`, …)                                                                      | `internal/motion.ts`             | **already public** ✅ |
+| `Box`, `Text`, `CloseButton`, `Overlay`, `Portal`, `ScrollArea`                                                                       | various                          | **already public** ✅ |
+| `slotStyles` / `SlotStyles` / `styled` / `GetProps` / `withStaticProperties` / `Theme` / `useThemeName` / `isWeb` / `AnimatePresence` | `@knitui/core`                   | **already public** ✅ |
+| `useId` / `useFocusTrap` / `useReducedMotion`                                                                                         | `@knitui/hooks`                  | **already public** ✅ |
 
 **Decision: export the foundation, do NOT copy it.** Copying `ModalBase`/variants into each package
 would fork the overlay behaviour and let it drift. Instead add a small, additive public surface to
@@ -73,12 +73,12 @@ inherited variants (use them on the element, as `@knitui/sheet` does for `shadow
 - The public `Modal` export is **removed** from `@knitui/components`' barrel; consumers import from
   `@knitui/modal`. (Migration step below.)
 - The internal **Modals manager** (`@mantine/modals` port, memory `modals-manager`) currently rides
-  on `Modal` *inside* `@knitui/components`. Two options — **decide before milestone 5**:
+  on `Modal` _inside_ `@knitui/components`. Two options — **decide before milestone 5**:
   1. **Move the Modals manager into `@knitui/modal`** (it's modal-specific) — cleanest; components no
      longer references Modal at all.
   2. Keep a minimal components-internal modal for the manager only — avoids touching the manager but
      keeps a second modal impl alive. Not recommended.
-  Plan assumes **option 1**.
+     Plan assumes **option 1**.
 
 > **Alternative considered:** a dedicated `@knitui/overlay-core` package holding `ModalBase` + the
 > drag primitive, with `@knitui/components`, `@knitui/modal`, `@knitui/drawer`, `@knitui/sheet` all depending
@@ -152,6 +152,7 @@ packages/modal/
 a11y (`aria-label`/`aria-labelledby`/`aria-describedby`).
 
 **New, additive:**
+
 - `dragToDismiss?: boolean` (default `false`) — enable the reanimated/RNGH drag-down-to-dismiss layer.
 - `dragThreshold?: number` (default ~0.3 of measured height) — distance/fraction past which release dismisses.
 - `animationConfig?: WithSpringConfig` — spring for the drag settle (mirrors sheet).
@@ -177,12 +178,15 @@ Compound parts unchanged: `Modal.Content` / `Modal.Header` / `Modal.Title` / `Mo
 ## 7. Animation — default unchanged + opt-in drag
 
 ### Default (parity, keep as-is)
+
 `DEFAULT_MODAL_MOTION` = drop-in fade (`opacity:0, y:-DISTANCES.nudge`), resolved via
 `useMotionPreset(animation, { duration })`, spread onto `ModalContentFrame`; `AnimatePresence` in
 `ModalBase` plays the exit; overlay fades in lockstep. **No change** — this is the zero-risk path.
 
 ### Opt-in `dragToDismiss` (new, sheet-derived)
+
 When `dragToDismiss`:
+
 - Wrap the content frame in the shared **drag primitive** (§3), axis **+Y** (drag down).
 - `GestureDetector` over the content; `offset` `SharedValue` tracks the finger (rubber-band upward).
 - On release: `dismissDecision` (distance past `dragThreshold` OR downward fling) → animate `offset`

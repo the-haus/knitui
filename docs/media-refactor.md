@@ -17,7 +17,7 @@ Intended outcome: a **generic media core** both domains specialize, so common co
 in one place and drift becomes impossible by construction. The unification is already proven
 in-package — `session/media-session.shared.ts` (`MediaSession<C,S,Src>`) and
 `media-facade.shared.ts` (`MediaFacadeBase`) are fully domain-agnostic and shared by both
-domains. This plan hoists the duplicated *middle* layers (state helpers, base types, keyboard,
+domains. This plan hoists the duplicated _middle_ layers (state helpers, base types, keyboard,
 controller base, hook factory) up to that same altitude. Tamagui chrome stays per-domain
 (deliberately out of scope — a generic `styled()` layer hits this kit's known inference pain).
 
@@ -29,17 +29,20 @@ deleted and the `media` export removed from `core/src/index.ts`). The primitives
 `Listener`, and `formatTime` are being relocated into a **new `packages/media/src/shared`**
 module — the engine barrels (`audio/engine/index.ts`, `video/engine/index.ts`, `audio/engine/format-time.ts`)
 already import `from "../../shared"`, **but that module does not exist yet, so the tree currently
-does not typecheck.** (`smoothing` did *not* move into media — it stays at `@knitui/core/src/config/smoothing.ts`.)
+does not typecheck.** (`smoothing` did _not_ move into media — it stays at `@knitui/core/src/config/smoothing.ts`.)
 
 Consequences folded into this plan:
+
 - **T0 lives in `packages/media/src/shared/`, NOT `@knitui/core`.** No cross-package hoist; no new
-  `@knitui/core` exports; `@knitui/core` is not touched at all. This is *simpler* than the draft.
+  `@knitui/core` exports; `@knitui/core` is not touched at all. This is _simpler_ than the draft.
 - Drop every `@knitui/core` verification step and all "core gains real exports" framing.
 
 ### ⚠️ Sequencing gate (do NOT start until ALL true)
+
 A concurrent agent is (a) removing audio visualization to `@knitui/graphics` and (b) relocating
 media primitives to `packages/media/src/shared`. Both are mid-flight/uncommitted. **Before
 implementing, re-verify the working tree:**
+
 1. `packages/media/src/shared` exists and exports `TypedEmitter`, `Listener`, `formatTime`.
 2. `pnpm --filter @knitui/media typecheck` is **clean** (it is currently broken — missing `shared`).
 3. The visualization files are gone/committed (`visualizers/`, `surface/AudioVisualizer*`,
@@ -94,57 +97,124 @@ root `index.ts` stays `export {}`; `src/core/` and `src/shared/` are internal (n
 ## Generic core sketches (verified against current code)
 
 **T0 `src/shared/media-types.ts`** — the 12 common state fields in exactly one place:
+
 ```ts
 export type MediaStatus = "idle" | "loading" | "readyToPlay" | "error";
-export interface MediaError { message: string; code?: string | number }
-export interface MediaTimeUpdate { currentTime: number; duration: number; bufferedPosition: number }
+export interface MediaError {
+  message: string;
+  code?: string | number;
+}
+export interface MediaTimeUpdate {
+  currentTime: number;
+  duration: number;
+  bufferedPosition: number;
+}
 export interface BaseMediaState {
-  status: MediaStatus; playing: boolean; currentTime: number; duration: number;
-  bufferedPosition: number; volume: number; muted: boolean; playbackRate: number;
-  loop: boolean; isLive: boolean; ended: boolean; error: MediaError | null;
+  status: MediaStatus;
+  playing: boolean;
+  currentTime: number;
+  duration: number;
+  bufferedPosition: number;
+  volume: number;
+  muted: boolean;
+  playbackRate: number;
+  loop: boolean;
+  isLive: boolean;
+  ended: boolean;
+  error: MediaError | null;
 }
-export type MediaSessionState = BaseMediaState;   // widens the session's 10-field bound (both states satisfy it)
-export interface BaseMediaCapabilities { canSetVolume: boolean; canSetPlaybackRate: boolean }
+export type MediaSessionState = BaseMediaState; // widens the session's 10-field bound (both states satisfy it)
+export interface BaseMediaCapabilities {
+  canSetVolume: boolean;
+  canSetPlaybackRate: boolean;
+}
 export interface BaseMediaEventMap<State extends BaseMediaState> {
-  change: State; statusChange: { status: MediaStatus; error: MediaError | null };
-  playingChange: { playing: boolean }; timeUpdate: MediaTimeUpdate;
-  volumeChange: { volume: number; muted: boolean }; playbackRateChange: { playbackRate: number };
-  durationChange: { duration: number }; sourceLoad: { duration: number };
-  playToEnd: void; error: MediaError;
+  change: State;
+  statusChange: { status: MediaStatus; error: MediaError | null };
+  playingChange: { playing: boolean };
+  timeUpdate: MediaTimeUpdate;
+  volumeChange: { volume: number; muted: boolean };
+  playbackRateChange: { playbackRate: number };
+  durationChange: { duration: number };
+  sourceLoad: { duration: number };
+  playToEnd: void;
+  error: MediaError;
 }
-export interface BaseMediaSourceObject { uri?: string; assetId?: number; headers?: Record<string,string> }
+export interface BaseMediaSourceObject {
+  uri?: string;
+  assetId?: number;
+  headers?: Record<string, string>;
+}
 export interface BaseMediaPlayerConfig {
-  autoPlay?: boolean; loop?: boolean; muted?: boolean; volume?: number;
-  playbackRate?: number; updateInterval?: number;   // unified name (video's timeUpdateInterval folds in)
+  autoPlay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  volume?: number;
+  playbackRate?: number;
+  updateInterval?: number; // unified name (video's timeUpdateInterval folds in)
 }
-export interface BaseMediaMetadata { title?: string; artist?: string; artwork?: string }
+export interface BaseMediaMetadata {
+  title?: string;
+  artist?: string;
+  artwork?: string;
+}
 ```
 
 **Domain `types.ts` collapse** (`extends` keeps nominal names in errors/tooltips):
+
 ```ts
 // audio/types.ts
 export interface AudioControllerState extends BaseMediaState {
-  shouldCorrectPitch: boolean; isBuffering: boolean; isLoaded: boolean;
-  lockScreenActive: boolean; metadata: AudioMetadata | null;
+  shouldCorrectPitch: boolean;
+  isBuffering: boolean;
+  isLoaded: boolean;
+  lockScreenActive: boolean;
+  metadata: AudioMetadata | null;
 }
-export interface AudioControllerEventMap extends BaseMediaEventMap<AudioControllerState> { sampleUpdate: AudioSampleData }
-export interface AudioCapabilities extends BaseMediaCapabilities { canCorrectPitch: boolean; canSample: boolean; canLockScreen: boolean }
-export interface AudioMetadata extends BaseMediaMetadata { albumTitle?: string }
+export interface AudioControllerEventMap extends BaseMediaEventMap<AudioControllerState> {
+  sampleUpdate: AudioSampleData;
+}
+export interface AudioCapabilities extends BaseMediaCapabilities {
+  canCorrectPitch: boolean;
+  canSample: boolean;
+  canLockScreen: boolean;
+}
+export interface AudioMetadata extends BaseMediaMetadata {
+  albumTitle?: string;
+}
 // video/types.ts
 export interface VideoControllerState extends BaseMediaState {
-  fullscreen: boolean; pictureInPicture: boolean;
-  availableAudioTracks: AudioTrack[]; availableSubtitleTracks: SubtitleTrack[]; availableVideoTracks: VideoTrack[];
-  audioTrackId: string | null; subtitleTrackId: string | null; activeCueText: string | null;
+  fullscreen: boolean;
+  pictureInPicture: boolean;
+  availableAudioTracks: AudioTrack[];
+  availableSubtitleTracks: SubtitleTrack[];
+  availableVideoTracks: VideoTrack[];
+  audioTrackId: string | null;
+  subtitleTrackId: string | null;
+  activeCueText: string | null;
 }
 export interface VideoControllerEventMap extends BaseMediaEventMap<VideoControllerState> {
-  fullscreenChange: { fullscreen: boolean }; pictureInPictureChange: { pictureInPicture: boolean };
-  tracksChange: { availableAudioTracks: AudioTrack[]; availableSubtitleTracks: SubtitleTrack[]; availableVideoTracks: VideoTrack[] };
+  fullscreenChange: { fullscreen: boolean };
+  pictureInPictureChange: { pictureInPicture: boolean };
+  tracksChange: {
+    availableAudioTracks: AudioTrack[];
+    availableSubtitleTracks: SubtitleTrack[];
+    availableVideoTracks: VideoTrack[];
+  };
 }
-export interface VideoCapabilities extends BaseMediaCapabilities { canFullscreen; canPictureInPicture; canSelectAudioTracks; canSelectSubtitleTracks; canAirPlay; canGenerateThumbnails }
+export interface VideoCapabilities extends BaseMediaCapabilities {
+  canFullscreen;
+  canPictureInPicture;
+  canSelectAudioTracks;
+  canSelectSubtitleTracks;
+  canAirPlay;
+  canGenerateThumbnails;
+}
 ```
 
 **T1 `src/core/controller.shared.ts`** — generic base, shrinks each domain base to its deltas. The
 current `BaseVideoController` (182 ln) and `BaseAudioController` (205 ln) become thin subclasses:
+
 ```ts
 export interface MediaController<State extends BaseMediaState, Caps, Events extends BaseMediaEventMap<State>, Source> {
   readonly state: State; readonly capabilities: Caps;
@@ -165,6 +235,7 @@ abstract class BaseMediaController<State, Caps, Events, Source> implements Media
   // abstract: play pause replay seekTo setVolume setMuted setPlaybackRate setLoop replace retry
 }
 ```
+
 - `BaseAudioController extends BaseMediaController<...>` adds ONLY the silence-gate
   (`emitSample`, `SAMPLE_SILENCE_FLOOR`, `_lastAudibleSampleMs`) + lock-screen/sampling abstracts.
 - `BaseVideoController extends BaseMediaController<...>` adds ONLY `toggleFullscreen`/`togglePictureInPicture`
@@ -176,15 +247,17 @@ abstract class BaseMediaController<State, Caps, Events, Source> implements Media
 **T1 `src/core/react/createMediaControllerHook.ts`** — confirmed: `useAudioController.tsx` and
 `useVideoController.tsx` are byte-identical except the engine hook (`useAudioEngine`/`useVideoEngine`),
 the `configBag`, and one extra effect. Factory signature:
+
 ```ts
-createMediaControllerHook({ useEngine, configBag, getSource, extraEffects })
+createMediaControllerHook({ useEngine, configBag, getSource, extraEffects });
 //   wiring (identical): useId → idempotent register → useMemo(getFacade) →
 //   useSyncExternalStore(session.subscribe, () => session.snapshotFor(id)) →
 //   source-sync effect w/ skip-first ref → loop/muted/volume/rate effects → autoplay → unregister cleanup
 ```
+
 - audio `extraEffects`: `facade.setSamplingEnabled(Boolean(options.sampling))`.
 - video `extraEffects`: `engine.session.update(id, { config: { surface: options.surface } })`.
-Each domain hook (`.tsx` + `.native.tsx`) becomes ~15 lines. Pure TS/React — no Tamagui.
+  Each domain hook (`.tsx` + `.native.tsx`) becomes ~15 lines. Pure TS/React — no Tamagui.
 
 **Keyboard:** `resolveMediaKeyAction` (T0 `src/shared/media-keyboard.ts`) returns the common action union;
 `audio/engine/keyboard.ts` re-exports it (audio has no extra keys); `video/engine/keyboard.ts` wraps it
@@ -200,30 +273,32 @@ Barrels currently export `resolveKeyAction` + `AudioKeyAction`/`VideoKeyAction` 
 All renames ship as additive `@deprecated` aliases first, so public API + existing chrome compile at
 every step; breaking removal is a later, separate major.
 
-| Drift | Canonical | Mechanism |
-|---|---|---|
-| Status type | `MediaStatus` | `AudioStatus`/`VideoStatus` alias it; `AudioPlaybackStatus` → `@deprecated` alias of `AudioStatus` |
-| Error type | `MediaError` | `AudioError`/`VideoError` alias it. **DOM name clash:** web adapters already use `MediaError` (DOM) — alias-import the package type inside web adapters |
-| Config interval | `updateInterval` | drop video's `timeUpdateInterval`; update `video/hooks/useVideoController.shared.ts:62 pickPlayerConfig` + the native adapter read site |
-| `timeUpdate` payload | `MediaTimeUpdate {currentTime, duration, bufferedPosition}` | audio emits `{currentTime,duration}`, video emits `{currentTime,bufferedPosition}` today — emit the superset (additive; existing `onTimeUpdate(p.currentTime)` consumers unaffected). Verify each adapter has all three at its emit site |
-| `seekTo`/`seekBy` return | `void \| Promise<void>` | widen video's iface (`controller.shared.ts:43,45`); adapters return `void` (assignable). Removes the BaseVideoController-vs-MediaFacadeBase mismatch |
-| **Native video `seekBy` bug** | route through base `seekTo` | **delete the `override seekBy` at `video/controller/expo-controller.native.ts:354-356`** (`this.player.seekBy(seconds)`) so it clamps + optimistically updates like every other adapter |
-| `emitEvent` JSDoc lie | "emit a granular event" | fix `video/controller/controller.shared.ts:115` (says "AND fold it into state"; body only emits) — and the audio copy |
-| Metadata field | `artwork` | rename audio `artworkUrl`→`artwork`; keep `@deprecated artworkUrl?` read by the lock-screen adapter one cycle; `albumTitle?` stays audio-only |
-| Video lacks split time parts | add `TimeCurrent` + `TimeDuration` to `Video.chrome` | mirror audio (4-line bodies + `color={ON_DARK}`), export + attach to `Video.*`, keep combined `TimeDisplay` |
+| Drift                         | Canonical                                                   | Mechanism                                                                                                                                                                                                                                |
+| ----------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status type                   | `MediaStatus`                                               | `AudioStatus`/`VideoStatus` alias it; `AudioPlaybackStatus` → `@deprecated` alias of `AudioStatus`                                                                                                                                       |
+| Error type                    | `MediaError`                                                | `AudioError`/`VideoError` alias it. **DOM name clash:** web adapters already use `MediaError` (DOM) — alias-import the package type inside web adapters                                                                                  |
+| Config interval               | `updateInterval`                                            | drop video's `timeUpdateInterval`; update `video/hooks/useVideoController.shared.ts:62 pickPlayerConfig` + the native adapter read site                                                                                                  |
+| `timeUpdate` payload          | `MediaTimeUpdate {currentTime, duration, bufferedPosition}` | audio emits `{currentTime,duration}`, video emits `{currentTime,bufferedPosition}` today — emit the superset (additive; existing `onTimeUpdate(p.currentTime)` consumers unaffected). Verify each adapter has all three at its emit site |
+| `seekTo`/`seekBy` return      | `void \| Promise<void>`                                     | widen video's iface (`controller.shared.ts:43,45`); adapters return `void` (assignable). Removes the BaseVideoController-vs-MediaFacadeBase mismatch                                                                                     |
+| **Native video `seekBy` bug** | route through base `seekTo`                                 | **delete the `override seekBy` at `video/controller/expo-controller.native.ts:354-356`** (`this.player.seekBy(seconds)`) so it clamps + optimistically updates like every other adapter                                                  |
+| `emitEvent` JSDoc lie         | "emit a granular event"                                     | fix `video/controller/controller.shared.ts:115` (says "AND fold it into state"; body only emits) — and the audio copy                                                                                                                    |
+| Metadata field                | `artwork`                                                   | rename audio `artworkUrl`→`artwork`; keep `@deprecated artworkUrl?` read by the lock-screen adapter one cycle; `albumTitle?` stays audio-only                                                                                            |
+| Video lacks split time parts  | add `TimeCurrent` + `TimeDuration` to `Video.chrome`        | mirror audio (4-line bodies + `color={ON_DARK}`), export + attach to `Video.*`, keep combined `TimeDisplay`                                                                                                                              |
 
 **File splits (mechanical move + re-export, no behavior change):**
+
 - `video/Video.chrome.tsx` (658 ln) → `+ .overlays.tsx` (BigPlay/Buffering/Error/Caption) `+ .menus.tsx` (PlaybackRate/Settings/Volume/PiP/Fullscreen + `useHoldWhileOpen`).
 - `audio/Audio.chrome.tsx` (417 ln) → `+ .controls.tsx`.
 - both `html-controller.ts` (~505/526 ln) → extract the event-wiring block to `html-events.ts`.
 - `video/controller/expo-controller.native.ts` (502 ln) → `expo-events.native.ts` + `expo-captions.native.ts`.
-**Barrels:** give both `index.ts` one identical section order (doc-comment → component+chrome →
-controller hooks → engine helpers → session → controller-contract types); **move video's mid-file
-doc-comment to the top**.
+  **Barrels:** give both `index.ts` one identical section order (doc-comment → component+chrome →
+  controller hooks → engine helpers → session → controller-contract types); **move video's mid-file
+  doc-comment to the top**.
 
 ---
 
 ## Focused test coverage (new)
+
 - `packages/media/src/shared/media-state.test.ts` — hoisted helpers (mergeState identity/short-circuit, progressOf, bufferedFractionOf, bufferedEndForTime) + `createBaseState`.
 - `packages/media/src/core/react/createMediaControllerHook.test.tsx` — register/snapshot/source-sync/autoplay/unregister wiring + `useSyncExternalStore` snapshot stability.
 - BaseController behavior incl. the **seekBy clamp fix** (seek-relative clamps at 0 and at duration; optimistic state). Extend existing `keyboard.test.ts`/`state.test.ts` rather than duplicate.
@@ -235,13 +310,13 @@ doc-comment to the top**.
 
 > Phase 0 (precondition, not a code change): confirm the sequencing gate above — `src/shared` exists and `pnpm --filter @knitui/media typecheck` is clean.
 
-1. **Hoist pure state helpers to `src/shared/media-state.ts`** — *mechanical, ~0 risk.* Both domain `engine/state.ts` re-export the core helpers, keep only `createInitialState` (which differs per domain — confirmed). Update both `engine/index.ts` re-export lists. Existing `state.test.ts` confirm identity; add `media-state.test.ts`.
-2. **Introduce T0 base types `src/shared/media-types.ts`** — *type-only.* Domain types `extends` the bases (+ `@deprecated` aliases). Point session `MediaSessionState` at `BaseMediaState`. Gate: `tsc --noEmit`.
-3. **Generic keyboard + `refineCapabilities`** — *mechanical.* `src/shared/media-keyboard.ts` + `src/core/capabilities.ts`; rewire domain keyboard/capabilities. Existing `keyboard.test.ts` pass unchanged.
-4. **Generic `BaseMediaController`** (`src/core/controller.shared.ts`) — *moderate (the one type seam).* Re-base both domain controllers; land alone. Run `html-controller.test.ts` + `emit-gate.test.ts` + native typecheck. Apply `TypedEmitter<any>` fallback only if needed.
-5. **`createMediaControllerHook` factory** (`src/core/react/`) — *moderate (React parity).* Rewrite all four hooks (`.tsx`/`.native.tsx` × 2); keep effect bodies identical; diff against `Audio.test.tsx`/`Video.test.tsx`. Add the factory test.
+1. **Hoist pure state helpers to `src/shared/media-state.ts`** — _mechanical, ~0 risk._ Both domain `engine/state.ts` re-export the core helpers, keep only `createInitialState` (which differs per domain — confirmed). Update both `engine/index.ts` re-export lists. Existing `state.test.ts` confirm identity; add `media-state.test.ts`.
+2. **Introduce T0 base types `src/shared/media-types.ts`** — _type-only._ Domain types `extends` the bases (+ `@deprecated` aliases). Point session `MediaSessionState` at `BaseMediaState`. Gate: `tsc --noEmit`.
+3. **Generic keyboard + `refineCapabilities`** — _mechanical._ `src/shared/media-keyboard.ts` + `src/core/capabilities.ts`; rewire domain keyboard/capabilities. Existing `keyboard.test.ts` pass unchanged.
+4. **Generic `BaseMediaController`** (`src/core/controller.shared.ts`) — _moderate (the one type seam)._ Re-base both domain controllers; land alone. Run `html-controller.test.ts` + `emit-gate.test.ts` + native typecheck. Apply `TypedEmitter<any>` fallback only if needed.
+5. **`createMediaControllerHook` factory** (`src/core/react/`) — _moderate (React parity)._ Rewrite all four hooks (`.tsx`/`.native.tsx` × 2); keep effect bodies identical; diff against `Audio.test.tsx`/`Video.test.tsx`. Add the factory test.
 6. **Consistency fixes + bug fix** — payload widening, `updateInterval` unify, metadata rename (+ lock-screen adapter mapping), **delete native `seekBy` override**, `emitEvent` JSDoc, `seekTo`/`seekBy` widen, add `Video` `TimeCurrent`/`TimeDuration`. **Behavior — device/sim verify.**
-7. **File splits + barrel normalization** — *mechanical.* Move + re-export; storybook confirms chrome unchanged.
+7. **File splits + barrel normalization** — _mechanical._ Move + re-export; storybook confirms chrome unchanged.
 8. **Cleanup** — remove dead duplicated code; confirm `src/core/`+`src/shared/` never leak into a public subpath; deprecation JSDoc.
 
 Suggested commit boundaries: 1–3 together (pure/additive), 4 alone, 5 alone, 6 alone (behavior — device-verify), 7 together. Never commit without explicit request.
@@ -249,6 +324,7 @@ Suggested commit boundaries: 1–3 together (pure/additive), 4 alone, 5 alone, 6
 ---
 
 ## Verification
+
 - `pnpm --filter @knitui/media typecheck` — clean (primary gate for the type-collapse phases; note `node_modules` must be installed first — currently absent in this container).
 - `pnpm --filter @knitui/media lint` — clean.
 - `pnpm --filter @knitui/media test` — all prior tests + new focused tests green. (Known flaky `media-session` parallel-worker SIGSEGV: re-run isolated with `--runInBand` to distinguish flake from regression.)

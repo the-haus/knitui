@@ -150,15 +150,15 @@ easing hook are exported too.
 
 ## What's inside
 
-| Export | What it is |
-| --- | --- |
-| `GraphicsProvider`, `useGraphics`, `useGraphicsReady` | Skia runtime provider + readiness hooks |
-| `EffectView` (`ViewProps`, `EffectLayer`, `EffectKind`, …) | Effects-on-a-box `<View>` |
-| `ShadowView` (`ShadowProps`, `ShadowViewProps`) | Cross-platform Skia drop shadow `<View>` |
-| `AudioVisualizer` + `AudioBars`/`AudioDots`/`AudioLine`/`AudioRadial`/`AudioWaveform` | Data-driven audio visualizer + presets |
-| `GradientShader` + gradient fill types (`LinearGradientFill`, `RadialGradientFill`, …) | Reusable Skia gradient shader |
-| `fftToBands`, `createSpectrumMapper`, `useLevelTransition`, `registerVisualizerVariant` | Spectrum mapping + level-transition primitives |
-| `export * from "@shopify/react-native-skia"` | The whole Skia surface — `Canvas`, `Group`, `Path`, `Image`, shaders, `useImage`, `useSVG`, `Skia`, … |
+| Export                                                                                  | What it is                                                                                            |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `GraphicsProvider`, `useGraphics`, `useGraphicsReady`                                   | Skia runtime provider + readiness hooks                                                               |
+| `EffectView` (`ViewProps`, `EffectLayer`, `EffectKind`, …)                              | Effects-on-a-box `<View>`                                                                             |
+| `ShadowView` (`ShadowProps`, `ShadowViewProps`)                                         | Cross-platform Skia drop shadow `<View>`                                                              |
+| `AudioVisualizer` + `AudioBars`/`AudioDots`/`AudioLine`/`AudioRadial`/`AudioWaveform`   | Data-driven audio visualizer + presets                                                                |
+| `GradientShader` + gradient fill types (`LinearGradientFill`, `RadialGradientFill`, …)  | Reusable Skia gradient shader                                                                         |
+| `fftToBands`, `createSpectrumMapper`, `useLevelTransition`, `registerVisualizerVariant` | Spectrum mapping + level-transition primitives                                                        |
+| `export * from "@shopify/react-native-skia"`                                            | The whole Skia surface — `Canvas`, `Group`, `Path`, `Image`, shaders, `useImage`, `useSVG`, `Skia`, … |
 
 Same-named Knit exports win over Skia's (e.g. our `ImageSource` type shadows
 Skia's). The package also exports canvas geometry types
@@ -169,7 +169,7 @@ Skia's). The package also exports canvas geometry types
 
 **Preload CanvasKit before the Skia barrel.** Skia's web runtime captures
 `global.CanvasKit` at module-eval time, so CanvasKit must be on the global
-*before* anything that re-exports `@shopify/react-native-skia` evaluates.
+_before_ anything that re-exports `@shopify/react-native-skia` evaluates.
 `<GraphicsProvider>` handles this for its subtree, but if you **lazy-import**
 graphics modules, call the runtime loader first:
 
@@ -207,7 +207,9 @@ kit's Next plugin does this for you:
 ```js
 // next.config.js
 const { withKnitui } = require("@knitui/plugins/next-plugin");
-module.exports = withKnitui({ /* your next config */ });
+module.exports = withKnitui({
+  /* your next config */
+});
 ```
 
 ## Storybook & scripts
@@ -216,13 +218,13 @@ module.exports = withKnitui({ /* your next config */ });
 pnpm --filter @knitui/graphics storybook   # http://localhost:6008
 ```
 
-| Script | Description |
-| --- | --- |
-| `typecheck` | `tsc --noEmit` |
-| `lint` | `eslint .` |
-| `test` | `jest` |
+| Script      | Description                      |
+| ----------- | -------------------------------- |
+| `typecheck` | `tsc --noEmit`                   |
+| `lint`      | `eslint .`                       |
+| `test`      | `jest`                           |
 | `storybook` | Storybook dev server (port 6008) |
-| `build` | `bob build` |
+| `build`     | `bob build`                      |
 
 ---
 

@@ -4,20 +4,20 @@ This document describes how Knit UI is validated, versioned, and published.
 
 ## Overview
 
-| Concern            | Tool                                   | Where                          |
-| ------------------ | -------------------------------------- | ------------------------------ |
-| Task orchestration | Turborepo                              | `turbo.json`                   |
-| Package manager    | pnpm workspaces                        | `pnpm-workspace.yaml`          |
-| Versioning/publish | Changesets                             | `.changeset/`                  |
-| Local git checks   | Git hooks (`core.hooksPath = .husky`)  | `.husky/`                      |
-| CI                 | GitHub Actions                         | `.github/workflows/ci.yml`     |
-| Release            | GitHub Actions + Changesets            | `.github/workflows/release.yml`|
-| Storybook deploy   | GitHub Actions → Pages                 | `.github/workflows/storybook.yml` |
-| Visual regression  | GitHub Actions + Playwright            | `.github/workflows/visual-regression.yml` |
-| Native builds      | GitHub Actions + EAS Build             | `.github/workflows/eas-build.yml` |
-| E2E (native)       | GitHub Actions + Detox                 | `.github/workflows/e2e.yml`    |
-| Dependency updates | Dependabot                             | `.github/dependabot.yml`       |
-| Node version       | `.nvmrc` / `.node-version` (Node 20)   | repo root                      |
+| Concern            | Tool                                  | Where                                     |
+| ------------------ | ------------------------------------- | ----------------------------------------- |
+| Task orchestration | Turborepo                             | `turbo.json`                              |
+| Package manager    | pnpm workspaces                       | `pnpm-workspace.yaml`                     |
+| Versioning/publish | Changesets                            | `.changeset/`                             |
+| Local git checks   | Git hooks (`core.hooksPath = .husky`) | `.husky/`                                 |
+| CI                 | GitHub Actions                        | `.github/workflows/ci.yml`                |
+| Release            | GitHub Actions + Changesets           | `.github/workflows/release.yml`           |
+| Storybook deploy   | GitHub Actions → Pages                | `.github/workflows/storybook.yml`         |
+| Visual regression  | GitHub Actions + Playwright           | `.github/workflows/visual-regression.yml` |
+| Native builds      | GitHub Actions + EAS Build            | `.github/workflows/eas-build.yml`         |
+| E2E (native)       | GitHub Actions + Detox                | `.github/workflows/e2e.yml`               |
+| Dependency updates | Dependabot                            | `.github/dependabot.yml`                  |
+| Node version       | `.nvmrc` / `.node-version` (Node 20)  | repo root                                 |
 
 ## 1. Continuous Integration (`ci.yml`)
 
@@ -84,10 +84,10 @@ model can be flipped to lib-first later without republishing plumbing.
 
 ## 4. Required repository secrets
 
-| Secret                     | Used by       | Purpose                          |
-| -------------------------- | ------------- | -------------------------------- |
-| `NPM_TOKEN`                | `release.yml` | `changeset publish` auth to npm  |
-| `TURBO_TOKEN` / `TURBO_TEAM`| both (opt.)  | Turbo remote cache               |
+| Secret                       | Used by       | Purpose                         |
+| ---------------------------- | ------------- | ------------------------------- |
+| `NPM_TOKEN`                  | `release.yml` | `changeset publish` auth to npm |
+| `TURBO_TOKEN` / `TURBO_TEAM` | both (opt.)   | Turbo remote cache              |
 
 npm provenance is enabled (`id-token: write` + `NPM_CONFIG_PROVENANCE`), which
 requires a **granular npm automation token** on the `@knitui` org.

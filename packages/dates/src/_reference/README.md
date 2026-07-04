@@ -30,7 +30,7 @@ The numbered rules below map 1:1 onto the numbered comments in
    declare the slot→part map once, and distribute it with `slotStyles().merge`
    (from `@knitui/core`). Per-item dynamics stay on a `getXxxProps(date)` callback.
    Precedence is fixed: `defaults < styles[slot] < explicit xxxProps < inline
-   props on a composed part` — **explicit beats sugar**.
+props on a composed part` — **explicit beats sugar**.
 8. **Controlled + uncontrolled value** through `useUncontrolled`.
 9. **Locale + formatting** via `useDatesContext().getLocale(locale)` + dayjs
    (consumer `locale` prop wins over the provider).
