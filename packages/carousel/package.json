@@ -1,6 +1,6 @@
 {
   "name": "@knitui/carousel",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Cross-platform carousel for Knit UI (Embla-style engine).",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
