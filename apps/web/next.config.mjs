@@ -33,6 +33,7 @@ const nextConfig = {
     "@knitui/hooks",
     "@knitui/map",
     "@knitui/graphics",
+    "@knitui/mediaquery",
     "@knitui/demo",
   ],
 };

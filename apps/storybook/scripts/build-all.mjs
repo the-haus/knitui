@@ -26,7 +26,18 @@ const repoRoot = path.resolve(appDir, "..", "..");
 const OUT = path.join(appDir, "storybook-static");
 
 /** Packages that ship a `.storybook/` config. core/hooks/plugins have no stories. */
-const PACKAGES = ["components", "dates", "carousel", "graphics", "icons", "map", "media", "sheet"];
+const PACKAGES = [
+  "components",
+  "dates",
+  "carousel",
+  "graphics",
+  "icons",
+  "emoji",
+  "map",
+  "media",
+  "mediaquery",
+  "sheet",
+];
 
 const run = (cmd, cwd) => {
   console.log(`\n› ${cmd}\n  (cwd: ${path.relative(repoRoot, cwd) || "."})`);

@@ -20,8 +20,10 @@ const PACKAGES: Array<[id: string, title: string]> = [
   ["carousel", "Carousel"],
   ["graphics", "Graphics"],
   ["icons", "Icons"],
+  ["emoji", "Emoji"],
   ["map", "Map"],
   ["media", "Media"],
+  ["mediaquery", "Media Query"],
   ["sheet", "Sheet"],
 ];
 
