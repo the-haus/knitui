@@ -15,3 +15,6 @@ pnpm-lock.yaml
 # Generated / scratch
 tmp/
 *.d.ts
+# @knitui/emoji generated data modules (~3800 machine-generated .js glyphs;
+# also eslint-ignored — see packages/emoji/eslint.config.mjs)
+packages/emoji/src/emojis/

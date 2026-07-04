@@ -6,8 +6,10 @@
     [
       "@knitui/core",
       "@knitui/hooks",
+      "@knitui/mediaquery",
       "@knitui/components",
       "@knitui/icons",
+      "@knitui/emoji",
       "@knitui/graphics",
       "@knitui/dates"
     ]
