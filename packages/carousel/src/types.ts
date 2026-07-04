@@ -217,6 +217,25 @@ export interface CarouselProps<T> {
   fixedDirection?: "positive" | "negative";
 
   /* Gesture / scroll ----------------------------------------------------- */
+  /**
+   * How the track scrolls.
+   *
+   * - `"transform"` (default) — the custom reanimated engine: a single scroll
+   *   offset drives every slide's transform. Powers `loop`, the transition
+   *   `mode`s (parallax/fade/cube/…), virtualization, and async `source`.
+   * - `"native"` — a real platform scroll container (an `Animated.ScrollView` on
+   *   native, an overflow-scroll surface on web). You get the OS's own momentum,
+   *   rubber-band overscroll, accessible scrolling, and free (non-paged)
+   *   scrolling. This is the "normal scroll" mode.
+   *
+   * Native mode trades some features for that: it always mounts every slide (no
+   * windowed virtualization), forces `loop` off, and ignores the transition
+   * `mode`/`customAnimation` (slides lay out in normal flow, start-aligned).
+   * `snapEnabled` / `pagingEnabled` / `overscrollEnabled`, `vertical`, `itemSize`,
+   * the imperative `ref`, controlled `index`, pagination and `onProgressChange`
+   * all keep working. Default `"transform"`.
+   */
+  scrollMode?: "transform" | "native";
   enabled?: boolean;
   pagingEnabled?: boolean;
   snapEnabled?: boolean;

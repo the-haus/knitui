@@ -11,7 +11,7 @@ import { useDragGesture } from "../input/useDragGesture";
 import { useKeyboard } from "../input/useKeyboard";
 import { useWheel } from "../input/useWheel";
 import { useLayout } from "../layouts";
-import { resolveConfig, useCarouselCore } from "../motion/useCarouselCore";
+import { resolveConfig, type SeekFn, useCarouselCore } from "../motion/useCarouselCore";
 import { Pagination } from "../pagination/Pagination";
 import { useResolvedSource } from "../source";
 import type { CarouselProps, CarouselRef } from "../types";
@@ -28,11 +28,13 @@ import {
   SlideBox,
   useCarouselSlots,
 } from "./chrome";
+import { NativeTrack } from "./NativeTrack";
 import { Track } from "./Track";
 
 function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) {
   const config = resolveConfig(props);
   const { count, vertical, loop, windowSize, prefetchCount, defaultIndex, enabled } = config;
+  const native = config.scrollMode === "native";
 
   // Normalize eager `data` and lazy `source` into one accessor; re-renders as
   // async pages arrive.
@@ -53,7 +55,13 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
   // Autoplay needs the controller; the core needs to pause/resume autoplay.
   // Break the cycle with a ref the core reads lazily.
   const autoplayRef = React.useRef<{ pause: () => void; resume: () => void } | null>(null);
-  const core = useCarouselCore(props, config, autoplayRef);
+  // In native scroll mode the track registers an imperative seek here so the
+  // controller / controlled `index` drive the real scroll container.
+  const seekRef = React.useRef<SeekFn | null>(null);
+  const registerSeek = React.useCallback((fn: SeekFn | null) => {
+    seekRef.current = fn;
+  }, []);
+  const core = useCarouselCore(props, config, autoplayRef, seekRef);
 
   // Honour reduced-motion: never auto-advance when the user prefers less motion.
   const reducedMotion = useReducedMotion();
@@ -103,7 +111,9 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
   const hostRef = React.useRef<unknown>(null);
   useWheel({
     hostRef,
-    enabled: enabled && (props.wheelEnabled ?? true),
+    // Native mode lets the platform own the wheel/trackpad (the scroll container
+    // scrolls itself); the custom page-per-wheel handler would fight it.
+    enabled: enabled && !native && (props.wheelEnabled ?? true),
     vertical,
     count,
     controller: core.controller,
@@ -139,10 +149,13 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
         tabIndex: enabled && (props.keyboardEnabled ?? true) ? 0 : undefined,
       } as Record<string, unknown>)
     : null;
-  // Let the browser own the cross-axis scroll; we own the main axis.
-  const touchActionStyle = isWeb
-    ? ({ touchAction: vertical ? "pan-x" : "pan-y" } as unknown as ViewStyle)
-    : null;
+  // Transform mode: let the browser own the cross-axis scroll; we own the main
+  // axis. Native mode leaves `touch-action` alone so the real scroll container
+  // handles touch itself.
+  const touchActionStyle =
+    isWeb && !native
+      ? ({ touchAction: vertical ? "pan-x" : "pan-y" } as unknown as ViewStyle)
+      : null;
 
   // Per-slot style sugar + marker-slot chrome (Controls / Indicators / Overlay).
   const s = useCarouselSlots(props.styles);
@@ -222,33 +235,62 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
         style={[touchActionStyle, props.style]}
         {...webProps}
       >
-        <GestureDetector gesture={gesture}>
-          <CarouselViewport
-            collapsable={false}
-            {...s.get("viewport")}
-            style={props.contentContainerStyle}
-          >
+        {native ? (
+          <CarouselViewport collapsable={false} {...s.get("viewport")}>
             {core.pageSize > 0 ? (
-              <Track
+              <NativeTrack
                 getItem={getItem}
                 ensure={ensure}
                 renderItem={props.renderItem}
                 renderPlaceholder={props.renderPlaceholder}
                 keyExtractor={props.keyExtractor}
                 count={count}
-                loop={loop}
                 vertical={vertical}
-                windowSize={windowSize}
-                prefetchCount={prefetchCount}
-                defaultIndex={defaultIndex}
                 pageSize={core.pageSize}
+                defaultIndex={defaultIndex}
                 offset={core.offset}
                 size={core.size}
-                animationStyle={animationStyle}
+                enabled={enabled}
+                snapEnabled={config.snapEnabled}
+                pagingEnabled={config.pagingEnabled}
+                overscrollEnabled={config.overscrollEnabled}
+                contentContainerStyle={props.contentContainerStyle}
+                onInteractionStart={core.onInteractionStart}
+                onInteractionEnd={core.onInteractionEnd}
+                registerSeek={registerSeek}
+                testID={props.testID ? `${props.testID}-scroll` : undefined}
               />
             ) : null}
           </CarouselViewport>
-        </GestureDetector>
+        ) : (
+          <GestureDetector gesture={gesture}>
+            <CarouselViewport
+              collapsable={false}
+              {...s.get("viewport")}
+              style={props.contentContainerStyle}
+            >
+              {core.pageSize > 0 ? (
+                <Track
+                  getItem={getItem}
+                  ensure={ensure}
+                  renderItem={props.renderItem}
+                  renderPlaceholder={props.renderPlaceholder}
+                  keyExtractor={props.keyExtractor}
+                  count={count}
+                  loop={loop}
+                  vertical={vertical}
+                  windowSize={windowSize}
+                  prefetchCount={prefetchCount}
+                  defaultIndex={defaultIndex}
+                  pageSize={core.pageSize}
+                  offset={core.offset}
+                  size={core.size}
+                  animationStyle={animationStyle}
+                />
+              ) : null}
+            </CarouselViewport>
+          </GestureDetector>
+        )}
         {controls}
         {indicators}
         {overlay}

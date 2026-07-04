@@ -93,6 +93,10 @@ export function useWebPainter({
       if (entry && entry.el) {
         const live = entry as unknown as LiveEntry;
         entries.current.set(index, live);
+        // Promote the slide to its own compositor layer once, on registration:
+        // its transform is rewritten every frame, so the `will-change` hint keeps
+        // the browser from re-rasterizing it on the main thread each paint.
+        live.el.style.willChange = "transform";
         const s = size.value;
         if (s > 0) paintEntry(index, live, offset.value, s);
       } else {

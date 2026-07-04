@@ -22,6 +22,8 @@ the `withKnitui` wrapper from `@knitui/plugins/next-plugin`.
 
 ## Features
 
+- **Scroll engine**: the default transform engine, or `scrollMode="native"` for real
+  OS/browser scrolling (momentum, rubber-band, accessible, free scroll). See below.
 - **Modes**: normal, parallax, horizontal/vertical stack, and `customAnimation`.
 - **Loop** (with seamless auto-fill for 1–2 item lists), `vertical`, paging/snap, overscroll.
 - **Gesture + keyboard + wheel** input; `autoPlay` (reduced-motion & tab-visibility aware).
@@ -54,6 +56,46 @@ const ref = useRef(null);
 />;
 ```
 
+## Native ("normal") scroll
+
+By default the carousel is driven by a custom reanimated engine — one scroll
+offset transforms every slide. That powers `loop`, the transition `mode`s
+(parallax/fade/cube/…), virtualization and the async `source`. When you just want
+a **plain, momentum-scrolling strip of slides**, pass `scrollMode="native"`:
+
+```tsx
+<Carousel
+  data={photos}
+  scrollMode="native" // real platform scroll container
+  itemWidth={200} // page/snap unit; omit for full-width pages
+  renderItem={({ item }) => <PhotoCard photo={item} />}
+  style={{ width: 360, height: 240 }}
+/>
+```
+
+In native mode the track is an `Animated.ScrollView` on native and an
+overflow-scroll surface (with CSS scroll-snap) on web — so scrolling, momentum
+and rubber-band overscroll are the OS's own, and **nothing runs per frame on the
+JS thread**. The live scroll position is mirrored into the same scroll-offset
+shared value the engine uses, so pagination, `progress` / `onProgressChange`, the
+active index, controlled `index`, and the imperative `ref`
+(`next`/`prev`/`scrollTo`) all keep working.
+
+What changes vs. the transform engine:
+
+|                                                       | transform (default) | `scrollMode="native"` |
+| ----------------------------------------------------- | ------------------- | --------------------- |
+| `loop`                                                | ✅                  | forced off (warns)    |
+| transition `mode` / `customAnimation`                 | ✅                  | ignored (flow layout) |
+| virtualization / async `source`                       | ✅ windowed         | mounts every slide    |
+| momentum / overscroll physics                         | emulated            | the OS's own          |
+| `snapEnabled` / `pagingEnabled` / `overscrollEnabled` | ✅                  | ✅                    |
+| `vertical`, `itemSize`/`itemWidth`/`itemHeight`       | ✅                  | ✅                    |
+
+`snapEnabled={false}` gives free (non-paged) scrolling; `pagingEnabled` snaps one
+page per swipe. Use the default transform engine for looped, animated, or very
+large / remote lists; use native mode for a simple, maximally smooth scroll strip.
+
 ## Remote / virtualized data
 
 Pass an async `source` instead of an eager `data` array — only the slides in the
@@ -64,16 +106,16 @@ requests and a handful of mounted nodes.
 import { Carousel, createAsyncSlideSource } from "@knitui/carousel";
 
 const source = createAsyncSlideSource<Photo>({
-  length: 10_000,                 // total item count
-  pageSize: 20,                   // fetch batch size
+  length: 10_000, // total item count
+  pageSize: 20, // fetch batch size
   fetchRange: (start, count) => api.getPhotos(start, count), // Promise<Photo[]>
 });
 
 <Carousel
   source={source}
-  windowSize={5}                  // how many slides to mount/fetch around the active one
+  windowSize={5} // how many slides to mount/fetch around the active one
   renderItem={({ item }) => <PhotoCard photo={item} />}
-  renderPlaceholder={() => <Skeleton />}   // shown while a slide's page loads
+  renderPlaceholder={() => <Skeleton />} // shown while a slide's page loads
   style={{ width: 360, height: 240 }}
 />;
 ```
@@ -123,22 +165,22 @@ pnpm build        # react-native-builder-bob
 
 ## Web rendering — imperative painter
 
-Reanimated's web *reactivity* (`useAnimatedStyle` re-running on shared-value changes) does not run under
+Reanimated's web _reactivity_ (`useAnimatedStyle` re-running on shared-value changes) does not run under
 this repo's Vite tooling — Vite doesn't apply the worklets Babel plugin. So the web build does **not**
 animate slides through `useAnimatedStyle`. Instead it uses an **imperative rAF painter**
 (`view/painter.web.ts` + `Item.web.tsx`): one `requestAnimationFrame` loop reads the live `offset`
-shared value (which Reanimated's runtime *does* tick for `withTiming`/`withSpring`/`withDecay`) and
+shared value (which Reanimated's runtime _does_ tick for `withTiming`/`withSpring`/`withDecay`) and
 writes each slide's transform/opacity/zIndex to the DOM directly. This mirrors the pattern ScrollArea
 uses for its web thumbs. Native keeps the standard `useAnimatedStyle` path (`Item.tsx`). The only
 platform split in the view layer is `Item` + `painter`.
 
 ## Testing & environments
 
-| Layer | Environment | Status |
-|---|---|---|
-| Engine math (offset / loop ring / settle / window) | jest (pure TS) | ✅ deterministic |
-| Controller, virtualization, async source, autoplay, controlled index, edge cases, a11y | jest + react-native-web (jsdom) — 79 tests | ✅ verified |
-| Real animation, drag, layout modes, keyboard/wheel, async loading, large-data perf | Storybook (`:6010`) in a real browser via Playwright | ✅ verified |
+| Layer                                                                                  | Environment                                          | Status           |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------- |
+| Engine math (offset / loop ring / settle / window)                                     | jest (pure TS)                                       | ✅ deterministic |
+| Controller, virtualization, async source, autoplay, controlled index, edge cases, a11y | jest + react-native-web (jsdom) — 79 tests           | ✅ verified      |
+| Real animation, drag, layout modes, keyboard/wheel, async loading, large-data perf     | Storybook (`:6010`) in a real browser via Playwright | ✅ verified      |
 
 The jsdom painter is inert (no frame loop), so animated transforms are verified in a real browser, not
 jest; jest covers the logic. Native animation runs through Reanimated on-device as usual.

@@ -31,6 +31,8 @@ export interface ResolvedConfig {
   itemSize: number;
   /** Forced programmatic travel direction in loop mode (experimental). */
   fixedDirection?: "positive" | "negative";
+  /** Scroll implementation: the transform engine, or a native scroll container. */
+  scrollMode: "transform" | "native";
 }
 
 /** Default mounted window for a lazy source (so it doesn't fetch everything). */
@@ -41,7 +43,17 @@ const LARGE_DATA_WINDOW = 11;
 
 export function resolveConfig<T>(props: CarouselProps<T>): ResolvedConfig {
   const rawCount = props.source ? props.source.length : (props.data?.length ?? 0);
-  const loop = props.loop ?? true;
+  const scrollMode = props.scrollMode ?? "transform";
+  // Native scroll rides the platform scroll container, which can't fake the
+  // virtual loop ring (that needs the transform engine's shortest-path placement).
+  // So `loop` is unavailable in native mode — force it off, and warn in dev.
+  const native = scrollMode === "native";
+  if (process.env.NODE_ENV !== "production" && native && props.loop) {
+    console.warn(
+      '[@knitui/carousel] `loop` is not supported with scrollMode="native"; falling back to a non-looping native scroll.',
+    );
+  }
+  const loop = (props.loop ?? true) && !native;
   // Auto-fill: a 1- or 2-item loop can't fill the ring on both sides, so the
   // engine treats the list as duplicated (1→3, 2→4) while indices map back to
   // the real items. Only for eager data (a remote source already has a length).
@@ -86,6 +98,7 @@ export function resolveConfig<T>(props: CarouselProps<T>): ResolvedConfig {
     scrollAnimationDuration: props.scrollAnimationDuration ?? 500,
     itemSize,
     fixedDirection: props.fixedDirection,
+    scrollMode,
   };
 }
 
@@ -116,10 +129,19 @@ export interface CarouselCore {
  * `offset`; this hook publishes progress, reports the active index, reconciles
  * size/count changes, and exposes the imperative controller.
  */
+/** Imperatively scroll a native scroll container to an engine offset (px). */
+export type SeekFn = (offset: number, animated: boolean) => void;
+
 export function useCarouselCore<T>(
   props: CarouselProps<T>,
   config: ResolvedConfig,
   autoplayRef: React.MutableRefObject<{ pause: () => void; resume: () => void } | null>,
+  /**
+   * In `scrollMode="native"` the track registers an imperative seek here so the
+   * controller / controlled `index` drive the real scroll container instead of
+   * the (unused) transform animation. `null` in transform mode.
+   */
+  seekRef?: React.MutableRefObject<SeekFn | null>,
 ): CarouselCore {
   const { count, rawCount, loop, scrollAnimationDuration, defaultIndex } = config;
   // Map an effective (engine-space) index to the real data index it displays.
@@ -180,7 +202,9 @@ export function useCarouselCore<T>(
   React.useEffect(() => {
     if (!seededRef.current || !(size.value > 0)) return;
     const idx = clamp(activeRef.current, 0, Math.max(0, count - 1));
-    offset.value = offsetFor(idx, size.value);
+    const to = offsetFor(idx, size.value);
+    offset.value = to;
+    seekRef?.current?.(to, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count]);
 
@@ -265,7 +289,11 @@ export function useCarouselCore<T>(
     if (props.index === undefined || !seededRef.current || !(size.value > 0)) return;
     const target = clamp(props.index, 0, Math.max(0, count - 1));
     if (target === activeRef.current) return;
-    offset.value = offsetFor(target, size.value);
+    const to = offsetFor(target, size.value);
+    offset.value = to;
+    // In native mode the offset write alone doesn't move the scroll container;
+    // seek it too (unanimated — a controlled prop is authoritative).
+    seekRef?.current?.(to, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.index]);
 
@@ -296,6 +324,18 @@ export function useCarouselCore<T>(
         opts?.onFinished?.();
         onInteractionEnd();
       };
+      const seek = seekRef?.current;
+      if (seek) {
+        // Native scroll mode: drive the real scroll container. Seed the offset
+        // synchronously so progress/index report the landing page immediately
+        // (correct even where scroll events don't fire — jsdom / programmatic),
+        // then let the container animate there. The live scroll events keep the
+        // offset — and thus the pagination — in sync during the animation.
+        offset.value = target;
+        seek(target, animated);
+        done();
+        return;
+      }
       if (!animated) {
         offset.value = target;
         done();
@@ -303,7 +343,7 @@ export function useCarouselCore<T>(
         animateOffset(offset, target, cbs.current.withAnimation, scrollAnimationDuration, done);
       }
     },
-    [offset, size, scrollAnimationDuration, onInteractionEnd],
+    [offset, size, scrollAnimationDuration, onInteractionEnd, seekRef],
   );
 
   const currentPage = React.useCallback(

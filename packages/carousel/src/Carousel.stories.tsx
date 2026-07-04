@@ -661,3 +661,102 @@ export const RemoteAsyncData: Story = {
     );
   },
 };
+
+/* ------------------------------------------------------------ Native scroll */
+
+export const NativeScroll: Story = {
+  name: "Native scroll / Default",
+  render: () => (
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      renderItem={renderItem}
+      style={frame}
+      testID="carousel"
+    />
+  ),
+};
+
+export const NativeScrollFree: Story = {
+  name: "Native scroll / Free (no snap)",
+  render: () => (
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      snapEnabled={false}
+      itemWidth={200}
+      renderItem={renderItem}
+      style={frame}
+      testID="carousel"
+    />
+  ),
+};
+
+export const NativeScrollMultiple: Story = {
+  name: "Native scroll / Multiple per view",
+  render: () => (
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      itemWidth={160}
+      renderItem={renderItem}
+      style={{ width: 420, height: 200 }}
+      testID="carousel"
+    />
+  ),
+};
+
+export const NativeScrollVertical: Story = {
+  name: "Native scroll / Vertical",
+  render: () => (
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      vertical
+      renderItem={renderItem}
+      style={frame}
+      testID="carousel"
+    />
+  ),
+};
+
+export const NativeScrollPaged: Story = {
+  name: "Native scroll / One page per swipe",
+  render: () => (
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      pagingEnabled
+      renderItem={renderItem}
+      style={frame}
+      testID="carousel"
+    />
+  ),
+};
+
+export const NativeScrollWithChrome: Story = {
+  name: "Native scroll / Controls + indicators",
+  render: () => {
+    const progress = useSharedValue(0);
+    const ref = React.useRef<CarouselRef>(null);
+    return (
+      <Box style={{ gap: 12 }}>
+        <Carousel
+          ref={ref}
+          data={DATA}
+          scrollMode="native"
+          progress={progress}
+          withControls
+          renderItem={renderItem}
+          style={frame}
+          testID="carousel"
+        />
+        <Pagination
+          progress={progress}
+          count={DATA.length}
+          onPress={(i) => ref.current?.scrollTo({ index: i })}
+        />
+      </Box>
+    );
+  },
+};
