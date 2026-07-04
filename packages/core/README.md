@@ -29,7 +29,7 @@ Wrap your app once — `<Provider>` sets up theming **and** mounts the
 `GestureHandlerRootView` for you:
 
 ```tsx
-import { Provider } from "@knitui/core";        // or from "@knitui/components"
+import { Provider } from "@knitui/core"; // or from "@knitui/components"
 import { Button, Card } from "@knitui/components";
 
 export default function App() {
@@ -59,7 +59,7 @@ with this package's config + component list baked in:
 
 ```js
 // babel.config.js
-require("@knitui/plugins/babel-plugin")
+require("@knitui/plugins/babel-plugin");
 ```
 
 See the [`@knitui/plugins` README](../plugins/README.md) for the metro, next, vite,
@@ -77,24 +77,24 @@ import { createTheme, Provider } from "@knitui/core";
 
 export const config = createTheme({
   // brand & accents — a hex, a @tamagui/colors name, {light,dark}, or 12-step ramps
-  brand: "violet",                               // real Radix ramp from @tamagui/colors
+  brand: "violet", // real Radix ramp from @tamagui/colors
   // brand: "#7C3AED",                           // …or a hex (light/dark auto-generated)
   // brand: { light: "violet", dark: "purple" }, // …or mix names/hex per scheme
-  brandThemeName: "primary",                     // theme="primary" (default "brand")
+  brandThemeName: "primary", // theme="primary" (default "brand")
   accents: { teal: "#14b8a6", brandish: "indigo" }, // theme="teal" / theme="brandish"
-  includeDefaultAccents: true,                   // keep built-in blue/red/green/…
-  includeTamaguiColors: true,                    // or register all 28 @tamagui/colors
+  includeDefaultAccents: true, // keep built-in blue/red/green/…
+  includeTamaguiColors: true, // or register all 28 @tamagui/colors
   // includeTamaguiColors: ["violet", "sand", "slate"], // …or just these
 
   // neutral chrome
-  neutral: "#71717a",                            // base UI ramp (default gray)
+  neutral: "#71717a", // base UI ramp (default gray)
   shadows: { light: { shadowColor: "rgba(124,58,237,.15)" } },
 
   // tokens
-  radius: "rounded",            // "default" | "rounded" | "sharp" | { md: 12, … }
-  space: "comfortable",         // "default" | "compact" | "comfortable" | { … }
-  size: { md: 18 },             // sizing scale (defaults to match `space`)
-  fontSizes: { xl: 24 },        // font-size scale overrides
+  radius: "rounded", // "default" | "rounded" | "sharp" | { md: 12, … }
+  space: "comfortable", // "default" | "compact" | "comfortable" | { … }
+  size: { md: 18 }, // sizing scale (defaults to match `space`)
+  fontSizes: { xl: 24 }, // font-size scale overrides
   zIndex: { 6: 600 },
   colors: { brandRaw: "#7C3AED" }, // extra raw color tokens
 
@@ -107,19 +107,24 @@ export const config = createTheme({
   defaultFont: "body",
 
   // responsive
-  breakpoints: { md: 900 },        // rebuilds the media queries
+  breakpoints: { md: 900 }, // rebuilds the media queries
   media: { tall: { minHeight: 800 } },
 
   // motion / styling
-  animations: myDriver,            // replace the animation driver
+  animations: myDriver, // replace the animation driver
   shorthands: { bgc: "backgroundColor" },
   settings: { onlyAllowShorthands: false },
-  defaultTheme: "light",
+  // (initial color scheme is a runtime concern — set it on
+  //  <Provider defaultColorScheme="light" /> rather than here)
 
   // escape hatches for anything not surfaced above (both deep-merged)
-  themeBuilder: { /* templates, masks, … merged into createThemes */ },
-  themes: undefined,               // a fully-built themes object bypasses the builder
-  tamagui: { /* deep-merged into createTamagui() — augments, never clobbers */ },
+  themeBuilder: {
+    /* templates, masks, … merged into createThemes */
+  },
+  themes: undefined, // a fully-built themes object bypasses the builder
+  tamagui: {
+    /* deep-merged into createTamagui() — augments, never clobbers */
+  },
 });
 
 export const App = ({ children }) => <Provider config={config}>{children}</Provider>;
@@ -128,7 +133,22 @@ export const App = ({ children }) => <Provider config={config}>{children}</Provi
 Any palette input accepts a hex seed (dark auto-derived), a `@tamagui/colors`
 name, `{ light, dark }` seeds for explicit dark-mode tuning, or explicit 12-step
 `{ light: [...], dark: [...] }` ramps. Call `createTheme()` with no arguments to
-reproduce the kit's stock config.
+reproduce the kit's stock look — same tokens, fonts, and base/accent/children
+palettes (plus a `brand` theme aliased to the accent).
+
+Feed the result to `<Provider>`:
+
+```tsx
+import { Provider, createTheme } from "@knitui/core";
+
+const config = createTheme({ brand: "violet" });
+
+export const App = ({ children }) => <Provider config={config}>{children}</Provider>;
+```
+
+> A hex `brand`/`neutral`/accent seed is expanded into a 12-step ramp by a
+> built-in approximation (fixed per-step lightness, seed hue + saturation). For a
+> pixel-exact scale, pass a `@tamagui/colors` name or explicit 12-step ramps.
 
 ### Hard to misconfigure
 
@@ -155,41 +175,13 @@ export const config = extendTheme(themePresets.vibrant, { brand: "#7C3AED" });
 - `mergeThemeOptions(...optionSets)` — same merge, returns the options (no build).
 - `defineTheme(options)` — identity helper that preserves literal types for autocomplete.
 
-### Per-component customization
+### Per-component customization — planned
 
-Scope theming and default props to individual components via `components`. Two
-layers, both optional per component:
-
-```tsx
-import { createTheme, Provider } from "@knitui/core";
-
-export const config = createTheme({
-  brand: "violet",
-  components: {
-    // Layer A — recolor via a constrained template (or an accent palette)
-    Button: { template: "surface3", defaults: { size: "lg", variant: "light" } },
-    Card:   { template: "surface1" },
-    Badge:  { accent: "teal" },
-  },
-});
-
-// componentDefaults ride along on the config — <Provider> applies them.
-export const App = ({ children }) => <Provider config={config}>{children}</Provider>;
-```
-
-- **Layer A (theming)** — `template` (`base | surface1 | surface2 | surface3 | alt1 | alt2 | inverse`) or `accent` generate a `light_<Component>` / `dark_<Component>` sub-theme, so the component recolors with no source changes.
-- **Layer B (defaults)** — `defaults` set the component's default props, merged **under** caller props (the caller always wins). Set on the frame, they propagate through the component's styled context to its sub-parts (e.g. a `Button` `size` reaches `Button.Text`).
-- Only the **curated user-facing components** (`KIT_COMPONENT_NAMES`) are addressable; names and templates autocomplete and are validated (unknown name → "did you mean …?"; `template` + `accent` together → error).
-
-Author Layer B defaults type-safely (per component's real props) with `defineComponentDefaults` from `@knitui/components`, and apply them for a subtree without `createTheme`:
-
-```tsx
-import { Provider, defineComponentDefaults } from "@knitui/components";
-
-<Provider componentDefaults={defineComponentDefaults({ Button: { size: "lg" } })}>
-  {children}
-</Provider>
-```
+A per-component `components` layer (constrained recolor templates + default props
+via `componentDefaults` / `defineComponentDefaults`) is on the roadmap but **not
+yet implemented**. Until it lands, recolor a component with the existing theme
+system (`<Theme name="teal"><Badge /></Theme>` or `theme="teal"` on the frame)
+and set default props by wrapping your own thin component.
 
 ---
 

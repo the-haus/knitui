@@ -14,4 +14,9 @@ export interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "de
   defaultColorScheme?: ColorSchemePreference;
   /** Force a color scheme regardless of OS / user preference. */
   forceColorScheme?: ColorScheme;
+  /**
+   * A custom Tamagui config (e.g. from `createTheme` / `extendTheme`). Falls
+   * back to the kit's built-in config when omitted.
+   */
+  config?: TamaguiProviderProps["config"];
 }

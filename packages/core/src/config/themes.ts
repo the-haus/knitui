@@ -32,7 +32,7 @@ const palette = (light: Record<string, string>, dark: Record<string, string>) =>
  * `"white"` literals. (Keeping the literals HERE, in the theme layer, is correct:
  * a `linear-gradient` / scrim color genuinely can't be a `$colorN` ramp token.)
  */
-const OVER_MEDIA = {
+export const OVER_MEDIA = {
   /** Text / glyph color for chrome on a dark scrim (the old `ON_DARK = "white"`). */
   mediaOnScrim: "white",
   /** Strong scrim — caption bubble + the opaque stop of the bottom gradient. */

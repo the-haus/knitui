@@ -3,7 +3,7 @@ import { PortalProvider } from "react-native-teleport";
 
 import { TamaguiProvider, View } from "@tamagui/core";
 
-import config from "../config/config";
+import defaultConfig from "../config/config";
 import { ColorSchemeContext } from "./ColorSchemeContext";
 import type {
   ColorScheme,
@@ -20,6 +20,7 @@ import { useSystemColorScheme } from "./useSystemColorScheme";
 export function SharedProvider({
   defaultColorScheme = "system",
   forceColorScheme,
+  config = defaultConfig,
   children,
   ...rest
 }: ProviderProps) {
