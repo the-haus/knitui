@@ -23,6 +23,8 @@ import type {
   ViewState,
   ViewStateChangeEvent,
 } from "../../types/primitives";
+import { createRasterStore } from "../SvgImage/rasterizer.shared";
+import { RasterizerHost } from "../SvgImage/RasterizerHost";
 import { MapContext, type MapContextValue, NATIVE_CAPABILITIES } from "./MapView.context";
 import { isAttributionEnabled } from "./MapView.helpers";
 import type { MapProps, MapRef as PublicMapRef } from "./MapView.types";
@@ -60,6 +62,7 @@ export const MapView = memo(
     const mapRef = useRef<NativeMapRef | null>(null);
     const [ready, setReady] = useState(false);
     const { registrations } = useMapRegistries();
+    const rasterizer = useRef(createRasterStore()).current;
 
     // Latest props ref
     const propsRef = useRef<MapProps>(null!);
@@ -300,9 +303,10 @@ export const MapView = memo(
         adapterKind: "native",
         capabilities: NATIVE_CAPABILITIES,
         mapEngine: mapRef.current,
+        rasterizer,
         ...registrations,
       }),
-      [ready, registrations],
+      [ready, registrations, rasterizer],
     );
 
     return (
@@ -375,6 +379,13 @@ export const MapView = memo(
             */}
             {children}
           </MapLibreMap>
+          {/*
+            Offscreen SVG rasterization surfaces live OUTSIDE the native MapView
+            (a sibling here, not a child above) so react-native-svg paints them
+            reliably — nested inside MapView they often never paint on the New
+            Architecture, and `toDataURL` comes back empty.
+          */}
+          <RasterizerHost store={rasterizer} />
         </MapContext.Provider>
       </View>
     );

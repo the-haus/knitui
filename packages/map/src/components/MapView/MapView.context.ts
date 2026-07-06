@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 
+import type { RasterStore } from "../SvgImage/rasterizer.shared";
 import type { ImageEntry, LayerEntry, SourceEntry } from "./MapView.registry";
 
 // ── Adapter kind ────────────────────────────────────────────────────
@@ -62,6 +63,12 @@ export interface MapContextValue {
   // ── Interactive source registration (for cursor: pointer on hover) ──
   registerInteractiveSource: (sourceId: string) => void;
   unregisterInteractiveSource: (sourceId: string) => void;
+
+  /**
+   * Shared SVG → bitmap rasterizer. `SvgImage`/`useRasterizedSvg` register icons
+   * here; `MapView` renders the offscreen surfaces via `RasterizerHost`.
+   */
+  rasterizer: RasterStore;
 }
 
 // ── React context ───────────────────────────────────────────────────

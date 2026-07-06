@@ -59,6 +59,8 @@ const config: StorybookConfig = {
           "@maplibre/maplibre-gl-style-spec",
           "expo-image",
           "react-native-web",
+          // SvgImage rasterizes SVG icons via react-native-svg on web too.
+          "react-native-svg",
         ],
         esbuildOptions: {
           resolveExtensions: RN_WEB_EXTENSIONS,

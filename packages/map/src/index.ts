@@ -87,8 +87,8 @@ export type { GeoJSONSourceProps, GeoJSONSourceRef } from "./components/ShapeSou
 
 // ── SVG icons ──────────────────────────────────────────────────────
 
-export { SvgImage } from "./components/SvgImage";
-export type { SvgImageProps } from "./components/SvgImage";
+export { SvgImage, SvgImages } from "./components/SvgImage";
+export type { SvgImageEntry, SvgImageProps, SvgImagesProps } from "./components/SvgImage";
 export * from "./components/SymbolLayer";
 export { UserLocation } from "./components/UserLocation";
 
@@ -104,7 +104,15 @@ export * from "./styles";
 
 // ── Styles ─────────────────────────────────────────────────────────
 
-export { svgToImageDataUri } from "./svg";
+export {
+  fetchSvgMarkup,
+  isSvgMarkup,
+  isSvgUri,
+  resolvePassthrough,
+  resolveSvgSize,
+  svgToImageDataUri,
+  useSvgMarkup,
+} from "./svg";
 
 // ── Layer style types ──────────────────────────────────────────────
 

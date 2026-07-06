@@ -14,15 +14,39 @@
  * `SymbolLayer` draws it via `icon-image` (a single batched GPU draw), and the
  * point geometry comes from a `geojson` `ShapeSource`.
  */
-import { type ReactElement, type ReactNode, useMemo } from "react";
+import {
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MapContext, type MapContextValue, WEB_CAPABILITIES } from "../MapView/MapView.context";
+import { createRasterStore, type RasterStore } from "../SvgImage/rasterizer.shared";
 import { SvgImage } from "../SvgImage/SvgImage";
 import { SymbolLayer } from "../SymbolLayer/SymbolLayer";
 import { ShapeSource } from "./ShapeSource";
+
+/**
+ * Stand-in for `RasterizerHost`: resolves every requested surface to a stub PNG
+ * immediately, so the real `SvgImage → Images → SymbolLayer` pipeline runs
+ * end-to-end without react-native-svg's DOM/canvas capture (which can't execute
+ * in jsdom). The capture mechanism itself is covered in `rasterizer.test.ts`.
+ */
+function FakeRasterHost({ store }: { store: RasterStore }): null {
+  const requests = useSyncExternalStore(store.subscribe, store.getRequests, store.getRequests);
+  useEffect(() => {
+    for (const req of requests) {
+      store.resolve(req.key, `data:image/png;base64,${req.key}`);
+    }
+  }, [requests, store]);
+  return null;
+}
 
 // ── Fake maplibre-gl engine ─────────────────────────────────────────
 
@@ -204,6 +228,9 @@ function Harness({
   ready?: boolean;
   children: ReactNode;
 }): ReactElement {
+  const rasterizer = useRef<RasterStore>(undefined as unknown as RasterStore);
+  if (!rasterizer.current) rasterizer.current = createRasterStore();
+
   // Stable context value so effects keyed on register* / map don't re-fire on
   // every parent re-render (only `map`/`ready` identity should matter).
   const value = useMemo<MapContextValue>(
@@ -212,6 +239,7 @@ function Harness({
       adapterKind: "web",
       capabilities: WEB_CAPABILITIES,
       mapEngine: map,
+      rasterizer: rasterizer.current,
       registerSource: vi.fn(),
       unregisterSource: vi.fn(),
       registerLayer: vi.fn(),
@@ -223,7 +251,12 @@ function Harness({
     }),
     [map, ready],
   );
-  return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
+  return (
+    <MapContext.Provider value={value}>
+      {children}
+      <FakeRasterHost store={rasterizer.current} />
+    </MapContext.Provider>
+  );
 }
 
 /** Flush the microtask queue so stubbed Image.onload (→ addImage) settles. */

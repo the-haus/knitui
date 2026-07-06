@@ -29,6 +29,8 @@ import type {
   ViewState,
   ViewStateChangeEvent,
 } from "../../types/primitives";
+import { createRasterStore } from "../SvgImage/rasterizer.shared";
+import { RasterizerHost } from "../SvgImage/RasterizerHost";
 import { MapContext, type MapContextValue, WEB_CAPABILITIES } from "./MapView.context";
 import { isAttributionEnabled, pressEvent, viewStateChangeEvent } from "./MapView.helpers";
 import type { AttributionControlOptions, MapProps, MapRef } from "./MapView.types";
@@ -139,6 +141,7 @@ export const MapView = memo(
     const attributionControlRef = useRef<maplibregl.AttributionControl | null>(null);
     const [ready, setReady] = useState(false);
     const { sources, layers, images, interactiveSources, registrations } = useMapRegistries();
+    const rasterizer = useRef(createRasterStore()).current;
 
     // Latest props ref — always kept in sync for use in event handlers.
     // Direct assignment during render is safe because the ref is only read in
@@ -713,9 +716,10 @@ export const MapView = memo(
         adapterKind: "web",
         capabilities: WEB_CAPABILITIES,
         mapEngine: mapRef.current,
+        rasterizer,
         ...registrations,
       }),
-      [ready, registrations],
+      [ready, registrations, rasterizer],
     );
 
     return (
@@ -730,7 +734,11 @@ export const MapView = memo(
         }}
         data-testid={props.testID}
       >
-        <MapContext.Provider value={contextValue}>{children}</MapContext.Provider>
+        <MapContext.Provider value={contextValue}>
+          {children}
+          {/* Offscreen SVG rasterization surfaces — kept out of the map itself. */}
+          <RasterizerHost store={rasterizer} />
+        </MapContext.Provider>
       </div>
     );
   }),
