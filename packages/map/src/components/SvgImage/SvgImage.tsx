@@ -28,10 +28,22 @@ export function SvgImage({ id, svg, uri, source, width, height, pixelRatio, sdf 
 
   const entry = passthrough ?? raster;
 
+  // Our rasterizer emits a bitmap upscaled by `pixelRatio`; register that density
+  // (`scale`) so the icon draws at its logical size on every platform instead of
+  // `pixelRatio×` too big. Passthrough rasters are registered as-is (scale 1).
+  const scale = !passthrough && raster != null ? (pixelRatio ?? 1) : 1;
+
   const images = useMemo<Record<string, ImageEntry>>(() => {
     if (!entry) return {};
-    return { [id]: sdf ? { source: entry as string | number, sdf: true } : entry };
-  }, [id, entry, sdf]);
+    if (!sdf && scale === 1) return { [id]: entry };
+    return {
+      [id]: {
+        source: entry as string | number,
+        ...(sdf ? { sdf: true } : {}),
+        ...(scale !== 1 ? { scale } : {}),
+      },
+    };
+  }, [id, entry, sdf, scale]);
 
   return <Images images={images} />;
 }
