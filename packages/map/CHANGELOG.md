@@ -1,5 +1,11 @@
 # @knitui/map
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix `SvgImage` icons rendering larger on iOS than on Android/web. react-native-svg's `toDataURL` bakes the device scale (`UIScreen.scale`, e.g. 3×) into the rasterized bitmap on iOS but not on Android/web, so registering the icon with `scale = pixelRatio` left iOS icons `UIScreen.scale`× too big. The rasterizer now derives the registered density from the bitmap's **real** pixel width (read from the PNG header), so an icon renders at its logical `width`/`height` identically on web, iOS, and Android.
+
 ## 0.3.0
 
 ### Minor Changes

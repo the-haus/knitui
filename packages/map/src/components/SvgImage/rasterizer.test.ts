@@ -1,6 +1,37 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createRasterStore, keyFor } from "./rasterizer.shared";
+import { createRasterStore, keyFor, pngPixelWidth } from "./rasterizer.shared";
+
+/** Build base64 for a PNG whose IHDR declares the given pixel width. */
+function pngBase64(width: number): string {
+  const bytes = [
+    0x89,
+    0x50,
+    0x4e,
+    0x47,
+    0x0d,
+    0x0a,
+    0x1a,
+    0x0a, // signature
+    0x00,
+    0x00,
+    0x00,
+    0x0d, // IHDR length
+    0x49,
+    0x48,
+    0x44,
+    0x52, // "IHDR"
+    (width >>> 24) & 0xff,
+    (width >>> 16) & 0xff,
+    (width >>> 8) & 0xff,
+    width & 0xff, // width
+    0x00,
+    0x00,
+    0x00,
+    0x18, // height (arbitrary)
+  ];
+  return Buffer.from(bytes).toString("base64");
+}
 
 const req = (key: string, svg = "<svg/>") => ({ key, svg, width: 24, height: 24 });
 
@@ -12,6 +43,21 @@ describe("keyFor", () => {
   it("separates different markup or sizes", () => {
     expect(keyFor("<svg>a</svg>", 24, 24)).not.toBe(keyFor("<svg>b</svg>", 24, 24));
     expect(keyFor("<svg>a</svg>", 24, 24)).not.toBe(keyFor("<svg>a</svg>", 48, 48));
+  });
+});
+
+describe("pngPixelWidth", () => {
+  it("reads the real bitmap width from the PNG IHDR", () => {
+    // The whole cross-platform fix hinges on this: iOS bakes UIScreen.scale into
+    // the bitmap, so a 60px request can come back 180px — we must read the truth.
+    expect(pngPixelWidth(pngBase64(60))).toBe(60);
+    expect(pngPixelWidth(pngBase64(180))).toBe(180);
+    expect(pngPixelWidth(pngBase64(1))).toBe(1);
+  });
+
+  it("returns undefined for non-PNG or truncated data", () => {
+    expect(pngPixelWidth("AAAA")).toBeUndefined();
+    expect(pngPixelWidth("")).toBeUndefined();
   });
 });
 

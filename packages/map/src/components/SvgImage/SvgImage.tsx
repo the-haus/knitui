@@ -26,12 +26,13 @@ export function SvgImage({ id, svg, uri, source, width, height, pixelRatio, sdf 
   const markup = useSvgMarkup(passthrough ? undefined : svg, passthrough ? undefined : uri);
   const raster = useRasterizedSvg(markup, { width, height, pixelRatio });
 
-  const entry = passthrough ?? raster;
+  const entry = passthrough ?? raster?.uri;
 
-  // Our rasterizer emits a bitmap upscaled by `pixelRatio`; register that density
-  // (`scale`) so the icon draws at its logical size on every platform instead of
-  // `pixelRatio×` too big. Passthrough rasters are registered as-is (scale 1).
-  const scale = !passthrough && raster != null ? (pixelRatio ?? 1) : 1;
+  // The rasterizer reports the density to register its bitmap with (derived from
+  // the real pixel width, so it's correct even where a platform bakes a device
+  // scale into `toDataURL` — e.g. iOS). This makes the icon draw at its logical
+  // size identically on web, iOS, and Android. Passthrough rasters are as-is.
+  const scale = passthrough ? 1 : (raster?.scale ?? 1);
 
   const images = useMemo<Record<string, ImageEntry>>(() => {
     if (!entry) return {};

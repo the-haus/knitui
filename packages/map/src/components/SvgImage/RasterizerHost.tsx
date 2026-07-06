@@ -25,7 +25,10 @@ function RasterSurface({
 }): React.JSX.Element {
   const ref = useRef<CapturableSvg | null>(null);
 
-  useEffect(() => runCapture(ref, req, (uri) => store.resolve(req.key, uri)), [req, store]);
+  useEffect(
+    () => runCapture(ref, req, (uri, pixelWidth) => store.resolve(req.key, uri, pixelWidth)),
+    [req, store],
+  );
 
   return (
     <div
