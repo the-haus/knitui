@@ -1,6 +1,6 @@
 {
   "name": "@knitui/sheet",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Cross-platform bottom sheet for Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
