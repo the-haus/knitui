@@ -106,7 +106,7 @@ export const FixedSizeIcons: Story = {
           source="cities"
           style={{
             iconImage: "pin",
-            iconSize: 0.5, // bitmap is 2× (pixelRatio) → 40px on screen
+            iconSize: 1, // 40px icon; pixelRatio only affects crispness, not size
             iconAllowOverlap: true,
             iconAnchor: "bottom",
           }}
@@ -136,7 +136,7 @@ export const FromUrl: Story = {
             source="cities"
             style={{
               iconImage: "pin",
-              iconSize: 0.5,
+              iconSize: 1,
               iconAllowOverlap: true,
               iconAnchor: "bottom",
             }}
@@ -170,7 +170,7 @@ export const DataDrivenIcons: Story = {
           source="cities"
           style={{
             iconImage: expr(["concat", "pin-", ["to-string", ["get", "category"]]]),
-            iconSize: 0.5,
+            iconSize: 1,
             iconAllowOverlap: true,
             iconAnchor: "bottom",
           }}
@@ -197,7 +197,7 @@ export const TenThousandMarkers: Story = {
           source="markers"
           style={{
             iconImage: "pin",
-            iconSize: 0.5,
+            iconSize: 1,
             iconAllowOverlap: true,
             iconIgnorePlacement: true,
             iconAnchor: "bottom",
@@ -230,7 +230,7 @@ export const TenThousandDataDriven: Story = {
           source="markers"
           style={{
             iconImage: expr(["concat", "pin-", ["to-string", ["get", "category"]]]),
-            iconSize: 0.5,
+            iconSize: 1,
             iconAllowOverlap: true,
             iconIgnorePlacement: true,
             iconAnchor: "bottom",
@@ -298,7 +298,7 @@ export const TenThousandClustered: Story = {
           filter={NO_COUNT}
           style={{
             iconImage: "pin",
-            iconSize: 0.5,
+            iconSize: 1,
             iconAllowOverlap: true,
             iconAnchor: "bottom",
           }}
@@ -370,7 +370,7 @@ export const FiftyThousandClustered: Story = {
           id="unclustered-pins"
           source="markers"
           filter={NO_COUNT}
-          style={{ iconImage: "pin", iconSize: 0.5, iconAllowOverlap: true, iconAnchor: "bottom" }}
+          style={{ iconImage: "pin", iconSize: 1, iconAllowOverlap: true, iconAnchor: "bottom" }}
         />
       </GeoJSONSource>
     </Map>

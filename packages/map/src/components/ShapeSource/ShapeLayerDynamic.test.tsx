@@ -74,7 +74,7 @@ class FakeMap {
   sources = new Map<string, FakeSource>();
   layers: Array<Record<string, unknown>> = [];
   layerMap = new Map<string, Record<string, unknown>>();
-  images = new Map<string, { img: unknown; sdf: boolean }>();
+  images = new Map<string, { img: unknown; sdf: boolean; pixelRatio: number }>();
 
   paint: Record<string, Record<string, unknown>> = {};
   layout: Record<string, Record<string, unknown>> = {};
@@ -173,9 +173,9 @@ class FakeMap {
     return this.images.has(id);
   }
 
-  addImage(id: string, img: unknown, opts?: { sdf?: boolean }): void {
+  addImage(id: string, img: unknown, opts?: { sdf?: boolean; pixelRatio?: number }): void {
     this.record("addImage", id, img, opts);
-    this.images.set(id, { img, sdf: Boolean(opts?.sdf) });
+    this.images.set(id, { img, sdf: Boolean(opts?.sdf), pixelRatio: opts?.pixelRatio ?? 1 });
   }
 
   removeImage(id: string): void {
@@ -427,6 +427,9 @@ describe("dynamic SVG icon updates (React state → re-registered image)", () =>
     );
     await flushImages();
     expect(map.callsTo("addImage")).toHaveLength(1);
+    // The rasterizer upscales by pixelRatio (Scene uses 2); it must be registered
+    // as the image density so the icon draws at logical size, not 2× too big.
+    expect(map.images.get("pin")?.pixelRatio).toBe(2);
 
     rerender(
       <Harness map={map}>

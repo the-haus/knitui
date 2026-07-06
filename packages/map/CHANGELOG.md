@@ -1,5 +1,15 @@
 # @knitui/map
 
+## 0.3.0
+
+### Minor Changes
+
+- Fix native `SvgImage`/`Images` crash and correct high-density icon sizing.
+  - **Crash fix.** `@maplibre/maplibre-react-native` resolves an object-form image `source` via `Image.resolveAssetSource`, which returns `null` for a bare string (a `data:` URI from the SVG rasterizer, or a remote URL) and then throws `TypeError: Cannot read property 'uri' of null`. The native `Images` adapter now wraps a string `source` into `{ uri }` so it resolves correctly. This is what broke SDF/object icons on Android and iOS.
+  - **Correct `pixelRatio` sizing.** The rasterizer upscales the bitmap by `pixelRatio` for crispness, but the extra density was never registered, so raster icons drew `pixelRatio×` too big (previously worked around with `iconSize`). `SvgImage` now registers the bitmap's density as `scale` — passed through to `map.addImage({ pixelRatio })` on web and to the native image source `{ uri, scale }` (iOS `UIImage.scale` / Android `bitmap.setDensity`) — so an icon renders at its logical `width`/`height` regardless of `pixelRatio`.
+
+    **Behavior change:** if you set `pixelRatio` and compensated with a fractional `iconSize` (e.g. `iconSize: 0.5` for `pixelRatio: 2`), drop that compensation and use `iconSize: 1` (or your intended size). SDF icons at the default `pixelRatio` of 1 are unaffected.
+
 ## 0.2.0
 
 ### Minor Changes
