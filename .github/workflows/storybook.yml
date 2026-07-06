@@ -79,12 +79,32 @@ jobs:
     timeout-minutes: 25
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deploy1.outputs.page_url || steps.deploy2.outputs.page_url || steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      # GitHub Pages' `syncing_files` phase flakes intermittently on this
+      # aggregate site, failing in seconds with "Deployment failed, try again
+      # later" — a Pages backend transient, not an artifact problem (the build
+      # and upload already succeeded). Retry a few times before giving up.
+      # `timeout` maxes out at 600000 ms (10 min); the action clamps anything
+      # higher and warns, so we set it to the real ceiling.
+      - name: Deploy (attempt 1)
+        id: deploy1
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+        with:
+          timeout: 600000
+
+      - name: Deploy (attempt 2)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+        with:
+          timeout: 600000
+
+      - name: Deploy (attempt 3)
         id: deployment
+        if: steps.deploy1.outcome == 'failure' && steps.deploy2.outcome == 'failure'
         uses: actions/deploy-pages@v5
         with:
-          # The aggregate site is large (~100 MB across 8 composed Storybooks);
-          # give the Pages backend more than the 10-minute default to process it.
-          timeout: 1200000
+          timeout: 600000
