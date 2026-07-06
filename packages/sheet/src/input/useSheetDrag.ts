@@ -8,7 +8,14 @@ import {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { clampOffset, nearestSnapIndex, settle, type SettleResult } from "../engine";
+import {
+  handoffStart,
+  handoffUpdate,
+  nearestSnapIndex,
+  settle,
+  type SettleResult,
+  shouldSettleOnEnd,
+} from "../engine";
 import { settleOffset } from "../motion/animate";
 
 /**
@@ -34,10 +41,23 @@ export interface SheetDragParams {
   spring?: WithSpringConfig;
   /** Allow a child ScrollView to take over (handoff) — RNGH ref to compose with. */
   scrollGesture?: ReturnType<typeof Gesture.Native>;
+  /**
+   * Live vertical scroll offset (px, ≥0) of a nested `Sheet.ScrollView`. When
+   * present the gesture becomes scroll-aware (the handoff): while the sheet is
+   * fully expanded the list owns the drag, and the panel only starts moving once
+   * the list is at the top and the finger pulls down. Omit for a sheet with no
+   * scrollable content — the panel then tracks the finger directly.
+   */
+  scrollOffsetY?: SharedValue<number>;
   /** Fired (JS) when a drag begins — pauses any external sync. */
   onStart: () => void;
   /** Fired (JS) when a drag settles — commits the resting snap / dismiss. */
   onSettle: (result: SettleResult) => void;
+  /**
+   * Fired (JS) when a scroll-owned drag releases — the list was scrolling, so the
+   * panel is not settled, but any external-sync pause must still be lifted.
+   */
+  onScrollRelease?: () => void;
 }
 
 /**
@@ -56,8 +76,10 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
     enabled,
     spring,
     scrollGesture,
+    scrollOffsetY,
     onStart,
     onSettle,
+    onScrollRelease,
   } = params;
 
   const panStart = useSharedValue(0);
@@ -68,7 +90,14 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
   // Whether `onEnd` already committed a settle, so the `onFinalize` safety net
   // only runs when an activated drag was cancelled/interrupted before a clean end.
   const settled = useSharedValue(false);
+  // Handoff bookkeeping (only meaningful when `coordinated`): whether the panel —
+  // rather than the list — currently owns the drag, and the finger translation at
+  // the moment the sheet took over (so the panel tracks from there with no jump).
+  const sheetOwns = useSharedValue(false);
+  const handoff = useSharedValue(0);
   const config = spring;
+  // Scroll-aware only when a nested ScrollView wired both the gesture + its offset.
+  const coordinated = scrollGesture != null && scrollOffsetY != null;
 
   return React.useMemo(() => {
     const minOffset = offsets.length > 0 ? offsets[0] : 0;
@@ -104,18 +133,39 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         panStart.value = offset.value;
         cancelAnimation(offset);
         active.value = true;
+        // Handoff: decide who owns this drag (the panel, or a nested list). The
+        // pure engine holds the rule; the shared values just carry it per frame.
+        const start = handoffStart(coordinated, offset.value, minOffset);
+        sheetOwns.value = start.sheetOwns;
+        handoff.value = start.handoff;
         scheduleOnRN(onStart);
       })
       .onUpdate((e) => {
         "worklet";
-        // Hard clamp to the travel range (no rubber-band overshoot): the panel
-        // can't be dragged above the most-open snap or below the lowest snap
-        // (or the closed offset when dismissible). The finger simply stops at the
-        // limit instead of pulling the sheet past it.
-        offset.value = clampOffset(panStart.value + e.translationY, minOffset, maxOffset, false);
+        const r = handoffUpdate({
+          coordinated,
+          translationY: e.translationY,
+          scrollOffsetY: scrollOffsetY ? scrollOffsetY.value : 0,
+          panStart: panStart.value,
+          minOffset,
+          maxOffset,
+          sheetOwns: sheetOwns.value,
+          handoff: handoff.value,
+        });
+        sheetOwns.value = r.sheetOwns;
+        handoff.value = r.handoff;
+        offset.value = r.offset;
       })
       .onEnd((e) => {
         "worklet";
+        // The list was scrolling, not the panel: don't settle the sheet (a
+        // downward fling on the list must not collapse it) — let native momentum
+        // run and just lift the external-sync pause on the JS side.
+        if (!shouldSettleOnEnd(coordinated, sheetOwns.value)) {
+          settled.value = true;
+          scheduleOnRN(onScrollRelease ?? onStart);
+          return;
+        }
         const result = settle({
           offset: offset.value,
           velocity: e.velocityY,
@@ -147,6 +197,10 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
     panStart,
     active,
     settled,
+    sheetOwns,
+    handoff,
+    coordinated,
+    scrollOffsetY,
     offsets,
     closed,
     dismissible,
@@ -155,5 +209,6 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
     scrollGesture,
     onStart,
     onSettle,
+    onScrollRelease,
   ]);
 }

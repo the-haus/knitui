@@ -1,4 +1,6 @@
 import * as React from "react";
+import { Gesture } from "react-native-gesture-handler";
+import { useSharedValue } from "react-native-reanimated";
 
 import { KeyboardAvoidingView, Portal, UnstyledButton } from "@knitui/components";
 import {
@@ -24,6 +26,7 @@ import { useSharedValueListener } from "./hooks/useSharedValueListener";
 import { useSheetDrag } from "./input/useSheetDrag";
 import { useSheetMotion } from "./motion/useSheetMotion";
 import type { SheetProps, SheetRef } from "./types";
+import { SheetScrollContext, type SheetScrollContextValue } from "./view/scrollContext";
 import { SheetScrollView } from "./view/ScrollView";
 import { Surface } from "./view/Surface";
 
@@ -160,9 +163,23 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const motionRef = React.useRef(motion);
   motionRef.current = motion;
 
+  // Scroll↔drag handoff plumbing (native): a nested `Sheet.ScrollView` attaches
+  // this `Native` gesture to its scroller (so it recognises simultaneously with
+  // the Pan) and reports its live content offset back through `scrollOffsetY`.
+  // Both are stable; on web the browser handles nested scroll, so the Pan is left
+  // unaware of them (no coordination, current behaviour preserved).
+  const scrollOffsetY = useSharedValue(0);
+
+  const scrollGesture = React.useMemo(() => Gesture.Native(), []);
+  const dragEnabled = !disableDrag && maxHeight > 0 && isOpen;
+
   const draggingRef = React.useRef(false);
   const onDragStart = React.useCallback(() => {
     draggingRef.current = true;
+  }, []);
+  // A scroll-owned drag released without settling the panel — just clear the pause.
+  const onScrollRelease = React.useCallback(() => {
+    draggingRef.current = false;
   }, []);
   const onDragSettle = React.useCallback(
     (result: SettleResult) => {
@@ -188,11 +205,28 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     // Drop the gesture the moment the sheet is no longer open, so a stray touch
     // during the close animation can't `cancelAnimation` the close spring and
     // re-park the panel at a visible snap (the panel would then never unmount).
-    enabled: !disableDrag && maxHeight > 0 && isOpen,
+    enabled: dragEnabled,
     spring: animationConfig,
+    // Coordinate with a nested `Sheet.ScrollView` on native only; on web the
+    // browser owns nested scrolling, so leave the Pan unaware (unchanged path).
+    scrollGesture: isWeb ? undefined : scrollGesture,
+    scrollOffsetY: isWeb ? undefined : scrollOffsetY,
     onStart: onDragStart,
     onSettle: onDragSettle,
+    onScrollRelease,
   });
+
+  // The channel a nested `Sheet.ScrollView` reads to cooperate with the Pan.
+  const scrollContext = React.useMemo<SheetScrollContextValue>(
+    () => ({
+      scrollGesture,
+      scrollOffsetY,
+      sheetOffset: motion.offset,
+      expandedOffset: motion.offsets.length > 0 ? motion.offsets[0] : 0,
+      handoffEnabled: dragEnabled,
+    }),
+    [scrollGesture, scrollOffsetY, motion.offset, motion.offsets, dragEnabled],
+  );
 
   /* ── Open / close lifecycle ───────────────────────────────────────────── */
 
@@ -300,10 +334,15 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const slots = SheetSlots.collect(children, { displayName: "Sheet" });
 
   const frameContent = slots.Frame ? slots.Frame.children : slots.default;
-  const content = moveOnKeyboardChange ? (
+  const keyboardAware = moveOnKeyboardChange ? (
     <KeyboardAvoidingView>{frameContent}</KeyboardAvoidingView>
   ) : (
     frameContent
+  );
+  // Publish the scroll-coordination channel so a nested `Sheet.ScrollView` can
+  // hand its drag off to (and back from) the sheet Pan.
+  const content = (
+    <SheetScrollContext.Provider value={scrollContext}>{keyboardAware}</SheetScrollContext.Provider>
   );
 
   // Web a11y rides on `role`/`aria-modal`; native on `accessibilityViewIsModal`.

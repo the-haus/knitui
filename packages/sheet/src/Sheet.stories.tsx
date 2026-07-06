@@ -97,7 +97,12 @@ export const CustomHandle: Story = {
   },
 };
 
-/** Scrollable content inside the panel via `Sheet.ScrollView`. */
+/**
+ * Scrollable content inside the panel via `Sheet.ScrollView`, exercising the
+ * scroll↔drag handoff (native): at the top snap the list scrolls; drag it back to
+ * the top and keep pulling down and the sheet takes over (collapses to 40 %, then
+ * dismisses). From the 40 % snap a drag moves the sheet, not the list.
+ */
 export const WithScrollView: Story = {
   render: () => {
     const [opened, setOpened] = React.useState(false);
@@ -107,7 +112,7 @@ export const WithScrollView: Story = {
         <Sheet
           opened={opened}
           onClose={() => setOpened(false)}
-          snapPoints={[80]}
+          snapPoints={[80, 40]}
           dismissOnSnapToBottom
         >
           <Sheet.Frame>

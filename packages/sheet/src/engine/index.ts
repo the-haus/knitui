@@ -6,6 +6,7 @@
  * views consume these from `src/motion`, `src/input`, and `src/view`.
  */
 
+export * from "./handoff";
 export * from "./overlay";
 export * from "./settle";
 export * from "./snap";
