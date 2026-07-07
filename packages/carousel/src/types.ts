@@ -229,11 +229,14 @@ export interface CarouselProps<T> {
    *   scrolling. This is the "normal scroll" mode.
    *
    * Native mode trades some features for that: it always mounts every slide (no
-   * windowed virtualization), forces `loop` off, and ignores the transition
-   * `mode`/`customAnimation` (slides lay out in normal flow, start-aligned).
-   * `snapEnabled` / `pagingEnabled` / `overscrollEnabled`, `vertical`, `itemSize`,
-   * the imperative `ref`, controlled `index`, pagination and `onProgressChange`
-   * all keep working. Default `"transform"`.
+   * windowed virtualization) and ignores the transition `mode`/`customAnimation`
+   * (slides lay out in normal flow, start-aligned). `loop`, `snapEnabled` /
+   * `pagingEnabled` / `overscrollEnabled`, `vertical`, `itemSize`, the imperative
+   * `ref`, controlled `index`, pagination and `onProgressChange` all keep
+   * working. `loop` is realised by cloning the ring in the scroll content and
+   * silently recentring on settle (see NativeTrack), so a tiny 1–2 item loop
+   * mounts a few identical copies rather than being auto-filled. Default
+   * `"transform"`.
    */
   scrollMode?: "transform" | "native";
   enabled?: boolean;

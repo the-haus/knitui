@@ -692,6 +692,42 @@ export const NativeScrollFree: Story = {
   ),
 };
 
+export const NativeScrollLoopingRail: Story = {
+  name: "Native scroll / Looping rail (start-aligned)",
+  render: () => (
+    // A media-card rail: start-aligned (first card at the leading edge, not
+    // centered) AND infinitely looping. Native mode clones the ring and
+    // silently recentres on settle, so free-scrolling wraps seamlessly.
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      snapEnabled={false}
+      itemWidth={160}
+      renderItem={renderItem}
+      style={{ width: 420, height: 200 }}
+      testID="carousel"
+    />
+  ),
+};
+
+export const NativeScrollFinite: Story = {
+  name: "Native scroll / Finite rail (loop off)",
+  render: () => (
+    // The same rail with looping disabled: a finite start-aligned row that
+    // stops at the last card.
+    <Carousel
+      data={DATA}
+      scrollMode="native"
+      snapEnabled={false}
+      loop={false}
+      itemWidth={160}
+      renderItem={renderItem}
+      style={{ width: 420, height: 200 }}
+      testID="carousel"
+    />
+  ),
+};
+
 export const NativeScrollMultiple: Story = {
   name: "Native scroll / Multiple per view",
   render: () => (
