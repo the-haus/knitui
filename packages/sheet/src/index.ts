@@ -10,9 +10,11 @@
 
 export {
   SHEET_SLOT_KEYS,
+  SheetFooter,
   SheetFrame,
   SheetHandleBar,
   SheetHandleRow,
+  SheetHeader,
   type SheetStyles,
 } from "./chrome";
 export * as engine from "./engine";

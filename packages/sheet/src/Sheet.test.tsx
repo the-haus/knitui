@@ -118,6 +118,39 @@ describe("Sheet", () => {
     expect(screen.getByLabelText("Sheet drag handle")).toBeInTheDocument();
   });
 
+  it("renders a fixed Sheet.Header and Sheet.Footer around the content", () => {
+    render(
+      <Sheet opened onClose={() => {}}>
+        <Sheet.Header>
+          <Text>sheet header</Text>
+        </Sheet.Header>
+        <Sheet.Frame>
+          <Sheet.ScrollView>
+            <Text>scrolled body</Text>
+          </Sheet.ScrollView>
+        </Sheet.Frame>
+        <Sheet.Footer>
+          <Text>sheet footer</Text>
+        </Sheet.Footer>
+      </Sheet>,
+    );
+    expect(screen.getByText("sheet header")).toBeInTheDocument();
+    expect(screen.getByText("scrolled body")).toBeInTheDocument();
+    expect(screen.getByText("sheet footer")).toBeInTheDocument();
+  });
+
+  it("omits the header/footer regions when their markers are absent", () => {
+    render(
+      <Sheet opened onClose={() => {}}>
+        <Sheet.Frame>
+          <Text>only body</Text>
+        </Sheet.Frame>
+      </Sheet>,
+    );
+    expect(screen.queryByText("sheet header")).not.toBeInTheDocument();
+    expect(screen.queryByText("sheet footer")).not.toBeInTheDocument();
+  });
+
   // Closing animates the panel off-screen via reanimated's (web) timer loop;
   // drain it inside `act` so the trailing unmount is wrapped and never leaks an
   // un-acted state update into a later test.

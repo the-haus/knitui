@@ -1,5 +1,25 @@
 # @knitui/sheet
 
+## 0.3.0
+
+### Minor Changes
+
+- **Sheet.Header / Sheet.Footer: fixed slots around the scrollable content.**
+
+  The slot system gains two fixed (non-scrolling) regions that frame a
+  `Sheet.ScrollView`:
+  - `Sheet.Header` — pinned below the drag handle and above the content. A good
+    home for a title, tabs, or a segmented control that must stay put while the
+    body scrolls.
+  - `Sheet.Footer` — pinned below the content. A good home for an action bar
+    (e.g. a "Done" button) that stays visible regardless of scroll position.
+
+  Both are `styled(Box)` parts with `flexShrink: 0`, so a nested
+  `Sheet.ScrollView` (`flex: 1`) fills and scrolls the space between them. They
+  are opt-in markers (rendered only when present) and are targetable via the
+  per-slot `styles` map (`styles={{ header, footer }}`) alongside the existing
+  `root` / `overlay` / `handle` slots.
+
 ## 0.2.0
 
 ### Minor Changes

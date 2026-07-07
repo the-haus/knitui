@@ -86,8 +86,8 @@ export interface SheetProps {
   testID?: string;
 
   /**
-   * `Sheet.Overlay` / `Sheet.Handle` / `Sheet.Frame` markers, or plain content
-   * (which folds into the panel).
+   * `Sheet.Overlay` / `Sheet.Handle` / `Sheet.Header` / `Sheet.Footer` /
+   * `Sheet.Frame` markers, or plain content (which folds into the panel).
    */
   children?: React.ReactNode;
 }

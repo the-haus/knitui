@@ -30,6 +30,10 @@ export interface SurfaceProps {
   rootProps?: GetProps<typeof SheetFrame>;
   /** The drag handle node (or null). */
   handle?: React.ReactNode;
+  /** The fixed header node, pinned below the handle and above the content (or null). */
+  header?: React.ReactNode;
+  /** The fixed footer node, pinned below the content (or null). */
+  footer?: React.ReactNode;
   /** Panel content. */
   children?: React.ReactNode;
   /** Measures the full-cover layer. */
@@ -57,6 +61,8 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
     onOverlayPress,
     rootProps,
     handle,
+    header,
+    footer,
     children,
     onLayout,
     testID,
@@ -99,7 +105,9 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
           <AnimatedFrameHost offset={offset}>
             <SheetFrame {...rootProps}>
               {handle}
+              {header}
               {children}
+              {footer}
             </SheetFrame>
           </AnimatedFrameHost>
         </Box>

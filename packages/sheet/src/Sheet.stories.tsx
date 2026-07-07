@@ -126,6 +126,48 @@ export const WithScrollView: Story = {
   },
 };
 
+/**
+ * A fixed header + footer via the `Sheet.Header` / `Sheet.Footer` markers. Both
+ * stay pinned (below the handle / above the bottom edge) while the
+ * `Sheet.ScrollView` between them scrolls independently — the scroll region is
+ * squeezed between the two fixed bars.
+ */
+export const WithHeaderAndFooter: Story = {
+  render: () => {
+    const [opened, setOpened] = React.useState(false);
+    return (
+      <>
+        <Button onPress={() => setOpened(true)}>Open sheet with header + footer</Button>
+        <Sheet opened={opened} onClose={() => setOpened(false)} snapPoints={[80, 40]}>
+          <Sheet.Header>
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              paddingVertical="$xs"
+            >
+              <Title>Header</Title>
+              <Button size="sm" variant="subtle" onPress={() => setOpened(false)}>
+                Close
+              </Button>
+            </Box>
+          </Sheet.Header>
+          <Sheet.Frame>
+            <Sheet.ScrollView>
+              <DemoContent lines={40} />
+            </Sheet.ScrollView>
+          </Sheet.Frame>
+          <Sheet.Footer>
+            <Button fullWidth onPress={() => setOpened(false)}>
+              Confirm
+            </Button>
+          </Sheet.Footer>
+        </Sheet>
+      </>
+    );
+  },
+};
+
 /** Top-corner rounding scale. */
 export const Sizes: Story = {
   render: () => {

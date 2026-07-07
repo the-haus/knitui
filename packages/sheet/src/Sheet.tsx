@@ -14,9 +14,11 @@ import {
 import { useFocusTrap, useUncontrolled } from "@knitui/hooks";
 
 import {
+  SheetFooter,
   type SheetFrame,
   SheetHandleBar,
   SheetHandleRow,
+  SheetHeader,
   SheetSlots,
   SheetStylesProvider,
   useSheetSlots,
@@ -376,6 +378,25 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     </UnstyledButton>
   ) : null;
 
+  // A fixed header, rendered inside the panel below the handle and above the
+  // (scrollable) content — a `Sheet.ScrollView` with `flex: 1` fills the space
+  // beneath it. Rendered only when a `Sheet.Header` marker is present.
+  const headerNode =
+    slots.Header !== undefined ? (
+      <SheetHeader {...s.get("header")} {...slots.Header.props}>
+        {slots.Header.children}
+      </SheetHeader>
+    ) : null;
+
+  // A fixed footer, pinned below the (scrollable) content — a good home for an
+  // action bar. Rendered only when a `Sheet.Footer` marker is present.
+  const footerNode =
+    slots.Footer !== undefined ? (
+      <SheetFooter {...s.get("footer")} {...slots.Footer.props}>
+        {slots.Footer.children}
+      </SheetFooter>
+    ) : null;
+
   const onOverlayPress = dismissOnOverlayPress ? () => setOpenRef.current(false) : undefined;
   const resolvedOverlayProps = { ...s.get("overlay"), ...overlayProps };
 
@@ -400,6 +421,8 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
           onOverlayPress={onOverlayPress}
           rootProps={rootProps}
           handle={handleNode}
+          header={headerNode}
+          footer={footerNode}
           onLayout={onLayout}
         >
           {content}
@@ -416,10 +439,12 @@ SheetComponent.displayName = "Sheet";
 
 /**
  * Cross-platform bottom sheet. Marker slots (`Sheet.Overlay` / `.Handle` /
- * `.Frame`) are the composition API; `Sheet.ScrollView` is the scrollable
- * content region. The styled parts are the targets of the `styles` map.
+ * `.Header` / `.Footer` / `.Frame`) are the composition API; `Sheet.ScrollView`
+ * is the scrollable content region. `Sheet.Header` / `Sheet.Footer` are fixed
+ * regions pinned above / below the content, so a `Sheet.ScrollView` scrolls
+ * between them. The styled parts are the targets of the `styles` map.
  */
 export const Sheet = withStaticProperties(SheetComponent, {
-  ...SheetSlots.markers, // Overlay, Handle, Frame (marker slots)
+  ...SheetSlots.markers, // Overlay, Handle, Header, Footer, Frame (marker slots)
   ScrollView: SheetScrollView,
 });

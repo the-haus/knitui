@@ -78,6 +78,35 @@ export const SheetHandleRow = styled(Box, {
   paddingTop: "$xs",
 });
 
+/**
+ * A fixed (non-scrolling) header region at the top of the panel. Sits below the
+ * drag handle and above the panel content, so a nested `Sheet.ScrollView`
+ * (`flex: 1`) is pushed down beneath it and scrolls independently. `flexShrink:
+ * 0` keeps it from being squeezed when the content is tall. Padding matches the
+ * handle strip's horizontal rhythm; override anything via the `header` style
+ * slot or props spread on `Sheet.Header`.
+ */
+export const SheetHeader = styled(Box, {
+  name: "SheetHeader",
+  flexShrink: 0,
+  paddingHorizontal: "$md",
+  paddingBottom: "$sm",
+});
+
+/**
+ * A fixed (non-scrolling) footer region at the bottom of the panel. Sits below
+ * the panel content, so a nested `Sheet.ScrollView` (`flex: 1`) scrolls in the
+ * space above it while the footer stays pinned (e.g. an action bar). `flexShrink:
+ * 0` keeps it from being squeezed when the content is tall. Override anything via
+ * the `footer` style slot or props spread on `Sheet.Footer`.
+ */
+export const SheetFooter = styled(Box, {
+  name: "SheetFooter",
+  flexShrink: 0,
+  paddingHorizontal: "$md",
+  paddingTop: "$sm",
+});
+
 /* ── Marker slots ───────────────────────────────────────────────────────── */
 
 /**
@@ -86,7 +115,9 @@ export const SheetHandleRow = styled(Box, {
  *   <Sheet>
  *     <Sheet.Overlay />
  *     <Sheet.Handle />
+ *     <Sheet.Header>{title}</Sheet.Header>
  *     <Sheet.Frame>{content}</Sheet.Frame>
+ *     <Sheet.Footer>{actions}</Sheet.Footer>
  *   </Sheet>
  *
  * These markers render nothing; the root collects them from `children` and
@@ -98,6 +129,16 @@ export const SheetSlots = defineSlots({
   Overlay: createSlot<"Overlay", OverlayProps>("Overlay"),
   /** Customizes / enables the drag handle. Props spread onto the handle bar. */
   Handle: createSlot<"Handle", GetProps<typeof SheetHandleBar>>("Handle"),
+  /**
+   * A fixed header pinned above the (scrollable) content. Its children render
+   * inside `SheetHeader`; props spread onto that container.
+   */
+  Header: createSlot<"Header", GetProps<typeof SheetHeader>>("Header"),
+  /**
+   * A fixed footer pinned below the (scrollable) content. Its children render
+   * inside `SheetFooter`; props spread onto that container.
+   */
+  Footer: createSlot<"Footer", GetProps<typeof SheetFooter>>("Footer"),
   /** The panel content host. Props spread onto `SheetFrame`. */
   Frame: createSlot<"Frame", GetProps<typeof SheetFrame>>("Frame"),
 });
@@ -117,12 +158,18 @@ export interface SheetStyles {
   overlay?: OverlayProps;
   /** The drag handle bar (`Sheet.Handle`). */
   handle?: GetProps<typeof SheetHandleBar>;
+  /** The fixed header region (`Sheet.Header`). */
+  header?: GetProps<typeof SheetHeader>;
+  /** The fixed footer region (`Sheet.Footer`). */
+  footer?: GetProps<typeof SheetFooter>;
 }
 
 export const SHEET_SLOT_KEYS = [
   "root",
   "overlay",
   "handle",
+  "header",
+  "footer",
 ] as const satisfies readonly (keyof SheetStyles)[];
 
 /** Distributes the `styles` map down to parts rendered by nested children. */
