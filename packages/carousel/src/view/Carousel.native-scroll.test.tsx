@@ -36,29 +36,42 @@ function renderNative(
 
 describe("Carousel — native scroll mode", () => {
   it("mounts every slide (no windowed virtualization)", () => {
-    renderNative({ data: Array.from({ length: 12 }, (_, i) => i) });
+    renderNative({ data: Array.from({ length: 12 }, (_, i) => i), loop: false });
     // Transform mode would window a 12-item list; native mounts them all.
     expect(screen.getByText("slide-0")).toBeTruthy();
     expect(screen.getByText("slide-6")).toBeTruthy();
     expect(screen.getByText("slide-11")).toBeTruthy();
   });
 
-  it("forces loop off and warns when loop is requested", async () => {
+  it("loops without warning: clones the ring and wraps past the ends", async () => {
     const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
     const prevEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "development";
     try {
       const ref = React.createRef<CarouselRef>();
       renderNative({ data: [0, 1, 2], loop: true }, ref);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("loop"));
+      // No "loop unsupported" warning any more.
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("loop"));
 
-      // Non-looping: prev at the first item clamps to 0.
+      // The ring is cloned LOOP_COPIES (3) times, so each item mounts 3×.
+      expect(screen.getAllByText("slide-0")).toHaveLength(3);
+      expect(screen.getAllByText("slide-2")).toHaveLength(3);
+
+      // Looping: prev from the first item wraps to the last.
       act(() => ref.current?.prev({ animated: false }));
+      await waitFor(() => expect(ref.current?.getCurrentIndex()).toBe(2));
+      // …and next from the last wraps back to the first.
+      act(() => ref.current?.next({ animated: false }));
       await waitFor(() => expect(ref.current?.getCurrentIndex()).toBe(0));
     } finally {
       process.env.NODE_ENV = prevEnv;
       warn.mockRestore();
     }
+  });
+
+  it("does not clone when loop is disabled", () => {
+    renderNative({ data: [0, 1, 2], loop: false });
+    expect(screen.getAllByText("slide-0")).toHaveLength(1);
   });
 
   it("scrollTo({ index }) drives the container and reports the index", async () => {
@@ -74,7 +87,7 @@ describe("Carousel — native scroll mode", () => {
 
   it("next()/prev() step and clamp at the boundaries", async () => {
     const ref = React.createRef<CarouselRef>();
-    renderNative({ data: [0, 1, 2] }, ref);
+    renderNative({ data: [0, 1, 2], loop: false }, ref);
 
     act(() => ref.current?.next({ animated: false }));
     await waitFor(() => expect(ref.current?.getCurrentIndex()).toBe(1));
@@ -126,7 +139,7 @@ describe("Carousel — native scroll mode", () => {
   });
 
   it("supports vertical native scrolling", () => {
-    renderNative({ data: [0, 1, 2], vertical: true });
+    renderNative({ data: [0, 1, 2], vertical: true, loop: false });
     expect(screen.getByText("slide-0")).toBeTruthy();
     expect(screen.getByTestId("carousel-scroll")).toBeTruthy();
   });

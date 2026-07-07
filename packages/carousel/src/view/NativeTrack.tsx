@@ -4,11 +4,19 @@ import Animated, { useAnimatedScrollHandler, useDerivedValue } from "react-nativ
 
 import { Box } from "@knitui/components";
 
-import { itemProgress, rawIndex } from "../engine";
+import { itemProgress, mod, rawIndex } from "../engine";
 import type { SeekFn } from "../motion/useCarouselCore";
 import { SlideBox, useSlideStyle } from "./chrome";
 import { slideContent } from "./Item.shared";
-import { flowSlideStyle, type NativeTrackProps } from "./NativeTrack.shared";
+import {
+  flowSlideStyle,
+  loopSeekPos,
+  middleRingPos,
+  type NativeTrackProps,
+  recentredPos,
+  renderedCount,
+  ringLength,
+} from "./NativeTrack.shared";
 
 /**
  * Native "normal scroll" track. Renders every slide in flow inside a real
@@ -25,6 +33,7 @@ function NativeTrackInner<T>({
   renderPlaceholder,
   keyExtractor,
   count,
+  loop,
   vertical,
   pageSize,
   defaultIndex,
@@ -42,9 +51,20 @@ function NativeTrackInner<T>({
 }: NativeTrackProps<T>) {
   const ref = React.useRef<RNScrollView>(null);
 
+  const slideCount = renderedCount(count, loop);
+  const ring = loop ? ringLength(count, pageSize) : 0;
+
+  const scrollToPos = React.useCallback(
+    (pos: number, animated: boolean) => {
+      ref.current?.scrollTo(vertical ? { y: pos, animated } : { x: pos, animated });
+    },
+    [vertical],
+  );
+
   // Mirror the live scroll position into the engine offset on the UI thread —
   // no JS hop per frame. Writing `offset` drives the core's animated reaction,
-  // so progress and the active index update as the user scrolls.
+  // so progress and the active index update as the user scrolls. A whole-ring
+  // recentre (loop) is mod-invariant, so the mirror stays correct across it.
   const scrollHandler = useAnimatedScrollHandler(
     {
       onScroll: (e) => {
@@ -55,26 +75,38 @@ function NativeTrackInner<T>({
     [vertical],
   );
 
-  // Register the imperative seek: convert an engine offset (negative) to a
-  // content offset (positive) and scroll there.
+  // Register the imperative seek. Looping travels to the nearest ring copy of
+  // the target (using the `from` the controller was leaving); otherwise the
+  // content offset is just `-offset`.
   React.useEffect(() => {
-    const seek: SeekFn = (target, animated) => {
-      const to = -target;
-      ref.current?.scrollTo(vertical ? { y: to, animated } : { x: to, animated });
+    const seek: SeekFn = (target, animated, from) => {
+      if (loop && ring > 0) {
+        const pos = loopSeekPos(target, ring, from === undefined ? undefined : -from);
+        offset.value = -pos;
+        scrollToPos(pos, animated);
+      } else {
+        scrollToPos(-target, animated);
+      }
     };
     registerSeek(seek);
     return () => registerSeek(null);
-  }, [registerSeek, vertical]);
+  }, [registerSeek, scrollToPos, loop, ring, offset]);
 
   // Keep the scroll position aligned to the engine offset when the page size
   // changes (initial measure / resize) — offset writes alone don't move a
-  // native ScrollView. Non-animated: this is a reconcile, not a navigation.
+  // native ScrollView. In loop mode rest in the middle copy so a full ring of
+  // cloned buffer sits on each side. Non-animated: a reconcile, not a navigation.
   React.useEffect(() => {
     if (!(pageSize > 0)) return;
-    const to = -offset.value;
-    ref.current?.scrollTo(vertical ? { y: to, animated: false } : { x: to, animated: false });
+    if (loop) {
+      const pos = middleRingPos(mod(defaultIndex, count), count, pageSize);
+      offset.value = -pos;
+      scrollToPos(pos, false);
+    } else {
+      scrollToPos(-offset.value, false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageSize, vertical]);
+  }, [pageSize, vertical, loop]);
 
   // No windowing in native mode: mount all slides so the scroll container sizes
   // its content correctly. Ask the source to load them all (no-op for eager data).
@@ -96,12 +128,23 @@ function NativeTrackInner<T>({
     }
   }, []);
 
+  // Loop recentre: on a settled scroll, snap the resting position back into the
+  // middle ring by whole ring-lengths (invisible — identical pixels, exact ring).
+  const recentre = React.useCallback(() => {
+    if (!(loop && ring > 0)) return;
+    const next = recentredPos(-offset.value, ring);
+    if (next === null) return;
+    offset.value = -next;
+    scrollToPos(next, false);
+  }, [loop, ring, offset, scrollToPos]);
+
   const reportSettle = React.useCallback(() => {
     clearSettle();
     if (!interacting.current) return;
     interacting.current = false;
+    recentre();
     onInteractionEnd();
-  }, [clearSettle, onInteractionEnd]);
+  }, [clearSettle, recentre, onInteractionEnd]);
 
   const onScrollBeginDrag = React.useCallback(() => {
     clearSettle();
@@ -123,12 +166,15 @@ function NativeTrackInner<T>({
   React.useEffect(() => clearSettle, [clearSettle]);
 
   const slideStyle = useSlideStyle();
+  const startPos = loop
+    ? middleRingPos(mod(defaultIndex, count), count, pageSize)
+    : defaultIndex * pageSize;
   const contentOffset = React.useMemo(
     () => ({
-      x: vertical ? 0 : defaultIndex * pageSize,
-      y: vertical ? defaultIndex * pageSize : 0,
+      x: vertical ? 0 : startPos,
+      y: vertical ? startPos : 0,
     }),
-    [vertical, defaultIndex, pageSize],
+    [vertical, startPos],
   );
 
   return (
@@ -157,15 +203,21 @@ function NativeTrackInner<T>({
       // wants the plain RN style — the runtime shape is identical.
       contentContainerStyle={contentContainerStyle as never}
     >
-      {Array.from({ length: count }, (_, index) => {
-        const item = getItem(index);
-        const key = item !== undefined && keyExtractor ? keyExtractor(item, index) : String(index);
+      {Array.from({ length: slideCount }, (_, rendered) => {
+        // `getItem` already maps rendered → real via `mod`; derive the real
+        // index for a stable key and suffix the copy so cloned slides stay
+        // uniquely keyed (a consumer keying by item id would otherwise clash).
+        const real = loop ? mod(rendered, count) : rendered;
+        const item = getItem(rendered);
+        const base = item !== undefined && keyExtractor ? keyExtractor(item, real) : String(real);
+        const key = loop ? `${base}#${Math.floor(rendered / count)}` : base;
         return (
           <NativeSlide
             key={key}
             item={item}
-            index={index}
-            count={count}
+            index={real}
+            slot={rendered}
+            slotCount={slideCount}
             vertical={vertical}
             pageSize={pageSize}
             offset={offset}
@@ -182,10 +234,15 @@ function NativeTrackInner<T>({
 
 interface NativeSlideProps<T> extends Pick<
   NativeTrackProps<T>,
-  "vertical" | "pageSize" | "offset" | "size" | "renderItem" | "renderPlaceholder" | "count"
+  "vertical" | "pageSize" | "offset" | "size" | "renderItem" | "renderPlaceholder"
 > {
   item: T | undefined;
+  /** Real data index handed to `renderItem` (wrapped onto `[0, count)` in loop). */
   index: number;
+  /** Rendered flow position — this slide's slot among all mounted copies. */
+  slot: number;
+  /** Total mounted slots (`count * LOOP_COPIES` in loop mode). */
+  slotCount: number;
   slideStyle: ReturnType<typeof useSlideStyle>;
 }
 
@@ -193,11 +250,14 @@ interface NativeSlideProps<T> extends Pick<
  * One flow slide (native). Its `progress` (0 = at the leading slot, ±1 = one
  * page away) is derived from the engine offset on the UI thread and handed to
  * `renderItem` — so progress-driven content still works, without any transform.
+ * Progress is measured from the rendered `slot` (each clone is its own flow
+ * slide); `index` stays the real data index.
  */
 function NativeSlideInner<T>({
   item,
   index,
-  count,
+  slot,
+  slotCount,
   vertical,
   pageSize,
   offset,
@@ -208,9 +268,9 @@ function NativeSlideInner<T>({
 }: NativeSlideProps<T>) {
   const progress = useDerivedValue(() => {
     "worklet";
-    if (!(size.value > 0)) return index;
-    return itemProgress(rawIndex(offset.value, size.value), index, count, false);
-  }, [index, count]);
+    if (!(size.value > 0)) return slot;
+    return itemProgress(rawIndex(offset.value, size.value), slot, slotCount, false);
+  }, [slot, slotCount]);
 
   return (
     <Box style={flowSlideStyle(vertical, pageSize)}>

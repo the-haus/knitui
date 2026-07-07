@@ -245,6 +245,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
                 renderPlaceholder={props.renderPlaceholder}
                 keyExtractor={props.keyExtractor}
                 count={count}
+                loop={loop}
                 vertical={vertical}
                 pageSize={core.pageSize}
                 defaultIndex={defaultIndex}

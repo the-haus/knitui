@@ -44,21 +44,19 @@ const LARGE_DATA_WINDOW = 11;
 export function resolveConfig<T>(props: CarouselProps<T>): ResolvedConfig {
   const rawCount = props.source ? props.source.length : (props.data?.length ?? 0);
   const scrollMode = props.scrollMode ?? "transform";
-  // Native scroll rides the platform scroll container, which can't fake the
-  // virtual loop ring (that needs the transform engine's shortest-path placement).
-  // So `loop` is unavailable in native mode — force it off, and warn in dev.
   const native = scrollMode === "native";
-  if (process.env.NODE_ENV !== "production" && native && props.loop) {
-    console.warn(
-      '[@knitui/carousel] `loop` is not supported with scrollMode="native"; falling back to a non-looping native scroll.',
-    );
-  }
-  const loop = (props.loop ?? true) && !native;
-  // Auto-fill: a 1- or 2-item loop can't fill the ring on both sides, so the
-  // engine treats the list as duplicated (1→3, 2→4) while indices map back to
-  // the real items. Only for eager data (a remote source already has a length).
+  const loop = props.loop ?? true;
+  // Auto-fill duplicates a tiny list (1→3, 2→4) so the TRANSFORM engine's ring
+  // fills on both sides. Native scroll loops by physically cloning the ring in
+  // the track (see NativeTrack), so it needs neither auto-fill nor the effective
+  // count bump — it works off `rawCount` directly.
   const autoFill =
-    (props.autoFillData ?? true) && loop && !props.source && rawCount > 0 && rawCount < 3;
+    (props.autoFillData ?? true) &&
+    loop &&
+    !native &&
+    !props.source &&
+    rawCount > 0 &&
+    rawCount < 3;
   const count = autoFill ? (rawCount === 1 ? 3 : 4) : rawCount;
   // windowSize=0 means "mount all". That's fine for small carousels (no
   // mount/unmount churn) but a perf trap for large sets, so:
@@ -129,8 +127,15 @@ export interface CarouselCore {
  * `offset`; this hook publishes progress, reports the active index, reconciles
  * size/count changes, and exposes the imperative controller.
  */
-/** Imperatively scroll a native scroll container to an engine offset (px). */
-export type SeekFn = (offset: number, animated: boolean) => void;
+/**
+ * Imperatively scroll a native scroll container to an engine offset (px).
+ * `from` is the engine offset the move STARTS from (captured before the core
+ * seeds the target); a looping track uses it to travel to the nearest ring copy
+ * of the destination (shortest visual path). Omitted for non-navigational
+ * reconciles (controlled `index`, data-length change), where the track picks a
+ * safe in-band copy itself.
+ */
+export type SeekFn = (offset: number, animated: boolean, from?: number) => void;
 
 export function useCarouselCore<T>(
   props: CarouselProps<T>,
@@ -326,13 +331,16 @@ export function useCarouselCore<T>(
       };
       const seek = seekRef?.current;
       if (seek) {
-        // Native scroll mode: drive the real scroll container. Seed the offset
-        // synchronously so progress/index report the landing page immediately
-        // (correct even where scroll events don't fire — jsdom / programmatic),
-        // then let the container animate there. The live scroll events keep the
-        // offset — and thus the pagination — in sync during the animation.
+        // Native scroll mode: drive the real scroll container. Capture the
+        // offset we're leaving BEFORE seeding the target, so a looping track can
+        // travel to the nearest ring copy (shortest visual path). Then seed the
+        // target offset synchronously so progress/index report the landing page
+        // immediately (correct even where scroll events don't fire — jsdom /
+        // programmatic); the live scroll events keep the offset — and thus the
+        // pagination — in sync during the animation.
+        const from = offset.value;
         offset.value = target;
-        seek(target, animated);
+        seek(target, animated, from);
         done();
         return;
       }
