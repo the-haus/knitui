@@ -8,8 +8,36 @@
  * the decoupled `<Pagination>`.
  */
 
+export { type DeckStampTone, type DeckStyles } from "./deck/chrome";
+export {
+  type DecideInput,
+  decideSwipe,
+  DEFAULT_FLICK_VELOCITY,
+  exitVectorFor,
+  stampOpacityFor,
+} from "./deck/decide";
+export {
+  deckEffects,
+  fanEffect,
+  resolveDeckEffect,
+  stackEffect,
+  swipeEffect,
+  tinderEffect,
+} from "./deck/effects";
+export { SwipeDeck } from "./deck/SwipeDeck";
+export type {
+  DeckCardState,
+  DeckEffect,
+  DeckEffectConfig,
+  DeckEffectFactory,
+  DeckEffectName,
+  SwipeDeckProps,
+  SwipeDeckRef,
+  SwipeDirection,
+} from "./deck/types";
 export * as engine from "./engine";
 export { Pagination, type PaginationProps, type PaginationStyles } from "./pagination/Pagination";
+
 export {
   type DotStyle,
   PaginationItem,
