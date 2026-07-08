@@ -38,6 +38,9 @@ the `withKnitui` wrapper from `@knitui/plugins/next-plugin`.
   snap/animation unit independently of the container size.
 - **`fixedDirection`** (`"positive"` / `"negative"`) forces the loop travel direction.
 - **Accessible**: region/slide roles, focus, a polite live region; reduced-motion respected.
+- **`SwipeDeck`**: a Tinder-style swipe deck with pluggable effects (`tinder` / `stack` /
+  `fan` / `swipe`), directional commit (distance or flick velocity), stamps, and an
+  imperative `ref`. See below.
 
 ### Observing & controlling the scroll
 
@@ -123,6 +126,53 @@ const source = createAsyncSlideSource<Photo>({
 Eager `data` still works unchanged; lists longer than ~11 items auto-virtualize
 (bounded mounted window) unless you set `windowSize` explicitly.
 
+## Swipe deck (`SwipeDeck`)
+
+A Tinder-style swipe deck: the top card free-drags in 2-D and commits a
+like / nope / super-like past a directional threshold — by distance **or** flick
+velocity — flying off while the next card rises to the top.
+
+```tsx
+import { SwipeDeck } from "@knitui/carousel";
+import { useRef } from "react";
+
+const ref = useRef(null);
+
+<SwipeDeck
+  ref={ref}
+  data={profiles}
+  effect="tinder" // "tinder" | "stack" | "fan" | "swipe" | custom worklet
+  directions={["left", "right", "up"]}
+  stampLabels={{ right: "LIKE", left: "NOPE", up: "SUPER" }}
+  onSwipe={(item, index, dir) => log(dir, item)}
+  onEmpty={() => log("out of cards")}
+  renderCard={(profile) => <ProfileCard profile={profile} />}
+  renderEmpty={() => <NoMoreCards />}
+  style={{ width: 320, height: 440 }}
+/>;
+
+// Imperative swipes (e.g. from Like / Nope buttons):
+ref.current?.swipeRight();
+```
+
+- **Effects** are the extensibility seam — each is a card-transform worklet
+  `(DeckCardState) => ViewStyle`, selected by the `effect` prop (a built-in
+  name or your own worklet). `DeckCardState` carries the card's animated stack
+  `depth`, live 2-D `drag`, and measured `size`; tune the built-ins via
+  `effectConfig` (`stackInterval` / `scaleInterval` / `tiltDeg` / `fanDeg` / …).
+- **Stamps** — the LIKE / NOPE overlays — come from `stampLabels` (built-in
+  bordered labels) or `renderStamp(direction)` (full control); their opacity is
+  driven by the drag toward that direction.
+- **Commit tuning**: `threshold` (fraction of card size, default `0.25`) and
+  `velocityThreshold` (px/s, default `800`); `directions` gates which way a
+  card can leave.
+- **Imperative `ref`**: `swipe(dir)` / `swipeLeft` / `swipeRight` / `swipeUp` /
+  `getActiveIndex`. Callbacks: `onSwipe` (+ per-direction), `onActiveIndexChange`,
+  `onEmpty`.
+- **Styling**: set the deck's size via `style`; theme the parts via the `styles`
+  per-slot map (`root` / `card` / `stamp`) or the exposed `SwipeDeck.Frame` /
+  `SwipeDeck.Card` / `SwipeDeck.Stamp` styled parts.
+
 ## Architecture
 
 The hard part — the motion math — is a **platform-free, reanimated-free, DOM-free**
@@ -134,11 +184,12 @@ on native, pointer/wheel/keyboard on web).
 ```
 src/
   engine/        # pure functions: offset↔index, itemProgress (loop core), settle, window
-  motion/        # reanimated worklet wrappers (shared RN + web)   — Phase 2
-  input/         # platform-split gesture/pointer input            — Phase 4/5
-  layouts/       # (progress,index) => ViewStyle worklets          — Phase 6
-  view/          # <Carousel>, Track, Item, virtualization         — Phase 3
-  pagination/    # decoupled indicators (consume a `progress` SV)  — Phase 7
+  motion/        # reanimated worklet wrappers (shared RN + web)
+  input/         # platform-split gesture/pointer input
+  layouts/       # (progress,index) => ViewStyle worklets
+  view/          # <Carousel>, Track, Item, virtualization
+  pagination/    # decoupled indicators (consume a `progress` SV)
+  deck/          # <SwipeDeck> — 2-D drag/commit + pluggable card effects
 ```
 
 ### The loop, redesigned
@@ -148,18 +199,13 @@ Looping is **virtual**: a single shortest-path-on-a-ring function
 center, so items wrap automatically — with **no data duplication** and no
 multi-point interpolation seams. One formula, correct for every item count.
 
-## Status
-
-Phase 1 (the pure engine) is implemented and tested. See the status list in
-`src/index.ts` for the remaining phases.
-
 ## Scripts
 
 ```
-pnpm test         # jest — engine + view + pagination (58 tests)
+pnpm test         # jest — engine + view + pagination + deck (192 tests)
 pnpm typecheck
 pnpm lint
-pnpm storybook    # port 6010
+pnpm storybook    # port 6008
 pnpm build        # react-native-builder-bob
 ```
 
@@ -176,11 +222,11 @@ platform split in the view layer is `Item` + `painter`.
 
 ## Testing & environments
 
-| Layer                                                                                  | Environment                                          | Status           |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------- |
-| Engine math (offset / loop ring / settle / window)                                     | jest (pure TS)                                       | ✅ deterministic |
-| Controller, virtualization, async source, autoplay, controlled index, edge cases, a11y | jest + react-native-web (jsdom) — 79 tests           | ✅ verified      |
-| Real animation, drag, layout modes, keyboard/wheel, async loading, large-data perf     | Storybook (`:6010`) in a real browser via Playwright | ✅ verified      |
+| Layer                                                                                                       | Environment                                          | Status           |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------- |
+| Engine math (offset / loop ring / settle / window)                                                          | jest (pure TS)                                       | ✅ deterministic |
+| Controller, virtualization, async source, autoplay, controlled index, deck commit/effects, edge cases, a11y | jest + react-native-web (jsdom) — 192 tests          | ✅ verified      |
+| Real animation, drag, layout modes, swipe-deck gestures, keyboard/wheel, async loading, large-data perf     | Storybook (`:6008`) in a real browser via Playwright | ✅ verified      |
 
 The jsdom painter is inert (no frame loop), so animated transforms are verified in a real browser, not
 jest; jest covers the logic. Native animation runs through Reanimated on-device as usual.
