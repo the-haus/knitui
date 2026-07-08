@@ -79,6 +79,14 @@ function withKnitui(nextConfig = {}, overrides = {}) {
  * for the SSR/Node path; in the browser bundle those have no equivalent, so
  * mark them as empty fallbacks.
  *
+ * `react-native-reanimated`'s web build touches the Node-ism `global` at
+ * module-eval time (e.g. `updateProps` assigns `global.UpdatePropsManager`).
+ * The browser has no `global`, so merely importing reanimated — which every
+ * `@knitui/carousel`/gesture consumer pulls in — throws `ReferenceError:
+ * global is not defined`. Alias the bare identifier to `globalThis` in the
+ * client bundle via DefinePlugin. Server-side `global` is a real Node global,
+ * so this rewrite is gated to `!isServer` to leave it untouched there.
+ *
  * @param {NextConfig} nextConfig
  * @returns {NextConfig}
  */
@@ -99,6 +107,8 @@ function withKnituiWebpack(nextConfig = {}) {
           fs: false,
           path: false,
         };
+        config.plugins = config.plugins || [];
+        config.plugins.push(new options.webpack.DefinePlugin({ global: "globalThis" }));
       }
       return typeof userWebpack === "function" ? userWebpack(config, options) : config;
     },
