@@ -1,6 +1,6 @@
 {
   "name": "@knitui/icons",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Hybrid React + React Native icon kit generated from @tabler/icons SVG data.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
