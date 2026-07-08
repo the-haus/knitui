@@ -67,9 +67,9 @@
     }
   },
   "devDependencies": {
-    "expo-document-picker": "~13.1.6",
+    "expo-document-picker": "~57.0.0",
     "react": "19.2.3",
-    "react-native": "0.85.3",
+    "react-native": "0.86.0",
     "react-native-builder-bob": "^0.40.5"
   },
   "react-native-builder-bob": {
