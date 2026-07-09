@@ -116,7 +116,7 @@
     "react-native-web": "~0.21.0",
     "storybook": "^10.4.1",
     "vite": "^8.0.14",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.10"
   },
   "react-native-builder-bob": {
     "source": "src",
