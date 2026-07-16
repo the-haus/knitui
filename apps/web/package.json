@@ -16,12 +16,12 @@
     "@knitui/hooks": "workspace:*",
     "@knitui/map": "workspace:*",
     "@knitui/plugins": "workspace:*",
-    "@shopify/react-native-skia": "2.6.6",
+    "@shopify/react-native-skia": "2.8.0",
     "maplibre-gl": "^5.0.0",
     "next": "^16.2.10",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native-reanimated": "4.5.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-native-reanimated": "4.5.1",
     "react-native-teleport": "^1.1.7"
   },
   "devDependencies": {
