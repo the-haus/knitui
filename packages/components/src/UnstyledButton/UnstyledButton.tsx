@@ -1,8 +1,15 @@
 import { type GetProps, styled, withStaticProperties } from "@knitui/core";
 
 import { Box } from "../Box";
+import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
-import { focusRingStyle, webButton, webButtonTextReset, webCursor } from "../internal/style-props";
+import {
+  focusRingStyle,
+  pressScaleStyle,
+  webButton,
+  webButtonTextReset,
+  webCursor,
+} from "../internal/style-props";
 import { Text } from "../Text";
 
 /**
@@ -19,6 +26,14 @@ export const UnstyledButtonFrame = styled(Box, {
   borderWidth: 0,
   userSelect: "none",
   ...focusRingStyle,
+  // Tactile press-dip — the same base affordance `Button`/`ActionIcon`/`Chip`
+  // carry, eased via the `usePressScale()` props applied on render
+  // (reduced-motion aware). Without it an `UnstyledButton` is the only pressable
+  // in the kit that gives NO feedback on press, so custom controls built on it
+  // read as dead next to their built-in siblings. Descendants that add their own
+  // `pressStyle` (e.g. a background shift) merge with this rather than replace
+  // it, exactly as `Chip`'s per-state colours do.
+  ...pressScaleStyle,
 
   variants: {
     disabled: {
@@ -43,6 +58,8 @@ export interface UnstyledButtonProps extends UnstyledButtonFrameProps {
 const UnstyledButtonComponent = UnstyledButtonFrame.styleable<UnstyledButtonProps>(
   function UnstyledButton(props, ref) {
     const { children, disabled, style, ...rest } = props;
+    // Reduced-motion-aware press easing (neutralises the base dip when reduced).
+    const press = usePressScale();
     // On web the semantic `<button>` host carries a UA `text-align: center` that
     // would centre text content — diverging from native, where a pressable's text
     // starts at the inline edge. `webButtonTextReset()` neutralises that (web-only)
@@ -54,6 +71,7 @@ const UnstyledButtonComponent = UnstyledButtonFrame.styleable<UnstyledButtonProp
       <UnstyledButtonFrame
         ref={ref}
         disabled={disabled}
+        {...press}
         {...rest}
         aria-disabled={disabled || undefined}
         {...webButton()}

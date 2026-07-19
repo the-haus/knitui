@@ -231,6 +231,8 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       offsetScrollbars = false,
       scrollHideDelay = DEFAULT_HIDE_DELAY,
       onScrollPositionChange,
+      scrollValueX,
+      scrollValueY,
       viewportRef,
       viewportProps,
       keyboardShouldPersistTaps,
@@ -483,6 +485,21 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
         if (!usePan || !needsJsScroll) return;
         if (prev && curr.x === prev.x && curr.y === prev.y) return;
         runOnJS(reportScroll)(curr.x, curr.y);
+      },
+    );
+
+    // Mirror the live offset into caller-owned shared values on the UI thread, so
+    // a reanimated consumer (a parallax / collapsing header) can read the scroll
+    // offset with ZERO JS-thread round-trip — unlike `onScrollPositionChange`,
+    // which hops to JS via `runOnJS` and stutters when JS is busy. Watches the
+    // internal offset shared values, so it covers BOTH the native (Autosize) and
+    // Pan engines with one reaction. No-op unless the caller passes the props.
+    useAnimatedReaction(
+      () => ({ x: scrollX.value, y: scrollY.value }),
+      (curr) => {
+        "worklet";
+        if (scrollValueX) scrollValueX.value = curr.x;
+        if (scrollValueY) scrollValueY.value = curr.y;
       },
     );
 
