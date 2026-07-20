@@ -592,4 +592,12 @@ export { TreeSelect, type TreeSelectProps, type TreeSelectSize } from "./TreeSel
 
 export { Typography, type TypographyProps } from "./Typography";
 export { UnstyledButton, type UnstyledButtonProps } from "./UnstyledButton";
+export {
+  VirtualList,
+  type VirtualListHandle,
+  type VirtualListOwnProps,
+  type VirtualListProps,
+  type VirtualListRenderItemInfo,
+  type VirtualListStyles,
+} from "./VirtualList";
 export { VisuallyHidden, type VisuallyHiddenProps } from "./VisuallyHidden";

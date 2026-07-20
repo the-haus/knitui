@@ -16,8 +16,10 @@
  *   - headless hooks (useAudioController / …PlaylistController / …RecorderController)
  *   - the audio session API (setAudioMode / preload / permissions)
  *   - the isolated type contracts + pure engine helpers
+ *   - the store contract (MediaStore) + selector hooks for custom chrome
  */
 
+export { type MediaStore, shallowEqual, useMediaSelector } from "../core/react/useMediaSelector";
 export { Audio } from "./Audio";
 export {
   BufferingIndicator,
@@ -38,11 +40,13 @@ export {
   type VolumeSliderProps,
 } from "./Audio.chrome";
 export {
+  AudioContext,
   type AudioContextValue,
   type AudioProps,
   type AudioSize,
   type AudioStyles,
   useAudio,
+  useAudioState,
 } from "./Audio.shared";
 export type { AudioController } from "./controller/audio-controller-base";
 export type {
@@ -118,6 +122,7 @@ export {
   type AudioPlaylistProps,
   type AudioPlaylistStyles,
   useAudioPlaylistContext,
+  usePlaylistState,
 } from "./playlist/AudioPlaylist.shared";
 export { AudioRecorder } from "./recorder/AudioRecorder";
 export {
@@ -126,6 +131,7 @@ export {
   type AudioRecorderSize,
   type AudioRecorderStyles,
   useAudioRecorder,
+  useRecorderState,
 } from "./recorder/AudioRecorder.shared";
 export { createAudioEngine, getSharedAudioSession, useAudioEngine } from "./session/audio-engine";
 export type { AudioEngine } from "./session/audio-engine.shared";

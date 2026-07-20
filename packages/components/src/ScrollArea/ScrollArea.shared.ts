@@ -1,4 +1,5 @@
 import type * as React from "react";
+import type { SharedValue } from "react-native-reanimated";
 
 import type { TamaguiElement } from "@knitui/core";
 
@@ -149,6 +150,21 @@ export interface ScrollAreaOwnProps {
 
   /** Called with the `{ x, y }` scroll offset whenever the viewport scrolls. */
   onScrollPositionChange?: (position: ScrollPosition) => void;
+
+  /**
+   * Reanimated shared value the live vertical scroll offset is mirrored INTO on
+   * the UI thread every frame, with NO JS-thread round-trip. Pass this when a
+   * reanimated animation (e.g. a parallax / collapsing header) needs the live
+   * offset: create it with `useSharedValue(0)` and feed the SAME value to your
+   * `useAnimatedStyle`. Prefer this over `onScrollPositionChange` for animation —
+   * that callback hops to JS via `runOnJS`, so the animation stutters whenever the
+   * JS thread is busy. Native only; the web ScrollArea ignores it (drive web from
+   * `onScrollPositionChange` + React state instead).
+   */
+  scrollValueY?: SharedValue<number>;
+
+  /** Horizontal counterpart of {@link scrollValueY}. */
+  scrollValueX?: SharedValue<number>;
 
   /** Ref assigned to the scrollable viewport element. */
   viewportRef?: React.Ref<TamaguiElement>;

@@ -109,8 +109,8 @@ expose their parts as static members (e.g. `Card.Section`, `Combobox.Dropdown`,
 motion presets (`motionPresets`, `useMotionPreset`, `usePressScale`,
 `MotionConfig`).
 
-**Scrolling & utilities** — `ScrollArea`, `VisuallyHidden`, `KeyboardAvoidingView`,
-`KeyboardAwareScrollView`.
+**Scrolling & utilities** — `ScrollArea`, `VirtualList`, `VisuallyHidden`,
+`KeyboardAvoidingView`, `KeyboardAwareScrollView`.
 
 **Positioning engine** — a portable, cross-platform floating layer
 (`useFloating`, `computePosition`, `flip`, `shift`, `offset`, `arrow`, `size`, …)

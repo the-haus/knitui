@@ -51,6 +51,13 @@ export class ExpoAudioRecorderController
   private poll: ReturnType<typeof setInterval> | null = null;
   /** Guards `recordingComplete` to exactly once per recording (event + `stop()`). */
   private finalized = false;
+  /**
+   * Set by `dispose()`. Every `await` below re-checks it before touching the
+   * recorder: the owning hook releases the underlying `AudioRecorder` as part of
+   * the same unmount that disposes us, so a continuation resuming afterwards
+   * would be a use-after-release (a hard native crash, not a warning).
+   */
+  private disposed = false;
 
   constructor(recorder: AudioRecorder, options: RecordingOptions) {
     super(options);
@@ -121,6 +128,29 @@ export class ExpoAudioRecorderController
     }
   }
 
+  /**
+   * Publish the ONE terminal error state, byte-identical to the shape
+   * `ingestStatus()` publishes for a backend-reported `status.hasError` — so a
+   * rejected `prepareToRecordAsync()` / `stop()` lands the recorder in exactly
+   * the same place a faulted `recordingStatusUpdate` does and the chrome has a
+   * single error state to render. `error` + `statusChange` fan out from the diff
+   * in `deriveEvents` (the callers that get here always clear `error` to `null`
+   * first, so a repeated failure re-fires `error` rather than going silent).
+   * `status: "error"` is in NEEDS_PREPARE, so the next `record()` re-prepares —
+   * that is the retry path.
+   */
+  private fail(cause: unknown, fallback: string): void {
+    const message =
+      cause instanceof Error && cause.message ? cause.message : String(cause || fallback);
+    this.setState({
+      status: "error",
+      isRecording: false,
+      canRecord: false,
+      error: { message } satisfies AudioError,
+    });
+    this.stopPolling();
+  }
+
   /** Finalize a recording exactly once: stop polling, publish the URI + events. */
   private finalize(uri: string | null): void {
     if (this.finalized) return;
@@ -142,9 +172,25 @@ export class ExpoAudioRecorderController
 
   async prepare(): Promise<void> {
     this.setState({ status: "preparing", error: null });
-    await this.recorder.prepareToRecordAsync(
-      this.options as unknown as Partial<ExpoRecordingOptions>,
-    );
+    try {
+      await this.recorder.prepareToRecordAsync(
+        this.options as unknown as Partial<ExpoRecordingOptions>,
+      );
+    } catch (cause) {
+      // A denied mic prompt rejects here (`NotAllowedError` on web, the native
+      // equivalent on device). Left unhandled this escaped through `record()` to
+      // the chrome's `void controller.record()` as an unhandled rejection, and
+      // the recorder stayed stuck at `status: "preparing"` forever — no `error`
+      // event, no `statusChange`, no way to recover. Publish the terminal error
+      // state instead and DON'T re-throw: every caller in the chrome is
+      // `void controller.record()` / `void controller.stop()` and no caller or
+      // test consumes the rejection, so re-throwing would only reinstate the
+      // unhandled rejection on top of state the UI can already act on.
+      if (this.disposed) return;
+      this.fail(cause, "Microphone unavailable or permission denied.");
+      return;
+    }
+    if (this.disposed) return;
     const inputs = this.mapInputs();
     let currentInputUid: string | null = null;
     try {
@@ -165,9 +211,24 @@ export class ExpoAudioRecorderController
   async record(options?: RecordingStartOptions): Promise<void> {
     if (NEEDS_PREPARE.has(this._state.status) || !this._state.canRecord) {
       await this.prepare();
+      // Unmounting mid-tap disposes us during that await; without this the
+      // continuation would `record()` a released recorder and install a poll
+      // interval that nothing is left to clear.
+      if (this.disposed) return;
+      // `prepare()` reports its own failure as terminal error state rather than
+      // throwing, so bail here instead of recording an unprepared recorder.
+      if (this._state.status === "error") return;
     }
     this.finalized = false;
-    this.recorder.record(options);
+    try {
+      this.recorder.record(options);
+    } catch (cause) {
+      // Same failure class as the prepare rejection above (the web backend
+      // throws synchronously from `record()`), and inside an async method a sync
+      // throw is just another rejected promise for `void controller.record()`.
+      this.fail(cause, "Could not start recording.");
+      return;
+    }
     // recordingChange + statusChange fan out from the diff in deriveEvents.
     this.setState({ status: "recording", isRecording: true, uri: null, error: null });
     this.startPolling();
@@ -191,7 +252,22 @@ export class ExpoAudioRecorderController
     this.stopPolling();
     // The web backend emits `recordingStatusUpdate({ isFinished })` during this
     // await, which finalizes via `ingestStatus`; the call below is then a no-op.
-    await this.recorder.stop();
+    try {
+      await this.recorder.stop();
+    } catch (cause) {
+      // `AudioRecorderWeb.stop()` throws when `mediaRecorder` is null and rejects
+      // when the recorder faulted. `stopPolling()` has already run, so without
+      // this the recorder stayed pinned at `status: "recording"` with a frozen
+      // duration and no message. Not re-thrown, for the same reason as
+      // `prepare()`: the caller is `void controller.stop()`.
+      if (this.disposed) return this._state.uri;
+      // A `recordingStatusUpdate({ isFinished })` may have already finalized us
+      // during the await; the recording succeeded, so don't clobber it.
+      if (this.finalized) return this._state.uri;
+      this.fail(cause, "Recording could not be finalized.");
+      return null;
+    }
+    if (this.disposed) return this._state.uri;
     const uri = this.recorder.uri ?? this._state.uri;
     this.finalize(uri);
     return this._state.uri ?? uri;
@@ -223,6 +299,7 @@ export class ExpoAudioRecorderController
   }
 
   override dispose(): void {
+    this.disposed = true;
     this.stopPolling();
     for (const subscription of this.subscriptions) subscription.remove();
     this.subscriptions = [];

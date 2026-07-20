@@ -50,9 +50,25 @@ type ImageErrorEvent = Parameters<NonNullable<ImageProps["onError"]>>[0];
 const SIZE_KEYS = new Set(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"]);
 
 /**
+ * Internal alias the unified `transition` prop is forwarded under. expo-image's
+ * `transition` (a numeric fade duration / config) collides with Tamagui v2's
+ * reserved `transition` animation prop: Tamagui treats ANY component where
+ * `"transition" in props` as animated (see @tamagui/web useComponentState) and
+ * engages its animation driver. On web that driver calls `getComputedStyle(host)`,
+ * but the backing expo-image host ref is not a DOM `Element`, so it throws
+ * ("parameter 1 is not of type 'Element'") and blanks the tree. We therefore
+ * forward the value to the backend under this Tamagui-invisible alias and remap
+ * it back to `transition` in the adapter that wraps the backend component.
+ */
+const TRANSITION_INLINE_ALIAS = "expoImageTransition";
+
+/**
  * Props handed straight to the underlying image component without Tamagui
  * processing. Covers the full expo-image surface so every feature prop
  * (transition, placeholder, tintColor, cache policy, …) reaches the backend.
+ * NOTE: `transition` is deliberately absent — it is forwarded under
+ * `TRANSITION_INLINE_ALIAS` instead (see above) so Tamagui never sees a raw
+ * `transition` prop that would (crash-inducingly) mark the image as animated.
  */
 const DEFAULT_INLINE_PROPS = new Set([
   "source",
@@ -60,7 +76,7 @@ const DEFAULT_INLINE_PROPS = new Set([
   "placeholderContentFit",
   "contentFit",
   "contentPosition",
-  "transition",
+  TRANSITION_INLINE_ALIAS,
   "blurRadius",
   "tintColor",
   "priority",
@@ -279,7 +295,22 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
   const inlinePropsSet = new Set(DEFAULT_INLINE_PROPS);
   if (inlineProps) for (const name of inlineProps) inlinePropsSet.add(name);
 
-  const BaseComponent: ComponentType<Record<string, unknown>> = Component;
+  // Adapter wrapping the backend component: remaps `TRANSITION_INLINE_ALIAS`
+  // (the Tamagui-invisible key the styled layer forwards) back to the backend's
+  // real `transition` prop. This sits BELOW the Tamagui `styled()` layer, so
+  // Tamagui never sees a raw `transition` prop (which would mark the image
+  // animated and crash the web CSS animation driver on the non-Element host).
+  const BaseComponent: ComponentType<Record<string, unknown>> = React.forwardRef<
+    unknown,
+    Record<string, unknown>
+  >(function ImageBackendAdapter(backendProps, backendRef) {
+    const { [TRANSITION_INLINE_ALIAS]: transitionValue, ...backendRest } = backendProps;
+    return React.createElement(Component, {
+      ...backendRest,
+      ...(transitionValue !== undefined && { transition: transitionValue }),
+      ref: backendRef,
+    });
+  }) as unknown as ComponentType<Record<string, unknown>>;
 
   const StyledImage = styled(
     BaseComponent,
@@ -323,6 +354,11 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
       accessibilityLabel,
       onLoad,
       onError,
+      // Pulled out so it never reaches the Tamagui `styled()` layer as a raw
+      // `transition` prop (which marks the image animated → crashes the web CSS
+      // animation driver on the non-Element host). Re-forwarded under
+      // `TRANSITION_INLINE_ALIAS` below and unwrapped in the backend adapter.
+      transition,
       ...rest
     } = props;
 
@@ -391,6 +427,13 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
       onError: handleError,
       onLoad: handleLoad,
     };
+
+    // Forward the backend fade config under the Tamagui-invisible alias (the
+    // backend adapter remaps it to `transition`). Keyed so a value of `0` (no
+    // fade) still forwards; only an absent prop is skipped.
+    if (transition !== undefined) {
+      finalProps[TRANSITION_INLINE_ALIAS] = transition;
+    }
 
     // The unified API uses web-style `alt`; expo-image's web build reads only
     // `accessibilityLabel` for the `<img alt>`, so normalize `alt` onto it

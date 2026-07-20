@@ -29,7 +29,7 @@ export interface AudioStreamBufferData {
   data: ArrayBuffer;
   /** Actual sample rate, Hz. */
   sampleRate: number;
-  /** Actual channel count. */
+  /** Actual channel count in this buffer (always `1` on web — mono-only). */
   channels: number;
   /** Seconds since the stream started. */
   timestamp: number;
@@ -41,7 +41,14 @@ export interface AudioStreamBufferData {
 export interface UseAudioStreamOptions {
   /** Desired sample rate, Hz. Default backend-specific (native 48000). */
   sampleRate?: number;
-  /** Channel count. `1` mono, `2` stereo. Default `1`. */
+  /**
+   * Channel count. `1` mono, `2` stereo. Default `1`.
+   *
+   * Honored on native. IGNORED on web: that backend captures with no
+   * `channelCount` constraint and down-mixes to mono, so it always delivers ONE
+   * channel — the returned/emitted `channels` reports `1` there no matter what
+   * is requested. Read it (don't assume this value) before de-interleaving.
+   */
   channels?: number;
   /** PCM encoding. Default `'float32'`. Honored on native; web is always float. */
   encoding?: AudioStreamEncoding;
@@ -68,7 +75,10 @@ export interface UseAudioStreamResult {
   isStreaming: boolean;
   /** Actual sample rate being delivered, Hz (`0` before `start`). */
   sampleRate: number;
-  /** Actual channel count being delivered (`0` before `start`). */
+  /**
+   * Actual channel count being delivered (`0` before `start`). May be LESS than
+   * the requested `channels` — web always delivers `1`.
+   */
   channels: number;
   /** Throttled latest level (drives React re-renders for a meter UI). */
   level: AudioStreamLevel;
