@@ -772,8 +772,7 @@ const ColorPickerRoot = React.forwardRef<
   const geometry = React.useMemo(() => getPickerGeometry(size), [size]);
 
   const hiddenInputProps:
-    | { name: string; readOnly: true; type: "hidden"; value: string }
-    | undefined =
+    { name: string; readOnly: true; type: "hidden"; value: string } | undefined =
     isWeb && name ? { type: "hidden", name, value: _value, readOnly: true } : undefined;
 
   const onSaturationChangeEnd = React.useCallback(

@@ -23,13 +23,7 @@ import { Text } from "../Text";
 
 type AlertSize = SizeKey;
 type AlertVariant =
-  | "filled"
-  | "light"
-  | "outline"
-  | "default"
-  | "transparent"
-  | "white"
-  | "gradient";
+  "filled" | "light" | "outline" | "default" | "transparent" | "white" | "gradient";
 
 const AlertContext = createStyledContext<{ size: AlertSize; variant: AlertVariant }>({
   size: "md",

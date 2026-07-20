@@ -118,13 +118,9 @@ export const config = createTheme({
   //  <Provider defaultColorScheme="light" /> rather than here)
 
   // escape hatches for anything not surfaced above (both deep-merged)
-  themeBuilder: {
-    /* templates, masks, … merged into createThemes */
-  },
+  themeBuilder: {/* templates, masks, … merged into createThemes */},
   themes: undefined, // a fully-built themes object bypasses the builder
-  tamagui: {
-    /* deep-merged into createTamagui() — augments, never clobbers */
-  },
+  tamagui: {/* deep-merged into createTamagui() — augments, never clobbers */},
 });
 
 export const App = ({ children }) => <Provider config={config}>{children}</Provider>;

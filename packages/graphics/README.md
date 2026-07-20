@@ -207,9 +207,7 @@ kit's Next plugin does this for you:
 ```js
 // next.config.js
 const { withKnitui } = require("@knitui/plugins/next-plugin");
-module.exports = withKnitui({
-  /* your next config */
-});
+module.exports = withKnitui({/* your next config */});
 ```
 
 ## Storybook & scripts

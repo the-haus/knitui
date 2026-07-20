@@ -26,10 +26,7 @@ type DatesValue<Type extends DatePickerType> = DatePickerValue<Type, DateStringV
  * to this union, so a plain `=` widens it for inspection.
  */
 type StoredDatesValue =
-  | DatesRangeValue<DateStringValue>
-  | DateStringValue[]
-  | DateStringValue
-  | null;
+  DatesRangeValue<DateStringValue> | DateStringValue[] | DateStringValue | null;
 
 /** Range branch of `getControlProps` — maps onto Day/PickerControl boolean variants. */
 interface RangeControlProps {

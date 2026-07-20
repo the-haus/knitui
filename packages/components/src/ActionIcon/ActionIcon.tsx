@@ -26,14 +26,7 @@ import { Text } from "../Text";
 
 type ActionIconSize = SizeKey;
 type ActionIconVariant =
-  | "filled"
-  | "light"
-  | "outline"
-  | "subtle"
-  | "transparent"
-  | "white"
-  | "default"
-  | "gradient";
+  "filled" | "light" | "outline" | "subtle" | "transparent" | "white" | "default" | "gradient";
 
 const ActionIconContext = createStyledContext<{
   size: ActionIconSize;

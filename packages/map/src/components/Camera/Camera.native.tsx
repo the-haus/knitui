@@ -25,29 +25,26 @@ export const Camera = memo(
 
     // Forward the native ref methods directly — the RN v11 beta Camera
     // already exposes jumpTo/easeTo/flyTo/fitBounds/zoomTo/setStop.
-    useImperativeHandle(
-      ref,
-      (): CameraRef => ({
-        jumpTo: (options) => {
-          cameraRef.current?.jumpTo(options);
-        },
-        easeTo: (options) => {
-          cameraRef.current?.easeTo(options);
-        },
-        flyTo: (options) => {
-          cameraRef.current?.flyTo(options);
-        },
-        fitBounds: (bounds, options) => {
-          cameraRef.current?.fitBounds(bounds, options);
-        },
-        zoomTo: (zoom, options) => {
-          cameraRef.current?.zoomTo(zoom, options);
-        },
-        setStop: async (s) => {
-          await cameraRef.current?.setStop(s);
-        },
-      }),
-    );
+    useImperativeHandle(ref, (): CameraRef => ({
+      jumpTo: (options) => {
+        cameraRef.current?.jumpTo(options);
+      },
+      easeTo: (options) => {
+        cameraRef.current?.easeTo(options);
+      },
+      flyTo: (options) => {
+        cameraRef.current?.flyTo(options);
+      },
+      fitBounds: (bounds, options) => {
+        cameraRef.current?.fitBounds(bounds, options);
+      },
+      zoomTo: (zoom, options) => {
+        cameraRef.current?.zoomTo(zoom, options);
+      },
+      setStop: async (s) => {
+        await cameraRef.current?.setStop(s);
+      },
+    }));
 
     return (
       <MapLibreCamera

@@ -70,10 +70,7 @@ export type ConicalGradientFill = GradientFillBase & {
  * a sensible default derived from the bounds.
  */
 export type GradientFill =
-  | LinearGradientFill
-  | RadialGradientFill
-  | SweepGradientFill
-  | ConicalGradientFill;
+  LinearGradientFill | RadialGradientFill | SweepGradientFill | ConicalGradientFill;
 
 export type GradientBaseProps = Partial<Size> & {
   x?: number;

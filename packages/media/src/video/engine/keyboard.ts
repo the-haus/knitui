@@ -9,9 +9,7 @@ import { type MediaKeyAction, type MediaKeyOptions, resolveMediaKeyAction } from
 export type VideoKeyOptions = MediaKeyOptions;
 
 export type VideoKeyAction =
-  | MediaKeyAction
-  | { type: "toggleFullscreen" }
-  | { type: "togglePictureInPicture" };
+  MediaKeyAction | { type: "toggleFullscreen" } | { type: "togglePictureInPicture" };
 
 /**
  * Maps a `KeyboardEvent.key` to a player action, or `null` if the key is not a

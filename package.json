@@ -39,23 +39,23 @@
     "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.28.1",
+    "@changesets/cli": "^2.31.1",
     "@eslint/js": "^9.25.0",
-    "@next/eslint-plugin-next": "^16.2.7",
+    "@next/eslint-plugin-next": "^16.2.10",
     "@react-native/metro-config": "0.86.0",
     "eslint": "^9.25.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import-x": "^4.16.2",
-    "eslint-plugin-perfectionist": "^5.9.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-perfectionist": "^5.10.0",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "prettier": "^3.5.3",
-    "react-native-builder-bob": "^0.40.5",
+    "prettier": "^3.9.5",
+    "react-native-builder-bob": "^0.43.0",
     "rimraf": "^6.0.1",
-    "turbo": "^2.5.0",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.31.0"
+    "turbo": "^2.10.5",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.64.0"
   },
   "pnpm": {
     "overrides": {
@@ -64,19 +64,12 @@
       "@react-native/metro-config": "0.86.0",
       "react-native-reanimated": "4.5.0",
       "react-native-worklets": "0.10.0",
-      "@shopify/react-native-skia": "2.6.6",
+      "@shopify/react-native-skia": "2.6.2",
       "@maplibre/maplibre-gl-style-spec": "24.8.5"
-    },
-    "peerDependencyRules": {
-      "allowedVersions": {
-        "@config-plugins/detox>expo": "57"
-      }
     },
     "onlyBuiltDependencies": [
       "@shopify/react-native-skia",
       "@swc/core",
-      "detox",
-      "dtrace-provider",
       "esbuild",
       "sharp"
     ],
@@ -85,9 +78,9 @@
     ],
     "patchedDependencies": {
       "react-native-teleport@1.1.7": "patches/react-native-teleport@1.1.7.patch",
-      "@tamagui/animations-css@2.3.0": "patches/@tamagui__animations-css@2.3.0.patch",
-      "expo-modules-core@57.0.3": "patches/expo-modules-core@57.0.3.patch",
-      "expo-audio@57.0.0": "patches/expo-audio@57.0.0.patch"
+      "@tamagui/animations-css@2.4.6": "patches/@tamagui__animations-css@2.4.6.patch",
+      "expo-modules-core@57.0.6": "patches/expo-modules-core@57.0.6.patch",
+      "expo-audio@57.0.2": "patches/expo-audio@57.0.2.patch"
     }
   }
 }

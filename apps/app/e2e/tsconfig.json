@@ -1,7 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "types": ["detox", "jest", "node"]
-  },
-  "include": ["./**/*.ts"]
-}

@@ -20,14 +20,7 @@ import { Text } from "../Text";
 
 type BadgeSize = SizeKey;
 type BadgeVariant =
-  | "filled"
-  | "light"
-  | "outline"
-  | "dot"
-  | "transparent"
-  | "white"
-  | "default"
-  | "gradient";
+  "filled" | "light" | "outline" | "dot" | "transparent" | "white" | "default" | "gradient";
 
 const BadgeContext = createStyledContext<{ size: BadgeSize | number; variant: BadgeVariant }>({
   size: "md",

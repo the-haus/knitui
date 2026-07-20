@@ -14,7 +14,9 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "types": ["node", "jest"]
   },
-  "exclude": ["node_modules", "lib", "dist", ".expo"]
+  "exclude": ["node_modules", "lib", "dist", ".expo"],
+  "files": ["./types/assets.d.ts"]
 }

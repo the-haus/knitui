@@ -5,19 +5,7 @@ import { Text } from "../Text";
 
 export type TitleOrder = 1 | 2 | 3 | 4 | 5 | 6;
 export type TitleSize =
-  | "h1"
-  | "h2"
-  | "h3"
-  | "h4"
-  | "h5"
-  | "h6"
-  | "xxs"
-  | "xs"
-  | "sm"
-  | "md"
-  | "lg"
-  | "xl"
-  | "xxl";
+  "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "xxs" | "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
 
 /**
  * Heading — mirrors Mantine's `Title`. `order` (1–6) drives the semantic heading

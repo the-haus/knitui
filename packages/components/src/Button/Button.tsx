@@ -38,14 +38,7 @@ import { Text } from "../Text";
 type ButtonSize = SizeKey;
 
 type ButtonVariant =
-  | "filled"
-  | "light"
-  | "outline"
-  | "subtle"
-  | "default"
-  | "white"
-  | "transparent"
-  | "gradient";
+  "filled" | "light" | "outline" | "subtle" | "default" | "white" | "transparent" | "gradient";
 
 const ButtonContext = createStyledContext<{ size: ButtonSize; variant: ButtonVariant }>({
   size: "md",

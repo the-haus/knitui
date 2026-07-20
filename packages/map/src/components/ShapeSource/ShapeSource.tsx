@@ -172,54 +172,51 @@ export const ShapeSource = memo(
 
     // --- Imperative ref ---
 
-    useImperativeHandle(
-      ref,
-      (): GeoJSONSourceRef => ({
-        getData: async (filter?: FilterSpecification): Promise<GeoJSON.FeatureCollection> => {
-          if (!map) return { type: "FeatureCollection", features: [] };
-          const features = map.querySourceFeatures(id, {
-            filter: filter as FilterSpecification | undefined,
-          } as Parameters<MLMap["querySourceFeatures"]>[1]);
-          return { type: "FeatureCollection", features: features as Feature[] };
-        },
+    useImperativeHandle(ref, (): GeoJSONSourceRef => ({
+      getData: async (filter?: FilterSpecification): Promise<GeoJSON.FeatureCollection> => {
+        if (!map) return { type: "FeatureCollection", features: [] };
+        const features = map.querySourceFeatures(id, {
+          filter: filter as FilterSpecification | undefined,
+        } as Parameters<MLMap["querySourceFeatures"]>[1]);
+        return { type: "FeatureCollection", features: features as Feature[] };
+      },
 
-        getClusterExpansionZoom: async (clusterId: number): Promise<number> => {
-          const source = map?.getSource(id) as GeoJSONSource | undefined;
-          if (!source) return 0;
-          try {
-            return await source.getClusterExpansionZoom(clusterId);
-          } catch {
-            return 0;
-          }
-        },
+      getClusterExpansionZoom: async (clusterId: number): Promise<number> => {
+        const source = map?.getSource(id) as GeoJSONSource | undefined;
+        if (!source) return 0;
+        try {
+          return await source.getClusterExpansionZoom(clusterId);
+        } catch {
+          return 0;
+        }
+      },
 
-        getClusterLeaves: async (
-          clusterId: number,
-          limit: number,
-          offset: number,
-        ): Promise<GeoJSON.Feature[]> => {
-          const source = map?.getSource(id) as GeoJSONSource | undefined;
-          if (!source) return [];
-          try {
-            const leaves = await source.getClusterLeaves(clusterId, limit, offset);
-            return leaves as Feature[];
-          } catch {
-            return [];
-          }
-        },
+      getClusterLeaves: async (
+        clusterId: number,
+        limit: number,
+        offset: number,
+      ): Promise<GeoJSON.Feature[]> => {
+        const source = map?.getSource(id) as GeoJSONSource | undefined;
+        if (!source) return [];
+        try {
+          const leaves = await source.getClusterLeaves(clusterId, limit, offset);
+          return leaves as Feature[];
+        } catch {
+          return [];
+        }
+      },
 
-        getClusterChildren: async (clusterId: number): Promise<GeoJSON.Feature[]> => {
-          const source = map?.getSource(id) as GeoJSONSource | undefined;
-          if (!source) return [];
-          try {
-            const children = await source.getClusterChildren(clusterId);
-            return children as Feature[];
-          } catch {
-            return [];
-          }
-        },
-      }),
-    );
+      getClusterChildren: async (clusterId: number): Promise<GeoJSON.Feature[]> => {
+        const source = map?.getSource(id) as GeoJSONSource | undefined;
+        if (!source) return [];
+        try {
+          const children = await source.getClusterChildren(clusterId);
+          return children as Feature[];
+        } catch {
+          return [];
+        }
+      },
+    }));
 
     return <>{children}</>;
   }),

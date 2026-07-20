@@ -106,12 +106,7 @@ export type ExpressionName =
   | "heatmap-density";
 
 export type ExpressionField =
-  | string
-  | number
-  | boolean
-  | Expression
-  | ExpressionField[]
-  | { [key: string]: ExpressionField };
+  string | number | boolean | Expression | ExpressionField[] | { [key: string]: ExpressionField };
 
 export type Expression = readonly [ExpressionName, ...ExpressionField[]];
 

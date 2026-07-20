@@ -5,7 +5,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    # 0 disables routine version-update PRs. Security-advisory PRs are a
+    # separate mechanism and still open regardless of this limit.
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
     commit-message:
@@ -24,7 +26,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    # See note above: disables version-update PRs, keeps security PRs.
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "github-actions"

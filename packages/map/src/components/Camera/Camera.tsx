@@ -202,10 +202,14 @@ export const Camera = memo(
       applyStop(map, stop);
     };
 
-    useImperativeHandle(
-      ref,
-      (): CameraRef => ({ jumpTo, easeTo, flyTo, fitBounds, zoomTo, setStop }),
-    );
+    useImperativeHandle(ref, (): CameraRef => ({
+      jumpTo,
+      easeTo,
+      flyTo,
+      fitBounds,
+      zoomTo,
+      setStop,
+    }));
 
     // --- Initial view state (applied once on ready) ---
 

@@ -50,13 +50,7 @@ export interface RecordingStartOptions {
 
 /** Lifecycle status of the recorder, normalized across both backends. */
 export type AudioRecorderStatus =
-  | "idle"
-  | "preparing"
-  | "ready"
-  | "recording"
-  | "paused"
-  | "stopped"
-  | "error";
+  "idle" | "preparing" | "ready" | "recording" | "paused" | "stopped" | "error";
 
 /**
  * An immutable snapshot of everything the recorder UI needs to render. The

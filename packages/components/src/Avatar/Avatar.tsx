@@ -25,13 +25,7 @@ import { Text } from "../Text";
 
 export type AvatarSize = SizeKey;
 export type AvatarVariant =
-  | "filled"
-  | "light"
-  | "outline"
-  | "transparent"
-  | "default"
-  | "white"
-  | "gradient";
+  "filled" | "light" | "outline" | "transparent" | "default" | "white" | "gradient";
 
 /** Accent color theme names available for auto-color assignment. */
 const ACCENT_COLORS = [

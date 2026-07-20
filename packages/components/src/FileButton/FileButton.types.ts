@@ -7,15 +7,7 @@ import type { ButtonProps } from "../Button";
 /* -------------------------------------------------------------------------- */
 
 type FileButtonOwnedInputProps =
-  | "accept"
-  | "capture"
-  | "disabled"
-  | "form"
-  | "multiple"
-  | "name"
-  | "onChange"
-  | "style"
-  | "type";
+  "accept" | "capture" | "disabled" | "form" | "multiple" | "name" | "onChange" | "style" | "type";
 
 /** Props spread onto the hidden web `<input>`, excluding props owned by FileButton. */
 export type FileButtonInputProps = Omit<
@@ -66,8 +58,7 @@ export type FileButtonTriggerProps = Omit<ButtonProps, "onPress" | "onChange" | 
  * wire onto your own element (used internally by `FileInput`).
  */
 export type FileButtonChildren =
-  | React.ReactNode
-  | ((props: { onClick: () => void }) => React.ReactNode);
+  React.ReactNode | ((props: { onClick: () => void }) => React.ReactNode);
 
 export interface FileButtonProps<
   Multiple extends boolean = false,

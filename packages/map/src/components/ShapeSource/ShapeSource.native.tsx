@@ -20,37 +20,34 @@ export const ShapeSource = memo(
   forwardRef<GeoJSONSourceRef, GeoJSONSourceProps>(function ShapeSource(props, ref) {
     const nativeRef = useRef<NativeGeoJSONSourceRef | null>(null);
 
-    useImperativeHandle(
-      ref,
-      (): GeoJSONSourceRef => ({
-        getData: async (filter?: FilterSpecification): Promise<FeatureCollection> => {
-          if (!nativeRef.current?.getData) {
-            return { type: "FeatureCollection", features: [] };
-          }
-          return nativeRef.current.getData(filter);
-        },
-        getClusterExpansionZoom: async (clusterId: number): Promise<number> => {
-          if (!nativeRef.current?.getClusterExpansionZoom) return 0;
-          return nativeRef.current.getClusterExpansionZoom(clusterId);
-        },
-        getClusterLeaves: async (
-          clusterId: number,
-          limit: number,
-          offset: number,
-        ): Promise<Feature[]> => {
-          if (!nativeRef.current?.getClusterLeaves) {
-            return [];
-          }
-          return nativeRef.current.getClusterLeaves(clusterId, limit, offset);
-        },
-        getClusterChildren: async (clusterId: number): Promise<Feature[]> => {
-          if (!nativeRef.current?.getClusterChildren) {
-            return [];
-          }
-          return nativeRef.current.getClusterChildren(clusterId);
-        },
-      }),
-    );
+    useImperativeHandle(ref, (): GeoJSONSourceRef => ({
+      getData: async (filter?: FilterSpecification): Promise<FeatureCollection> => {
+        if (!nativeRef.current?.getData) {
+          return { type: "FeatureCollection", features: [] };
+        }
+        return nativeRef.current.getData(filter);
+      },
+      getClusterExpansionZoom: async (clusterId: number): Promise<number> => {
+        if (!nativeRef.current?.getClusterExpansionZoom) return 0;
+        return nativeRef.current.getClusterExpansionZoom(clusterId);
+      },
+      getClusterLeaves: async (
+        clusterId: number,
+        limit: number,
+        offset: number,
+      ): Promise<Feature[]> => {
+        if (!nativeRef.current?.getClusterLeaves) {
+          return [];
+        }
+        return nativeRef.current.getClusterLeaves(clusterId, limit, offset);
+      },
+      getClusterChildren: async (clusterId: number): Promise<Feature[]> => {
+        if (!nativeRef.current?.getClusterChildren) {
+          return [];
+        }
+        return nativeRef.current.getClusterChildren(clusterId);
+      },
+    }));
 
     return (
       <MapLibreGeoJSONSource

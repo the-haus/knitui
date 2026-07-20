@@ -99,8 +99,7 @@ export interface DepthConfig {
 
 /** The settle/scroll animation. `withAnimation` takes precedence over `scrollAnimationDuration`. */
 export type WithAnimation =
-  | { type: "spring"; config: WithSpringConfig }
-  | { type: "timing"; config: WithTimingConfig };
+  { type: "spring"; config: WithSpringConfig } | { type: "timing"; config: WithTimingConfig };
 
 /** Info passed to `renderItem`. */
 export interface RenderItemInfo<T> {
@@ -119,8 +118,7 @@ export type RenderItem<T> = (info: RenderItemInfo<T>) => ReactElement | null;
  * into it on the UI thread (no JS hop) — ideal for driving `<Pagination>`.
  */
 export type OnProgressChange =
-  | ((offsetProgress: number, absoluteProgress: number) => void)
-  | SharedValue<number>;
+  ((offsetProgress: number, absoluteProgress: number) => void) | SharedValue<number>;
 
 /** Options for the imperative navigation methods. */
 export interface ScrollToOptions {
