@@ -1,6 +1,6 @@
 {
   "name": "@knitui/graphics",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Skia-powered graphics primitives and effects for Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
