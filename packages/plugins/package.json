@@ -77,12 +77,12 @@
   },
   "dependencies": {
     "@knitui/core": "workspace:*",
-    "@tamagui/babel-plugin": "^2.3.0"
+    "@tamagui/babel-plugin": "^2.4.6"
   },
   "optionalDependencies": {
-    "@tamagui/metro-plugin": "^2.3.0",
-    "@tamagui/next-plugin": "^2.3.0",
-    "@tamagui/vite-plugin": "^2.3.0",
+    "@tamagui/metro-plugin": "^2.4.6",
+    "@tamagui/next-plugin": "^2.4.6",
+    "@tamagui/vite-plugin": "^2.4.6",
     "tamagui-loader": "^2.3.0"
   },
   "peerDependencies": {
@@ -100,12 +100,12 @@
     "@types/jest": "^29.5.12",
     "@types/react": "~19.2.0",
     "babel-jest": "^29.7.0",
-    "babel-preset-expo": "^57.0.2",
+    "babel-preset-expo": "^57.0.3",
     "jest": "^29.7.0",
     "next": "^16.2.10",
-    "react": "19.2.3",
+    "react": "19.2.7",
     "react-native": "0.86.0",
-    "react-native-builder-bob": "^0.40.5",
+    "react-native-builder-bob": "^0.43.0",
     "react-native-web": "~0.21.0",
     "typescript": "~5.8.3"
   },

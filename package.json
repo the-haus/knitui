@@ -39,23 +39,23 @@
     "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.28.1",
+    "@changesets/cli": "^2.31.1",
     "@eslint/js": "^9.25.0",
-    "@next/eslint-plugin-next": "^16.2.7",
+    "@next/eslint-plugin-next": "^16.2.10",
     "@react-native/metro-config": "0.86.0",
     "eslint": "^9.25.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import-x": "^4.16.2",
-    "eslint-plugin-perfectionist": "^5.9.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-perfectionist": "^5.10.0",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "prettier": "^3.5.3",
-    "react-native-builder-bob": "^0.40.5",
+    "prettier": "^3.9.5",
+    "react-native-builder-bob": "^0.43.0",
     "rimraf": "^6.0.1",
-    "turbo": "^2.5.0",
+    "turbo": "^2.10.5",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.31.0"
+    "typescript-eslint": "^8.64.0"
   },
   "pnpm": {
     "overrides": {
