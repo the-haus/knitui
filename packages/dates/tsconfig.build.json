@@ -3,7 +3,6 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "lib/typescript",
-    "baseUrl": ".",
     "declaration": false
   },
   "include": ["src/**/*"],
