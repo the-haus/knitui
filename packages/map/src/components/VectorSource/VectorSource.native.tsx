@@ -19,18 +19,15 @@ export const VectorSource = memo(
   forwardRef<VectorSourceRef, VectorSourceProps>(function VectorSource(props, ref) {
     const nativeRef = useRef<NativeVectorSourceRef | null>(null);
 
-    useImperativeHandle(
-      ref,
-      (): VectorSourceRef => ({
-        querySourceFeatures: async (options: {
-          sourceLayer: string;
-          filter?: FilterSpecification;
-        }): Promise<GeoJSON.Feature[]> => {
-          if (!nativeRef.current?.querySourceFeatures) return [];
-          return nativeRef.current.querySourceFeatures(options);
-        },
-      }),
-    );
+    useImperativeHandle(ref, (): VectorSourceRef => ({
+      querySourceFeatures: async (options: {
+        sourceLayer: string;
+        filter?: FilterSpecification;
+      }): Promise<GeoJSON.Feature[]> => {
+        if (!nativeRef.current?.querySourceFeatures) return [];
+        return nativeRef.current.querySourceFeatures(options);
+      },
+    }));
 
     return (
       <MapLibreVectorSource

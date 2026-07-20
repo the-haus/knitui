@@ -80,22 +80,19 @@ export const VectorSource = memo(
     ]);
 
     // --- Imperative ref ---
-    useImperativeHandle(
-      ref,
-      (): VectorSourceRef => ({
-        querySourceFeatures: async (options: {
-          sourceLayer: string;
-          filter?: FilterSpecification;
-        }): Promise<GeoJSON.Feature[]> => {
-          if (!map) return [];
-          const features = map.querySourceFeatures(id, {
-            sourceLayer: options.sourceLayer,
-            filter: options.filter as FilterSpecification | undefined,
-          } as Parameters<MLMap["querySourceFeatures"]>[1]);
-          return features as GeoJSON.Feature[];
-        },
-      }),
-    );
+    useImperativeHandle(ref, (): VectorSourceRef => ({
+      querySourceFeatures: async (options: {
+        sourceLayer: string;
+        filter?: FilterSpecification;
+      }): Promise<GeoJSON.Feature[]> => {
+        if (!map) return [];
+        const features = map.querySourceFeatures(id, {
+          sourceLayer: options.sourceLayer,
+          filter: options.filter as FilterSpecification | undefined,
+        } as Parameters<MLMap["querySourceFeatures"]>[1]);
+        return features as GeoJSON.Feature[];
+      },
+    }));
 
     return <>{children}</>;
   }),

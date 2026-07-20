@@ -252,17 +252,15 @@ export class ExpoVideoController extends BaseVideoController {
       this.subtitleById.set(id, t);
       return { id, label: t.label, language: t.language, isDefault: t.isDefault };
     });
-    const availableVideoTracks = (video as VideoTrack[]).map(
-      (t, i): VideoTrack => ({
-        id: t.id ?? `video-${i}`,
-        size: t.size ?? { width: 0, height: 0 },
-        averageBitrate: t.averageBitrate ?? null,
-        peakBitrate: t.peakBitrate ?? null,
-        frameRate: t.frameRate ?? null,
-        mimeType: t.mimeType ?? null,
-        videoRange: t.videoRange,
-      }),
-    );
+    const availableVideoTracks = (video as VideoTrack[]).map((t, i): VideoTrack => ({
+      id: t.id ?? `video-${i}`,
+      size: t.size ?? { width: 0, height: 0 },
+      averageBitrate: t.averageBitrate ?? null,
+      peakBitrate: t.peakBitrate ?? null,
+      frameRate: t.frameRate ?? null,
+      mimeType: t.mimeType ?? null,
+      videoRange: t.videoRange,
+    }));
 
     this.setState({ availableAudioTracks, availableVideoTracks });
     // Publish the merged subtitle list (manifest-embedded + custom sidecar) and

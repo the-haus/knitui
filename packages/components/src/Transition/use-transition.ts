@@ -12,12 +12,7 @@ import { useDidUpdate, useReducedMotion } from "@knitui/hooks";
  * union), so the hook stays free of any platform-specific style imports.
  */
 export type TransitionStatus =
-  | "entering"
-  | "entered"
-  | "exiting"
-  | "exited"
-  | "pre-exiting"
-  | "pre-entering";
+  "entering" | "entered" | "exiting" | "exited" | "pre-exiting" | "pre-entering";
 
 export interface UseTransitionOptions {
   duration: number;

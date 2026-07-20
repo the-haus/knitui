@@ -21,14 +21,7 @@ export type PinInputHostType = React.HTMLInputTypeAttribute;
 
 /** Host `inputmode` override (inferred from `type` when unset). */
 export type PinInputMode =
-  | "none"
-  | "text"
-  | "tel"
-  | "url"
-  | "email"
-  | "numeric"
-  | "decimal"
-  | "search";
+  "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search";
 
 const REGEX = {
   number: /^[0-9]+$/,

@@ -46,8 +46,7 @@ import { getDecadeRange } from "./get-decade-range/get-decade-range";
 
 /** Two-arg decade label format — receives the start and end of the decade. */
 export type DecadeLabelFormat =
-  | string
-  | ((startOfDecade: DateStringValue, endOfDecade: DateStringValue) => React.ReactNode);
+  string | ((startOfDecade: DateStringValue, endOfDecade: DateStringValue) => React.ReactNode);
 
 export interface DecadeLevelBaseSettings extends YearsListSettings {
   /** dayjs format for the decade label, or a function returning it. @default 'YYYY' */

@@ -16,14 +16,7 @@ import {
 
 type ThemeIconSize = SizeKey;
 type ThemeIconVariant =
-  | "filled"
-  | "light"
-  | "outline"
-  | "subtle"
-  | "transparent"
-  | "white"
-  | "default"
-  | "gradient";
+  "filled" | "light" | "outline" | "subtle" | "transparent" | "white" | "default" | "gradient";
 
 const ThemeIconContext = createStyledContext<{
   size: ThemeIconSize;
