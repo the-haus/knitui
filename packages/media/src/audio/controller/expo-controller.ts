@@ -49,6 +49,24 @@ function toExpoMetadata(metadata?: AudioMetadata): AudioMetadata | undefined {
   return artworkUrl ? { ...metadata, artworkUrl } : metadata;
 }
 
+/**
+ * The pitch-correction state to assume on WEB before anything sets it.
+ *
+ * `HTMLMediaElement.preservesPitch` defaults to `true` in every browser, and
+ * expo's web backend does not touch it until the first `setPlaybackRate` — so
+ * correction really is on. (Its own `player.shouldCorrectPitch` field initializes
+ * to `false` and describes nothing until that first call, which is why we do NOT
+ * seed from it on web.) Matches `AudioPlayerConfig.shouldCorrectPitch`'s
+ * documented default and native's `AudioPlayer.swift` default.
+ */
+const WEB_DEFAULT_PITCH_CORRECTION = true;
+
+/** The initial pitch-correction state, per platform (see the constant above). */
+function initialPitchCorrection(config: AudioPlayerConfig, player: AudioPlayer): boolean {
+  if (config.shouldCorrectPitch != null) return config.shouldCorrectPitch;
+  return isWeb ? WEB_DEFAULT_PITCH_CORRECTION : (player.shouldCorrectPitch ?? true);
+}
+
 export class ExpoAudioController extends BaseAudioController {
   // On web, refine with the live browser probes (iOS volume lock, MediaSession,
   // Web Audio availability); native exposes the full feature set.
@@ -73,7 +91,7 @@ export class ExpoAudioController extends BaseAudioController {
       volume: config.volume ?? player.volume ?? 1,
       muted: config.muted ?? player.muted ?? false,
       playbackRate: config.playbackRate ?? player.playbackRate ?? 1,
-      shouldCorrectPitch: config.shouldCorrectPitch ?? player.shouldCorrectPitch ?? true,
+      shouldCorrectPitch: initialPitchCorrection(config, player),
       loop: config.loop ?? player.loop ?? false,
     });
     this.player = player;

@@ -7,6 +7,9 @@
  * `onBuffer`/`onLevel` are forwarded. React state (`level`) is flushed at ~30 fps
  * — NEVER once per frame — so a meter re-renders smoothly without thrashing.
  *
+ * This backend is MONO-ONLY: `options.channels` is ignored and the reported
+ * `channels` is always `1` (see {@link WEB_DELIVERED_CHANNELS}).
+ *
  * This file is the web target (`.tsx`); it NEVER imports `expo-audio`. It relies
  * on the jsdom Web Audio / getUserMedia stubs (see jest.setup.ts) so it
  * constructs under test.
@@ -41,8 +44,22 @@ interface WebGraph {
   sampler: WebAudioSampler;
 }
 
+/**
+ * How many channels this backend actually delivers — ALWAYS one.
+ *
+ * `getUserMedia({ audio: true })` is requested with no `channelCount`
+ * constraint, and {@link createWebAudioSampler} down-mixes whatever the device
+ * hands back to a single mono track before we ever see it. So `options.channels`
+ * cannot be honored here: it is accepted for cross-platform call-site parity and
+ * deliberately IGNORED. Reporting the requested count instead of this would be a
+ * silent lie — a caller de-interleaving stereo per the documented contract would
+ * split one mono buffer into two decimated copies of the same signal.
+ */
+const WEB_DELIVERED_CHANNELS = 1;
+
 export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStreamResult {
-  const { sampleRate, channels = 1, autoStart, onBuffer, onLevel } = options;
+  // NOTE: `options.channels` is intentionally not read — see WEB_DELIVERED_CHANNELS.
+  const { sampleRate, autoStart, onBuffer, onLevel } = options;
 
   // Keep the latest callbacks in a ref so the rAF loop doesn't need to restart
   // when a caller passes new inline functions.
@@ -53,6 +70,15 @@ export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStr
 
   const graphRef = React.useRef<WebGraph | null>(null);
   const lastFlushRef = React.useRef(0);
+  /**
+   * Bumped by every `start()` and by `stop()`/unmount. `start()` builds the mic
+   * graph across two awaits, and `graphRef` is only populated at the very end —
+   * so a `stop()` or unmount landing inside that window has nothing to tear down
+   * and would otherwise strand a live `MediaStream` (mic indicator stays lit) and
+   * an `AudioContext` (browsers cap these at ~6 per tab). Each await re-checks
+   * the token and discards what it built if it has been superseded.
+   */
+  const startTokenRef = React.useRef(0);
 
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [actualRate, setActualRate] = React.useState(0);
@@ -60,6 +86,9 @@ export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStr
   const [level, setLevel] = React.useState<AudioStreamLevel>(ZERO_LEVEL);
 
   const stop = React.useCallback(() => {
+    // Invalidate any `start()` still in flight so its continuation discards the
+    // graph it is midway through building instead of stranding it.
+    startTokenRef.current += 1;
     const graph = graphRef.current;
     graphRef.current = null;
     if (graph) {
@@ -85,11 +114,37 @@ export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStr
       throw new Error("Web Audio capture is not available in this environment.");
     }
 
-    const stream = await media.getUserMedia({ audio: true });
-    const ctx = sampleRate ? new Ctor({ sampleRate }) : new Ctor();
-    if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+    const token = ++startTokenRef.current;
+    /** True once a `stop()`/unmount/newer `start()` has superseded this run. */
+    const superseded = () => startTokenRef.current !== token;
 
-    const source = ctx.createMediaStreamSource(stream);
+    const stream = await media.getUserMedia({ audio: true });
+    if (superseded()) {
+      for (const track of stream.getTracks()) track.stop();
+      return;
+    }
+
+    let ctx: AudioContext;
+    let source: MediaStreamAudioSourceNode;
+    try {
+      ctx = sampleRate ? new Ctor({ sampleRate }) : new Ctor();
+      if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+      source = ctx.createMediaStreamSource(stream);
+    } catch (err) {
+      // The mic is already live at this point but no graph exists to own it, so
+      // nothing else can ever release it — Chrome throws here once a tab is past
+      // its concurrent-AudioContext cap. Drop the mic before propagating, or the
+      // tab's recording indicator stays lit until a reload.
+      for (const track of stream.getTracks()) track.stop();
+      throw err;
+    }
+
+    if (superseded()) {
+      for (const track of stream.getTracks()) track.stop();
+      void ctx.close().catch(() => {});
+      return;
+    }
+
     const startTime = ctx.currentTime;
 
     // `audible: false` — never route the mic to the speakers (feedback). Each
@@ -106,7 +161,8 @@ export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStr
           const data: AudioStreamBufferData = {
             data: frame.mono.buffer as ArrayBuffer,
             sampleRate: ctx.sampleRate || sampleRate || 0,
-            channels,
+            // The sampler already mixed to mono — report what is in the buffer.
+            channels: WEB_DELIVERED_CHANNELS,
             timestamp: Math.max(0, ctx.currentTime - startTime),
             frames: Array.from(frame.mono),
           };
@@ -128,10 +184,10 @@ export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStr
     graphRef.current = graph;
 
     setActualRate(ctx.sampleRate || sampleRate || 0);
-    setActualChannels(channels);
+    setActualChannels(WEB_DELIVERED_CHANNELS);
     setIsStreaming(true);
     lastFlushRef.current = 0;
-  }, [sampleRate, channels]);
+  }, [sampleRate]);
 
   // Auto-start once on mount when requested; always tear the graph down.
   React.useEffect(() => {

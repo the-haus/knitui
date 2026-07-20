@@ -7,19 +7,23 @@
  *
  * The one native-only function is `requestNotificationPermissionsAsync` (Android
  * lock-screen controls); it is absent from the web backend, so we feature-detect
- * it and fall back to the browser `Notification` API there.
+ * it and fall back to the browser `Notification` API there. That detection is
+ * why this file takes a NAMESPACE import: a named import of a binding the web
+ * backend doesn't export is a hard "Attempted import error" in webpack/Next,
+ * even when the call site is guarded — reading it off the namespace defers the
+ * lookup to runtime, where `undefined` is exactly what the guard expects.
  */
-import {
-  requestNotificationPermissionsAsync,
-  setAudioModeAsync,
-  setIsAudioActiveAsync,
-} from "expo-audio";
+import * as ExpoAudio from "expo-audio";
 
 import type {
   AudioModeConfig,
   AudioSessionApi,
   NotificationPermissionResult,
 } from "./audio-mode.shared";
+
+const { setAudioModeAsync, setIsAudioActiveAsync } = ExpoAudio;
+const requestNotificationPermissionsAsync = (ExpoAudio as Partial<typeof ExpoAudio>)
+  .requestNotificationPermissionsAsync;
 
 export function setAudioMode(mode: AudioModeConfig): Promise<void> {
   return setAudioModeAsync(mode);

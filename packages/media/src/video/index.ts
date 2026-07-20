@@ -13,8 +13,10 @@
  *   - the VideoContext + useVideo() for fully custom chrome
  *   - the isolated type contract (VideoController, state, capabilities, tracks…)
  *   - pure engine helpers (formatTime, progressOf…) for advanced/headless use
+ *   - the store contract (MediaStore) + selector hooks for custom chrome
  */
 
+export { type MediaStore, shallowEqual, useMediaSelector } from "../core/react/useMediaSelector";
 export { videoHostName } from "../provider/context";
 export type { VideoController } from "./controller/video-controller-base";
 export {
@@ -81,6 +83,7 @@ export {
 } from "./Video.chrome";
 export {
   useVideo,
+  useVideoState,
   VideoContext,
   type VideoContextValue,
   type VideoProps,
