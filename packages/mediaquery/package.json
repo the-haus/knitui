@@ -1,6 +1,6 @@
 {
   "name": "@knitui/mediaquery",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Cross-platform media queries and responsive breakpoints for Knit UI (React Native + web, SSR-safe).",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
