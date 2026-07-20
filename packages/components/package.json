@@ -1,6 +1,6 @@
 {
   "name": "@knitui/components",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Cross-platform (React Native + Web) component kit for Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
