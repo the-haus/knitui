@@ -2,6 +2,7 @@ import * as React from "react";
 
 import {
   createStyledContext,
+  getLineHeight,
   type GetProps,
   getTokenValue,
   type SpaceTokens,
@@ -138,9 +139,12 @@ const TocText = styled(Text, {
     size: {
       ...fontSizeVariant,
       ...fontSizePassthroughVariant,
+      // A numeric size skips the font tokens, so pair it through the same ladder
+      // the tokens use (rather than a local ratio) or a custom size gets leading
+      // that doesn't match the equivalent `$token` step.
       ":number": (value: number) => ({
         fontSize: value,
-        lineHeight: Math.round(value * 1.4),
+        lineHeight: getLineHeight(value),
       }),
     },
     active: {

@@ -26,6 +26,26 @@ export const getFontSize = (size: string | number): number => {
   return FONT_SIZE_KEYS.has(key) ? font[key as FontSizeKey] : font.md;
 };
 
+const FONT_SIZE_ENTRIES = (Object.keys(font) as FontSizeKey[]).map((key) => ({
+  key,
+  px: font[key],
+}));
+
+/**
+ * The ratio a RAW px font size would carry if it were a token — the step it sits
+ * closest to on the `font` scale. Without this a numeric size is stuck on one
+ * fixed ratio, so `fontSize={28}` and `fontSize="$xxl"` (also 28) render lines of
+ * different heights; walking the ladder keeps the taper in `lineHeightRatios`
+ * continuous across both. Sizes past either end clamp to that end's ratio.
+ */
+const nearestRatio = (px: number): number => {
+  let best = FONT_SIZE_ENTRIES[0];
+  for (const entry of FONT_SIZE_ENTRIES) {
+    if (Math.abs(entry.px - px) < Math.abs(best.px - px)) best = entry;
+  }
+  return lineHeightRatios[best.key];
+};
+
 /**
  * Resolve a font-size TOKEN to its LINE HEIGHT in px — exactly the value the
  * Tamagui font config derives (`config/fonts.ts`: `round(fontSize * ratio)`),
@@ -36,11 +56,12 @@ export const getFontSize = (size: string | number): number => {
  * `getFontSize`.
  *
  * Accepts the same inputs as `getFontSize`. A bare number is treated as a raw font
- * size and scaled by the `md` ratio (a numeric size carries no token ratio of its
- * own); `"true"` and unrecognized strings fall back to the `md` step.
+ * size and takes the ratio of the nearest step on the font scale, so it lands on
+ * the same line height as the equivalent token; `"true"` and unrecognized strings
+ * fall back to the `md` step.
  */
 export const getLineHeight = (size: string | number): number => {
-  if (typeof size === "number") return Math.round(size * lineHeightRatios.md);
+  if (typeof size === "number") return Math.round(size * nearestRatio(size));
   const raw = size.startsWith("$") ? size.slice(1) : size;
   const key = (raw === "true" || !FONT_SIZE_KEYS.has(raw) ? "md" : raw) as FontSizeKey;
   return Math.round(font[key] * lineHeightRatios[key]);
