@@ -53,10 +53,19 @@ describe("defineSlots.collect", () => {
     expect(bag.Label).toBeUndefined();
   });
 
+  // A SINGLE plain child is handed through as-is, not re-wrapped in a pooling
+  // array: the array was an artifact of the multi-child accumulator, and keeping
+  // the caller's node means the slot's `children` identity is stable across
+  // renders (see the `collect` fast paths). Multi-child pooling still arrays.
   it("folds plain children into the configured defaultSlot", () => {
     const bag = Demo.collect("plain text", { defaultSlot: "Label" });
-    expect(bag.Label?.children).toEqual(["plain text"]);
+    expect(bag.Label?.children).toBe("plain text");
     expect(bag.default).toBeUndefined();
+  });
+
+  it("pools MULTIPLE plain children into the defaultSlot as an array", () => {
+    const bag = Demo.collect(<>{["a", "b"]}</>, { defaultSlot: "Label" });
+    expect(bag.Label?.children).toEqual(["a", "b"]);
   });
 
   it("keeps an explicit default-slot marker over pooled plain children", () => {
@@ -137,9 +146,10 @@ describe("dev warnings", () => {
     const bag = Demo.collect(<Other>nope</Other>, { displayName: "Demo" });
     expect(spy).toHaveBeenCalledWith(expect.stringContaining("Other"));
     // It matches no registered key; the plan's collector then pools it as
-    // default content rather than dropping it silently.
+    // default content rather than dropping it silently. A single child is passed
+    // through by reference (no pooling array — see the `collect` fast paths).
     expect(bag.Left).toBeUndefined();
-    expect(bag.default).toHaveLength(1);
+    expect(React.isValidElement(bag.default)).toBe(true);
   });
 
   it("warns when a required slot is missing", () => {

@@ -26,6 +26,12 @@ describe("createTheme", () => {
     expect(tokens(config).space.md).toBeDefined();
     expect(tokens(config).radius.md).toBeDefined();
     expect(tokens(config).size.md).toBeDefined();
+    // `componentThemes: false` — no `<scheme>_<Component>` cross-product, so a
+    // consumer's `createTheme()` ships the same theme SET as the stock config
+    // (2 schemes × [base, accent, 9 accents, brand] = 24). Reintroducing
+    // Tamagui's deprecated `defaultComponentThemes` would multiply this by 20.
+    expect(names.filter((name) => /_[A-Z]/.test(name))).toEqual([]);
+    expect(names).toHaveLength(24);
   });
 
   it("exposes the brand under a custom theme name", () => {

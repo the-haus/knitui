@@ -84,14 +84,79 @@ export interface SlotAccessor<M> {
  *
  * In development it warns once per render for keys that aren't real slots —
  * catching typos from JS callers that TypeScript wouldn't flag.
+ *
+ * ## Cost
+ *
+ * Called at ~105 sites across the kits, several of them PER ITEM (`Tree`'s
+ * memoized `TreeNode`, `TreeSelect`, and 6× each in `TagsInput` / `MultiSelect` /
+ * `ColorPicker`), so it runs far more often than once per component. Two things
+ * follow from that:
+ *
+ *  - `styles == null` — the overwhelmingly common case — returns the shared
+ *    frozen {@link EMPTY_ACCESSOR} instead of allocating an object plus two
+ *    closures per call.
+ *  - `merge` only builds a new object when BOTH sides are actually present.
+ *    Otherwise it hands back the existing object UNCHANGED, so the props spread
+ *    onto a part keep a stable identity across renders and downstream `React.memo`
+ *    / Tamagui prop comparisons can still bail out. (Safe because no call site
+ *    mutates an accessor result — every one either spreads it into JSX or passes
+ *    it to `cloneElement`. Do not start mutating: the object may be shared, or be
+ *    the caller's own `explicit` object, or come straight from the consumer's
+ *    `styles` prop.)
  */
+
+/** Shared empty props object — the `merge` result when neither side has props. */
+const EMPTY_PROPS = Object.freeze({});
+
+function emptyGet(): undefined {
+  return undefined;
+}
+
+// `EMPTY_PROPS` is a partial of every slot shape (it has no keys), but TS can't
+// prove that for a generic `M[K]` — hence the single assertion, matching the
+// style of the assertions in the populated accessor below.
+function emptyMerge<M, K extends keyof M>(
+  _key: K,
+  explicit: SlotValue<M, K> | undefined,
+): SlotValue<M, K> {
+  return explicit ?? (EMPTY_PROPS as SlotValue<M, K>);
+}
+
+/**
+ * The accessor for `styles === undefined`: `get` is always `undefined` and
+ * `merge` is the identity on `explicit`. Shared and frozen — with no `styles`
+ * map there is nothing per-call to close over.
+ */
+const EMPTY_ACCESSOR = Object.freeze({ get: emptyGet, merge: emptyMerge });
+
+/**
+ * Dev-only cache of the known-slot lookup `Set`, keyed by the `*_SLOT_KEYS`
+ * module constant each component passes. Without it every render with a `styles`
+ * map rebuilt the `Set` from scratch.
+ */
+const knownSlotSets = new WeakMap<readonly string[], ReadonlySet<string>>();
+
+function knownSlotSet(knownSlots: readonly string[]): ReadonlySet<string> {
+  let set = knownSlotSets.get(knownSlots);
+  if (!set) {
+    set = new Set<string>(knownSlots);
+    knownSlotSets.set(knownSlots, set);
+  }
+  return set;
+}
+
 export function slotStyles<M>(
   styles: SlotStyles<M> | undefined,
   knownSlots: readonly (keyof M & string)[],
   displayName?: string,
 ): SlotAccessor<M> {
-  if (isDev() && styles) {
-    const known = new Set<string>(knownSlots);
+  if (styles == null) return EMPTY_ACCESSOR;
+  // Re-bind so the null-narrowing survives into the closures below (TS does not
+  // carry a narrowing on a parameter into nested function declarations).
+  const map = styles;
+
+  if (isDev()) {
+    const known = knownSlotSet(knownSlots);
     for (const key of Object.keys(styles)) {
       if (!known.has(key)) {
         console.warn(
@@ -104,16 +169,20 @@ export function slotStyles<M>(
   // them (the slot is an optional override), so a single assertion re-types the
   // looked-up value — TS can't prove `M[K]` is a partial of itself generically.
   function get<K extends keyof M>(key: K): SlotValue<M, K> | undefined {
-    return styles?.[key] as SlotValue<M, K> | undefined;
+    return map[key] as SlotValue<M, K> | undefined;
   }
   // The spread of two same-typed partials is a partial of the same shape; TS
   // can't prove that for a generic `M[K]`, so a single assertion re-attaches the
-  // slot's type to the freshly-built object.
+  // slot's type to the freshly-built object. Only ONE side present → return that
+  // side as-is (identity-preserving); both present → spread, explicit last.
   function merge<K extends keyof M>(
     key: K,
     explicit: SlotValue<M, K> | undefined,
   ): SlotValue<M, K> {
-    return { ...styles?.[key], ...explicit } as SlotValue<M, K>;
+    const sugar = map[key] as SlotValue<M, K> | undefined;
+    if (sugar === undefined) return explicit ?? (EMPTY_PROPS as SlotValue<M, K>);
+    if (explicit === undefined) return sugar;
+    return { ...sugar, ...explicit } as SlotValue<M, K>;
   }
   return { get, merge };
 }

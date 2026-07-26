@@ -4,6 +4,7 @@ import { createThemes } from "@tamagui/theme-builder";
 
 import { animations } from "../animations";
 import { media as defaultMedia } from "../media";
+import { OVER_MEDIA } from "../over-media";
 import {
   breakpoints as defaultBreakpoints,
   lineHeightRatios,
@@ -11,7 +12,6 @@ import {
   systemFontFamily,
 } from "../scales";
 import { shorthands as defaultShorthands } from "../shorthands";
-import { OVER_MEDIA } from "../themes";
 import { deepMerge } from "./merge";
 import type { FontInput, ThemeOptions } from "./options";
 import { type PaletteInput, resolvePalette, TAMAGUI_COLOR_NAMES } from "./palette";
@@ -259,6 +259,13 @@ export const createTheme = (options: ThemeOptions = {}) => {
   const neutralPalette: PaletteInput = options.neutral ?? "gray";
   const themeProps = deepMerge(
     {
+      // Matches the stock config (`config/themes.ts`) — see the perf note there.
+      // Tamagui's `defaultComponentThemes` would cross-multiply 20 component
+      // themes across every scheme × palette (2 × N × 20), so a stock
+      // `createTheme()` would build 440 themes instead of 22. Keeping this
+      // `false` also means a consumer's `createTheme()` output has the SAME
+      // theme set as the kit's shipped `config`.
+      componentThemes: false as const,
       base: { palette: resolvePalette(neutralPalette), extra: buildExtra(options) },
       accent: { palette: resolvePalette(brandPalette) },
       childrenThemes: buildChildrenThemes(options, brandPalette),

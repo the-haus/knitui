@@ -12,6 +12,11 @@ export { AnimatePresence } from "@tamagui/animate-presence";
  * (`Box` and `Text` — the styled primitives — live in `./elements`.)
  */
 export {
+  // token → CSS custom property name (`"color5"` → `"var(--color5)"`), applying
+  // Tamagui's own name hashing + `TAMAGUI_CSS_VARIABLE_PREFIX`. Lets web-only
+  // code resolve a `$token` colour WITHOUT subscribing to the theme via
+  // `useTheme()` (see `components/internal/theme-color-web.ts`).
+  createCSSVariable,
   // composition helpers
   createStyledContext,
   // config access
@@ -24,8 +29,6 @@ export {
   getVariableValue,
   // platform branch (true on web / react-native-web, false on native)
   isWeb,
-  // factory + primitive
-  styled,
   // raw Tamagui text primitive (the kit's styled `Text` lives in components;
   // the vendored Input reads `Text.staticConfig.validStyles`)
   Text,

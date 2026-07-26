@@ -102,10 +102,23 @@ function getSlotName(type: unknown): string | undefined {
     : undefined;
 }
 
+/** Props of a synthesized (non-marker) slot entry — no marker element, no props. */
+const EMPTY_SLOT_PROPS = Object.freeze({});
+
+/** The bag for children that contain nothing renderable. Read-only by contract. */
+const EMPTY_BAG = Object.freeze({});
+
 /**
  * Register a component's marker slots once and get back the markers (to spread
  * as statics) plus a typed `collect` that normalizes children into a
  * precisely-keyed `SlotBag`.
+ *
+ * ## Cost
+ *
+ * `collect` runs on every render of every slot-bearing component (`Button` calls
+ * it unconditionally), so the trivial child shapes are answered before any
+ * `React.Children` walk, and marker matching is a `Map` lookup rather than a
+ * linear scan of the registry per child.
  */
 export function defineSlots<R extends Record<string, AnySlotComponent>>(
   registry: R,
@@ -115,18 +128,84 @@ export function defineSlots<R extends Record<string, AnySlotComponent>>(
 } {
   type Key = keyof R & string;
   const keys = Object.keys(registry) as Key[];
+  // Marker component → registry key, built ONCE. `matchSlotKey` used to loop
+  // every registry key for every child on every render.
+  const keyByMarker = new Map<AnySlotComponent, Key>(keys.map((key) => [registry[key], key]));
 
   /** Which registry key (if any) this element matches — by reference, then alias. */
   function matchSlotKey(type: unknown, aliases: CollectOptions<Key>["aliases"]): Key | undefined {
+    const direct = keyByMarker.get(type as AnySlotComponent);
+    if (direct !== undefined) return direct;
+    if (!aliases) return undefined;
     for (const key of keys) {
-      if (type === registry[key]) return key;
-      const alts = aliases?.[key];
+      const alts = aliases[key];
       if (alts && alts.some((alt) => alt === type)) return key;
     }
     return undefined;
   }
 
+  /** Dev-only: warn for `required` keys the bag ended up without. */
+  function warnMissingRequired(named: Record<string, unknown>, opts?: CollectOptions<Key>): void {
+    if (!opts?.required) return;
+    const label = opts.displayName ?? "component";
+    for (const key of opts.required) {
+      if (!named[key]) {
+        console.warn(`[@knitui] ${label} is missing required slot <${label}.${key}>.`);
+      }
+    }
+  }
+
   function collect(children: React.ReactNode, opts?: CollectOptions<Key>): SlotBag<R> {
+    // ---- Fast paths, before any `React.Children` walk. ----
+    const childrenType = typeof children;
+    // A lone string/number — the `<Button>Save</Button>` shape, i.e. most Button
+    // renders. The entry keeps the CALLER's node as `children` rather than a
+    // freshly-pooled `[node]` array, so a label subtree's `children` identity is
+    // stable across renders (and `renderTextChild` hits its own string fast path).
+    if (childrenType === "string" || childrenType === "number") {
+      const bag: Record<string, unknown> = {};
+      const fastDefaultSlot = opts?.defaultSlot;
+      if (fastDefaultSlot) bag[fastDefaultSlot] = { props: EMPTY_SLOT_PROPS, children };
+      else bag.default = children;
+      if (isDev()) warnMissingRequired(bag, opts);
+      return bag as SlotBag<R>;
+    }
+    // Nothing renderable at all.
+    if (children == null || childrenType === "boolean") {
+      if (isDev()) warnMissingRequired(EMPTY_BAG, opts);
+      return EMPTY_BAG as SlotBag<R>;
+    }
+    // A single non-fragment element — `<ActionIcon><IconX/></ActionIcon>` or one
+    // marker. There is exactly one candidate, so match it directly: no `visit`
+    // closure, no `pooled` array, and the non-marker case keeps the caller's
+    // element identity so a memoized child isn't invalidated every render.
+    if (React.isValidElement(children) && children.type !== React.Fragment) {
+      const bag: Record<string, unknown> = {};
+      const key = matchSlotKey(children.type, opts?.aliases);
+      if (key) {
+        // Bridge cast, justified exactly as in `visit` below: `matchSlotKey` has
+        // confirmed `children.type === registry[key]`, which pins the element's
+        // prop type to this slot's.
+        const marker = children.props as SlotProps<SlotPropsOf<R[Key]>>;
+        const { children: slotChildren, ...props } = marker;
+        bag[key] = { props, children: slotChildren };
+      } else {
+        if (isDev()) {
+          const foreign = getSlotName(children.type);
+          if (foreign !== undefined) {
+            console.warn(
+              `[@knitui] <${foreign}> is a slot from another component and is ignored inside ${opts?.displayName ?? "component"}.`,
+            );
+          }
+        }
+        const fastDefaultSlot = opts?.defaultSlot;
+        if (fastDefaultSlot) bag[fastDefaultSlot] = { props: EMPTY_SLOT_PROPS, children };
+        else bag.default = children;
+      }
+      if (isDev()) warnMissingRequired(bag, opts);
+      return bag as SlotBag<R>;
+    }
+
     // Accumulate named slots into a loosely-typed record (TS rejects writes to a
     // generic mapped-type key); the precise per-key entry types are re-attached
     // by the `as SlotBag<R>` assertion when the bag is assembled below.
@@ -179,13 +258,7 @@ export function defineSlots<R extends Record<string, AnySlotComponent>>(
       defaultChildren = pooled;
     }
 
-    if (dev && opts?.required) {
-      for (const key of opts.required) {
-        if (!named[key]) {
-          console.warn(`[@knitui] ${label} is missing required slot <${label}.${key}>.`);
-        }
-      }
-    }
+    if (dev) warnMissingRequired(named, opts);
 
     // The named entries plus the pooled `default` children form the bag; the
     // assertion re-attaches the precise per-key types (see the accumulator note).
