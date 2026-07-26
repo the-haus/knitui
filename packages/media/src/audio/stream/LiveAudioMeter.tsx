@@ -11,7 +11,8 @@
 import * as React from "react";
 
 import { Box, Button, Group, Progress, Stack, Text } from "@knitui/components";
-import { IconMicrophone, IconMicrophoneOff } from "@knitui/icons";
+import { IconMicrophone } from "@knitui/icons/IconMicrophone";
+import { IconMicrophoneOff } from "@knitui/icons/IconMicrophoneOff";
 
 import { useAudioStream } from "../hooks/useAudioStream";
 import type { UseAudioStreamOptions } from "../hooks/useAudioStream.shared";

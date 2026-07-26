@@ -19,6 +19,23 @@ describe("frameFromTimeDomain", () => {
     expect(frame.peak).toBeCloseTo(0.5);
     expect(frame.rms).toBeCloseTo(0.5);
   });
+
+  it("stays independent across frames despite the reused channel list", () => {
+    // It runs up to 60×/s per sampler, so the channel list handed to `mixChannels`
+    // is module-level; each returned frame must still carry its OWN window + envelope.
+    const quiet = frameFromTimeDomain(new Float32Array([0.1, -0.1]));
+    const loud = frameFromTimeDomain(new Float32Array([1, -1]));
+    expect(quiet.peak).toBeCloseTo(0.1);
+    expect(quiet.rms).toBeCloseTo(0.1);
+    expect(loud.peak).toBeCloseTo(1);
+    expect(loud.rms).toBeCloseTo(1);
+    expect(quiet.mono).not.toBe(loud.mono);
+    expect(frameFromTimeDomain(new Float32Array([]))).toEqual({
+      mono: new Float32Array([]),
+      peak: 0,
+      rms: 0,
+    });
+  });
 });
 
 describe("createWebAudioSampler — worklet path", () => {

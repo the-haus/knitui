@@ -180,6 +180,33 @@ describe("useMediaSelector — field-scoped (auto-tracking) store", () => {
     expect(result.current).toEqual({ muted: true, volume: 0.5 });
   });
 
+  it("keeps two leaves' tracked key-sets apart on the same snapshot", () => {
+    // The tracking Proxy is cached per snapshot and shared by every subscriber, so
+    // the "which keys did this selector read" recorder must be scoped per RUN — if it
+    // leaked, one leaf would inherit the other's fields and wake on the wrong change.
+    const store = new FieldStore();
+    let mutedRenders = 0;
+    let volumeRenders = 0;
+    renderHook(() => {
+      mutedRenders++;
+      return useMediaSelector(store, (s) => s.muted);
+    });
+    renderHook(() => {
+      volumeRenders++;
+      return useMediaSelector(store, (s) => s.volume);
+    });
+    expect([mutedRenders, volumeRenders]).toEqual([1, 1]);
+
+    act(() => store.set({ volume: 0.5 }));
+    expect([mutedRenders, volumeRenders]).toEqual([1, 2]);
+
+    act(() => store.set({ muted: true }));
+    expect([mutedRenders, volumeRenders]).toEqual([2, 2]);
+
+    act(() => store.set({ currentTime: 3 })); // read by neither
+    expect([mutedRenders, volumeRenders]).toEqual([2, 2]);
+  });
+
   it("re-subscribes when the selector's tracked field-set changes across renders", () => {
     // Regression for C1: a prop-driven field swap updates `keysRef` during render
     // but does not re-run `subscribe`; the live registration must still be

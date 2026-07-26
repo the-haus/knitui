@@ -100,10 +100,24 @@ export interface SamplerFrame {
   rms: number;
 }
 
-/** Reduce a mono time-domain window into a {@link SamplerFrame}. Pure; unit-tested. */
+/**
+ * The one-slot channel list handed to {@link mixChannels}, reused across frames.
+ * `mixChannels` reads it synchronously and never retains it, and this module is only
+ * ever entered from a (single-threaded) audio/rAF callback, so one module-level slot
+ * is enough — `frameFromTimeDomain` runs up to 60 times a second per live sampler.
+ */
+const MONO_CHANNEL: ArrayLike<number>[] = [];
+
+/**
+ * Reduce a mono time-domain window into a {@link SamplerFrame}. Pure; unit-tested.
+ * The envelope is written straight into the returned frame (and the channel list is
+ * reused), so the whole reduction costs ONE object per frame instead of three.
+ */
 export function frameFromTimeDomain(mono: Float32Array): SamplerFrame {
-  const { peak, rms } = mixChannels([mono]);
-  return { mono, peak, rms };
+  const frame: SamplerFrame = { mono, peak: 0, rms: 0 };
+  MONO_CHANNEL[0] = mono;
+  mixChannels(MONO_CHANNEL, frame);
+  return frame;
 }
 
 /** Options for {@link createWebAudioSampler}. */

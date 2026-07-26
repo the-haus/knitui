@@ -58,6 +58,24 @@ class FakeWebAudioPlayer {
       l({ channels: [{ frames }], timestamp: 0 } as never);
     }
   }
+
+  /**
+   * Like {@link pushSample}, but counts how many times the bridge actually READS
+   * the frames — the observable proxy for "did the 60 Hz handler do any work".
+   */
+  pushSampleCountingReads(frames: number[]): number {
+    let reads = 0;
+    const channel = {
+      get frames() {
+        reads++;
+        return frames;
+      },
+    };
+    for (const l of this.sampleListeners) {
+      l({ channels: [channel], timestamp: 0 } as never);
+    }
+    return reads;
+  }
 }
 
 describe("ExpoAudioController.setSamplingEnabled (web lazy support)", () => {
@@ -72,6 +90,43 @@ describe("ExpoAudioController.setSamplingEnabled (web lazy support)", () => {
 
     player.pushSample([0.5, -0.5, 0.5]); // audible → passes the silence gate
     expect(samples).toHaveLength(1);
+    controller.dispose();
+  });
+
+  it("does no per-frame work while nothing listens for sampleUpdate", () => {
+    // The backend keeps posting a ~2048-frame window per display frame for as long
+    // as sampling is on, which can outlive the visualizer that asked for it. With no
+    // `sampleUpdate` listener the handler must not touch the frames at all.
+    const player = new FakeWebAudioPlayer();
+    const controller = new ExpoAudioController(player as unknown as AudioPlayer);
+    controller.setSamplingEnabled(true);
+
+    expect(player.pushSampleCountingReads([0.5, -0.5])).toBe(0);
+
+    const off = controller.on("sampleUpdate", () => {});
+    expect(player.pushSampleCountingReads([0.5, -0.5])).toBe(1);
+
+    off();
+    expect(player.pushSampleCountingReads([0.5, -0.5])).toBe(0);
+    controller.dispose();
+  });
+
+  it("reuses the channel list across frames (read-synchronously contract)", () => {
+    const player = new FakeWebAudioPlayer();
+    const controller = new ExpoAudioController(player as unknown as AudioPlayer);
+    const samples: { channels: ReadonlyArray<ArrayLike<number>>; peak: number }[] = [];
+    controller.on("sampleUpdate", (s) => samples.push(s));
+
+    controller.setSamplingEnabled(true);
+    player.pushSample([0.5, -0.5]);
+    player.pushSample([0.25, -0.25]);
+
+    expect(samples).toHaveLength(2);
+    // Same list object, refilled — the payload is documented as valid only inside
+    // the callback, and this is what keeps the 60 Hz path allocation-free.
+    expect(samples[0].channels).toBe(samples[1].channels);
+    expect(samples[1].channels[0]).toEqual([0.25, -0.25]);
+    expect(samples[1].peak).toBeCloseTo(0.25);
     controller.dispose();
   });
 

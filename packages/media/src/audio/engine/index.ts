@@ -20,6 +20,7 @@ export {
   DEFAULT_MIN_DB,
   meteringToLevel,
   mixChannels,
+  type MixedLevels,
   peakOf,
   rmsOf,
 } from "./levels";

@@ -77,6 +77,7 @@ export {
   formatTime,
   meteringToLevel,
   mixChannels,
+  type MixedLevels,
   NATIVE_CAPABILITIES,
   peakOf,
   progressOf,

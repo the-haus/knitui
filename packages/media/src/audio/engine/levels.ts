@@ -34,23 +34,61 @@ export function rmsOf(frames: ArrayLike<number>): number {
   return rms > 1 ? 1 : rms;
 }
 
+/** The mixed envelope of a multi-channel frame. See {@link mixChannels}. */
+export interface MixedLevels {
+  /** Peak absolute amplitude across all channels, 0..1. */
+  peak: number;
+  /** Mean of the per-channel RMS values, 0..1. */
+  rms: number;
+}
+
 /**
  * Combine per-channel frame buffers into a single mixed `{ peak, rms }` envelope.
  * Mono passes straight through; stereo (and beyond) are averaged.
+ *
+ * Peak and RMS are FUSED into ONE pass per channel (rather than `peakOf` +
+ * `rmsOf`, which walked every frame twice). This is the hottest loop in the
+ * package: the web sampler posts a 2048-sample window per display frame, so the
+ * two-pass version read ~245k typed-array elements/second on a stereo source —
+ * halved here for a byte-identical result (the per-channel clamps are applied at
+ * exactly the same points as `peakOf`/`rmsOf` apply them).
+ *
+ * Pass `out` to write into a caller-owned result object instead of allocating one
+ * per call — the per-frame sampling path does, so a 60 Hz meter allocates nothing.
  */
-export function mixChannels(channels: ReadonlyArray<ArrayLike<number>>): {
-  peak: number;
-  rms: number;
-} {
-  if (channels.length === 0) return { peak: 0, rms: 0 };
-  let peak = 0;
-  let rms = 0;
-  for (const ch of channels) {
-    const p = peakOf(ch);
-    if (p > peak) peak = p;
-    rms += rmsOf(ch);
+export function mixChannels(
+  channels: ReadonlyArray<ArrayLike<number>>,
+  out?: MixedLevels,
+): MixedLevels {
+  const result = out ?? { peak: 0, rms: 0 };
+  const channelCount = channels.length;
+  if (channelCount === 0) {
+    result.peak = 0;
+    result.rms = 0;
+    return result;
   }
-  return { peak, rms: rms / channels.length };
+  let peak = 0;
+  let rmsSum = 0;
+  for (let c = 0; c < channelCount; c++) {
+    const frames = channels[c];
+    const n = frames.length;
+    let chPeak = 0;
+    let squares = 0;
+    for (let i = 0; i < n; i++) {
+      const v = frames[i];
+      const a = v < 0 ? -v : v;
+      if (a > chPeak) chPeak = a;
+      squares += v * v;
+    }
+    if (chPeak > 1) chPeak = 1;
+    if (chPeak > peak) peak = chPeak;
+    let chRms = n === 0 ? 0 : Math.sqrt(squares / n);
+    if (chRms > 1) chRms = 1;
+    rmsSum += chRms;
+  }
+  result.peak = peak;
+  result.rms = rmsSum / channelCount;
+  return result;
 }
 
 /**

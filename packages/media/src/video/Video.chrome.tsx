@@ -17,12 +17,10 @@
 import * as React from "react";
 
 import { ActionIcon, Box, Group, Slider, Stack, Text } from "@knitui/components";
-import {
-  IconPlayerPauseFilled,
-  IconPlayerPlayFilled,
-  IconRewindBackward10,
-  IconRewindForward10,
-} from "@knitui/icons";
+import { IconPlayerPauseFilled } from "@knitui/icons/IconPlayerPauseFilled";
+import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
+import { IconRewindBackward10 } from "@knitui/icons/IconRewindBackward10";
+import { IconRewindForward10 } from "@knitui/icons/IconRewindForward10";
 
 import { clampMediaSize } from "../control-size";
 import { bufferedFractionOf, formatTime } from "./engine";
@@ -193,7 +191,10 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
 
 /** Current time. */
 export const TimeCurrent = React.memo(function TimeCurrent(): React.ReactElement {
-  const currentTime = useVideoState((s) => s.currentTime);
+  // `formatTime` floors to whole seconds, so subscribe to whole seconds: the raw
+  // float fails `Object.is` on EVERY tick (4 Hz via `timeUpdateEventInterval`) and
+  // re-rendered this `<Text>` to produce a byte-identical string 3 times in 4.
+  const currentTime = useVideoState((s) => Math.floor(s.currentTime));
   return (
     <Text size="xs" color="$mediaOnScrim" fontWeight="500">
       {formatTime(currentTime)}
@@ -214,7 +215,11 @@ export const TimeDuration = React.memo(function TimeDuration(): React.ReactEleme
 /** Combined "1:23 / 4:56" timecode. */
 export const TimeDisplay = React.memo(function TimeDisplay(): React.ReactElement {
   const { currentTime, duration } = useVideoState(
-    (s) => ({ currentTime: s.currentTime, duration: Number.isFinite(s.duration) ? s.duration : 0 }),
+    // Whole seconds — `formatTime` floors anyway (see `TimeCurrent`).
+    (s) => ({
+      currentTime: Math.floor(s.currentTime),
+      duration: Number.isFinite(s.duration) ? s.duration : 0,
+    }),
     shallowEqual,
   );
   return (

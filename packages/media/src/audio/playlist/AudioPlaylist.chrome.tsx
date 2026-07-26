@@ -6,15 +6,13 @@
 import * as React from "react";
 
 import { ActionIcon, Box, Group, Slider, Stack, Text } from "@knitui/components";
-import {
-  IconPlayerPauseFilled,
-  IconPlayerPlayFilled,
-  IconPlayerTrackNextFilled,
-  IconPlayerTrackPrevFilled,
-  IconRepeat,
-  IconRepeatOff,
-  IconRepeatOnce,
-} from "@knitui/icons";
+import { IconPlayerPauseFilled } from "@knitui/icons/IconPlayerPauseFilled";
+import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
+import { IconPlayerTrackNextFilled } from "@knitui/icons/IconPlayerTrackNextFilled";
+import { IconPlayerTrackPrevFilled } from "@knitui/icons/IconPlayerTrackPrevFilled";
+import { IconRepeat } from "@knitui/icons/IconRepeat";
+import { IconRepeatOff } from "@knitui/icons/IconRepeatOff";
+import { IconRepeatOnce } from "@knitui/icons/IconRepeatOnce";
 
 import { clampMediaSize } from "../../control-size";
 import { volumeIconFor } from "../Audio.chrome.internal";
@@ -133,7 +131,12 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
 export const TimeDisplay = React.memo(function TimeDisplay(): React.ReactElement {
   const { styles } = useAudioPlaylistContext("Time");
   const { currentTime, duration } = usePlaylistState(
-    (s) => ({ currentTime: s.currentTime, duration: Number.isFinite(s.duration) ? s.duration : 0 }),
+    // Whole seconds — `formatTime` floors anyway, so a raw float only bought
+    // byte-identical re-renders at tick rate (the `Scrubber` above keeps the float).
+    (s) => ({
+      currentTime: Math.floor(s.currentTime),
+      duration: Number.isFinite(s.duration) ? s.duration : 0,
+    }),
     shallowEqual,
   );
   return (

@@ -3,7 +3,10 @@
  * ({@link ./Audio.chrome} and {@link ./Audio.chrome.controls}). Kept in their own
  * module so both files import from here and neither has to depend on the other.
  */
-import { IconVolume, IconVolume2, IconVolume3, IconVolumeOff } from "@knitui/icons";
+import { IconVolume } from "@knitui/icons/IconVolume";
+import { IconVolume2 } from "@knitui/icons/IconVolume2";
+import { IconVolume3 } from "@knitui/icons/IconVolume3";
+import { IconVolumeOff } from "@knitui/icons/IconVolumeOff";
 
 /** Pick the speaker glyph that matches the current level (off / low / mid / full). */
 export function volumeIconFor(muted: boolean, volume: number): typeof IconVolume {

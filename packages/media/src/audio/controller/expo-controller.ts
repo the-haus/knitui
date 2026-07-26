@@ -21,7 +21,12 @@ import type {
  */
 import { isWeb } from "@knitui/core";
 
-import { mixChannels, NATIVE_CAPABILITIES, resolveWebRuntimeCapabilities } from "../engine";
+import {
+  mixChannels,
+  type MixedLevels,
+  NATIVE_CAPABILITIES,
+  resolveWebRuntimeCapabilities,
+} from "../engine";
 import type {
   AudioCapabilities,
   AudioError,
@@ -78,6 +83,14 @@ export class ExpoAudioController extends BaseAudioController {
   readonly player: AudioPlayer;
   private subscriptions: ExpoSubscription[] = [];
   private sampleSub: ExpoSubscription | null = null;
+  /**
+   * Per-frame sampling scratch, reused across `audioSampleUpdate` callbacks so the
+   * 60 Hz path allocates nothing: the channel-frames list and the mixed envelope.
+   * Safe because `AudioSampleData` is documented as read-synchronously (the backend
+   * itself recycles the frame buffers between frames).
+   */
+  private readonly sampleChannels: ArrayLike<number>[] = [];
+  private readonly sampleLevels: MixedLevels = { peak: 0, rms: 0 };
   private lastSource: AudioSource;
   /** The id this player's own status updates carry — adopted from its first event. */
   private ownStatusId: string | null = null;
@@ -308,9 +321,31 @@ export class ExpoAudioController extends BaseAudioController {
       if (!this.player.isAudioSamplingSupported) return; // backend declined (e.g. tainted cross-origin source)
       if (this.sampleSub) return;
       this.sampleSub = this.player.addListener("audioSampleUpdate", (sample: ExpoAudioSample) => {
-        const channels = sample.channels.map((c) => c.frames);
-        const { peak, rms } = mixChannels(channels);
-        this.emitSample({ channels, peak, rms, timestamp: sample.timestamp });
+        // The single hottest callback in the package: the backend posts a ~2048-frame
+        // window per display frame (≈60 Hz). So do NOTHING before establishing that
+        // the work will be used:
+        //   1. Nobody subscribed to `sampleUpdate` (sampling was enabled but no
+        //      visualizer/meter is mounted) ⇒ return immediately. `setSamplingEnabled`
+        //      is driven by mount effects that can outlive the listeners, and this
+        //      used to walk every frame twice and allocate per frame regardless.
+        //      `timeUpdate` is gated the same way in `BaseMediaController`.
+        //   2. The channel list is written into a REUSED array and the envelope into a
+        //      reused `{ peak, rms }` — the emitted payload is documented as valid only
+        //      for the duration of the callback (the backend already recycles the
+        //      underlying frame buffers), so no consumer may retain either.
+        //   3. `mixChannels` fuses the peak + RMS passes into one walk of the frames.
+        if (!this.hasListeners("sampleUpdate")) return;
+        const source = sample.channels;
+        const channels = this.sampleChannels;
+        channels.length = source.length;
+        for (let i = 0; i < source.length; i++) channels[i] = source[i].frames;
+        const levels = mixChannels(channels, this.sampleLevels);
+        this.emitSample({
+          channels,
+          peak: levels.peak,
+          rms: levels.rms,
+          timestamp: sample.timestamp,
+        });
       });
     } else {
       this.player.setAudioSamplingEnabled(false);

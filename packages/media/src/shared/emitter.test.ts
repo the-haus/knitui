@@ -49,6 +49,36 @@ describe("TypedEmitter", () => {
     expect(calls).toEqual(["a", "b", "b"]);
   });
 
+  it("tolerates the SOLE listener unsubscribing or throwing during emit", () => {
+    // The single-listener path skips the defensive copy (it runs per audio frame),
+    // so pin that its semantics match: self-unsubscribing takes effect from the NEXT
+    // emit (this one already dispatched), and a throw is contained.
+    const e = new TypedEmitter<Events>();
+    const calls: number[] = [];
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const off = e.on("ping", (p) => {
+      calls.push(p.n);
+      off();
+      throw new Error("boom");
+    });
+    expect(() => e.emit("ping", { n: 1 })).not.toThrow();
+    e.emit("ping", { n: 2 });
+    expect(calls).toEqual([1]);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("does not deliver to a listener added during the same emit", () => {
+    // True on both paths (the copy, and the single-listener fast path).
+    const e = new TypedEmitter<Events>();
+    const late = jest.fn();
+    e.on("ping", () => e.on("ping", late));
+    e.emit("ping", { n: 1 });
+    expect(late).not.toHaveBeenCalled();
+    e.emit("ping", { n: 2 });
+    expect(late).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps notifying other listeners when one throws", () => {
     const e = new TypedEmitter<Events>();
     const after = jest.fn();

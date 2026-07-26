@@ -42,16 +42,38 @@ export class TypedEmitter<EventMap> {
   /** Emit an event to all current listeners. A throwing listener never blocks others. */
   emit<K extends keyof EventMap>(type: K, payload: EventMap[K]): void {
     const set = this.listeners.get(type);
-    if (!set) return;
-    // Copy so a listener unsubscribing mid-emit doesn't disturb iteration.
-    for (const listener of [...set]) {
-      try {
-        (listener as Listener<EventMap[K]>)(payload);
-      } catch (error) {
-        // One faulty subscriber must not stop the rest from being notified
-        // (and the media state from staying consistent). Surface it for debug.
-        console.error(`TypedEmitter: listener for "${String(type)}" threw`, error);
+    if (set === undefined || set.size === 0) return;
+    // ONE listener is the common case on the hot channels (`sampleUpdate` reaches a
+    // single visualizer; `timeUpdate` a single scrubber), and it needs no defensive
+    // copy — only a `break`. Set iteration is insertion-ordered, so the sole existing
+    // listener is visited first; breaking right after it reproduces the copy exactly:
+    // a listener it unsubscribes is already dispatched, and one it ADDS is not
+    // visited (which plain live iteration would do — a `Set` grown during iteration
+    // yields the new entries). Only the multi-listener path pays for the array; this
+    // runs once per audio frame.
+    if (set.size === 1) {
+      for (const listener of set) {
+        this.dispatch(type, listener, payload);
+        break;
       }
+      return;
+    }
+    // Copy so a listener unsubscribing mid-emit doesn't disturb iteration.
+    for (const listener of [...set]) this.dispatch(type, listener, payload);
+  }
+
+  /** Invoke one listener; a throw is reported and never blocks the others. */
+  private dispatch<K extends keyof EventMap>(
+    type: K,
+    listener: Listener<never>,
+    payload: EventMap[K],
+  ): void {
+    try {
+      (listener as Listener<EventMap[K]>)(payload);
+    } catch (error) {
+      // One faulty subscriber must not stop the rest from being notified
+      // (and the media state from staying consistent). Surface it for debug.
+      console.error(`TypedEmitter: listener for "${String(type)}" threw`, error);
     }
   }
 

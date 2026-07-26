@@ -7,7 +7,7 @@
 import * as React from "react";
 
 import { ActionIcon, Box, Button, Loader, Text, useMotionPreset } from "@knitui/components";
-import { IconPlayerPlayFilled } from "@knitui/icons";
+import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
 
 import { CaptionBubble, CaptionText, shallowEqual, useVideo, useVideoState } from "./Video.shared";
 

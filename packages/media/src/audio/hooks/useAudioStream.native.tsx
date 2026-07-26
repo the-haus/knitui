@@ -49,17 +49,28 @@ export function useAudioStream(options: UseAudioStreamOptions = {}): UseAudioStr
 
   const levelShared = useSharedValue(0);
   const lastFlushRef = React.useRef(0);
+  /**
+   * One-slot channel list for the per-buffer level reduction, reused across buffers:
+   * `mixChannels` reads it synchronously and writes the envelope straight into the
+   * level object below, so a capturing stream allocates only that object per buffer.
+   */
+  const channelScratch = React.useRef<ArrayLike<number>[]>([]);
 
   const [level, setLevel] = React.useState<AudioStreamLevel>(ZERO_LEVEL);
 
   const handleBuffer = React.useCallback(
     (buffer: AudioStreamBuffer) => {
       const frames = decodePcm(buffer.data, encoding);
-      const { peak, rms } = mixChannels([frames]);
-      const nextLevel: AudioStreamLevel = { peak, rms };
+      // The level object is the one allocation here: it is handed to `onLevel` and
+      // (throttled) to React state, so it must be fresh. The channel list and the
+      // envelope are not — write both through.
+      const nextLevel: AudioStreamLevel = { peak: 0, rms: 0 };
+      const channels = channelScratch.current;
+      channels[0] = frames;
+      mixChannels(channels, nextLevel);
 
       // UI-thread value first — cheapest, no re-render.
-      levelShared.value = rms;
+      levelShared.value = nextLevel.rms;
 
       onLevelRef.current?.(nextLevel);
       if (onBufferRef.current) {

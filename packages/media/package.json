@@ -70,6 +70,7 @@
     "!**/__tests__/**",
     "!**/__mocks__/**"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "bob build",
     "typecheck": "tsc --noEmit -p tsconfig.json",

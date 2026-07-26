@@ -9,14 +9,12 @@ import * as React from "react";
 
 import { ActionIcon, Box, Menu, Slider, Text } from "@knitui/components";
 import { isWeb } from "@knitui/core";
-import {
-  IconCheck,
-  IconMaximize,
-  IconMinimize,
-  IconPictureInPicture,
-  IconPictureInPictureOff,
-  IconSettings,
-} from "@knitui/icons";
+import { IconCheck } from "@knitui/icons/IconCheck";
+import { IconMaximize } from "@knitui/icons/IconMaximize";
+import { IconMinimize } from "@knitui/icons/IconMinimize";
+import { IconPictureInPicture } from "@knitui/icons/IconPictureInPicture";
+import { IconPictureInPictureOff } from "@knitui/icons/IconPictureInPictureOff";
+import { IconSettings } from "@knitui/icons/IconSettings";
 
 import { clampMediaSize } from "../control-size";
 import { OnScrimIcons, useHoldWhileOpen, volumeIconFor } from "./Video.chrome.internal";

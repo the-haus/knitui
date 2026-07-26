@@ -7,7 +7,9 @@
 import * as React from "react";
 
 import { ControlIconProvider } from "@knitui/components/control-system";
-import { IconVolume, IconVolume2, IconVolumeOff } from "@knitui/icons";
+import { IconVolume } from "@knitui/icons/IconVolume";
+import { IconVolume2 } from "@knitui/icons/IconVolume2";
+import { IconVolumeOff } from "@knitui/icons/IconVolumeOff";
 
 import { clampMediaSize, type MediaSize } from "../control-size";
 

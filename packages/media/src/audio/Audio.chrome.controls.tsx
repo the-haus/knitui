@@ -23,15 +23,13 @@ import {
   Text,
 } from "@knitui/components";
 import { isWeb } from "@knitui/core";
-import {
-  IconCheck,
-  IconPlayerPauseFilled,
-  IconPlayerPlayFilled,
-  IconRepeat,
-  IconRepeatOff,
-  IconRewindBackward10,
-  IconRewindForward10,
-} from "@knitui/icons";
+import { IconCheck } from "@knitui/icons/IconCheck";
+import { IconPlayerPauseFilled } from "@knitui/icons/IconPlayerPauseFilled";
+import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
+import { IconRepeat } from "@knitui/icons/IconRepeat";
+import { IconRepeatOff } from "@knitui/icons/IconRepeatOff";
+import { IconRewindBackward10 } from "@knitui/icons/IconRewindBackward10";
+import { IconRewindForward10 } from "@knitui/icons/IconRewindForward10";
 
 import { clampMediaSize } from "../control-size";
 import { volumeIconFor } from "./Audio.chrome.internal";
@@ -165,7 +163,10 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
 /** Current time. */
 export const TimeCurrent = React.memo(function TimeCurrent(): React.ReactElement {
   const { styles } = useAudio("Time");
-  const currentTime = useAudioState((s) => s.currentTime);
+  // `formatTime` floors to whole seconds, so subscribe to whole seconds: the raw
+  // float fails `Object.is` on EVERY tick and re-rendered this `<Text>` at tick rate
+  // to produce a byte-identical string 3 out of 4 times.
+  const currentTime = useAudioState((s) => Math.floor(s.currentTime));
   return (
     <Text size="xs" fontVariant={["tabular-nums"]} {...styles?.get("time")}>
       {formatTime(currentTime)}
@@ -188,7 +189,11 @@ export const TimeDuration = React.memo(function TimeDuration(): React.ReactEleme
 export const TimeDisplay = React.memo(function TimeDisplay(): React.ReactElement {
   const { styles } = useAudio("Time");
   const { currentTime, duration } = useAudioState(
-    (s) => ({ currentTime: s.currentTime, duration: Number.isFinite(s.duration) ? s.duration : 0 }),
+    // Whole seconds — `formatTime` floors anyway (see `TimeCurrent`).
+    (s) => ({
+      currentTime: Math.floor(s.currentTime),
+      duration: Number.isFinite(s.duration) ? s.duration : 0,
+    }),
     shallowEqual,
   );
   return (

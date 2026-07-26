@@ -12,13 +12,11 @@ import * as React from "react";
 
 import { ActionIcon, Group, Select, Stack, Text } from "@knitui/components";
 import { ControlIconProvider } from "@knitui/components/control-system";
-import {
-  IconMicrophone,
-  IconPlayerPause,
-  IconPlayerPlay,
-  IconPlayerRecordFilled,
-  IconPlayerStopFilled,
-} from "@knitui/icons";
+import { IconMicrophone } from "@knitui/icons/IconMicrophone";
+import { IconPlayerPause } from "@knitui/icons/IconPlayerPause";
+import { IconPlayerPlay } from "@knitui/icons/IconPlayerPlay";
+import { IconPlayerRecordFilled } from "@knitui/icons/IconPlayerRecordFilled";
+import { IconPlayerStopFilled } from "@knitui/icons/IconPlayerStopFilled";
 
 import { clampMediaSize, mediaIconSize } from "../../control-size";
 import { formatMillis } from "../engine";

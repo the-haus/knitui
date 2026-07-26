@@ -147,8 +147,13 @@ export interface AudioSampleData {
    * `ArrayLike<number>` so backends can hand over a `Float32Array` directly
    * (the web sampler's transferred window, expo-audio's `frames`) with no
    * per-frame copy — reducers like `mixChannels` already read it as
-   * `ArrayLike`. Read synchronously; the
-   * buffer may be reused by the backend on the next frame.
+   * `ArrayLike`.
+   *
+   * READ SYNCHRONOUSLY, NEVER RETAIN: both the frame buffers AND this list are
+   * recycled between frames. The backend reuses the buffers, and the player
+   * controller reuses the list itself so a 60 Hz sampler allocates nothing per
+   * frame. Copy anything you need to keep (`useAudioSpectrum` copies into a ring
+   * buffer inside the callback).
    */
   channels: ReadonlyArray<ArrayLike<number>>;
   /** Peak absolute amplitude across all channels, 0..1. */
