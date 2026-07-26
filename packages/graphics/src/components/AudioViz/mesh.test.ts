@@ -1,5 +1,7 @@
 import {
   buildMeshUniforms,
+  buildMeshUniformsInto,
+  createMeshUniformScratch,
   DEFAULT_MESH_PALETTE,
   MAX_MESH_POINTS,
   type MeshOptions,
@@ -96,5 +98,67 @@ describe("buildMeshUniforms", () => {
     expect(u.u_resolution).toEqual([1, 1]);
     // No levels → zero intensity everywhere.
     expect(u.u_intensity.every((v) => v === 0)).toBe(true);
+  });
+});
+
+describe("buildMeshUniformsInto", () => {
+  const levels = [0.2, 0.8, 0.4, 0.6, 0.1, 0.9];
+
+  it("produces the same uniforms as the allocating form, in the reused buffers", () => {
+    const scratch = createMeshUniformScratch();
+    const flat = buildMeshUniformsInto(levels, 400, 200, 1.5, opts(4), scratch);
+    const ref = buildMeshUniforms(levels, 400, 200, 1.5, opts(4));
+
+    // No allocation: the record points AT the caller's buffers.
+    expect(flat.u_points).toBe(scratch.u_points);
+    expect(flat.u_intensity).toBe(scratch.u_intensity);
+    expect(flat.u_colors).toBe(scratch.u_colors);
+    expect(flat.u_resolution).toBe(scratch.u_resolution);
+
+    expect(flat.u_count).toBe(ref.u_count);
+    expect(flat.u_softness).toBe(ref.u_softness);
+    expect([...flat.u_resolution]).toEqual([...ref.u_resolution]);
+    // Float32 rounding is the only difference — and it is the precision the GPU
+    // receives from the plain-array form too.
+    for (let i = 0; i < MAX_MESH_POINTS * 2; i++) {
+      expect(flat.u_points[i]).toBeCloseTo(ref.u_points[i], 6);
+    }
+    for (let i = 0; i < MAX_MESH_POINTS; i++) {
+      expect(flat.u_intensity[i]).toBeCloseTo(ref.u_intensity[i], 6);
+    }
+    for (let i = 0; i < MAX_MESH_POINTS * 3; i++) {
+      expect(flat.u_colors[i]).toBeCloseTo(ref.u_colors[i], 6);
+    }
+  });
+
+  it("clears the inactive tail when a reused scratch held MORE points before", () => {
+    // The reuse hazard: a frame with fewer blobs must not leave the previous
+    // frame's extra blob live in the buffer.
+    const scratch = createMeshUniformScratch();
+    buildMeshUniformsInto(levels, 400, 200, 0, opts(MAX_MESH_POINTS), scratch);
+    expect(scratch.u_intensity[MAX_MESH_POINTS - 1]).toBeGreaterThan(0);
+
+    const flat = buildMeshUniformsInto(levels, 400, 200, 0, opts(1), scratch);
+    expect(flat.u_count).toBe(1);
+    for (let i = 1; i < MAX_MESH_POINTS; i++) {
+      expect(flat.u_intensity[i]).toBe(0);
+      expect(flat.u_points[i * 2]).toBe(0);
+      expect(flat.u_points[i * 2 + 1]).toBe(0);
+      expect(flat.u_colors[i * 3]).toBe(0);
+    }
+  });
+
+  it("returns a FRESH record each call (reanimated skips an identical reference)", () => {
+    const scratch = createMeshUniformScratch();
+    const a = buildMeshUniformsInto(levels, 400, 200, 0, opts(3), scratch);
+    const b = buildMeshUniformsInto(levels, 400, 200, 1, opts(3), scratch);
+    expect(a).not.toBe(b);
+  });
+
+  it("accepts a typed-array level row (the renderer's eased buffer)", () => {
+    const scratch = createMeshUniformScratch();
+    const flat = buildMeshUniformsInto(new Float64Array(levels), 400, 200, 0, opts(3), scratch);
+    const ref = buildMeshUniforms(levels, 400, 200, 0, opts(3));
+    expect(flat.u_intensity[0]).toBeCloseTo(ref.u_intensity[0], 6);
   });
 });

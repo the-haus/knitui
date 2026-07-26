@@ -110,18 +110,21 @@ export function useVisualizerSource(opts: VisualizerSourceOptions): VisualizerSo
   // memoized (rebuilt only when the settings or pushed length change) and writing
   // into a reused scratch buffer, so a low-rate producer pushes the whole spectrum
   // with zero per-frame allocation and only `count` values are ever kept.
-  const mapperRef = React.useRef<{ mapper: SpectrumMapper; key: string } | null>(null);
-  const scratchRef = React.useRef<number[]>([]);
-  const reduce = React.useCallback(
-    (data: ArrayLike<number>): ArrayLike<number> => {
+  // The mapper cache lives in the reducer's own closure, keyed by the settings that
+  // configure it, so the only thing left to check per push is the pushed length. It
+  // used to build a `${count}|${fftScale}|…|${data.length}` key string on EVERY push
+  // — up to the display rate — purely to prove that nothing had changed.
+  const reduce = React.useMemo(() => {
+    let cached: { mapper: SpectrumMapper; bins: number } | null = null;
+    const scratch: number[] = [];
+    return (data: ArrayLike<number>): ArrayLike<number> => {
       if (input !== "fft") return data;
-      const key = `${count}|${fftScale}|${minDb}|${maxDb}|${minBin}|${maxBin}|${data.length}`;
-      let entry = mapperRef.current;
-      if (!entry || entry.key !== key) {
-        entry = {
-          key,
+      const bins = data.length;
+      if (cached === null || cached.bins !== bins) {
+        cached = {
+          bins,
           mapper: createSpectrumMapper({
-            bins: data.length,
+            bins,
             bands: count,
             input: fftScale,
             minDb,
@@ -130,12 +133,10 @@ export function useVisualizerSource(opts: VisualizerSourceOptions): VisualizerSo
             maxBin,
           }),
         };
-        mapperRef.current = entry;
       }
-      return entry.mapper(data, scratchRef.current);
-    },
-    [input, count, fftScale, minDb, maxDb, minBin, maxBin],
-  );
+      return cached.mapper(data, scratch);
+    };
+  }, [input, count, fftScale, minDb, maxDb, minBin, maxBin]);
 
   const push = React.useCallback(
     (data: ArrayLike<number>) => pushLevels(reduce(data)),

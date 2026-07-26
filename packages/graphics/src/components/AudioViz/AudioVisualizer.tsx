@@ -39,17 +39,18 @@ import {
   Group,
   LinearGradient,
   Path,
-  Skia,
   type SkPath,
   SweepGradient,
 } from "@shopify/react-native-skia";
 
 import {
-  resolveVariant,
-  type VisualizerShape,
+  resolveVariantWriter,
+  shapeBufferSize,
+  strokeWidthOf,
   type VisualizerVariant,
   type VisualizerVariantName,
 } from "./geometry";
+import { buildFillPath, buildStrokePath } from "./paths";
 import { type SpectrumInput } from "./spectrum";
 import { useVisualizerSource } from "./useVisualizerSource";
 
@@ -202,77 +203,27 @@ export const DEFAULT_GLOW_BLUR = 8;
 
 /**
  * Apply the per-level effects (`gain`, `floor`, `reverse`) to the eased levels
- * before geometry. A small fresh (pre-sized) array per evaluation — cheap next to
- * the shape build, and it keeps the registered variants oblivious to the effects.
- * Only called when at least one effect is active (see the `shapes` worklet); the
- * default no-effects path skips it and lets the variant's own `clamp01` do the
- * clamping, avoiding an allocation per frame. Worklet.
+ * before geometry, into a buffer the component owns (so no allocation per frame).
+ * Only called when at least one effect is active (see the path worklets); the
+ * default no-effects path passes the eased levels straight through and lets the
+ * variant's own `clamp01` do the clamping. Worklet.
  */
-function applyLevels(src: number[], gain: number, floor: number, reverse: boolean): number[] {
+function prepareLevels(
+  src: number[],
+  gain: number,
+  floor: number,
+  reverse: boolean,
+  out: Float64Array,
+): ArrayLike<number> {
   "worklet";
-  const n = src.length;
-  const out = new Array<number>(n);
+  const n = src.length < out.length ? src.length : out.length;
   for (let i = 0; i < n; i++) {
     let v = src[reverse ? n - 1 - i : i] * gain;
     v = v < 0 ? 0 : v > 1 ? 1 : v;
     if (floor > 0) v = floor + (1 - floor) * v;
     out[i] = v;
   }
-  return out;
-}
-
-/**
- * Build the fill path (bars / dots / closed polylines) from shapes. Worklet.
- *
- * The `PathBuilder` (not the deprecated mutable `SkPath.add*`/`moveTo`/`lineTo`;
- * `detach()` returns the finished `SkPath`) is created LAZILY — only once a fill
- * shape is actually seen. Each variant emits either fill OR stroke shapes, so for
- * a stroke-only variant (`line`/`radial`) this returns `""` without ever touching
- * CanvasKit, saving a native path alloc + `detach()` every frame.
- */
-function buildFill(shapes: VisualizerShape[]): SkPath | "" {
-  "worklet";
-  let p: ReturnType<typeof Skia.PathBuilder.Make> | null = null;
-  for (const s of shapes) {
-    if (s.kind === "rect") {
-      if (!p) p = Skia.PathBuilder.Make();
-      p.addRRect(Skia.RRectXY(Skia.XYWHRect(s.x, s.y, s.w, s.h), s.r, s.r));
-    } else if (s.kind === "circle") {
-      if (!p) p = Skia.PathBuilder.Make();
-      p.addCircle(s.x, s.y, s.r);
-    } else if (s.closed && s.points.length >= 6) {
-      if (!p) p = Skia.PathBuilder.Make();
-      p.moveTo(s.points[0], s.points[1]);
-      for (let i = 2; i < s.points.length; i += 2) p.lineTo(s.points[i], s.points[i + 1]);
-      p.close();
-    }
-  }
-  return p ? p.detach() : "";
-}
-
-/**
- * Build the stroke path (open polylines / radial spokes) from shapes. Worklet.
- * Lazy `PathBuilder` like `buildFill`: a fill-only variant (`bars`/`mirror`/
- * `dots`/`wave`) returns `""` without allocating a native path.
- */
-function buildStroke(shapes: VisualizerShape[]): SkPath | "" {
-  "worklet";
-  let p: ReturnType<typeof Skia.PathBuilder.Make> | null = null;
-  for (const s of shapes) {
-    if (s.kind === "line" && !s.closed && s.points.length >= 4) {
-      if (!p) p = Skia.PathBuilder.Make();
-      p.moveTo(s.points[0], s.points[1]);
-      for (let i = 2; i < s.points.length; i += 2) p.lineTo(s.points[i], s.points[i + 1]);
-    }
-  }
-  return p ? p.detach() : "";
-}
-
-/** The stroke width to use (first open line's, or 0). Size-invariant. Worklet. */
-function firstStrokeWidth(shapes: VisualizerShape[]): number {
-  "worklet";
-  for (const s of shapes) if (s.kind === "line" && !s.closed) return s.strokeWidth;
-  return 0;
+  return n === out.length ? out : out.subarray(0, n);
 }
 
 /** Normalize the `gradient` prop to a `{ colors, type }` with ≥2 colors, or null. */
@@ -326,7 +277,19 @@ function AudioVisualizerImpl(
     reverse = false,
   } = props;
 
-  const variantFn = React.useMemo(() => resolveVariant(variant), [variant]);
+  const variantFn = React.useMemo(() => resolveVariantWriter(variant), [variant]);
+
+  // Per-frame scratch owned by the component and captured by the worklets: the flat
+  // shape buffer the variant writes into, the effects-applied levels, and a constant
+  // zero row for the size-only stroke-width probe. Typed arrays are the one kind of
+  // captured value reanimated does NOT freeze on conversion (it shares the backing
+  // buffer), so they are the safe place to keep cross-frame UI-thread scratch — and
+  // because they never enter a SharedValue there is no identity/dirty bookkeeping to
+  // get wrong. Each path worklet WRITES the shape buffer and READS it back within one
+  // synchronous run, so the two can share it.
+  const shapeBuffer = React.useMemo(() => new Float64Array(shapeBufferSize(count)), [count]);
+  const levelBuffer = React.useMemo(() => new Float64Array(count), [count]);
+  const zeroLevels = React.useMemo(() => new Float64Array(count), [count]);
 
   // The shared data head: readiness, the eased `levels` transition, FFT ingestion,
   // and the canvas `size` SharedValue (see `useVisualizerSource`).
@@ -354,51 +317,56 @@ function AudioVisualizerImpl(
 
   const opts = React.useMemo(() => ({ gap, radius }), [gap, radius]);
 
-  // The variant shapes for this frame, built ONCE from `levels` (+ size + effects).
-  // Both the fill and stroke paths derive from this, so `variantFn`/`applyLevels`
-  // run a single time per frame instead of once per path (most variants emit only
-  // fill OR stroke shapes, so the other path was pure waste). Shapes are plain data
-  // (no `SkPath`/CanvasKit host objects), which is safe to hold in a derived value
-  // on web. Explicit `dependencies` are REQUIRED on web (no Babel worklet plugin
-  // under Vite). `[]` before ready/layout yields the empty `""` paths below.
-  const shapes = useDerivedValue<VisualizerShape[]>(() => {
+  // Geometry + path building are FUSED into each path worklet: the variant writes
+  // this frame's shapes into the reused flat buffer and the path is built straight
+  // out of it, so the intermediate shape array never exists. It used to be a third
+  // derived value publishing `count` fresh `{kind,x,y,w,h,r}` objects plus a fresh
+  // array into a SharedValue every frame (≈2,900 objects/second at the default
+  // `count`, plus one more array whenever an effect was active) purely to be read
+  // once by the two worklets below. Fusing costs one extra variant pass per frame —
+  // pure arithmetic into a buffer, and most variants emit only fill OR stroke shapes
+  // — and removes a SharedValue write, a mapper, and every allocation on the path.
+  // Explicit `dependencies` are REQUIRED on web (no Babel worklet plugin under Vite).
+  // Each builder returns `""` (a valid empty path) when the variant emits no shapes
+  // of that kind, allocating no path (see `paths.ts`).
+  const fillPath = useDerivedValue<SkPath | string>(() => {
     "worklet";
     const w = size.value.width;
     const h = size.value.height;
-    if (!readyValue.value || w <= 0 || h <= 0) return [];
+    if (!readyValue.value || w <= 0 || h <= 0) return "";
     // No-effects fast path (the default): pass the eased levels straight to the
-    // variant — `gain=1`/`floor=0`/`reverse=false` makes `applyLevels` a no-op
-    // beyond a clamp the variant already does, so skip its per-frame allocation.
+    // variant — `gain=1`/`floor=0`/`reverse=false` makes `prepareLevels` a no-op
+    // beyond a clamp the variant already does.
     const lv =
       gain === 1 && floor === 0 && !reverse
         ? levels.value
-        : applyLevels(levels.value, gain, floor, reverse);
-    return variantFn(lv, w, h, opts);
-  }, [levels, readyValue, size, variantFn, opts, gain, floor, reverse]);
-
-  // Fill / stroke paths from the shared shapes. Each `build*` returns `""` (a valid
-  // empty path) when the variant emits no shapes of that kind, allocating no path.
-  const fillPath = useDerivedValue<SkPath | string>(() => {
-    "worklet";
-    return buildFill(shapes.value);
-  }, [shapes]);
+        : prepareLevels(levels.value, gain, floor, reverse, levelBuffer);
+    return buildFillPath(variantFn(lv, w, h, opts, shapeBuffer));
+  }, [levels, readyValue, size, variantFn, opts, gain, floor, reverse, shapeBuffer, levelBuffer]);
 
   const strokePath = useDerivedValue<SkPath | string>(() => {
     "worklet";
-    return buildStroke(shapes.value);
-  }, [shapes]);
+    const w = size.value.width;
+    const h = size.value.height;
+    if (!readyValue.value || w <= 0 || h <= 0) return "";
+    const lv =
+      gain === 1 && floor === 0 && !reverse
+        ? levels.value
+        : prepareLevels(levels.value, gain, floor, reverse, levelBuffer);
+    return buildStrokePath(variantFn(lv, w, h, opts, shapeBuffer));
+  }, [levels, readyValue, size, variantFn, opts, gain, floor, reverse, shapeBuffer, levelBuffer]);
 
-  // Stroke width depends only on size/variant (not levels). A derived value so it
-  // tracks resize without a layout-measured number.
+  // Stroke width depends only on size/variant (not levels), so probe the variant with
+  // a constant zero row — no per-evaluation array (this used to build a `count`-length
+  // one) and no dependency on the level stream. A derived value so it tracks resize
+  // without a layout-measured number.
   const strokeWidth = useDerivedValue<number>(() => {
     "worklet";
     const w = size.value.width;
     const h = size.value.height;
     if (w <= 0 || h <= 0) return 0;
-    const zeros: number[] = [];
-    for (let i = 0; i < count; i++) zeros.push(0);
-    return firstStrokeWidth(variantFn(zeros, w, h, opts));
-  }, [size, variantFn, opts, count]);
+    return strokeWidthOf(variantFn(zeroLevels, w, h, opts, shapeBuffer));
+  }, [size, variantFn, opts, zeroLevels, shapeBuffer]);
 
   // Sweep gradient pivots on the canvas center.
   const sweepCenter = useDerivedValue<{ x: number; y: number }>(() => {

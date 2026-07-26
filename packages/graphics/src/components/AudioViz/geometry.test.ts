@@ -1,17 +1,32 @@
 import {
   bars,
+  barsInto,
+  decodeShapes,
   dots,
+  dotsInto,
+  encodeShapes,
   line,
+  lineInto,
   mirror,
+  mirrorInto,
   radial,
+  radialInto,
   registerVisualizerVariant,
   resolveVariant,
+  resolveVariantWriter,
+  SHAPE_END,
+  shapeBufferSize,
+  strokeWidthOf,
   type VariantOptions,
   type VisualizerCircle,
   type VisualizerLine,
   type VisualizerRect,
+  type VisualizerShape,
+  type VisualizerVariant,
   visualizerVariantNames,
+  type VisualizerVariantWriter,
   wave,
+  waveInto,
 } from "./geometry";
 
 /**
@@ -97,6 +112,129 @@ describe("empty / degenerate input guards", () => {
     for (const v of [bars, mirror, dots, line, wave, radial]) {
       expect(v([1, 1], 0, 100, OPTS)).toEqual([]);
     }
+  });
+});
+
+describe("flat shape buffer", () => {
+  const WRITERS: Array<[string, VisualizerVariantWriter, VisualizerVariant]> = [
+    ["bars", barsInto, bars],
+    ["mirror", mirrorInto, mirror],
+    ["dots", dotsInto, dots],
+    ["line", lineInto, line],
+    ["wave", waveInto, wave],
+    ["radial", radialInto, radial],
+  ];
+
+  it("decodes to exactly the object-form shapes, across a size/level matrix", () => {
+    // The correctness bar for the renderer switching to the flat buffer: identical
+    // numbers, identical order. `Float64Array` round-trips doubles exactly, so this
+    // is `toEqual`, not `toBeCloseTo`.
+    const levelSets = [[0], [1, 0, 0.5], [0.25, 0.75], [0, 0.1, 0.9, 1, 0.33, 0.66]];
+    for (const [name, writer, variant] of WRITERS) {
+      for (const levels of levelSets) {
+        for (const [w, h] of [
+          [100, 48],
+          [7, 3],
+          [640, 200],
+        ]) {
+          for (const opts of [
+            { gap: 2, radius: 2 },
+            { gap: 0, radius: 0 },
+            { gap: 6, radius: 30 },
+          ]) {
+            expect({ name, shapes: decodeShapes(writer(levels, w, h, opts)) }).toEqual({
+              name,
+              shapes: variant(levels, w, h, opts),
+            });
+          }
+        }
+      }
+    }
+  });
+
+  it("reuses a caller-owned buffer and never leaks stale records past the terminator", () => {
+    // The whole point: the renderer hands the same buffer back every frame. A frame
+    // with FEWER shapes must not resurrect the previous frame's tail.
+    const buffer = new Float64Array(shapeBufferSize(8));
+    const opts: VariantOptions = { gap: 2, radius: 2 };
+
+    const many = barsInto([1, 1, 1, 1, 1, 1, 1, 1], 100, 50, opts, buffer);
+    expect(many).toBe(buffer); // no allocation
+    expect(decodeShapes(many)).toHaveLength(8);
+
+    const few = barsInto([1, 1], 100, 50, opts, buffer);
+    expect(few).toBe(buffer);
+    expect(decodeShapes(few)).toEqual(bars([1, 1], 100, 50, opts));
+
+    const none = barsInto([], 100, 50, opts, buffer);
+    expect(none[0]).toBe(SHAPE_END);
+    expect(decodeShapes(none)).toEqual([]);
+  });
+
+  it("grows past a buffer that is too small, leaving the caller's untouched", () => {
+    const tiny = new Float64Array(3);
+    const grown = radialInto([1, 1, 1, 1], 100, 100, { gap: 2, radius: 2 }, tiny);
+    expect(grown).not.toBe(tiny);
+    expect(decodeShapes(grown)).toHaveLength(4);
+    expect([...tiny]).toEqual([0, 0, 0]);
+  });
+
+  it("sizes shapeBufferSize for the worst-case built-in (radial)", () => {
+    for (const count of [1, 4, 48, 256]) {
+      const buffer = new Float64Array(shapeBufferSize(count));
+      const levels = new Array<number>(count).fill(1);
+      for (const [, writer] of WRITERS) {
+        expect(writer(levels, 300, 120, { gap: 2, radius: 2 }, buffer)).toBe(buffer);
+      }
+    }
+  });
+
+  it("round-trips object shapes through encodeShapes (the foreign-variant shim)", () => {
+    const shapes: VisualizerShape[] = [
+      { kind: "rect", x: 1, y: 2, w: 3, h: 4, r: 0.5 },
+      { kind: "circle", x: 5, y: 6, r: 7 },
+      { kind: "line", points: [0, 1, 2, 3, 4, 5], closed: true, strokeWidth: 0 },
+      { kind: "line", points: [8, 9, 10, 11], closed: false, strokeWidth: 2.5 },
+    ];
+    expect(decodeShapes(encodeShapes(shapes))).toEqual(shapes);
+  });
+
+  it("reads the first open line's stroke width out of the buffer", () => {
+    const opts: VariantOptions = { gap: 2, radius: 3 };
+    expect(strokeWidthOf(lineInto([0, 1], 100, 50, opts))).toBe(3);
+    expect(strokeWidthOf(radialInto([0, 1], 100, 100, opts))).toBeGreaterThan(0);
+    expect(strokeWidthOf(waveInto([0, 1], 100, 50, opts))).toBe(0); // closed → fill
+    expect(strokeWidthOf(barsInto([0, 1], 100, 50, opts))).toBe(0);
+    expect(strokeWidthOf(dotsInto([0, 1], 100, 50, opts))).toBe(0);
+  });
+});
+
+describe("resolveVariantWriter", () => {
+  const OPTS2: VariantOptions = { gap: 2, radius: 2 };
+
+  it("maps built-ins (by name and by reference) to their allocation-free writers", () => {
+    const buffer = new Float64Array(shapeBufferSize(4));
+    for (const variant of ["bars", "mirror", "wave", "line", "dots", "radial"] as const) {
+      expect(resolveVariantWriter(variant)([1, 0.5, 0, 1], 100, 50, OPTS2, buffer)).toBe(buffer);
+    }
+    expect(resolveVariantWriter(radial)([1, 0.5], 100, 50, OPTS2, buffer)).toBe(buffer);
+    expect(resolveVariantWriter(undefined)).toBe(resolveVariantWriter("bars"));
+  });
+
+  it("shims a foreign object-shaped variant unchanged", () => {
+    const custom: VisualizerVariant = (levels, width, height) => [
+      { kind: "rect", x: 0, y: 0, w: width, h: height * levels.length, r: 1 },
+      { kind: "circle", x: 1, y: 2, r: 3 },
+    ];
+    registerVisualizerVariant("shim-test", custom);
+    const writer = resolveVariantWriter("shim-test");
+    expect(decodeShapes(writer([0.5, 0.5], 10, 20, OPTS2))).toEqual(
+      custom([0.5, 0.5], 10, 20, OPTS2),
+    );
+    // Foreign variants also accept the non-array level views the renderer may pass.
+    expect(decodeShapes(writer(new Float64Array([0.5, 0.5]), 10, 20, OPTS2))).toEqual(
+      custom([0.5, 0.5], 10, 20, OPTS2),
+    );
   });
 });
 

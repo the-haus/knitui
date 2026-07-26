@@ -99,36 +99,80 @@ export interface MeshOptions {
   colors: number[];
 }
 
+/**
+ * The same uniform values, but over buffers the RENDERER owns and reuses — the
+ * per-frame form (see {@link buildMeshUniformsInto}). `Float32Array` because that is
+ * what `<Shader uniforms>` accepts alongside plain arrays, and what the GPU receives
+ * either way, so nothing is lost by writing straight into it.
+ */
+export type MeshUniformsFlat = {
+  u_resolution: Float32Array;
+  u_count: number;
+  u_softness: number;
+  u_points: Float32Array;
+  u_intensity: Float32Array;
+  u_colors: Float32Array;
+};
+
+/** The reused uniform buffers behind {@link buildMeshUniformsInto}. */
+export interface MeshUniformScratch {
+  u_resolution: Float32Array;
+  u_points: Float32Array;
+  u_intensity: Float32Array;
+  u_colors: Float32Array;
+}
+
+/** Allocate the reusable uniform buffers for one renderer instance. */
+export function createMeshUniformScratch(): MeshUniformScratch {
+  return {
+    u_resolution: new Float32Array(2),
+    u_points: new Float32Array(MAX_MESH_POINTS * 2),
+    u_intensity: new Float32Array(MAX_MESH_POINTS),
+    u_colors: new Float32Array(MAX_MESH_POINTS * 3),
+  };
+}
+
 function clamp01(v: number): number {
   "worklet";
   return v < 0 ? 0 : v > 1 ? 1 : v;
 }
 
+/** Active control points, clamped to what the shader declares. Worklet. */
+function activeMeshPoints(opts: MeshOptions): number {
+  "worklet";
+  return Math.max(1, Math.min(MAX_MESH_POINTS, Math.round(opts.points)));
+}
+
 /**
- * Reduce eased `levels` + a `time` (seconds) into the shader uniforms. Pure and
- * `"worklet"`-safe — called from the renderer's `useDerivedValue`. The control
- * points orbit slowly (so the field drifts even when silent) and each one's
- * intensity is the mean of one contiguous band of the spectrum, so low bands
- * pulse one blob and high bands another. Arrays are always emitted at
- * `MAX_MESH_POINTS` length (the SkSL array size); the inactive tail is zeroed and
- * masked by `u_count`.
+ * The shared mesh math — the ONE implementation, writing into any index-assignable
+ * targets (plain arrays for {@link buildMeshUniforms}, the renderer's reused
+ * `Float32Array`s for {@link buildMeshUniformsInto}). Every slot up to
+ * `MAX_MESH_POINTS` is written, including the inactive tail (zeroed), so a reused
+ * buffer can never show a previous frame's extra blob. Worklet.
  */
-export function buildMeshUniforms(
-  levels: number[],
-  width: number,
-  height: number,
+function writeMeshPoints(
+  levels: ArrayLike<number>,
   time: number,
   opts: MeshOptions,
-): MeshUniforms {
+  points: number,
+  u_points: { [i: number]: number },
+  u_intensity: { [i: number]: number },
+  u_colors: { [i: number]: number },
+): void {
   "worklet";
-  const points = Math.max(1, Math.min(MAX_MESH_POINTS, Math.round(opts.points)));
-  const u_points = new Array<number>(MAX_MESH_POINTS * 2).fill(0);
-  const u_intensity = new Array<number>(MAX_MESH_POINTS).fill(0);
-  const u_colors = new Array<number>(MAX_MESH_POINTS * 3).fill(0);
-
   const n = levels.length;
   const TWO_PI = Math.PI * 2;
-  for (let i = 0; i < points; i++) {
+  for (let i = 0; i < MAX_MESH_POINTS; i++) {
+    if (i >= points) {
+      // Inactive tail: zeroed and masked by `u_count`.
+      u_intensity[i] = 0;
+      u_points[i * 2] = 0;
+      u_points[i * 2 + 1] = 0;
+      u_colors[i * 3] = 0;
+      u_colors[i * 3 + 1] = 0;
+      u_colors[i * 3 + 2] = 0;
+      continue;
+    }
     // Mean level of this point's contiguous band of the spectrum → blob energy.
     let intensity = 0;
     if (n > 0) {
@@ -154,7 +198,32 @@ export function buildMeshUniforms(
     u_colors[i * 3 + 1] = opts.colors[c + 1] ?? 0.5;
     u_colors[i * 3 + 2] = opts.colors[c + 2] ?? 0.5;
   }
+}
 
+/**
+ * Reduce eased `levels` + a `time` (seconds) into the shader uniforms. Pure and
+ * `"worklet"`-safe. The control points orbit slowly (so the field drifts even when
+ * silent) and each one's intensity is the mean of one contiguous band of the
+ * spectrum, so low bands pulse one blob and high bands another. Arrays are always
+ * emitted at `MAX_MESH_POINTS` length (the SkSL array size); the inactive tail is
+ * zeroed and masked by `u_count`.
+ *
+ * This is the ALLOCATING form (4 fresh arrays per call), kept for callers that just
+ * want the values; the renderer uses {@link buildMeshUniformsInto} on every frame.
+ */
+export function buildMeshUniforms(
+  levels: number[],
+  width: number,
+  height: number,
+  time: number,
+  opts: MeshOptions,
+): MeshUniforms {
+  "worklet";
+  const points = activeMeshPoints(opts);
+  const u_points = new Array<number>(MAX_MESH_POINTS * 2);
+  const u_intensity = new Array<number>(MAX_MESH_POINTS);
+  const u_colors = new Array<number>(MAX_MESH_POINTS * 3);
+  writeMeshPoints(levels, time, opts, points, u_points, u_intensity, u_colors);
   return {
     // Clamp ≥1 so the shader's `fragcoord / u_resolution` never divides by zero in
     // the transient frame before `<Canvas onSize>` reports the real size.
@@ -164,6 +233,47 @@ export function buildMeshUniforms(
     u_points,
     u_intensity,
     u_colors,
+  };
+}
+
+/**
+ * {@link buildMeshUniforms} into caller-owned buffers: the numbers land in
+ * `scratch`'s `Float32Array`s and only the small record wrapping them is fresh —
+ * which it must be, since reanimated skips a SharedValue write whose value is
+ * identical by reference, and `<Shader>` would then never see the new frame.
+ *
+ * The allocating form built 4 arrays plus a `[w, h]` tuple plus the record on every
+ * frame, and the mesh repaints on the display clock, so that was ~5 objects × 60/s
+ * per mounted mesh for values the shader flattens and forgets immediately. Worklet.
+ */
+export function buildMeshUniformsInto(
+  levels: ArrayLike<number>,
+  width: number,
+  height: number,
+  time: number,
+  opts: MeshOptions,
+  scratch: MeshUniformScratch,
+): MeshUniformsFlat {
+  "worklet";
+  const points = activeMeshPoints(opts);
+  writeMeshPoints(
+    levels,
+    time,
+    opts,
+    points,
+    scratch.u_points,
+    scratch.u_intensity,
+    scratch.u_colors,
+  );
+  scratch.u_resolution[0] = Math.max(width, 1);
+  scratch.u_resolution[1] = Math.max(height, 1);
+  return {
+    u_resolution: scratch.u_resolution,
+    u_count: points,
+    u_softness: opts.softness,
+    u_points: scratch.u_points,
+    u_intensity: scratch.u_intensity,
+    u_colors: scratch.u_colors,
   };
 }
 

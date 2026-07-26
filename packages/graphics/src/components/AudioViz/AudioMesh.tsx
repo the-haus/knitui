@@ -4,23 +4,32 @@
  * of the shape-based `AudioVisualizer` — it shares the same data head
  * (`useVisualizerSource`: ingestion, the eased `levels` transition, readiness and
  * sizing) and the same imperative `push`/`rest` handle, but instead of building a
- * `SkPath` it derives the shader's uniforms from the eased levels + a `useClock`
+ * `SkPath` it derives the shader's uniforms from the eased levels + a drift clock
  * and paints them across the whole canvas with `<Fill><Shader/></Fill>`.
  *
  * Why a separate component (not a `variant`): the variant registry maps levels to
  * `VisualizerShape[]` baked into one `SkPath` painted with a single gradient. A
  * mesh gradient is per-region colour interpolation across the canvas — not a
  * shape — so it needs its own renderer. See `mesh.ts` for the shader + the pure
- * `buildMeshUniforms` reducer.
+ * `buildMeshUniformsInto` reducer (which writes into buffers this component owns, so
+ * a painted frame allocates only the small record `<Shader>` reads).
  *
  * Web: Storybook's Vite build does NOT run the reanimated worklet Babel plugin, so
  * the uniforms `useDerivedValue` is given an explicit `dependencies` array and a
  * `readyValue` SharedValue mirrors CanvasKit readiness; the `RuntimeEffect` is only
  * compiled once `ready` (CanvasKit on the global), and an inert canvas renders
- * until then. Reduced motion freezes the idle drift (audio reactivity stays).
+ * until then. Reduced motion (and `speed={0}`) freezes the idle drift — which also
+ * stops the drift clock, so a frozen mesh does no per-frame work at all; audio
+ * reactivity stays.
  */
 import * as React from "react";
-import { type SharedValue, useDerivedValue, useReducedMotion } from "react-native-reanimated";
+import {
+  type SharedValue,
+  useDerivedValue,
+  useFrameCallback,
+  useReducedMotion,
+  useSharedValue,
+} from "react-native-reanimated";
 
 import {
   Canvas,
@@ -29,12 +38,12 @@ import {
   Shader,
   Skia,
   type SkRuntimeEffect,
-  useClock,
 } from "@shopify/react-native-skia";
 
 import type { AudioVisualizerHandle } from "./AudioVisualizer";
 import {
-  buildMeshUniforms,
+  buildMeshUniformsInto,
+  createMeshUniformScratch,
   DEFAULT_MESH_PALETTE,
   DEFAULT_MESH_POINTS,
   DEFAULT_MESH_SOFTNESS,
@@ -42,11 +51,14 @@ import {
   MAX_MESH_POINTS,
   MESH_GRADIENT_SKSL,
   type MeshOptions,
-  type MeshUniforms,
+  type MeshUniformsFlat,
   resolveMeshColors,
 } from "./mesh";
 import type { SpectrumInput } from "./spectrum";
 import { useVisualizerSource } from "./useVisualizerSource";
+
+/** Stand-in for "no levels yet" (pre-layout / pre-CanvasKit) — never mutated. */
+const EMPTY_LEVELS: number[] = [];
 
 /** A mesh wants area to flow in — taller than the 48px bar default. */
 export const DEFAULT_MESH_HEIGHT = 160;
@@ -167,8 +179,24 @@ function AudioMeshImpl(
 
   // The drift clock (elapsed ms). Reduced motion freezes drift at t=0 (blobs still
   // pulse with the audio); otherwise scale by `speed`.
-  const clock = useClock();
+  //
+  // It is OUR clock rather than Skia's `useClock()` because that one runs its frame
+  // callback for as long as the component is mounted, and every tick dirties the
+  // uniforms mapper below — so a mesh whose drift is frozen (`prefers-reduced-motion`,
+  // or `speed={0}`) still rebuilt its uniforms and repainted a full-canvas fragment
+  // shader 60 times a second to produce pixel-identical output. Stopping the frame
+  // callback stops the writes, which stops the mapper, which stops the repaint: with
+  // the drift frozen the mesh now only repaints when the AUDIO moves it.
   const reducedMotion = useReducedMotion();
+  const clock = useSharedValue(0);
+  const drifting = !reducedMotion && speed !== 0;
+  const frame = useFrameCallback((info) => {
+    "worklet";
+    clock.value = info.timeSinceFirstFrame;
+  }, false);
+  React.useEffect(() => {
+    frame.setActive(drifting);
+  }, [drifting, frame]);
 
   // Compile the effect once CanvasKit is ready (web must wait; native is always
   // ready). `Make` returns null on a compile error → inert canvas below.
@@ -177,16 +205,21 @@ function AudioMeshImpl(
     [ready],
   );
 
-  // Per-frame uniforms from the eased levels + the clock. Explicit `dependencies`
-  // REQUIRED on web (no worklet Babel plugin under Vite).
-  const uniforms = useDerivedValue<MeshUniforms>(() => {
+  // Per-frame uniforms from the eased levels + the clock, written into buffers this
+  // instance owns (only the small record wrapping them is fresh each frame — it has
+  // to be, or reanimated skips the SharedValue write and `<Shader>` never updates).
+  // Explicit `dependencies` REQUIRED on web (no worklet Babel plugin under Vite).
+  const scratch = React.useMemo(createMeshUniformScratch, []);
+  const uniforms = useDerivedValue<MeshUniformsFlat>(() => {
     "worklet";
     const w = size.value.width;
     const h = size.value.height;
-    if (!readyValue.value || w <= 0 || h <= 0) return buildMeshUniforms([], w, h, 0, meshOpts);
-    const t = reducedMotion ? 0 : (clock.value / 1000) * speed;
-    return buildMeshUniforms(levels.value, w, h, t, meshOpts);
-  }, [levels, size, clock, readyValue, meshOpts, speed, reducedMotion]);
+    if (!readyValue.value || w <= 0 || h <= 0) {
+      return buildMeshUniformsInto(EMPTY_LEVELS, w, h, 0, meshOpts, scratch);
+    }
+    const t = drifting ? (clock.value / 1000) * speed : 0;
+    return buildMeshUniformsInto(levels.value, w, h, t, meshOpts, scratch);
+  }, [levels, size, clock, readyValue, meshOpts, speed, drifting, scratch]);
 
   const style = React.useMemo(
     () => ({ width: width ?? ("100%" as const), height, backgroundColor }),
