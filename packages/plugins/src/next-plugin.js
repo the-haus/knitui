@@ -34,6 +34,26 @@
 /** Packages the compiler scans for kit components to optimize. */
 const DEFAULT_COMPONENTS = ["@knitui/components", "@knitui/core"];
 
+/**
+ * Kit packages whose public entry is a big re-export barrel. Next rewrites
+ * `import { X } from "pkg"` into a direct deep import per named binding, so the
+ * barrel's module graph is never built in the first place.
+ *
+ * This matters far more here than for a typical dependency: the kit SRC-SHIPS,
+ * so `transpilePackages` makes Next compile every file it reaches — and
+ * `@knitui/icons`' barrel alone re-exports ~6.1k modules (`@knitui/emoji` is the
+ * same shape). Without this, one `import { IconCheck } from "@knitui/icons"` in
+ * app code costs thousands of module compiles on every cold start before
+ * tree-shaking can throw them away.
+ */
+const DEFAULT_OPTIMIZE_PACKAGE_IMPORTS = [
+  "@knitui/icons",
+  "@knitui/emoji",
+  "@knitui/components",
+  "@knitui/dates",
+  "@knitui/map",
+];
+
 /** @typedef {import("@tamagui/next-plugin").WithTamaguiProps} WithTamaguiProps */
 /** @typedef {Record<string, any>} NextConfig */
 
@@ -62,7 +82,27 @@ function withKnitui(nextConfig = {}, overrides = {}) {
     ...overrides,
   });
 
-  return plugin(withKnituiWebpack(nextConfig));
+  return plugin(withKnituiWebpack(withKnituiExperimental(nextConfig)));
+}
+
+/**
+ * Merge the kit's `experimental` defaults into a Next config without clobbering
+ * anything the app already set. `optimizePackageImports` is concatenated (app
+ * entries first, kit entries appended, de-duped) rather than replaced.
+ *
+ * @param {NextConfig} nextConfig
+ * @returns {NextConfig}
+ */
+function withKnituiExperimental(nextConfig = {}) {
+  const experimental = nextConfig.experimental ?? {};
+  const userList = experimental.optimizePackageImports ?? [];
+  return {
+    ...nextConfig,
+    experimental: {
+      ...experimental,
+      optimizePackageImports: [...new Set([...userList, ...DEFAULT_OPTIMIZE_PACKAGE_IMPORTS])],
+    },
+  };
 }
 
 /**
