@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useSharedValue } from "react-native-reanimated";
+import { type SharedValue, useSharedValue } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
 import type { StyleProp, ViewStyle } from "@knitui/core";
@@ -172,6 +172,52 @@ function NativeTrackInner<T>({
 
   React.useEffect(() => clearSettle, [clearSettle]);
 
+  /* ---- per-slide progress: ONE listener for the whole rail --------------- */
+  // Native scroll mode mounts EVERY slide (`count * LOOP_COPIES` when looping),
+  // so a per-slide `useSharedValueListener(offset, …)` meant one JS-thread
+  // callback + one shared-value write per mounted slide per scroll event — a
+  // 30-item looped rail fanned a single `offset.value` write out to 90 callbacks
+  // and 90 writes, on the main thread, for every scroll event the browser fired.
+  // Instead each slide registers its `progress` shared value here (mirroring the
+  // web painter's `entries` map) and ONE listener publishes them all, computing
+  // the scroll position once for the whole loop.
+  const slots = React.useRef(new Map<number, SharedValue<number>>());
+
+  // Kept in a ref so the listener callbacks stay stable (no resubscribe).
+  const latestCount = React.useRef(slideCount);
+  latestCount.current = slideCount;
+
+  const publishAll = React.useCallback(() => {
+    const s = size.value;
+    const scroll = s > 0 ? rawIndex(offset.value, s) : 0;
+    const n = latestCount.current;
+    slots.current.forEach((progress, slot) => {
+      progress.value = s > 0 ? itemProgress(scroll, slot, n, false) : slot;
+    });
+  }, [offset, size]);
+
+  const registerSlot = React.useCallback<RegisterSlotFn>(
+    (slot, progress) => {
+      if (!progress) {
+        slots.current.delete(slot);
+        return;
+      }
+      slots.current.set(slot, progress);
+      // Publish immediately so a slide that mounts between offset writes (data
+      // growth, key change) is not stuck at 0 until the next scroll event.
+      const s = size.value;
+      progress.value =
+        s > 0 ? itemProgress(rawIndex(offset.value, s), slot, slideCount, false) : slot;
+    },
+    [offset, size, slideCount],
+  );
+
+  // `addListener` delivers the current value once on subscribe, so the first
+  // paint is published without waiting for a scroll. Children's effects run
+  // before the parent's, so every slide is already registered by then.
+  useSharedValueListener(offset, publishAll);
+  useSharedValueListener(size, publishAll);
+
   const slideStyle = useSlideStyle();
 
   // Viewport: a real scroll surface. CSS scroll-snap gives snapping without any
@@ -220,16 +266,14 @@ function NativeTrackInner<T>({
               item={item}
               index={real}
               slot={rendered}
-              slotCount={slideCount}
               vertical={vertical}
               pageSize={pageSize}
-              offset={offset}
-              size={size}
               snapEnabled={snapEnabled}
               pagingEnabled={pagingEnabled}
               renderItem={renderItem}
               renderPlaceholder={renderPlaceholder}
               slideStyle={slideStyle}
+              registerSlot={registerSlot}
             />
           );
         })}
@@ -238,54 +282,51 @@ function NativeTrackInner<T>({
   );
 }
 
+/**
+ * Registers (or clears with `null`) a slide's `progress` shared value with the
+ * track's single offset listener, keyed by its rendered slot.
+ */
+type RegisterSlotFn = (slot: number, progress: SharedValue<number> | null) => void;
+
 interface NativeSlideProps<T> extends Pick<
   NativeTrackProps<T>,
-  | "vertical"
-  | "pageSize"
-  | "offset"
-  | "size"
-  | "renderItem"
-  | "renderPlaceholder"
-  | "snapEnabled"
-  | "pagingEnabled"
+  "vertical" | "pageSize" | "renderItem" | "renderPlaceholder" | "snapEnabled" | "pagingEnabled"
 > {
   item: T | undefined;
   /** Real data index handed to `renderItem` (wrapped onto `[0, count)` in loop). */
   index: number;
   /** Rendered flow position — this slide's slot among all mounted copies. */
   slot: number;
-  /** Total mounted slots (`count * LOOP_COPIES` in loop mode). */
-  slotCount: number;
   slideStyle: ReturnType<typeof useSlideStyle>;
+  registerSlot: RegisterSlotFn;
 }
 
 /**
- * One flow slide (web). Its `progress` is republished from the engine offset via
- * the shared-value listener (reanimated's reactive hooks don't re-run under this
- * repo's web tooling) and handed to `renderItem`. Carries the CSS scroll-snap
- * alignment so the browser snaps to it. Progress is measured from the rendered
- * `slot` (each clone is its own flow slide); `index` stays the real data index.
+ * One flow slide (web). Its `progress` is republished from the engine offset by
+ * the track's single shared-value listener (reanimated's reactive hooks don't
+ * re-run under this repo's web tooling) and handed to `renderItem`. Carries the
+ * CSS scroll-snap alignment so the browser snaps to it. Progress is measured
+ * from the rendered `slot` (each clone is its own flow slide); `index` stays the
+ * real data index.
  */
 function NativeSlideInner<T>({
   item,
   index,
   slot,
-  slotCount,
   vertical,
   pageSize,
-  offset,
-  size,
   snapEnabled,
   pagingEnabled,
   renderItem,
   renderPlaceholder,
   slideStyle,
+  registerSlot,
 }: NativeSlideProps<T>) {
   const progress = useSharedValue(0);
-  useSharedValueListener(offset, () => {
-    const s = size.value;
-    progress.value = s > 0 ? itemProgress(rawIndex(offset.value, s), slot, slotCount, false) : slot;
-  });
+  React.useEffect(() => {
+    registerSlot(slot, progress);
+    return () => registerSlot(slot, null);
+  }, [registerSlot, slot, progress]);
 
   const style = [
     flowSlideStyle(vertical, pageSize),
@@ -308,4 +349,13 @@ function NativeSlideInner<T>({
 
 const NativeSlide = React.memo(NativeSlideInner) as typeof NativeSlideInner;
 
-export const NativeTrack = NativeTrackInner;
+/**
+ * Memoized: `CarouselInner` re-renders once per settled page (the core's
+ * `setActive`), and re-rendering the track re-creates the element — and re-runs
+ * `getItem` / `keyExtractor` — for every one of its mounted slides, which in
+ * native scroll mode is ALL of them (`count * 3` when looping). On those
+ * internal re-renders every prop is identity-stable (the `useCallback`s in
+ * `CarouselInner`, plus `props.renderItem` & co., which React hands back
+ * unchanged when only local state moved), so the memo genuinely holds.
+ */
+export const NativeTrack = React.memo(NativeTrackInner) as typeof NativeTrackInner;

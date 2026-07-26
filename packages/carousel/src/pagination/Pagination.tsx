@@ -3,9 +3,10 @@ import type { SharedValue } from "react-native-reanimated";
 
 import { UnstyledButton, useReducedTransition } from "@knitui/components";
 import { type GetProps, isWeb } from "@knitui/core";
+import { useCallbackRef } from "@knitui/hooks";
 
 import { CarouselDot, CarouselDots } from "../view/chrome";
-import { useSelectedDot } from "./selectedDot";
+import { useSelectedIndex } from "./selectedDot";
 import { Basic, Custom } from "./variants";
 
 /**
@@ -41,8 +42,8 @@ export interface PaginationProps {
 
 interface DotProps {
   index: number;
-  count: number;
-  progress: SharedValue<number>;
+  /** Whether this dot is the selected one — derived once for the whole row. */
+  selected: boolean;
   dotProps?: GetProps<typeof CarouselDot>;
   activeDotProps?: GetProps<typeof CarouselDot>;
   onPress?: (index: number) => void;
@@ -50,31 +51,19 @@ interface DotProps {
   renderDot?: (index: number, selected: boolean) => React.ReactNode;
 }
 
-function Dot({
+function DotInner({
   index,
-  count,
-  progress,
+  selected,
   dotProps,
   activeDotProps,
   onPress,
   label,
   renderDot,
 }: DotProps) {
-  // The selected dot is the rounded progress (loop-wrapped into real-item space).
-  // The visible grow/fade transition is owned by Tamagui's `animation` driver
-  // below; this hook only flips the boolean it animates between (kept live on
-  // both platforms by a `progress.addListener` — see useSelectedDot).
-  const isActive = React.useCallback(
-    (p: number): boolean => {
-      "worklet";
-      if (count <= 0) return false;
-      return ((Math.round(p) % count) + count) % count === index;
-    },
-    [index, count],
-  );
-
-  const selected = useSelectedDot(progress, isActive, [index, count]);
-
+  // `selected` arrives from the row's single `useSelectedIndex` (the rounded,
+  // loop-wrapped progress). The visible grow/fade transition is owned by
+  // Tamagui's `animation` driver below; the boolean is all it animates between.
+  //
   // Reduced-motion-safe transition key (null under prefers-reduced-motion); this
   // is what eases the scale/opacity/colour change between the two dot states.
   const dotTransition = useReducedTransition("fast");
@@ -112,10 +101,29 @@ function Dot({
 }
 
 /**
+ * One dot, memoized.
+ *
+ * Only ONE dot's `selected` flips when the carousel changes page, but the row
+ * re-renders every dot — and each dot mounts a `useReducedTransition` and rebuilds
+ * its Tamagui `CarouselDot` (whose `active`/`scale`/`opacity` variants the animation
+ * driver then re-diffs). A plain shallow compare is enough here because every prop
+ * is a primitive or an identity-stable object: `dotProps`/`activeDotProps` come from
+ * `slotStyles`, which hands back the same object across renders, `label` is a string,
+ * and `onPress` is stabilised by the row (see `PaginationBase`).
+ *
+ * `renderDot` is deliberately NOT stabilised: a consumer's inline renderer closes
+ * over its own state, and freezing it would show stale dot content — the same
+ * `FlatList`-`extraData` trap documented for `Carousel`'s `renderItem`. An inline
+ * `renderDot` simply means this memo does not hold, exactly as before.
+ */
+const Dot = React.memo(DotInner);
+
+/**
  * Decoupled pagination indicator. It is not coupled to a carousel instance — it
- * just reads a `progress` SharedValue and reports taps via `onPress`. Each dot
- * owns its own animation and selected state (see useDotHost), so this stays a
- * thin layout shell.
+ * just reads a `progress` SharedValue and reports taps via `onPress`. Selection
+ * is derived ONCE here (`useSelectedIndex`) and handed down as a boolean; the
+ * dots own only their own (declarative) transition, so this stays a thin layout
+ * shell with exactly one reanimated subscription per row.
  */
 function PaginationBase({
   progress,
@@ -131,6 +139,17 @@ function PaginationBase({
     ? ({ role: "group", "aria-label": "Choose slide to display" } as Record<string, unknown>)
     : null;
 
+  // ONE subscription to `progress` for the whole row (the carousel writes it
+  // every frame) — not one reanimated mapper per dot.
+  const selectedIndex = useSelectedIndex(progress, count);
+
+  // Stabilised so the `Dot` memo above can actually hold: every caller writes this
+  // inline (`Carousel` passes `(i) => core.controller.scrollTo({ index: i })`), which
+  // would otherwise hand all `count` dots a new prop on every render. Safe to
+  // stabilise because it is a pure imperative action — it contributes nothing to
+  // what the dot renders, so an always-latest ref cannot make output stale.
+  const handlePress = useCallbackRef(onPress);
+
   return (
     <CarouselDots
       testID={testID}
@@ -142,11 +161,10 @@ function PaginationBase({
         <Dot
           key={index}
           index={index}
-          count={count}
-          progress={progress}
+          selected={selectedIndex === index}
           dotProps={styles?.dot}
           activeDotProps={styles?.activeDot}
-          onPress={onPress}
+          onPress={handlePress}
           renderDot={renderDot}
           label={dotAccessibilityLabel?.(index, count) ?? `Go to slide ${index + 1} of ${count}`}
         />

@@ -4,7 +4,10 @@ import { GestureDetector } from "react-native-gesture-handler";
 import { ActionIcon } from "@knitui/components";
 import { isWeb, type LayoutChangeEvent, type ViewStyle, withStaticProperties } from "@knitui/core";
 import { useReducedMotion } from "@knitui/hooks";
-import { IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronUp } from "@knitui/icons";
+import { IconChevronDown } from "@knitui/icons/IconChevronDown";
+import { IconChevronLeft } from "@knitui/icons/IconChevronLeft";
+import { IconChevronRight } from "@knitui/icons/IconChevronRight";
+import { IconChevronUp } from "@knitui/icons/IconChevronUp";
 
 import { useAutoplay } from "../hooks/useAutoplay";
 import { useDragGesture } from "../input/useDragGesture";
@@ -95,6 +98,20 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
     size: core.pageSize,
     vertical,
   });
+
+  /* ---- slide memoization -------------------------------------------------
+   * `props.renderItem` / `renderPlaceholder` / `keyExtractor` are handed to the
+   * track AS-IS, on purpose. Callers routinely pass them inline, but React hands
+   * `CarouselInner` the SAME props object when only its own state changed — and
+   * the carousel's own per-page `setActive` (see `useCarouselCore`) is exactly
+   * that case — so their identity is already stable across the re-render storm a
+   * fling causes, and the memoized track/slides below hold. Proxying them to a
+   * permanently stable identity (a render-time ref) would additionally hold the
+   * memo across PARENT re-renders, but that silently freezes slide content
+   * whenever an inline `renderItem` closes over changed state — the classic
+   * `FlatList` `extraData` bug. Covered by the "inline renderItem" tests in
+   * Carousel.test.tsx; don't "optimize" it away.
+   */
 
   const gesture = useDragGesture({
     offset: core.offset,

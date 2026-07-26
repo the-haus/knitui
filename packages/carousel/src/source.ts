@@ -115,8 +115,13 @@ export function useResolvedSource<T>(
   );
   const getVersion = React.useCallback(() => (source ? source.getVersion() : 0), [source]);
   // Re-render when the async source gains data.
-  React.useSyncExternalStore(subscribe, getVersion, getVersion);
+  const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
 
+  // `version` is a DEPENDENCY on purpose even though the body doesn't read it: an
+  // async source mutates in place, so a fetched page changes no prop identity.
+  // Rebuilding the accessor per version is the signal the memoized tracks
+  // (`Track` / `NativeTrack`) need to notice that `getItem` now returns data —
+  // without it a settled page would keep showing its placeholder.
   return React.useMemo<ResolvedSource<T>>(() => {
     if (source) {
       return {
@@ -127,5 +132,6 @@ export function useResolvedSource<T>(
     }
     const arr = data ?? [];
     return { count: arr.length, getItem: (i) => arr[i], ensure: noopEnsure };
-  }, [source, data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, data, version]);
 }

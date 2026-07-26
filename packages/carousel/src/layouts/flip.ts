@@ -14,6 +14,10 @@ import type { BaseLayoutConfig } from "./normal";
 export function flipLayout(_base: BaseLayoutConfig, config: FlipConfig = {}): AnimationStyle {
   const perspective = config.perspective ?? 0;
   const axis = config.axis ?? "y";
+  // Resolved once at closure-creation — this worklet runs per mounted slide per
+  // frame, so the `perspective > 0` test and the axis choice do not belong inside.
+  const hasPerspective = perspective > 0;
+  const rotateOnX = axis === "x";
 
   return (progress: number): ViewStyle => {
     "worklet";
@@ -21,11 +25,18 @@ export function flipLayout(_base: BaseLayoutConfig, config: FlipConfig = {}): An
     const dist = Math.abs(progress);
     const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
 
-    const persp = perspective > 0 ? [{ perspective }] : [];
-    const rot = axis === "x" ? { rotateX: `${angle}deg` } : { rotateY: `${angle}deg` };
+    const rot = rotateOnX ? { rotateX: `${angle}deg` } : { rotateY: `${angle}deg` };
 
+    // Built in one shot instead of `[...persp, rot]`, which allocated a throwaway
+    // array and copied it. The final array stays fresh per call by design — a
+    // transform array handed to reanimated must not be reused/mutated after it is
+    // converted.
     // Once a card turns past 90° its back faces the viewer; hide it so only the
     // front-facing slide shows through the stack.
-    return { transform: [...persp, rot], backfaceVisibility: "hidden", zIndex };
+    return {
+      transform: hasPerspective ? [{ perspective }, rot] : [rot],
+      backfaceVisibility: "hidden",
+      zIndex,
+    };
   };
 }

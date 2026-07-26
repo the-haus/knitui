@@ -5,6 +5,7 @@ import Animated, { useAnimatedScrollHandler, useDerivedValue } from "react-nativ
 import { Box } from "@knitui/components";
 
 import { itemProgress, mod, rawIndex } from "../engine";
+import { useDragScroll } from "../input/useDragScroll";
 import type { SeekFn } from "../motion/useCarouselCore";
 import { SlideBox, useSlideStyle } from "./chrome";
 import { slideContent } from "./Item.shared";
@@ -50,6 +51,10 @@ function NativeTrackInner<T>({
   testID,
 }: NativeTrackProps<T>) {
   const ref = React.useRef<RNScrollView>(null);
+
+  // Desktop-web mouse users can't drag an overflow-scroll container; give the
+  // rail the "grab and drag" affordance (web-only; native/touch scroll as-is).
+  useDragScroll({ scrollRef: ref, enabled, vertical });
 
   const slideCount = renderedCount(count, loop);
   const ring = loop ? ringLength(count, pageSize) : 0;
@@ -283,4 +288,13 @@ function NativeSlideInner<T>({
 
 const NativeSlide = React.memo(NativeSlideInner) as typeof NativeSlideInner;
 
-export const NativeTrack = NativeTrackInner;
+/**
+ * Memoized: `CarouselInner` re-renders once per settled page (the core's
+ * `setActive`), and re-rendering the track re-creates the element — and re-runs
+ * `getItem` / `keyExtractor` — for every one of its mounted slides, which in
+ * native scroll mode is ALL of them (`count * 3` when looping). On those
+ * internal re-renders every prop is identity-stable (the `useCallback`s in
+ * `CarouselInner`, plus `props.renderItem` & co., which React hands back
+ * unchanged when only local state moved), so the memo genuinely holds.
+ */
+export const NativeTrack = React.memo(NativeTrackInner) as typeof NativeTrackInner;

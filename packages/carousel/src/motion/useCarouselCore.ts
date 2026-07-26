@@ -35,6 +35,31 @@ export interface ResolvedConfig {
   scrollMode: "transform" | "native";
 }
 
+/**
+ * Minimum gap (ms) between two `onProgressChange` CALLBACK invocations (~30 Hz).
+ *
+ * The callback form costs a worklet→JS hop per invocation, and a consumer that
+ * puts the value in React state — the natural thing to write — pays a full
+ * render for each one. Firing on every frame of a fling therefore pins the JS
+ * thread; coalescing to ~30 Hz halves that. The stream always ENDS on the exact
+ * settled value (`flushProgress`, called from `onInteractionEnd`), and the
+ * `SharedValue` form of `onProgressChange` is unthrottled — it never leaves the
+ * UI thread, and it is the preferred API for per-frame work.
+ */
+const PROGRESS_CB_INTERVAL_MS = 32;
+
+/**
+ * Throttle gate for the progress callback. A worklet so the UI-thread reaction
+ * and the web JS-thread listener share one cadence.
+ */
+function progressHopDue(lastAt: SharedValue<number>): boolean {
+  "worklet";
+  const now = Date.now();
+  if (now - lastAt.value < PROGRESS_CB_INTERVAL_MS) return false;
+  lastAt.value = now;
+  return true;
+}
+
 /** Default mounted window for a lazy source (so it doesn't fetch everything). */
 const ASYNC_DEFAULT_WINDOW = 5;
 /** Above this item count, eager data auto-virtualizes to stay performant. */
@@ -168,6 +193,8 @@ export function useCarouselCore<T>(
   const [pageSize, setPageSize] = React.useState(0);
   const progress = useSharedValue(0);
   const lastReportedIndex = useSharedValue(-1);
+  /** Timestamp of the last `onProgressChange` callback hop (see the throttle). */
+  const lastProgressHop = useSharedValue(0);
 
   const [active, setActive] = React.useState(defaultIndex);
   const activeRef = React.useRef(defaultIndex);
@@ -246,10 +273,13 @@ export function useCarouselCore<T>(
       const realAbs = rawCount > 0 ? mod(abs, rawCount) : abs;
       progress.value = realAbs;
       if (externalProgress) externalProgress.value = realAbs;
-      // `onProgressChange` is either a callback (JS hop) or a SharedValue we
-      // write straight on the UI thread.
+      // `onProgressChange` is either a callback (a throttled JS hop — see
+      // PROGRESS_CB_INTERVAL_MS) or a SharedValue we write straight on the UI
+      // thread every frame (the preferred, hop-free form).
       if (progressSV) progressSV.value = realAbs;
-      if (hasProgressCb) scheduleOnRN(reportProgress, cur, realAbs);
+      if (hasProgressCb && progressHopDue(lastProgressHop)) {
+        scheduleOnRN(reportProgress, cur, realAbs);
+      }
 
       const real = rawCount > 0 ? mod(activeIndex(cur, size.value, count, loop), rawCount) : 0;
       if (real !== lastReportedIndex.value) {
@@ -276,7 +306,9 @@ export function useCarouselCore<T>(
       progress.value = realAbs;
       if (externalProgress) externalProgress.value = realAbs;
       if (progressSV) progressSV.value = realAbs;
-      if (hasProgressCb) reportProgress(cur, realAbs);
+      // Same cadence as native: no thread hop here, but a consumer that renders
+      // off the callback pays the same per-frame React render.
+      if (hasProgressCb && progressHopDue(lastProgressHop)) reportProgress(cur, realAbs);
       const real = rawCount > 0 ? mod(activeIndex(cur, size.value, count, loop), rawCount) : 0;
       if (real !== lastReportedIndex.value) {
         lastReportedIndex.value = real;
@@ -308,8 +340,20 @@ export function useCarouselCore<T>(
     cbs.current.onScrollStart?.();
   }, [autoplayRef]);
 
+  // Report the EXACT settled progress, bypassing the hop throttle, so a
+  // coalesced callback stream always ends on the true final value (a throttled
+  // stream would otherwise stop one gap short of where the carousel came to rest).
+  const flushProgress = React.useCallback(() => {
+    if (typeof cbs.current.onProgressChange !== "function") return;
+    if (!(size.value > 0) || count <= 0) return;
+    const cur = offset.value;
+    const abs = progressFor(cur, size.value, count, loop);
+    reportProgress(cur, rawCount > 0 ? mod(abs, rawCount) : abs);
+  }, [offset, size, count, loop, rawCount, reportProgress]);
+
   const onInteractionEnd = React.useCallback(() => {
     autoplayRef.current?.resume();
+    flushProgress();
     // Report the index of the FINAL offset, not the lagging React ref (the
     // index reaction may not have run yet when a non-animated jump settles).
     const idx =
@@ -317,7 +361,7 @@ export function useCarouselCore<T>(
         ? toReal(activeIndex(offset.value, size.value, count, loop))
         : activeRef.current;
     cbs.current.onScrollEnd?.(idx);
-  }, [autoplayRef, offset, size, count, loop, toReal]);
+  }, [autoplayRef, offset, size, count, loop, toReal, flushProgress]);
 
   const goToPage = React.useCallback(
     (page: number, opts?: ScrollToOptions) => {

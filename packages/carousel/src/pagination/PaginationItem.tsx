@@ -32,6 +32,11 @@ export interface PaginationItemProps {
   count: number;
   /** Progress shared value (real-item space, [0, count)). */
   animValue: SharedValue<number>;
+  /**
+   * Whether this dot is the selected one. Derived once per row by the pagination
+   * variant (`useSelectedIndex`); defaults to `false` for standalone use.
+   */
+  selected?: boolean;
   /** Container box size (px); falls back to dotStyle dims then 10. */
   size?: number;
   /** Lay the dot row out vertically (matches the carousel's `vertical`). */
@@ -58,6 +63,7 @@ export function PaginationItem({
   index,
   count,
   animValue,
+  selected = false,
   size,
   vertical = false,
   dotStyle,
@@ -91,15 +97,7 @@ export function PaginationItem({
     [index, count, width, height, vertical, customReanimatedStyle],
   );
 
-  const isActive = React.useCallback(
-    (p: number): boolean => {
-      "worklet";
-      return Math.round(p) === index;
-    },
-    [index],
-  );
-
-  const { selected, Host, setRef, hostStyle } = useDotHost(animValue, compute, isActive, [
+  const { Host, setRef, hostStyle } = useDotHost(animValue, compute, [
     index,
     count,
     width,

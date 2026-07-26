@@ -33,7 +33,7 @@ export interface TrackProps<T> {
  * doesn't churn the mounted set. Each window change also asks the data source to
  * `ensure` those indices are loaded (a no-op for eager array data).
  */
-export function Track<T>(props: TrackProps<T>) {
+function TrackInner<T>(props: TrackProps<T>) {
   const {
     getItem,
     ensure,
@@ -57,18 +57,25 @@ export function Track<T>(props: TrackProps<T>) {
   // monotonically as the ring loops, so its delta gives a reliable travel
   // direction without wrap bookkeeping.
   const [center, setCenter] = React.useState(defaultIndex);
+  const centerRef = React.useRef(defaultIndex);
   const directionRef = React.useRef(1);
 
   // Advance when the centered item changes. Native drives this from the
   // UI-thread reaction below; web drives it from the painter's `onCenter`
   // (reactions don't re-run on shared-value changes under web tooling).
+  //
+  // The travel direction is derived OUTSIDE the state updater, against a ref
+  // mirroring `center`: React may invoke an updater twice (StrictMode /
+  // concurrent replay), and the second invocation would compare `next` against
+  // the already-advanced value and record the wrong direction. It only feeds
+  // `prefetchWindow` below, so the cost was a mis-aimed prefetch rather than a
+  // visual bug — but an updater must stay pure regardless.
   const onCenter = React.useCallback((next: number) => {
-    setCenter((prev) => {
-      // Bail if unchanged so an idle painter frame causes no re-render.
-      if (next === prev) return prev;
-      directionRef.current = next >= prev ? 1 : -1;
-      return next;
-    });
+    // Bail if unchanged so an idle painter frame causes no re-render.
+    if (next === centerRef.current) return;
+    directionRef.current = next >= centerRef.current ? 1 : -1;
+    centerRef.current = next;
+    setCenter(next);
   }, []);
 
   // Web imperative painter (no-op on native — native items use useAnimatedStyle).
@@ -77,6 +84,7 @@ export function Track<T>(props: TrackProps<T>) {
   // Reset to the default position when the data shape changes.
   React.useEffect(() => {
     setCenter(defaultIndex);
+    centerRef.current = defaultIndex;
     directionRef.current = 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count, windowSize, loop]);
@@ -141,3 +149,11 @@ export function Track<T>(props: TrackProps<T>) {
     </>
   );
 }
+
+/**
+ * Memoized for the same reason as `NativeTrack`: `CarouselInner` re-renders once
+ * per settled page, and every prop here is identity-stable on such an internal
+ * re-render (`animationStyle` included — see `useLayout`), so the window's
+ * `Item`s are not rebuilt for a state change they don't read.
+ */
+export const Track = React.memo(TrackInner) as typeof TrackInner;

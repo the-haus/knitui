@@ -19,6 +19,12 @@ export function coverflowLayout(
   const inactiveScale = config.inactiveScale ?? 0.85;
   const spacing = config.spacing ?? 0.55;
   const perspective = config.perspective ?? 800;
+  // Resolved once at closure-creation, not per frame: this worklet runs for every
+  // MOUNTED SLIDE on every frame of a fling (on the UI thread on native, inside
+  // the web painter's `paintAll` on web), so an allocation here is multiplied by
+  // the window size × the frame rate — and on native the resulting GC pressure
+  // shows up directly as fling jank.
+  const hasPerspective = perspective > 0;
 
   return (progress: number): ViewStyle => {
     "worklet";
@@ -31,15 +37,17 @@ export function coverflowLayout(
     const scale = interpolate(dist, [0, 1], [1, inactiveScale], Extrapolation.CLAMP);
     const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
 
-    const persp = perspective > 0 ? [{ perspective }] : [];
-    if (vertical) {
-      return {
-        transform: [...persp, { translateY: translate }, { rotateX: `${angle}deg` }, { scale }],
-        zIndex,
-      };
-    }
+    // The transform array is built in ONE shot per branch rather than as
+    // `[...persp, …]`, which allocated a throwaway `persp` array and then copied
+    // it element-by-element into the real one. The final array itself must stay
+    // fresh (never hoisted/reused): a transform array handed to reanimated is
+    // converted on assignment and must not be mutated afterwards.
+    const move = vertical ? { translateY: translate } : { translateX: translate };
+    const rotate = vertical ? { rotateX: `${angle}deg` } : { rotateY: `${angle}deg` };
     return {
-      transform: [...persp, { translateX: translate }, { rotateY: `${angle}deg` }, { scale }],
+      transform: hasPerspective
+        ? [{ perspective }, move, rotate, { scale }]
+        : [move, rotate, { scale }],
       zIndex,
     };
   };

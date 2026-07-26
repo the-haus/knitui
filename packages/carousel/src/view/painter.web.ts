@@ -10,21 +10,74 @@ export type { PainterEntry, RegisterFn, WebPainterParams } from "./painter";
 // resolving it; the implementation now lives in the platform-neutral module.
 export { transformToCss } from "./transformToCss";
 
+/**
+ * The last values this painter wrote for the four SECONDARY style properties, so a
+ * repaint can skip the ones that did not change.
+ *
+ * `transform` is deliberately NOT cached — see {@link applyStyle}.
+ */
+interface LastApplied {
+  opacity: string;
+  zIndex: string;
+  transformOrigin: string;
+  backfaceVisibility: string;
+}
+
 interface LiveEntry {
   el: HTMLElement;
   progress: { value: number };
+  /** Per-entry write cache for the secondary properties. */
+  last: LastApplied;
 }
 
-function applyStyle(el: HTMLElement, style: Record<string, unknown>): void {
+function newLastApplied(): LastApplied {
+  // Matches the initial state of a fresh element's inline style (all unset), so the
+  // first paint only writes the properties that are actually non-empty.
+  return { opacity: "", zIndex: "", transformOrigin: "", backfaceVisibility: "" };
+}
+
+function applyStyle(entry: LiveEntry, style: Record<string, unknown>): void {
+  const { el, last } = entry;
+
+  // `transform` is written UNCONDITIONALLY, and must stay that way. It is the one
+  // property the painter does not exclusively own: `Item.web.tsx` also passes an
+  // `initialStyle` transform through the `Box`'s style prop, so a React re-render
+  // can overwrite the DOM value behind the painter's back. A cached value would
+  // then read as "already applied" and the slide would stick at the stale
+  // transform. The other four are painter-owned, so caching them is safe.
   el.style.transform = transformToCss(style.transform);
-  el.style.opacity = style.opacity != null ? String(style.opacity) : "";
-  el.style.zIndex = style.zIndex != null ? String(style.zIndex) : "";
+
+  // The remaining four are almost always a constant for the whole life of a slide
+  // (the default `normalLayout` emits none of them, so all four are `""` forever),
+  // yet they were re-assigned on every slide on every painted frame — 4 wasted
+  // CSSOM writes per slide per frame, each of which dirties the element's inline
+  // style. Diffing collapses the steady state to zero writes.
+  const opacity = style.opacity != null ? String(style.opacity) : "";
+  if (opacity !== last.opacity) {
+    el.style.opacity = opacity;
+    last.opacity = opacity;
+  }
+
+  const zIndex = style.zIndex != null ? String(style.zIndex) : "";
+  if (zIndex !== last.zIndex) {
+    el.style.zIndex = zIndex;
+    last.zIndex = zIndex;
+  }
+
   // Forwarded so 3D layouts (flip/cube) render correctly: a hinge pivot and a
-  // hidden back face. Constant per slide, but rewritten with the rest of the
-  // style each paint — both are cheap string assignments.
-  el.style.transformOrigin = style.transformOrigin != null ? String(style.transformOrigin) : "";
-  el.style.backfaceVisibility =
+  // hidden back face.
+  const transformOrigin = style.transformOrigin != null ? String(style.transformOrigin) : "";
+  if (transformOrigin !== last.transformOrigin) {
+    el.style.transformOrigin = transformOrigin;
+    last.transformOrigin = transformOrigin;
+  }
+
+  const backfaceVisibility =
     style.backfaceVisibility != null ? String(style.backfaceVisibility) : "";
+  if (backfaceVisibility !== last.backfaceVisibility) {
+    el.style.backfaceVisibility = backfaceVisibility;
+    last.backfaceVisibility = backfaceVisibility;
+  }
 }
 
 /**
@@ -65,7 +118,7 @@ export function useWebPainter({
     const { count: c, loop: l, animationStyle: style } = latest.current;
     const p = itemProgress(rawIndex(o, s), index, c, l);
     entry.progress.value = p;
-    applyStyle(entry.el, style(p, index) as Record<string, unknown>);
+    applyStyle(entry, style(p, index) as Record<string, unknown>);
   }, []);
 
   // Repaint every registered entry and advance the virtualization window when
@@ -79,7 +132,7 @@ export function useWebPainter({
     entries.current.forEach((entry, index) => {
       const p = itemProgress(scroll, index, c, l);
       entry.progress.value = p;
-      applyStyle(entry.el, style(p, index) as Record<string, unknown>);
+      applyStyle(entry, style(p, index) as Record<string, unknown>);
     });
     const center = Math.round(scroll);
     if (center !== lastCenter.current) {
@@ -91,7 +144,15 @@ export function useWebPainter({
   const register = React.useCallback<RegisterFn>(
     (index, entry) => {
       if (entry && entry.el) {
-        const live = entry as unknown as LiveEntry;
+        // A painter-owned wrapper rather than a cast of the caller's object: the
+        // write cache (`last`) belongs to the painter, and a fresh one per
+        // registration is also what keeps it correct — a re-registered element
+        // starts from a clean inline style, so the cache must start clean too.
+        const live: LiveEntry = {
+          el: entry.el as HTMLElement,
+          progress: entry.progress,
+          last: newLastApplied(),
+        };
         entries.current.set(index, live);
         // Promote the slide to its own compositor layer once, on registration:
         // its transform is rewritten every frame, so the `will-change` hint keeps

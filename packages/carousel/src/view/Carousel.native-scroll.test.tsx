@@ -138,6 +138,31 @@ describe("Carousel — native scroll mode", () => {
     expect(onProgressChange).toHaveBeenCalled();
   });
 
+  it("publishes per-slide progress from the track's single offset listener", async () => {
+    // Every mounted slide's `progress` is published by ONE listener in the track
+    // (a per-slide listener fanned a single offset write out to `count * 3`
+    // JS-thread callbacks). This asserts each slide still gets its own value.
+    const seen = new Map<number, SharedValue<number>>();
+    renderNative({
+      data: [0, 1, 2, 3],
+      loop: false,
+      renderItem: ({ item, progress }) => {
+        seen.set(item, progress);
+        return <Text>{`slide-${item}`}</Text>;
+      },
+    });
+
+    const scroll = screen.getByTestId("carousel-scroll");
+    Object.defineProperty(scroll, "scrollLeft", { value: 200, configurable: true });
+    fireEvent.scroll(scroll);
+
+    // scrollLeft 200 @ pageSize 100 → scroll index 2: slide 2 is centred (0),
+    // slide 3 sits one page ahead (+1), slide 0 two pages behind (−2).
+    await waitFor(() => expect(seen.get(2)?.value).toBe(0));
+    expect(seen.get(3)?.value).toBe(1);
+    expect(seen.get(0)?.value).toBe(-2);
+  });
+
   it("supports vertical native scrolling", () => {
     renderNative({ data: [0, 1, 2], vertical: true, loop: false });
     expect(screen.getByText("slide-0")).toBeTruthy();

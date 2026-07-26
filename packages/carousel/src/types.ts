@@ -113,9 +113,17 @@ export interface RenderItemInfo<T> {
 export type RenderItem<T> = (info: RenderItemInfo<T>) => ReactElement | null;
 
 /**
- * `onProgressChange` accepts either a callback or a `SharedValue<number>`. When
- * a shared value is passed, the carousel writes the fractional absolute progress
- * into it on the UI thread (no JS hop) — ideal for driving `<Pagination>`.
+ * `onProgressChange` accepts either a callback or a `SharedValue<number>`.
+ *
+ * The `SharedValue` form is PREFERRED: the carousel writes the fractional
+ * absolute progress into it on the UI thread, every frame, with no JS hop — the
+ * right input for animated/derived work and for driving `<Pagination>`.
+ *
+ * The callback form costs a worklet→JS hop per invocation (and a full React
+ * render if you put the value in state), so it is COALESCED to at most ~30 Hz
+ * while scrolling. It is always flushed with the exact final value when the
+ * scroll settles, so it can be trusted for "where did we land" logic — just not
+ * for per-frame animation.
  */
 export type OnProgressChange =
   ((offsetProgress: number, absoluteProgress: number) => void) | SharedValue<number>;

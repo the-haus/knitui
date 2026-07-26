@@ -17,6 +17,9 @@ export function cubeLayout(
   config: CubeConfig = {},
 ): AnimationStyle {
   const perspective = config.perspective ?? 800;
+  // Resolved once at closure-creation — this worklet runs per mounted slide per
+  // frame, so the `perspective > 0` test does not belong inside it.
+  const hasPerspective = perspective > 0;
 
   return (progress: number): ViewStyle => {
     "worklet";
@@ -27,21 +30,24 @@ export function cubeLayout(
     const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
     const opacity = dist >= 1 ? 0 : 1;
 
-    const persp = perspective > 0 ? [{ perspective }] : [];
-    if (vertical) {
-      // A slide below centre (progress > 0) hinges on its top edge; above, bottom.
-      const transformOrigin = progress > 0 ? "50% 0%" : "50% 100%";
-      return {
-        transform: [...persp, { translateY: translate }, { rotateX: `${-angle}deg` }],
-        transformOrigin,
-        opacity,
-        zIndex,
-      };
-    }
-    // A slide right of centre (progress > 0) hinges on its left edge; left, right.
-    const transformOrigin = progress > 0 ? "0% 50%" : "100% 50%";
+    // A slide past centre (progress > 0) hinges on its leading edge; before it, the
+    // trailing edge. Vertical folds about X and hinges top/bottom; horizontal folds
+    // about Y and hinges left/right.
+    const move = vertical ? { translateY: translate } : { translateX: translate };
+    const rotate = vertical ? { rotateX: `${-angle}deg` } : { rotateY: `${-angle}deg` };
+    const transformOrigin = vertical
+      ? progress > 0
+        ? "50% 0%"
+        : "50% 100%"
+      : progress > 0
+        ? "0% 50%"
+        : "100% 50%";
+
+    // Built in one shot instead of `[...persp, …]`, which allocated a throwaway
+    // array and copied it element-by-element. The final array stays fresh per call
+    // by design — reanimated converts it on assignment and it must not be reused.
     return {
-      transform: [...persp, { translateX: translate }, { rotateY: `${-angle}deg` }],
+      transform: hasPerspective ? [{ perspective }, move, rotate] : [move, rotate],
       transformOrigin,
       opacity,
       zIndex,

@@ -8,6 +8,7 @@ import {
   PaginationItem,
   type PaginationItemAccessibilityOverrides,
 } from "./PaginationItem";
+import { useSelectedIndex } from "./selectedDot";
 
 /** Shared props for the data-driven pagination variants. */
 export interface BasicPaginationProps<T> {
@@ -54,6 +55,10 @@ function PaginationRow<T>({
   paginationItemAccessibility,
   customReanimatedStyle,
 }: CustomPaginationProps<T>) {
+  // ONE subscription to `progress` for the whole row — each dot keeps only its
+  // own continuous fill `useAnimatedStyle`, not its own selection reaction.
+  const selectedIndex = useSelectedIndex(progress, data.length);
+
   return (
     <View
       style={[
@@ -77,6 +82,7 @@ function PaginationRow<T>({
             index={index}
             count={data.length}
             animValue={progress}
+            selected={selectedIndex === index}
             size={size}
             vertical={!horizontal}
             dotStyle={dotStyle}

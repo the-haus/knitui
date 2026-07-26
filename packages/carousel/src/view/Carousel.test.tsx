@@ -138,3 +138,40 @@ describe("Carousel — controlled index", () => {
     await waitFor(() => expect(onIndexChange).toHaveBeenCalledWith(2));
   });
 });
+
+describe("Carousel — inline renderItem freshness", () => {
+  // The tracks and slides are `React.memo`'d, so a fix that makes `renderItem`'s
+  // identity permanently stable (a render-time ref proxy) would silently freeze
+  // slide content whenever an inline `renderItem` closes over changed state — the
+  // classic `FlatList` `extraData` bug. These guard both scroll modes.
+  const Inline = ({
+    label,
+    scrollMode,
+  }: {
+    label: string;
+    scrollMode?: "transform" | "native";
+  }) => (
+    <Carousel
+      data={[0, 1, 2]}
+      loop={false}
+      itemSize={100}
+      scrollMode={scrollMode}
+      style={{ width: 100, height: 100 }}
+      renderItem={({ item }) => <Text>{`slide-${item}-${label}`}</Text>}
+    />
+  );
+
+  it("repaints slides in transform mode", () => {
+    const { rerender } = render(<Inline label="a" />);
+    expect(screen.getByText("slide-0-a")).toBeTruthy();
+    rerender(<Inline label="b" />);
+    expect(screen.getByText("slide-0-b")).toBeTruthy();
+  });
+
+  it("repaints slides in native scroll mode", () => {
+    const { rerender } = render(<Inline label="a" scrollMode="native" />);
+    expect(screen.getByText("slide-0-a")).toBeTruthy();
+    rerender(<Inline label="b" scrollMode="native" />);
+    expect(screen.getByText("slide-0-b")).toBeTruthy();
+  });
+});
