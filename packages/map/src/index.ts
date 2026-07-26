@@ -97,12 +97,23 @@ export { UserLocation } from "./components/UserLocation";
 export type { UserLocationProps } from "./components/UserLocation";
 export type { VectorSourceProps, VectorSourceRef } from "./components/VectorSource";
 
-export * from "./styles";
 // VectorSource: not exported as a runtime value to avoid eager native-component
 // registration on platforms that don't use it. Import directly from
 // "@knitui/map/src/components/VectorSource" if needed.
 
 // ── Styles ─────────────────────────────────────────────────────────
+//
+// The nine bundled MapLibre styles are deliberately NOT re-exported here. They
+// are 497 KB / 20,858 lines of nested object literals — 87% of this barrel's
+// entire module graph. The package src-ships and Metro does not tree-shake, and
+// because a re-export is `export *`, the CJS interop Babel/Metro generate
+// `require()`s the module at barrel eval — so every app that renders `<Map>` with
+// its own style URL constructed ~500 KB of literals before its first frame.
+//
+// Import them from the subpath instead:
+//
+//   import { positronStyle } from "@knitui/map/styles";
+//   import { positronStyle } from "@knitui/map/styles/positronStyle"; // one style only
 
 export {
   fetchSvgMarkup,

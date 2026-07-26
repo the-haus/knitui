@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, memo, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, memo, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 
 import type { Map as MLMap } from "maplibre-gl";
 
@@ -29,6 +29,42 @@ function toPaddingOptions(
     left: padding.left ?? 0,
     right: padding.right ?? 0,
   };
+}
+
+function tupleEquals(a: readonly number[] | undefined, b: readonly number[] | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function paddingEquals(a: ViewPadding | undefined, b: ViewPadding | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.top === b.top && a.bottom === b.bottom && a.left === b.left && a.right === b.right;
+}
+
+/**
+ * Whether two camera stops describe the same camera. Every field is a scalar, a
+ * short number tuple or a four-number padding object, so this is a handful of
+ * `===` checks — replaces a `JSON.stringify` that used to run in the render body.
+ */
+function cameraStopEquals(a: CameraStop | null, b: CameraStop): boolean {
+  if (!a) return false;
+  const prev = a as Record<string, unknown>;
+  const next = b as Record<string, unknown>;
+  return (
+    tupleEquals(prev.center as number[] | undefined, next.center as number[] | undefined) &&
+    tupleEquals(prev.bounds as number[] | undefined, next.bounds as number[] | undefined) &&
+    prev.bearing === next.bearing &&
+    prev.pitch === next.pitch &&
+    prev.zoom === next.zoom &&
+    prev.duration === next.duration &&
+    prev.easing === next.easing &&
+    paddingEquals(prev.padding as ViewPadding | undefined, next.padding as ViewPadding | undefined)
+  );
 }
 
 function resolveEasing(easing?: CameraEasing, duration?: number): "flyTo" | "easeTo" | "jumpTo" {
@@ -223,20 +259,27 @@ export const Camera = memo(
     }, [ready, map, initialViewState]);
 
     // --- Declarative camera props ---
-    // Build the stop object dynamically to satisfy the union type constraint
-    const cameraStop = {
-      ...(center ? { center } : {}),
-      ...(bounds ? { bounds } : {}),
-      bearing,
-      pitch,
-      zoom,
-      padding,
-      duration,
-      easing,
-    } as CameraStop;
+    // Build the stop object dynamically to satisfy the union type constraint.
+    // Memoized on the numeric/scalar inputs (plus the coordinate tuples, which are
+    // compared element-wise below) so the render body allocates nothing when
+    // nothing moved — this used to be a `JSON.stringify(cameraStop)` on EVERY
+    // render of every ancestor.
+    const cameraStop = useMemo(
+      () =>
+        ({
+          ...(center ? { center } : {}),
+          ...(bounds ? { bounds } : {}),
+          bearing,
+          pitch,
+          zoom,
+          padding,
+          duration,
+          easing,
+        }) as CameraStop,
+      [center, bounds, bearing, pitch, zoom, padding, duration, easing],
+    );
 
-    const cameraStopKey = JSON.stringify(cameraStop);
-    const prevCameraStopKeyRef = useRef(cameraStopKey);
+    const prevStopRef = useRef<CameraStop | null>(null);
 
     const isInitialRef = useRef(true);
     useEffect(() => {
@@ -248,15 +291,18 @@ export const Camera = memo(
         if (!initialViewState) {
           applyStop(map, { ...cameraStop, duration: 0 });
         }
-        prevCameraStopKeyRef.current = cameraStopKey;
+        prevStopRef.current = cameraStop;
         return;
       }
 
-      if (cameraStopKey === prevCameraStopKeyRef.current) return;
-      prevCameraStopKeyRef.current = cameraStopKey;
+      // Hand-rolled scalar/tuple compare instead of serializing the stop: every
+      // field is a number, a short number tuple, a string or a small padding
+      // object, so this is a handful of `===` checks with no allocation.
+      if (cameraStopEquals(prevStopRef.current, cameraStop)) return;
+      prevStopRef.current = cameraStop;
 
       applyStop(map, cameraStop);
-    }, [ready, map, cameraStopKey, initialViewState, trackUserLocation]);
+    }, [ready, map, cameraStop, initialViewState, trackUserLocation]);
 
     // --- Zoom constraints ---
 

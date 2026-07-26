@@ -128,15 +128,15 @@ export const MapView = memo(
       return () => cancelDidChange();
     }, [cancelDidChange]);
 
-    const handleRegionWillChange = useCallback(
-      (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
-        const vsEvent = event.nativeEvent;
-
-        if (!regionSessionActiveRef.current) {
-          regionSessionActiveRef.current = true;
-          propsRef.current.onRegionWillChange?.(vsEvent);
-        }
-
+    /**
+     * Arm the trailing `onRegionDidChange` debounce — ONLY when the consumer
+     * actually registered that handler. The native side emits `regionIsChanging`
+     * up to ~30×/s, and every one of those used to `clearTimeout` + allocate a
+     * fresh 500 ms `setTimeout` even with no handler to fire.
+     */
+    const armDidChange = useCallback(
+      (vsEvent: ViewStateChangeEvent): void => {
+        if (!propsRef.current.onRegionDidChange) return;
         cancelDidChange();
         didChangeTimerRef.current = setTimeout(() => {
           if (regionSessionActiveRef.current) {
@@ -148,8 +148,29 @@ export const MapView = memo(
       [cancelDidChange],
     );
 
+    const hasRegionHandler = useCallback((): boolean => {
+      const p = propsRef.current;
+      return Boolean(p.onRegionWillChange || p.onRegionIsChanging || p.onRegionDidChange);
+    }, []);
+
+    const handleRegionWillChange = useCallback(
+      (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
+        if (!hasRegionHandler()) return;
+        const vsEvent = event.nativeEvent;
+
+        if (!regionSessionActiveRef.current) {
+          regionSessionActiveRef.current = true;
+          propsRef.current.onRegionWillChange?.(vsEvent);
+        }
+
+        armDidChange(vsEvent);
+      },
+      [armDidChange, hasRegionHandler],
+    );
+
     const handleRegionIsChanging = useCallback(
       (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
+        if (!hasRegionHandler()) return;
         const vsEvent = event.nativeEvent;
 
         if (!regionSessionActiveRef.current) {
@@ -164,26 +185,18 @@ export const MapView = memo(
           propsRef.current.onRegionIsChanging?.(vsEvent);
         }
 
-        cancelDidChange();
-        didChangeTimerRef.current = setTimeout(() => {
-          if (regionSessionActiveRef.current) {
-            propsRef.current.onRegionDidChange?.(vsEvent);
-            regionSessionActiveRef.current = false;
-          }
-        }, regionDidChangeDebounceMs);
+        armDidChange(vsEvent);
       },
-      [cancelDidChange],
+      [armDidChange, hasRegionHandler],
     );
 
     const handleRegionDidChange = useCallback(
       (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
-        const vsEvent = event.nativeEvent;
-
         cancelDidChange();
 
         if (regionSessionActiveRef.current) {
-          propsRef.current.onRegionDidChange?.(vsEvent);
           regionSessionActiveRef.current = false;
+          propsRef.current.onRegionDidChange?.(event.nativeEvent);
         }
       },
       [cancelDidChange],

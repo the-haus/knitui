@@ -512,6 +512,74 @@ describe("dynamic symbol layout/paint updates", () => {
     expect(map.layout["city-pins"]["icon-rotate"]).toBeUndefined();
   });
 
+  it("re-applies nothing when the style is unchanged across a re-render", async () => {
+    // The public style API is an inline camelCase object, so it has a fresh
+    // identity every render. Undiffed, that looped setPaintProperty /
+    // setLayoutProperty over every key — and maplibre's own deepEqual guard only
+    // runs AFTER `layer.getPaintProperty(name)`, which deep-CLONES the current
+    // expression tree. So every render cost a clone plus a deep compare per key.
+    const map = new FakeMap();
+    const { rerender } = render(
+      <Harness map={map}>
+        <Scene data={fc(point([0, 0]))} iconSize={0.5} />
+      </Harness>,
+    );
+    await flushImages();
+    const layoutCalls = map.callsTo("setLayoutProperty").length;
+    const paintCalls = map.callsTo("setPaintProperty").length;
+
+    // Same style, different `data` — a re-render with structurally equal style.
+    rerender(
+      <Harness map={map}>
+        <Scene data={fc(point([1, 1]))} iconSize={0.5} />
+      </Harness>,
+    );
+
+    expect(map.callsTo("setLayoutProperty")).toHaveLength(layoutCalls);
+    expect(map.callsTo("setPaintProperty")).toHaveLength(paintCalls);
+  });
+
+  it("never calls setFilter for a layer that has no filter", async () => {
+    // maplibre's guard is `deepEqual(layer.filter, filter)` and `layer.filter` is
+    // `undefined`, so passing `null` compares FALSE and takes the clearing branch:
+    // `layer.setFilter(undefined)` + `_updateLayer(layer)`, which marks the source
+    // 'reload' and pauses its tile manager — re-requesting and re-tessellating
+    // every tile of the source right after the layer was added.
+    const map = new FakeMap();
+    const { rerender } = render(
+      <Harness map={map}>
+        <Scene data={fc(point([0, 0]))} />
+      </Harness>,
+    );
+    await flushImages();
+
+    rerender(
+      <Harness map={map}>
+        <Scene data={fc(point([1, 1]))} />
+      </Harness>,
+    );
+
+    expect(map.callsTo("setFilter")).toHaveLength(0);
+  });
+
+  it("clears a filter with undefined (never null) when it is dropped", async () => {
+    const map = new FakeMap();
+    const { rerender } = render(
+      <Harness map={map}>
+        <Scene data={fc(point([0, 0]))} filter={["==", ["get", "kind"], "a"]} />
+      </Harness>,
+    );
+    await flushImages();
+
+    rerender(
+      <Harness map={map}>
+        <Scene data={fc(point([0, 0]))} />
+      </Harness>,
+    );
+
+    expect(map.callsTo("setFilter").at(-1)?.args[1]).toBeUndefined();
+  });
+
   it("updates the feature filter via setFilter", async () => {
     const map = new FakeMap();
     const first = ["==", ["get", "kind"], "a"];

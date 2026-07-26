@@ -120,8 +120,25 @@ export interface MapProps {
   onLongPress?: (event: PressEvent) => void;
 
   // Region events
+
+  /** Fires once per gesture, when the viewport starts changing. */
   onRegionWillChange?: (event: ViewStateChangeEvent) => void;
+
+  /**
+   * Fires continuously while the viewport changes, throttled to ~32 ms (≈30×/s).
+   *
+   * **Do not `setState` from this handler unthrottled.** Every state update
+   * re-renders the whole map subtree, and a re-render is the amplifier for the
+   * expensive work in the children: `GeoJSONSource` re-serializes its
+   * FeatureCollection on native, and layers re-resolve their paint/layout. Those
+   * paths are memoized on their inputs, so a re-render is cheap only as long as
+   * the props you hand them keep their value — pass stable `data`/`style`/`filter`
+   * objects (`useMemo`) if you re-render during a gesture at all. Prefer keeping
+   * live viewport values in a ref, or debouncing to `onRegionDidChange`.
+   */
   onRegionIsChanging?: (event: ViewStateChangeEvent) => void;
+
+  /** Fires once, after the viewport settles. The right place for `setState`. */
   onRegionDidChange?: (event: ViewStateChangeEvent) => void;
 
   // Loading events

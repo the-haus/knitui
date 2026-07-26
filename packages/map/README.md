@@ -69,13 +69,30 @@ export function CitiesMap() {
 - **Annotations** — `Marker`, `ViewAnnotation`, `Callout`, `LayerAnnotation`.
 - **User location** — `UserLocation` (web `GeolocateControl`); `UserLocationPuck`
   and `NativeUserLocation` are native-only (no-op on web).
-- **Styles** — nine bundled MapLibre styles are re-exported (`positronStyle`,
-  `voyagerStyle`, `darkMatterStyle`, …).
+- **Styles** — nine bundled MapLibre styles, from the `@knitui/map/styles`
+  subpath (`positronStyle`, `voyagerStyle`, `darkMatterStyle`, …).
 
 > `VectorSource`, `RasterSource` and `ImageSource` are exported as **types only**
 > from the barrel to avoid eager native-component registration. Import the
 > runtime component from its subpath, e.g.
 > `import { RasterSource } from "@knitui/map/src/components/RasterSource"`.
+
+### Bundled styles
+
+The nine bundled styles live on a subpath, **not** the root barrel:
+
+```tsx
+import { positronStyle } from "@knitui/map/styles";
+// or, to pull in exactly one style:
+import { positronStyle } from "@knitui/map/styles/positronStyle";
+```
+
+They total 497 KB / 20,858 lines of nested object literals — 87% of the root
+barrel's whole module graph. This package src-ships and Metro doesn't tree-shake,
+and a re-export is `export *`, so the CJS interop Babel/Metro generate
+`require()`s the module at barrel eval: every app rendering `<Map>` with its own
+style URL used to construct ~500 KB of literals before its first frame. Keeping
+them off the barrel means you pay for a style only if you import one.
 
 ## Storybook
 

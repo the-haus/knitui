@@ -1,4 +1,4 @@
-import { forwardRef, memo, useImperativeHandle, useRef } from "react";
+import { forwardRef, memo, useCallback, useImperativeHandle, useMemo, useRef } from "react";
 import type { NativeSyntheticEvent } from "react-native";
 
 import type { FilterSpecification } from "@maplibre/maplibre-gl-style-spec";
@@ -19,6 +19,39 @@ type NativeGeoJSONSourceRef = {
 export const ShapeSource = memo(
   forwardRef<GeoJSONSourceRef, GeoJSONSourceProps>(function ShapeSource(props, ref) {
     const nativeRef = useRef<NativeGeoJSONSourceRef | null>(null);
+
+    // Latest props, so the press handler below can stay identity-stable.
+    const propsRef = useRef(props);
+    propsRef.current = props;
+
+    /**
+     * Serialize the FeatureCollection **once per `data` identity**.
+     *
+     * Upstream's `GeoJSONSource` stringifies in its render body
+     * (`data={typeof data === "string" ? data : JSON.stringify(data)}`). It is
+     * `memo`'d, but that memo can never hold through this wrapper: `children` is
+     * the consumer's inline JSX. So without this memo any ancestor re-render — a
+     * `setState` from `onRegionIsChanging` fires up to 30×/s — re-stringifies the
+     * whole collection (~1–3 MB for 4000 features) on the JS thread, ships a new
+     * string across the bridge, and the native side re-parses, re-indexes and
+     * re-clusters it. `data` doesn't even have to have changed.
+     *
+     * Handing upstream a `string` makes its ternary short-circuit to this exact
+     * identity, so Fabric diffs the prop to nothing.
+     */
+    const data = useMemo(
+      () => (typeof props.data === "string" ? props.data : JSON.stringify(props.data)),
+      [props.data],
+    );
+
+    /**
+     * Stable press handler over the props ref. `props.onPress` is typically an
+     * inline arrow, and an inline wrapper here would hand upstream a new function
+     * every render — the other half of why its `memo` never held.
+     */
+    const handlePress = useCallback((e: NativeSyntheticEvent<PressEventWithFeatures>): void => {
+      propsRef.current.onPress?.(e.nativeEvent);
+    }, []);
 
     useImperativeHandle(ref, (): GeoJSONSourceRef => ({
       getData: async (filter?: FilterSpecification): Promise<FeatureCollection> => {
@@ -53,7 +86,7 @@ export const ShapeSource = memo(
       <MapLibreGeoJSONSource
         ref={nativeRef as unknown as React.RefObject<never>}
         id={props.id}
-        data={props.data}
+        data={data}
         cluster={props.cluster}
         clusterRadius={props.clusterRadius}
         clusterMinPoints={props.clusterMinPoints}
@@ -62,11 +95,7 @@ export const ShapeSource = memo(
         buffer={props.buffer}
         tolerance={props.tolerance}
         lineMetrics={props.lineMetrics}
-        onPress={
-          props.onPress
-            ? (e: NativeSyntheticEvent<PressEventWithFeatures>) => props.onPress!(e.nativeEvent)
-            : undefined
-        }
+        onPress={props.onPress ? handlePress : undefined}
         hitbox={props.hitbox}
       >
         {props.children}

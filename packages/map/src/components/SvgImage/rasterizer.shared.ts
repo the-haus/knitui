@@ -118,16 +118,59 @@ interface Slot {
   resolved?: ResolvedRaster;
 }
 
+/**
+ * How many resolved rasters to keep after their last consumer leaves.
+ *
+ * `release()` drops the slot, which used to throw the finished bitmap away with
+ * it: unmounting and remounting an icon (a filter toggle, a tab switch) forced a
+ * fresh rasterization AND a `removeImage`/`addImage` round trip — and removing an
+ * image a symbol layer references makes MapLibre redo symbol placement. Icons are
+ * a small, bounded set (a per-category marker sheet), so keeping the last N data
+ * URIs keyed by the existing content key makes a remount free.
+ */
+const RESOLVED_CACHE_LIMIT = 64;
+
 export function createRasterStore(): RasterStore {
   const slots = new Map<string, Slot>();
   const listeners = new Set<() => void>();
+  /** Content key → resolved raster, insertion-ordered (used as an LRU). */
+  const resolvedCache = new Map<string, ResolvedRaster>();
+
+  const cacheGet = (key: string): ResolvedRaster | undefined => {
+    const hit = resolvedCache.get(key);
+    if (hit) {
+      // Touch: re-insert so this key becomes the most recently used.
+      resolvedCache.delete(key);
+      resolvedCache.set(key, hit);
+    }
+    return hit;
+  };
+
+  const cachePut = (key: string, value: ResolvedRaster): void => {
+    resolvedCache.delete(key);
+    resolvedCache.set(key, value);
+    if (resolvedCache.size > RESOLVED_CACHE_LIMIT) {
+      const oldest = resolvedCache.keys().next();
+      if (!oldest.done) resolvedCache.delete(oldest.value);
+    }
+  };
 
   // useSyncExternalStore requires getRequests to return a referentially-stable
   // value between notifications, or it loops forever. Rebuild the snapshot only
   // when the set of live surfaces actually changes.
+  //
+  // Only UNRESOLVED slots make it into the snapshot. A surface exists solely to
+  // produce a bitmap, so once it has, `RasterizerHost` must stop rendering it —
+  // it used to keep every `<SvgXml>` mounted for the map's whole lifetime, and on
+  // native those are real view trees with `collapsable={false}` that Android walks
+  // on every layout pass.
   let snapshot: RasterRequest[] = [];
   const rebuildSnapshot = (): void => {
-    snapshot = Array.from(slots.values(), (s) => s.req);
+    const next: RasterRequest[] = [];
+    for (const slot of slots.values()) {
+      if (!slot.resolved) next.push(slot.req);
+    }
+    snapshot = next;
   };
 
   const emit = (): void => {
@@ -141,7 +184,9 @@ export function createRasterStore(): RasterStore {
         existing.refs += 1;
         return;
       }
-      slots.set(req.key, { req, refs: 1 });
+      // A cache hit means no surface has to mount at all — the slot is born
+      // resolved, so `rebuildSnapshot` leaves it out.
+      slots.set(req.key, { req, refs: 1, resolved: cacheGet(req.key) });
       rebuildSnapshot();
       emit();
     },
@@ -151,6 +196,8 @@ export function createRasterStore(): RasterStore {
       if (!slot) return;
       slot.refs -= 1;
       if (slot.refs <= 0) {
+        // The bitmap itself survives in `resolvedCache`, so a remount of the same
+        // icon doesn't re-rasterize (and doesn't churn the map's image registry).
         slots.delete(key);
         rebuildSnapshot();
         emit();
@@ -163,6 +210,11 @@ export function createRasterStore(): RasterStore {
       // uri is unchanged so we don't wake subscribers for nothing.
       if (!slot || slot.resolved?.uri === uri) return;
       slot.resolved = { uri, pixelWidth };
+      cachePut(key, slot.resolved);
+      // Drops the now-redundant surface from the render snapshot. Safe to unmount
+      // only at this point — `runCapture`'s retry loop needs the surface mounted
+      // until it actually succeeds.
+      rebuildSnapshot();
       emit();
     },
 
@@ -188,19 +240,49 @@ export function createRasterStore(): RasterStore {
 }
 
 /**
- * How many frames to keep retrying `toDataURL` for. The offscreen `Svg` may not be
- * attached (ref still null) or painted (empty bytes) on the first frame — on the
- * New Architecture especially — so a single capture races the draw. ~30 frames
- * (a few hundred ms) is plenty for the surface to exist and paint.
+ * How many times to retry `toDataURL`. The offscreen `Svg` may not be attached
+ * (ref still null) or painted (empty bytes) yet — on the New Architecture
+ * especially — so a single capture races the draw.
+ *
+ * With {@link CAPTURE_BACKOFF_LIMIT_FRAMES} the retry *window* is ~80 frames
+ * (1+2+4+8×9), longer than the old flat 30, while the number of native view
+ * snapshots per icon drops from 30 to 12.
  */
-const MAX_CAPTURE_ATTEMPTS = 30;
+const MAX_CAPTURE_ATTEMPTS = 12;
+
+/** Cap on the geometric backoff between attempts, in animation frames. */
+const CAPTURE_BACKOFF_LIMIT_FRAMES = 8;
+
+/**
+ * How many captures may be in flight at once.
+ *
+ * `toDataURL` is a synchronous native view snapshot. Retrying every icon once per
+ * frame meant ~30 category icons × up to 30 frames = up to 900 snapshots in the
+ * ~500 ms right after mount — precisely when MapLibre is loading its first tiles
+ * and doing initial symbol placement. Draining a queue a few at a time spreads
+ * that out without delaying the first icons.
+ */
+const MAX_CONCURRENT_CAPTURES = 3;
+
+let activeCaptures = 0;
+const captureQueue: Array<() => void> = [];
+
+function pumpCaptureQueue(): void {
+  while (activeCaptures < MAX_CONCURRENT_CAPTURES && captureQueue.length > 0) {
+    const start = captureQueue.shift()!;
+    activeCaptures += 1;
+    start();
+  }
+}
 
 /**
  * Drive a react-native-svg surface to a PNG data URI, retrying across frames until
  * the view is attached and painted. Platform-agnostic: both the web and native
  * `Svg` instances expose the same `toDataURL(cb, {width,height})` contract and
- * hand back **raw base64** (no data-URI prefix). Returns a cleanup that cancels
- * any pending frame so a captured-then-unmounted surface can't call back.
+ * hand back **raw base64** (no data-URI prefix). Concurrency-capped and backed
+ * off geometrically — see {@link MAX_CONCURRENT_CAPTURES}. Returns a cleanup that
+ * cancels any pending frame (and gives up the queue slot) so a
+ * captured-then-unmounted surface can't call back.
  */
 export function runCapture(
   ref: { current: CapturableSvg | null },
@@ -210,9 +292,46 @@ export function runCapture(
   let cancelled = false;
   let attempts = 0;
   let raf = 0;
+  let backoff = 1;
+  let started = false;
+  let finished = false;
 
-  const schedule = (): void => {
-    raf = requestAnimationFrame(attempt);
+  /** Give up this job's concurrency slot (or dequeue it if it never started). */
+  const finish = (): void => {
+    if (finished) return;
+    finished = true;
+    if (started) {
+      activeCaptures -= 1;
+      pumpCaptureQueue();
+      return;
+    }
+    const queued = captureQueue.indexOf(start);
+    if (queued >= 0) captureQueue.splice(queued, 1);
+  };
+
+  /** Run `attempt` after `frames` animation frames. */
+  const scheduleIn = (frames: number): void => {
+    let remaining = frames;
+    const tick = (): void => {
+      if (cancelled) return;
+      remaining -= 1;
+      if (remaining > 0) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      raf = 0;
+      attempt();
+    };
+    raf = requestAnimationFrame(tick);
+  };
+
+  const retry = (): void => {
+    if (attempts++ >= MAX_CAPTURE_ATTEMPTS) {
+      finish();
+      return;
+    }
+    backoff = Math.min(backoff * 2, CAPTURE_BACKOFF_LIMIT_FRAMES);
+    scheduleIn(backoff);
   };
 
   const attempt = (): void => {
@@ -220,7 +339,7 @@ export function runCapture(
 
     const node = ref.current;
     if (!node) {
-      if (attempts++ < MAX_CAPTURE_ATTEMPTS) schedule();
+      retry();
       return;
     }
 
@@ -229,19 +348,27 @@ export function runCapture(
         if (cancelled) return;
         if (base64) {
           onCapture(`data:image/png;base64,${base64}`, pngPixelWidth(base64));
-        } else if (attempts++ < MAX_CAPTURE_ATTEMPTS) {
-          schedule();
+          finish();
+        } else {
+          retry();
         }
       },
       { width: size.width, height: size.height },
     );
   };
 
-  schedule();
+  const start = (): void => {
+    started = true;
+    scheduleIn(1);
+  };
+
+  captureQueue.push(start);
+  pumpCaptureQueue();
 
   return () => {
     cancelled = true;
     if (raf) cancelAnimationFrame(raf);
+    finish();
   };
 }
 

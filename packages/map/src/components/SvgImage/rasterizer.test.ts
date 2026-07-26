@@ -118,4 +118,35 @@ describe("createRasterStore", () => {
     store.resolve("a", "uri"); // surface gone
     expect(store.getUri("a")).toBeUndefined();
   });
+
+  it("drops a surface from the render snapshot once it resolves", () => {
+    // A surface exists only to produce a bitmap. Keeping it mounted afterwards
+    // leaves a live react-native-svg view tree (collapsable={false}) that Android
+    // walks on every layout pass, for the whole lifetime of the map.
+    const store = createRasterStore();
+    store.acquire(req("a"));
+    expect(store.getRequests()).toHaveLength(1);
+
+    store.resolve("a", "uri-a");
+
+    expect(store.getRequests()).toHaveLength(0);
+    // …but the raster is still available to consumers.
+    expect(store.getUri("a")).toBe("uri-a");
+  });
+
+  it("reuses a cached raster on remount instead of re-rasterizing", () => {
+    // Unmount/remount of an icon (a filter toggle) must not re-run the capture,
+    // because that also drives removeImage/addImage — and removing an image a
+    // symbol layer references forces MapLibre to redo symbol placement.
+    const store = createRasterStore();
+    store.acquire(req("a"));
+    store.resolve("a", "uri-a", 48);
+    store.release("a");
+
+    store.acquire(req("a"));
+
+    // Resolved immediately, and no surface is mounted for it.
+    expect(store.getResolved("a")).toEqual({ uri: "uri-a", pixelWidth: 48 });
+    expect(store.getRequests()).toHaveLength(0);
+  });
 });

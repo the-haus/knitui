@@ -29,6 +29,7 @@ import type {
   ViewState,
   ViewStateChangeEvent,
 } from "../../types/primitives";
+import { styleValueEquals } from "../layers/styleIdentity";
 import { createRasterStore } from "../SvgImage/rasterizer.shared";
 import { RasterizerHost } from "../SvgImage/RasterizerHost";
 import { MapContext, type MapContextValue, WEB_CAPABILITIES } from "./MapView.context";
@@ -140,7 +141,8 @@ export const MapView = memo(
     const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
     const attributionControlRef = useRef<maplibregl.AttributionControl | null>(null);
     const [ready, setReady] = useState(false);
-    const { sources, layers, images, interactiveSources, registrations } = useMapRegistries();
+    const { sources, layers, images, interactiveSources, revision, registrations } =
+      useMapRegistries();
     const rasterizer = useRef(createRasterStore()).current;
 
     // Latest props ref — always kept in sync for use in event handlers.
@@ -213,6 +215,10 @@ export const MapView = memo(
 
       applyInteractivityOptions(map, propsRef.current);
 
+      // Bumped whenever the style changes, so caches derived from the style's
+      // layer list (see `interactiveLayerIds`) are invalidated.
+      const styleEpochRef = { current: 0 };
+
       // --- Event handlers ---
 
       const handleLoad = (): void => {
@@ -221,6 +227,7 @@ export const MapView = memo(
       };
 
       const handleStyleData = (): void => {
+        styleEpochRef.current += 1;
         propsRef.current.onDidFinishLoadingStyle?.();
       };
 
@@ -317,18 +324,13 @@ export const MapView = memo(
         cancelPendingClick();
       };
 
-      const handleMoveStart = (): void => {
-        propsRef.current.onWillStartRenderingMap?.();
-        propsRef.current.onWillStartRenderingFrame?.();
-
-        const event = makeViewStateChangeEvent(map, true, true);
-
-        // Session-based: fire onRegionWillChange exactly once per gesture.
-        if (!regionSessionActiveRef.current) {
-          regionSessionActiveRef.current = true;
-          propsRef.current.onRegionWillChange?.(event);
-        }
-
+      /**
+       * Arm the trailing `onRegionDidChange` debounce — ONLY when the consumer
+       * actually registered that handler. `move` fires 60+×/s and every one of
+       * them used to `clearTimeout` + allocate a fresh 500 ms `setTimeout`.
+       */
+      const armDidChange = (): void => {
+        if (!propsRef.current.onRegionDidChange) return;
         cancelDidChange();
         didChangeTimerRef.current = setTimeout(() => {
           if (regionSessionActiveRef.current) {
@@ -338,29 +340,55 @@ export const MapView = memo(
         }, REGION_DID_CHANGE_DEBOUNCE_MS);
       };
 
-      const handleMove = (): void => {
-        const event = makeViewStateChangeEvent(map, true, true);
+      const hasRegionHandler = (): boolean => {
+        const p = propsRef.current;
+        return Boolean(p.onRegionWillChange || p.onRegionIsChanging || p.onRegionDidChange);
+      };
 
-        // Ensure session is active (handles edge cases where move fires before movestart)
+      const handleMoveStart = (): void => {
+        propsRef.current.onWillStartRenderingMap?.();
+        propsRef.current.onWillStartRenderingFrame?.();
+
+        if (!hasRegionHandler()) return;
+
+        // Session-based: fire onRegionWillChange exactly once per gesture.
         if (!regionSessionActiveRef.current) {
           regionSessionActiveRef.current = true;
-          propsRef.current.onRegionWillChange?.(event);
+          propsRef.current.onRegionWillChange?.(makeViewStateChangeEvent(map, true, true));
         }
 
-        // Throttle isChanging at 32ms
+        armDidChange();
+      };
+
+      const handleMove = (): void => {
+        // Early-out BEFORE building anything. `makeViewStateChangeEvent` does a
+        // `getBounds()` (four corner unprojections + a `LngLatBounds` alloc), a
+        // `getCenter()`, `getZoom/Bearing/Pitch` and two object allocations — and
+        // it used to run on every raw `move` (60+/s), ahead of the 32 ms throttle
+        // gate, even for consumers that registered no region handlers at all.
+        if (!hasRegionHandler()) return;
+
+        const p = propsRef.current;
+        const startSession = !regionSessionActiveRef.current;
         const now = Date.now();
-        if (now - lastIsChangingRef.current >= 32) {
-          lastIsChangingRef.current = now;
-          propsRef.current.onRegionIsChanging?.(event);
+        const fireIsChanging =
+          Boolean(p.onRegionIsChanging) && now - lastIsChangingRef.current >= 32;
+
+        // Ensure the session is active (handles edge cases where move fires
+        // before movestart). Cheap: just a ref write, no event needed.
+        if (startSession) regionSessionActiveRef.current = true;
+
+        // Build the event lazily, only once we know something will consume it.
+        if ((startSession && p.onRegionWillChange) || fireIsChanging) {
+          const event = makeViewStateChangeEvent(map, true, true);
+          if (startSession) p.onRegionWillChange?.(event);
+          if (fireIsChanging) {
+            lastIsChangingRef.current = now;
+            p.onRegionIsChanging?.(event);
+          }
         }
 
-        cancelDidChange();
-        didChangeTimerRef.current = setTimeout(() => {
-          if (regionSessionActiveRef.current) {
-            propsRef.current.onRegionDidChange?.(makeViewStateChangeEvent(map, true, true));
-            regionSessionActiveRef.current = false;
-          }
-        }, REGION_DID_CHANGE_DEBOUNCE_MS);
+        armDidChange();
       };
 
       const handleMoveEnd = (): void => {
@@ -369,46 +397,118 @@ export const MapView = memo(
         propsRef.current.onDidFinishRenderingMap?.();
         propsRef.current.onDidFinishRenderingMapFully?.();
 
-        const event = makeViewStateChangeEvent(map, true, true);
-
         // Cancel trailing debounce and fire didChange immediately.
         cancelDidChange();
 
         if (regionSessionActiveRef.current) {
-          propsRef.current.onRegionDidChange?.(event);
           regionSessionActiveRef.current = false;
+          propsRef.current.onRegionDidChange?.(makeViewStateChangeEvent(map, true, true));
         }
       };
 
       // --- Cursor management ---
-      const handleMouseMoveForCursor = (e: MapMouseEvent): void => {
-        if (interactiveSources.size === 0) return;
 
-        const style = map.getStyle();
-        if (!style) return;
+      /**
+       * The layer ids bound to an interactive source, CACHED.
+       *
+       * This used to call `map.getStyle()` per pointer move. That is
+       * `Style.serialize()` → `_serializeByIds(this._order, returnClone=true)`,
+       * i.e. a `clone()` of every serialized layer plus
+       * `mapObject(tileManagers, s => s.serialize())` — thousands of allocations
+       * per mousemove on a Positron/Voyager basemap (~130 layers, each with paint
+       * and layout expressions). And it only ran when `interactiveSources.size > 0`,
+       * i.e. exactly for the 4000-point `onPress` consumer.
+       *
+       * The layer registry already knows every layer's `sourceId`, so it gives the
+       * same answer without serializing anything. Invalidated by the registry
+       * revision (register/unregister of a layer or an interactive source) and by
+       * a style epoch bumped on `styledata`.
+       */
+      const layerIdCache = { revision: -1, epoch: -1, ids: [] as string[] };
 
-        const layerIds = (style.layers ?? [])
-          .filter(
-            (l): l is typeof l & { source: string } =>
-              "source" in l && interactiveSources.has(l.source as string),
-          )
-          .map((l) => l.id);
+      const interactiveLayerIds = (): string[] => {
+        if (
+          layerIdCache.revision === revision.current &&
+          layerIdCache.epoch === styleEpochRef.current
+        ) {
+          return layerIdCache.ids;
+        }
+        const ids: string[] = [];
+        for (const layer of layers.values()) {
+          if (!layer.sourceId || !interactiveSources.has(layer.sourceId)) continue;
+          // A registered layer can be briefly absent from the style (a setStyle
+          // reload before replay re-adds it); querying an unknown id errors.
+          if (!map.getLayer(layer.id)) continue;
+          ids.push(layer.id);
+        }
+        layerIdCache.revision = revision.current;
+        layerIdCache.epoch = styleEpochRef.current;
+        layerIdCache.ids = ids;
+        return ids;
+      };
 
+      // Hover hit-testing is coalesced to at most one per animation frame, and
+      // skipped entirely while the map is moving (the cursor can't meaningfully
+      // change mid-gesture and `queryRenderedFeatures` competes with rendering).
+      let hoverFrame = 0;
+      let hoverPoint: { x: number; y: number } | null = null;
+
+      /**
+       * Last cursor we wrote, so an unchanged value costs nothing.
+       *
+       * Assigning `style.cursor` invalidates the canvas' inline style and dirties
+       * style resolution even when the value is identical, and the hover hit-test
+       * runs once per animation frame for the whole time the pointer is over an
+       * interactive map — where the answer is the SAME on almost every frame (you
+       * stay on a marker, or you stay off all of them). Only transitions matter.
+       *
+       * Seeded from the live value so the first frame agrees with the DOM.
+       */
+      let appliedCursor = map.getCanvas().style.cursor;
+      const applyCursor = (cursor: string): void => {
+        if (cursor === appliedCursor) return;
+        appliedCursor = cursor;
+        map.getCanvas().style.cursor = cursor;
+      };
+
+      const runHoverHitTest = (): void => {
+        hoverFrame = 0;
+        const point = hoverPoint;
+        if (!point || map.isMoving()) return;
+
+        const layerIds = interactiveLayerIds();
         if (layerIds.length === 0) return;
 
         const tolerance = 4;
         const bbox: [[number, number], [number, number]] = [
-          [e.point.x - tolerance, e.point.y - tolerance],
-          [e.point.x + tolerance, e.point.y + tolerance],
+          [point.x - tolerance, point.y - tolerance],
+          [point.x + tolerance, point.y + tolerance],
         ];
 
         const features = map.queryRenderedFeatures(bbox, { layers: layerIds });
-        const canvas = map.getCanvas();
-        canvas.style.cursor = features.length > 0 ? "pointer" : "";
+        applyCursor(features.length > 0 ? "pointer" : "");
+      };
+
+      const handleMouseMoveForCursor = (e: MapMouseEvent): void => {
+        if (interactiveSources.size === 0) return;
+        if (map.isMoving()) return;
+
+        hoverPoint = { x: e.point.x, y: e.point.y };
+        if (hoverFrame) return;
+        hoverFrame = requestAnimationFrame(runHoverHitTest);
+      };
+
+      const cancelHover = (): void => {
+        if (hoverFrame) {
+          cancelAnimationFrame(hoverFrame);
+          hoverFrame = 0;
+        }
+        hoverPoint = null;
       };
 
       const handleMouseLeaveForCursor = (): void => {
-        map.getCanvas().style.cursor = "";
+        cancelHover();
+        applyCursor("");
       };
 
       map.on("load", handleLoad);
@@ -431,6 +531,7 @@ export const MapView = memo(
         cancelPendingClick();
         cancelIsChanging();
         cancelDidChange();
+        cancelHover();
 
         map.off("load", handleLoad);
         map.off("styledata", handleStyleData);
@@ -470,24 +571,33 @@ export const MapView = memo(
     }, [dragPan, touchZoom, doubleTapZoom, touchRotate, touchPitch]);
 
     // Map style — only call setStyle when the style prop actually changes
-    const appliedStyleRef = useRef<string | null>(null);
+    const appliedStyleRef = useRef<{ value: MapProps["mapStyle"] } | null>(null);
     useEffect(() => {
       const map = mapRef.current;
       if (!map) return;
 
-      const styleKey = typeof mapStyle === "string" ? mapStyle : JSON.stringify(mapStyle);
+      const applied = appliedStyleRef.current;
 
-      // First application: just record the key (map was already created with this style)
-      if (appliedStyleRef.current === null) {
-        appliedStyleRef.current = styleKey;
+      // First application: just record it (the map was already created with this
+      // style).
+      if (applied === null) {
+        appliedStyleRef.current = { value: mapStyle };
         return;
       }
 
-      // Same style as already applied: skip (handles StrictMode remount)
-      if (styleKey === appliedStyleRef.current) return;
+      // Unchanged (identity, then structure): skip. This used to
+      // `JSON.stringify(mapStyle)` — a bundled style is ~70–90 KB of nested
+      // literals, so an inline or derived `mapStyle` would have paid a ~485 KB
+      // serialization on every render. A structural compare bails on the first
+      // difference and allocates nothing. Still handles the StrictMode remount and
+      // a structurally identical object arriving with a fresh identity.
+      if (applied.value === mapStyle || styleValueEquals(applied.value, mapStyle)) {
+        appliedStyleRef.current = { value: mapStyle };
+        return;
+      }
 
       // Actual style change: apply and replay runtime state
-      appliedStyleRef.current = styleKey;
+      appliedStyleRef.current = { value: mapStyle };
 
       const handleStyleReplay = (): void => {
         map.off("styledata", handleStyleReplay);
@@ -522,8 +632,9 @@ export const MapView = memo(
       };
     }, [compass]);
 
-    // Attribution control — added/removed incrementally.
-    const attributionKey = JSON.stringify(attribution);
+    // Attribution control — added/removed incrementally. The key is memoized on
+    // the prop identity so a re-render doesn't re-serialize it.
+    const attributionKey = useMemo(() => JSON.stringify(attribution), [attribution]);
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !isAttributionEnabled(attribution)) return;

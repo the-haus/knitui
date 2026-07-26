@@ -34,6 +34,18 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./styles": {
+      "source": "./src/styles/index.ts",
+      "react-native": "./src/styles/index.ts",
+      "types": "./src/styles/index.ts",
+      "default": "./src/styles/index.ts"
+    },
+    "./styles/*": {
+      "source": "./src/styles/*.ts",
+      "react-native": "./src/styles/*.ts",
+      "types": "./src/styles/*.ts",
+      "default": "./src/styles/*.ts"
+    },
     "./src/*.stories": {
       "source": "./src/*.stories.tsx",
       "react-native": "./src/*.stories.tsx",
