@@ -12,7 +12,15 @@ export function useViewportSize(): ViewportSize {
   const [size, setSize] = useState<ViewportSize>({ width: 0, height: 0 });
 
   const onResize = useCallback(() => {
-    setSize({ width: window.innerWidth, height: window.innerHeight });
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    // Bail on unchanged dimensions, exactly as `use-element-size` does. `resize` is
+    // unthrottled (~60 events/s while a window is dragged) and `orientationchange`
+    // can fire alongside it, so without this a fresh object is allocated and every
+    // consumer re-renders per event — very often for dimensions it already had (a
+    // drag along one axis leaves the other identical, and `orientationchange` fires
+    // after `resize` has already reported the new box).
+    setSize((prev) => (prev.width === width && prev.height === height ? prev : { width, height }));
   }, []);
 
   useEffect(() => {

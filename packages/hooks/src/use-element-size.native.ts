@@ -18,7 +18,13 @@ export function useElementSize(): UseElementSizeReturn {
     () => ({
       onLayout: (event: LayoutChangeEvent) => {
         const { width, height } = event.nativeEvent.layout;
-        setSize({ width, height });
+        // Bail on an unchanged box: `onLayout` re-fires for any layout pass the view
+        // takes part in (a sibling changing, a parent re-flowing), and consumers
+        // re-render subtrees off this size — `Collapse`/`Spoiler`/`Marquee` must not
+        // pay a render for being told the size they already have.
+        setSize((prev) =>
+          prev.width === width && prev.height === height ? prev : { width, height },
+        );
       },
     }),
     [],

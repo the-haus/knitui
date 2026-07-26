@@ -44,7 +44,13 @@ export function useElementSize(): UseElementSizeReturn {
       const entry = entries[0];
       if (entry) {
         const { width, height } = entry.contentRect;
-        setSize({ width, height });
+        // Bail on an unchanged box. `ResizeObserver` also fires when an element
+        // merely becomes visible again (`display` flip, re-attach), and consumers
+        // of this hook re-render subtrees off the returned size — a `Collapse` or
+        // `Spoiler` re-measuring to the value it already had must not cost a render.
+        setSize((prev) =>
+          prev.width === width && prev.height === height ? prev : { width, height },
+        );
       }
     });
     observer.observe(node as unknown as Element);

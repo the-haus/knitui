@@ -39,8 +39,27 @@ export function useMove(
     // it actually is here to reach `addEventListener`/`getBoundingClientRect`.
     const node = current as unknown as HTMLElement;
 
+    /**
+     * The track rect for the ACTIVE drag, measured once and reused.
+     *
+     * `getBoundingClientRect()` inside `pointermove` is a forced layout flush, and
+     * `onChange` synchronously sets React state that writes layout — so measuring
+     * per move event is a read → write → read thrash for the whole drag, at pointer
+     * rate (120–1000 Hz on modern mice, which is well above frame rate).
+     *
+     * The cache is INVALIDATED, not refreshed, whenever the rect could have moved:
+     * any scroll in the document (capture phase — `scroll` doesn't bubble) or a
+     * window resize. The next move then re-measures lazily. So a Slider drag with
+     * nothing else moving measures exactly once, while a rail drag that scrolls its
+     * own viewport stays correct at no worse than today's cost.
+     */
+    let rect: DOMRect | null = null;
+    const invalidateRect = () => {
+      rect = null;
+    };
+
     const positionFromEvent = (clientX: number, clientY: number): MovePosition => {
-      const rect = node.getBoundingClientRect();
+      rect ??= node.getBoundingClientRect();
       return clampMovePosition({
         x: rect.width ? (clientX - rect.left) / rect.width : 0,
         y: rect.height ? (clientY - rect.top) / rect.height : 0,
@@ -52,26 +71,36 @@ export function useMove(
       stateRef.current.onChange(positionFromEvent(event.clientX, event.clientY));
     };
 
-    const onUp = (event: PointerEvent) => {
+    const stopTracking = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("scroll", invalidateRect, true);
+      window.removeEventListener("resize", invalidateRect);
+    };
+
+    const onUp = (event: PointerEvent) => {
+      stopTracking();
       stateRef.current.onChange(positionFromEvent(event.clientX, event.clientY));
       stateRef.current.handlers?.onScrubEnd?.();
+      rect = null;
     };
 
     const onDown = (event: PointerEvent) => {
       event.preventDefault();
+      // Measure fresh for this gesture; the element may have moved since the last one.
+      rect = null;
       stateRef.current.handlers?.onScrubStart?.();
       stateRef.current.onChange(positionFromEvent(event.clientX, event.clientY));
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("scroll", invalidateRect, { capture: true, passive: true });
+      window.addEventListener("resize", invalidateRect);
     };
 
     node.addEventListener("pointerdown", onDown);
     return () => {
       node.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
+      stopTracking();
     };
   }, []);
 

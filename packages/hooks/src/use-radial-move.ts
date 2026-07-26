@@ -43,8 +43,27 @@ export function useRadialMove(
     // `addEventListener`/`getBoundingClientRect`.
     const node = current as unknown as HTMLElement;
 
+    /**
+     * The ring rect for the ACTIVE drag, measured once and reused.
+     *
+     * `getBoundingClientRect()` inside `pointermove` is a forced layout flush, and
+     * `onChange` synchronously sets React state that writes layout — so measuring
+     * per move event is a read → write → read thrash for the whole drag, at pointer
+     * rate (120–1000 Hz on modern mice, well above frame rate).
+     *
+     * The cache is INVALIDATED, not refreshed, whenever the ring could have moved:
+     * any scroll in the document (capture phase — `scroll` doesn't bubble) or a
+     * window resize. The next move then re-measures lazily, so a drag with nothing
+     * else moving measures exactly once and a drag over a scrolling page stays
+     * correct.
+     */
+    let rect: DOMRect | null = null;
+    const invalidateRect = () => {
+      rect = null;
+    };
+
     const angleFromEvent = (clientX: number, clientY: number): number => {
-      const rect = node.getBoundingClientRect();
+      rect ??= node.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       return normalizeAngle(Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI) + 90);
@@ -56,28 +75,38 @@ export function useRadialMove(
       stateRef.current.onChange(angleFromEvent(event.clientX, event.clientY));
     };
 
-    const onUp = (event: PointerEvent) => {
+    const stopTracking = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("scroll", invalidateRect, true);
+      window.removeEventListener("resize", invalidateRect);
+    };
+
+    const onUp = (event: PointerEvent) => {
+      stopTracking();
       const final = stateRef.current.onChange(angleFromEvent(event.clientX, event.clientY));
       stateRef.current.options?.onScrubEnd?.();
       stateRef.current.options?.onChangeEnd?.(final);
+      rect = null;
     };
 
     const onDown = (event: PointerEvent) => {
       if (stateRef.current.options?.disabled) return;
       event.preventDefault();
+      // Measure fresh for this gesture; the ring may have moved since the last one.
+      rect = null;
       stateRef.current.options?.onScrubStart?.();
       stateRef.current.onChange(angleFromEvent(event.clientX, event.clientY));
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("scroll", invalidateRect, { capture: true, passive: true });
+      window.addEventListener("resize", invalidateRect);
     };
 
     node.addEventListener("pointerdown", onDown);
     return () => {
       node.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
+      stopTracking();
     };
   }, []);
 
