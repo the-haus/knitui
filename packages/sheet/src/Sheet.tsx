@@ -25,6 +25,7 @@ import {
 } from "./chrome";
 import type { SettleResult } from "./engine";
 import { useSharedValueListener } from "./hooks/useSharedValueListener";
+import { useStableRecord } from "./hooks/useStableRecord";
 import { useSheetDrag } from "./input/useSheetDrag";
 import { useSheetMotion } from "./motion/useSheetMotion";
 import type { SheetProps, SheetRef } from "./types";
@@ -109,6 +110,18 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   // Gates `finishClose` so a stray offset write (re-open, a drag, an interrupted
   // spring) can never tear down a sheet that is meant to stay up.
   const closingRef = React.useRef(false);
+  // UI-thread twin of `closingRef`. The offset watcher below has to run on the UI
+  // thread (see `useSharedValueListener`), and a worklet cannot read a JS ref — so
+  // the flag is mirrored into a shared value and the watcher's gate is evaluated
+  // where the offset lives, instead of waking the JS thread every frame.
+  const closingSV = useSharedValue(false);
+  const setClosing = React.useCallback(
+    (value: boolean) => {
+      closingRef.current = value;
+      closingSV.value = value;
+    },
+    [closingSV],
+  );
   const isOpenRef = React.useRef(isOpen);
   isOpenRef.current = isOpen;
 
@@ -119,15 +132,24 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   // panel on screen.
   const finishClose = React.useCallback(() => {
     if (!closingRef.current) return;
-    closingRef.current = false;
+    setClosing(false);
     setMounted(false);
-  }, []);
+  }, [setClosing]);
 
   // Stabilise the snap-points array by content so geometry isn't recomputed on
   // every render when the prop is an inline literal.
   const snapKey = snapPoints.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableSnapPoints = React.useMemo(() => snapPoints, [snapKey]);
+
+  // Same treatment for the spring config, for a sharper reason: `animationConfig`
+  // is a flat record of primitives that every call site writes inline, and it is a
+  // dependency of `useSheetDrag`'s `useMemo`. A fresh identity there rebuilds the
+  // `Gesture.Pan()` object on every render, and RNGH responds by tearing down and
+  // re-attaching the native gesture handler — mid-drag, that is a dropped gesture.
+  // Collapsing it to a stable reference while its values are unchanged fixes both
+  // that and the redundant `useSheetMotion` recomputation below.
+  const stableAnimationConfig = useStableRecord(animationConfig);
 
   /* ── Measurement ──────────────────────────────────────────────────────── */
 
@@ -157,7 +179,7 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const motion = useSheetMotion({
     snapPoints: stableSnapPoints,
     maxHeight,
-    animationConfig,
+    animationConfig: stableAnimationConfig,
     dismissOnSnapToBottom,
     setPosition: commitPosition,
     requestClose,
@@ -190,13 +212,13 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
       // cancelled the gesture so `onFinalize` re-settled to a visible snap):
       // never re-park on screen — drive the panel home to the closed position.
       if (!isOpenRef.current) {
-        closingRef.current = true;
+        setClosing(true);
         motionRef.current.animateClose(finishClose);
         return;
       }
       motionRef.current.handleSettle(result);
     },
-    [finishClose],
+    [finishClose, setClosing],
   );
 
   const gesture = useSheetDrag({
@@ -208,7 +230,7 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     // during the close animation can't `cancelAnimation` the close spring and
     // re-park the panel at a visible snap (the panel would then never unmount).
     enabled: dragEnabled,
-    spring: animationConfig,
+    spring: stableAnimationConfig,
     // Coordinate with a nested `Sheet.ScrollView` on native only; on web the
     // browser owns nested scrolling, so leave the Pan unaware (unchanged path).
     scrollGesture: isWeb ? undefined : scrollGesture,
@@ -238,10 +260,10 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     if (was === isOpen) return;
     wasOpenRef.current = isOpen;
     if (isOpen) {
-      closingRef.current = false;
+      setClosing(false);
       setMounted(true);
     } else {
-      closingRef.current = true;
+      setClosing(true);
       didOpenRef.current = false;
       motionRef.current.animateClose(finishClose);
       // Uncontrolled: forget the snap the user dragged/cycled to so the NEXT open
@@ -252,16 +274,28 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
         setPositionRef.current(defaultIndexRef.current);
       }
     }
-  }, [isOpen, finishClose]);
+  }, [isOpen, finishClose, setClosing]);
 
   // Robust unmount: the close spring's `finished` callback is silently dropped
   // when the animation is interrupted, which would otherwise strand the panel
   // on-screen. So also tear down the instant the panel reaches the closed
   // (off-screen) position — gated by `closingRef`, since opening seeds the
   // offset at `closed` too.
-  useSharedValueListener(motion.offset, (v) => {
-    if (closingRef.current && v >= motion.closed - 1) finishClose();
-  });
+  //
+  // The gate is passed as a FILTER, evaluated where the offset lives (the UI thread
+  // on native): the panel writes its offset every frame while dragging or springing,
+  // and delivering all of those to JS woke the JS thread 60–120×/s for a condition
+  // that is false except at the very end of a close. Only the interesting value
+  // crosses the bridge now.
+  const closedTarget = motion.closed - 1;
+  const isFullyClosed = React.useCallback(
+    (v: number) => {
+      "worklet";
+      return closingSV.value && v >= closedTarget;
+    },
+    [closingSV, closedTarget],
+  );
+  useSharedValueListener(motion.offset, finishClose, isFullyClosed);
 
   // Run the open animation once mounted AND measured; re-settle to the current
   // snap when the geometry changes (rotation / resize) while already open.

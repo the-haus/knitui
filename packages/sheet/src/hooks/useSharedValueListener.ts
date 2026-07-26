@@ -18,14 +18,27 @@ let _nextId = 0;
  * restart the subscription. The current value is delivered once on subscribe so
  * consumers are in sync even if it changed between render and effect.
  */
-export function useSharedValueListener<T>(sv: SharedValue<T>, fn: (value: T) => void): void {
+export function useSharedValueListener<T>(
+  sv: SharedValue<T>,
+  fn: (value: T) => void,
+  filter?: (value: T) => boolean,
+): void {
   const latest = React.useRef(fn);
   latest.current = fn;
+  // Read through a ref so a fresh predicate per render doesn't restart the
+  // subscription (the native twin takes it as a worklet dependency instead).
+  const latestFilter = React.useRef(filter);
+  latestFilter.current = filter;
 
   React.useEffect(() => {
     const id = _nextId++;
-    latest.current(sv.value);
-    sv.addListener(id, (value) => latest.current(value));
+    const notify = (value: T) => {
+      const test = latestFilter.current;
+      if (test && !test(value)) return;
+      latest.current(value);
+    };
+    notify(sv.value);
+    sv.addListener(id, notify);
     return () => sv.removeListener(id);
   }, [sv]);
 }
