@@ -101,3 +101,19 @@ describe("matchesQuery", () => {
     expect(matchesQuery({}, env())).toBe(true);
   });
 });
+
+describe("parse cache", () => {
+  const QUERY = "(min-width: 768px) and (orientation: landscape)";
+
+  it("returns equal results on repeat parses", () => {
+    expect(parseMediaQuery(QUERY)).toEqual(parseMediaQuery(QUERY));
+  });
+
+  it("hands out COPIES, so a caller cannot poison the cached parse", () => {
+    const first = parseMediaQuery(QUERY);
+    first.groups[0].minWidth = 9999;
+    expect(parseMediaQuery(QUERY).groups[0].minWidth).toBe(768);
+    // And evaluation is unaffected by the mutation above.
+    expect(matchesQuery(QUERY, env({ width: 1024, height: 768 }))).toBe(true);
+  });
+});

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { AccessibilityInfo, Appearance, Dimensions } from "react-native";
 
 import type { ColorScheme, MediaEnvironment, MediaQueryInput } from "./query.shared";
-import { matchesQuery, parseMediaQuery } from "./query.shared";
+import { matchesQuery, parseMediaQuery, queryToString } from "./query.shared";
 import type { UseMediaQueryOptions } from "./use-media-query.shared";
 
 /** Query strings we've already warned about (so the dev warning fires once each). */
@@ -12,56 +12,111 @@ function toColorScheme(value: string | null | undefined): ColorScheme {
   return value === "dark" ? "dark" : "light";
 }
 
+/* -------------------------------------------------------------------------- */
+/* Shared environment store                                                    */
+/* -------------------------------------------------------------------------- */
+
 /**
- * A live {@link MediaEnvironment} snapshot from React Native's `Dimensions`
- * (size / orientation), `Appearance` (color scheme) and `AccessibilityInfo`
- * (reduced motion). Native has real dimensions synchronously at first render,
- * so there is no SSR fallback to worry about here.
+ * ONE module-level {@link MediaEnvironment} for the whole app, wired to React
+ * Native's `Dimensions` / `Appearance` / `AccessibilityInfo` exactly once and
+ * fanned out to every `useMediaQuery` caller.
+ *
+ * The previous per-hook `useState` + `useEffect` registered THREE native
+ * subscriptions (plus an `isReduceMotionEnabled()` promise) per call site, so 20
+ * call sites meant 60 live listeners; and because each handler did
+ * `setEnv(prev => ({ ...prev, … }))` it always produced a NEW object, so a single
+ * rotation re-rendered every instance even though the boolean each one derives
+ * almost never flips.
+ *
+ * Two things fix that. (1) One store, three listeners total, regardless of call
+ * count. (2) `getSnapshot` returns the resolved **boolean** rather than the
+ * environment object, so React's own bailout absorbs the common case: an
+ * environment change that doesn't cross the query's threshold produces the same
+ * boolean and re-renders nothing. `setEnvironment` additionally value-compares
+ * before notifying, so a `Dimensions` event that reports the same size is a
+ * complete no-op.
+ *
+ * Mirrors the module-store shape of `@knitui/hooks`'
+ * `use-keyboard-height.native` / `use-reduced-motion`.
  */
-function useMediaEnvironment(): MediaEnvironment {
-  const [env, setEnv] = useState<MediaEnvironment>(() => {
-    const { width, height } = Dimensions.get("window");
-    return {
-      width,
-      height,
-      colorScheme: toColorScheme(Appearance.getColorScheme()),
-      reducedMotion: false,
-    };
-  });
+let environment: MediaEnvironment | null = null;
+let wired = false;
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    let mounted = true;
-
-    const dimensions = Dimensions.addEventListener("change", ({ window }) => {
-      setEnv((prev) => ({ ...prev, width: window.width, height: window.height }));
-    });
-    const appearance = Appearance.addChangeListener(({ colorScheme }) => {
-      setEnv((prev) => ({ ...prev, colorScheme: toColorScheme(colorScheme) }));
-    });
-    const reduceMotion = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      (reducedMotion) => {
-        setEnv((prev) => ({ ...prev, reducedMotion }));
-      },
-    );
-    AccessibilityInfo.isReduceMotionEnabled().then((reducedMotion) => {
-      if (mounted) setEnv((prev) => ({ ...prev, reducedMotion }));
-    });
-
-    return () => {
-      mounted = false;
-      dimensions.remove();
-      appearance.remove();
-      reduceMotion.remove();
-    };
-  }, []);
-
-  return env;
+function notify(): void {
+  for (const listener of listeners) listener();
 }
+
+function setEnvironment(next: Partial<MediaEnvironment>): void {
+  const current = environment ?? readEnvironment();
+  let changed = false;
+  for (const key of Object.keys(next) as (keyof MediaEnvironment)[]) {
+    if (next[key] !== undefined && next[key] !== current[key]) changed = true;
+  }
+  // Value-equality bail: `Dimensions` fires on every layout pass and often
+  // reports an unchanged window, which must not wake a single subscriber.
+  if (!changed) return;
+  environment = { ...current, ...next };
+  notify();
+}
+
+function readEnvironment(): MediaEnvironment {
+  const { width, height } = Dimensions.get("window");
+  environment = {
+    width,
+    height,
+    colorScheme: toColorScheme(Appearance.getColorScheme()),
+    // Resolved asynchronously by `wireOnce` — RN exposes reduced-motion only via
+    // a promise, and native has no synchronous getter.
+    reducedMotion: false,
+  };
+  return environment;
+}
+
+/** Attach the three native listeners exactly once, on first read or subscribe. */
+function wireOnce(): void {
+  if (wired) return;
+  wired = true;
+
+  Dimensions.addEventListener("change", ({ window }) => {
+    setEnvironment({ width: window.width, height: window.height });
+  });
+  Appearance.addChangeListener(({ colorScheme }) => {
+    setEnvironment({ colorScheme: toColorScheme(colorScheme) });
+  });
+  AccessibilityInfo.addEventListener("reduceMotionChanged", (reducedMotion) => {
+    setEnvironment({ reducedMotion });
+  });
+  void AccessibilityInfo.isReduceMotionEnabled().then((reducedMotion) => {
+    setEnvironment({ reducedMotion });
+  });
+  // The listeners are intentionally never removed: they are a fixed, tiny set
+  // owned by the module (not by any component), and tearing them down on the last
+  // unmount only to re-attach on the next mount is the churn we removed.
+}
+
+/** The live environment snapshot. Safe to call outside React. */
+export function getMediaEnvironment(): MediaEnvironment {
+  wireOnce();
+  return environment ?? readEnvironment();
+}
+
+/** Subscribe to environment changes. Returns an unsubscribe. */
+export function subscribeMediaEnvironment(listener: () => void): () => void {
+  wireOnce();
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Hook                                                                        */
+/* -------------------------------------------------------------------------- */
 
 /**
  * Subscribe to a media query (React Native) — native counterpart of
- * `use-media-query`. Evaluates the query against a live environment snapshot.
+ * `use-media-query`. Evaluates the query against the shared environment store.
  * `initialValue` / `options` are accepted for signature parity with the web hook
  * but are unused on native, which always has a real viewport.
  */
@@ -70,7 +125,14 @@ export function useMediaQuery(
   _initialValue?: boolean,
   _options: UseMediaQueryOptions = {},
 ): boolean {
-  const env = useMediaEnvironment();
+  // Key on the SERIALISED query so an inline descriptor object (a fresh identity
+  // every render) doesn't invalidate the memo. Combined with the parse cache in
+  // `query.shared`, evaluating a snapshot is then a handful of numeric compares.
+  const queryKey = typeof query === "string" ? query : queryToString(query);
+  const getSnapshot = useMemo(
+    () => () => matchesQuery(queryKey, getMediaEnvironment()),
+    [queryKey],
+  );
 
   useEffect(() => {
     if (!__DEV__ || typeof query !== "string" || warnedQueries.has(query)) return;
@@ -85,5 +147,5 @@ export function useMediaQuery(
     }
   }, [query]);
 
-  return matchesQuery(query, env);
+  return useSyncExternalStore(subscribeMediaEnvironment, getSnapshot, getSnapshot);
 }

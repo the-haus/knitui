@@ -132,12 +132,41 @@ function parseGroup(raw: string): InternalGroup {
   return group;
 }
 
-function parseInternal(query: string): InternalGroup[] {
+function parseUncached(query: string): InternalGroup[] {
   return query
     .toLowerCase()
     .split(",")
     .map((group) => parseGroup(group))
     .filter((group) => Object.keys(group.object).length > 0 || group.unsupported.length > 0);
+}
+
+/**
+ * Memoised parse. Parsing is pure, so the result for a given string never
+ * changes — and the set of distinct query strings an app uses is small and fixed
+ * (they're literals in component source, or serialised from a small descriptor).
+ *
+ * This matters because {@link matchesQuery} is called on the render path: the
+ * native `useMediaQuery` evaluates its query on every render, and every parse of
+ * e.g. `"(min-width: 768px) and (orientation: landscape)"` costs ~6 regex
+ * executions plus ~10 intermediate allocations (`toLowerCase`, two `split`s, a
+ * `replace` and `parseLength`'s `exec` per part). A 50-row list whose rows each
+ * call `useMediaQuery` did that ~50× per render pass to produce 50 identical
+ * results.
+ *
+ * The cache is bounded so a caller that builds query strings dynamically can't
+ * leak; the bound is far above any realistic distinct-query count, and blowing
+ * it simply resets to uncached-speed behavior.
+ */
+const PARSE_CACHE_LIMIT = 512;
+const parseCache = new Map<string, InternalGroup[]>();
+
+function parseInternal(query: string): InternalGroup[] {
+  const hit = parseCache.get(query);
+  if (hit) return hit;
+  const parsed = parseUncached(query);
+  if (parseCache.size >= PARSE_CACHE_LIMIT) parseCache.clear();
+  parseCache.set(query, parsed);
+  return parsed;
 }
 
 /**
@@ -150,7 +179,9 @@ export function parseMediaQuery(query: string): ParsedMediaQuery {
   const unsupported = new Set<string>();
   for (const group of groups) for (const feature of group.unsupported) unsupported.add(feature);
   return {
-    groups: groups.map((group) => group.object),
+    // Copy: the parsed groups are CACHED and shared, so handing the internal
+    // objects to callers would let one mutate every future parse of the query.
+    groups: groups.map((group) => ({ ...group.object })),
     unsupportedFeatures: [...unsupported],
   };
 }
