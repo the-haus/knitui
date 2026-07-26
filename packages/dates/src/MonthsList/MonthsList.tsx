@@ -17,6 +17,9 @@
 // prop (checklist #15): `fullWidth` is a boolean VARIANT on the frame/row/cell,
 // not a per-render spread the optimiser could fold onto a whole cell.
 // ───────────────────────────────────────────────────────────────────────────
+import * as React from "react";
+import { useMemo } from "react";
+
 import dayjs from "dayjs";
 
 import { Box } from "@knitui/components";
@@ -28,11 +31,14 @@ import {
   styled,
   withStaticProperties,
 } from "@knitui/core";
+import { useCallbackRef } from "@knitui/hooks";
 
 import { type CalendarSize, CELL_SPACING } from "../cell-metrics";
 import { useDatesContext } from "../DatesProvider";
+import { areCellPropsEqual } from "../internal/are-cell-props-equal";
 import { focusElement } from "../internal/focus-element";
 import { hasPreventDefault } from "../internal/has-prevent-default";
+import { memoizeByDate } from "../internal/memoize-control-props";
 import { PickerControl, type PickerControlProps } from "../PickerControl";
 import type {
   ControlKeyboardEvent,
@@ -119,6 +125,134 @@ const MonthsListCell = styled(Box, {
     },
   } as const,
 });
+
+/** Props for the memoized month cell — see {@link MonthsListControlCell}. */
+interface MonthsListControlCellProps {
+  /** The cell's month, `YYYY-MM-DD`. */
+  month: DateStringValue;
+  /** Localized month label (resolved once per year in the grid memo). */
+  label: string;
+  /** Resolved disabled state (bounds ∪ the per-month getter's own flag). */
+  disabled: boolean | undefined;
+
+  /** Grid position, used for roving focus. */
+  rowIndex: number;
+  cellIndex: number;
+
+  /** Roving tabindex for this cell. */
+  tabIndex: number;
+
+  size: CalendarSize;
+  fullWidth: boolean;
+  preventFocus: boolean | undefined;
+
+  /** `styles.cell` props for the wrapper. */
+  cellProps: GetProps<typeof MonthsListCell> | undefined;
+
+  /** The raw `getMonthControlProps(month)` result — source of the consumer's handlers. */
+  controlProps: Partial<PickerControlProps> | undefined;
+
+  /** `styles.control` merged UNDER `controlProps` — spread onto the leaf. */
+  mergedControlProps: Partial<PickerControlProps>;
+
+  /**
+   * The `__`-prefixed grid callbacks, pre-stabilised by `MonthsList` with
+   * `useCallbackRef` — an unstable identity here would defeat the memo for every
+   * cell on every render.
+   */
+  onControlMouseEnter: (event: unknown, date: DateStringValue) => void;
+  onControlClick: (event: ControlPressEvent, date: DateStringValue) => void;
+  onControlKeyDown: (
+    event: ControlKeyboardEvent,
+    payload: { rowIndex: number; cellIndex: number; date: DateStringValue },
+  ) => void;
+  getControlRef: (
+    rowIndex: number,
+    cellIndex: number,
+    control: { focus: () => void; disabled: boolean | undefined },
+  ) => void;
+}
+
+/**
+ * One month cell, memoized — the `MonthsList` twin of `Month`'s `MonthDayCell`.
+ *
+ * The grid re-renders for reasons that concern only one or two cells. Most sharply,
+ * a RANGE month picker updates `hoveredDate` on every web hover move, which
+ * re-renders the whole picker subtree; without a memo boundary that meant all 12
+ * `PickerControl` leaves re-rendering (and 12 refs detaching/reattaching, re-running
+ * `__getControlRef` and rebuilding the refs matrix) for a change that moved two
+ * cells' background colour.
+ *
+ * The boundary is deliberately an INTERNAL cell, not the public `PickerControl`,
+ * whose props contract stays exactly as it was. Tamagui's styled-context and theme
+ * reads happen inside the leaf and still propagate past a memo, so cells keep
+ * responding to theme/size changes.
+ */
+const MonthsListControlCell = React.memo(function MonthsListControlCell({
+  month,
+  label,
+  disabled,
+  rowIndex,
+  cellIndex,
+  tabIndex,
+  size,
+  fullWidth,
+  preventFocus,
+  cellProps,
+  controlProps,
+  mergedControlProps,
+  onControlMouseEnter,
+  onControlClick,
+  onControlKeyDown,
+  getControlRef,
+}: MonthsListControlCellProps) {
+  // Tamagui hover handlers are not part of `PickerControl`'s public prop type;
+  // attach them via a precisely-typed object spread, the kit's pattern for web-only
+  // affordances (see `Month`). Native never fires it.
+  const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
+    onHoverIn: (event) => onControlMouseEnter(event, month),
+  };
+
+  return (
+    <MonthsListCell role="cell" fullWidth={fullWidth} {...cellProps}>
+      <PickerControl
+        size={size}
+        fullWidth={fullWidth}
+        // explicit beats sugar: the `control` slot sits UNDER per-month
+        // `getMonthControlProps`, and the consumer's own handlers are
+        // preserved (called before ours).
+        {...mergedControlProps}
+        disabled={disabled}
+        ref={(node) => {
+          if (node) {
+            getControlRef(rowIndex, cellIndex, {
+              focus: () => focusElement(node),
+              disabled,
+            });
+          }
+        }}
+        onKeyDown={(event: ControlKeyboardEvent) => {
+          controlProps?.onKeyDown?.(event);
+          onControlKeyDown(event, { rowIndex, cellIndex, date: month });
+        }}
+        onPress={(event: ControlPressEvent) => {
+          controlProps?.onPress?.(event);
+          onControlClick(event, month);
+        }}
+        onPressIn={(event: ControlPressInEvent) => {
+          controlProps?.onPressIn?.(event);
+          if (preventFocus && hasPreventDefault(event)) {
+            event.preventDefault();
+          }
+        }}
+        tabIndex={tabIndex}
+        {...hoverHandlers}
+      >
+        {controlProps?.children ?? label}
+      </PickerControl>
+    </MonthsListCell>
+  );
+}, areCellPropsEqual);
 
 // ── 7. Per-slot `styles` sugar + per-item passthrough ───────────────────────────
 // The kit's ONE styling model is props on the parts. `styles` is thin sugar over
@@ -243,71 +377,83 @@ const MonthsListComponent = MonthsListFrame.styleable<MonthsListProps>(
     // 7. Typed per-slot accessor (dev-warns unknown keys against the known set).
     const s = slotStyles<MonthsListStyles>(styles, MONTHS_LIST_SLOT_KEYS, "MonthsList");
 
-    const months = getMonthsData(year);
+    const resolvedLocale = ctx.getLocale(locale);
+
+    // The 12 cells' grid, bounds and LABELS depend only on the year, the locale,
+    // the format and the min/max bounds — never on the selection. They were
+    // nonetheless rebuilt on every render: `getMonthsData` costs ~12 dayjs
+    // instances plus 12 `format` calls, and each cell then paid another
+    // `dayjs(month).locale(…).format(monthsListFormat)` — a parse, a locale clone
+    // and a locale-table format — for a label that is fixed for the whole year.
+    const monthsInfo = useMemo(() => {
+      const grid = getMonthsData(year);
+      return {
+        grid,
+        cells: grid.map((row) =>
+          row.map((month) => ({
+            month,
+            disabled: isMonthDisabled({ month, minDate: minDateString, maxDate: maxDateString }),
+            label: dayjs(month).locale(resolvedLocale).format(monthsListFormat),
+          })),
+        ),
+      };
+    }, [year, minDateString, maxDateString, resolvedLocale, monthsListFormat]);
+
+    // ONE per-render cache shared by `getMonthInTabOrder` (which consults the
+    // getter twice per month) and the cell loop below (a third time). Not memoized
+    // across renders — the getter closes over live selection state.
+    const resolveControlProps = memoizeByDate(getMonthControlProps);
 
     const monthInTabOrder = getMonthInTabOrder({
-      months,
+      months: monthsInfo.grid,
       minDate: minDateString,
       maxDate: maxDateString,
-      getMonthControlProps,
+      getMonthControlProps: resolveControlProps,
     });
 
     const cellGap = withCellSpacing ? CELL_SPACING : 0;
 
-    const rows = months.map((monthsRow, rowIndex) => {
-      const cells = monthsRow.map((month, cellIndex) => {
-        const controlProps = getMonthControlProps?.(month);
-        const isMonthInTabOrder = dayjs(month).isSame(monthInTabOrder, "month");
-        const disabled =
-          isMonthDisabled({ month, minDate: minDateString, maxDate: maxDateString }) ||
-          controlProps?.disabled;
+    // The cell memo can only bail out if every function prop it receives keeps a
+    // stable identity. All four of these arrive freshly built each render (the level
+    // group builds them per year, `MonthPicker` per render), so they are wrapped
+    // once here rather than being stabilised at each of their many call sites.
+    const onControlMouseEnter = useCallbackRef(__onControlMouseEnter);
+    const onControlClick = useCallbackRef(__onControlClick);
+    const onControlKeyDown = useCallbackRef(__onControlKeyDown);
+    const getControlRef = useCallbackRef(__getControlRef);
 
-        // Tamagui hover handlers are not part of `PickerControl`'s public prop
-        // type; attach them via a precisely-typed object spread, the kit's pattern
-        // for web-only affordances (see `Month`). Native never fires it.
-        const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
-          onHoverIn: (event) => __onControlMouseEnter?.(event, month),
-        };
+    const cellSlotProps = s.get("cell");
+
+    const rows = monthsInfo.cells.map((monthsRow, rowIndex) => {
+      const cells = monthsRow.map(({ month, disabled: outOfBounds, label }, cellIndex) => {
+        const controlProps = resolveControlProps?.(month);
+        // Both sides come from `getMonthsData`'s canonical `YYYY-MM-DD`, so the
+        // `YYYY-MM` prefix compare is exactly the month-granularity `isSame` it
+        // replaces — without a dayjs instance per cell.
+        const isMonthInTabOrder =
+          monthInTabOrder !== undefined && month.slice(0, 7) === monthInTabOrder.slice(0, 7);
+        const disabled = outOfBounds || controlProps?.disabled;
 
         return (
-          <MonthsListCell key={month} role="cell" fullWidth={fullWidth} {...s.get("cell")}>
-            <PickerControl
-              size={size}
-              fullWidth={fullWidth}
-              // explicit beats sugar: the `control` slot sits UNDER per-month
-              // `getMonthControlProps`, and the consumer's own handlers are
-              // preserved (called before ours).
-              {...s.merge("control", controlProps)}
-              disabled={disabled}
-              ref={(node) => {
-                if (node) {
-                  __getControlRef?.(rowIndex, cellIndex, {
-                    focus: () => focusElement(node),
-                    disabled,
-                  });
-                }
-              }}
-              onKeyDown={(event: ControlKeyboardEvent) => {
-                controlProps?.onKeyDown?.(event);
-                __onControlKeyDown?.(event, { rowIndex, cellIndex, date: month });
-              }}
-              onPress={(event: ControlPressEvent) => {
-                controlProps?.onPress?.(event);
-                __onControlClick?.(event, month);
-              }}
-              onPressIn={(event: ControlPressInEvent) => {
-                controlProps?.onPressIn?.(event);
-                if (__preventFocus && hasPreventDefault(event)) {
-                  event.preventDefault();
-                }
-              }}
-              tabIndex={__preventFocus || !isMonthInTabOrder ? -1 : 0}
-              {...hoverHandlers}
-            >
-              {controlProps?.children ??
-                dayjs(month).locale(ctx.getLocale(locale)).format(monthsListFormat)}
-            </PickerControl>
-          </MonthsListCell>
+          <MonthsListControlCell
+            key={month}
+            month={month}
+            label={label}
+            disabled={disabled}
+            rowIndex={rowIndex}
+            cellIndex={cellIndex}
+            tabIndex={__preventFocus || !isMonthInTabOrder ? -1 : 0}
+            size={size}
+            fullWidth={fullWidth}
+            preventFocus={__preventFocus}
+            cellProps={cellSlotProps}
+            controlProps={controlProps}
+            mergedControlProps={s.merge("control", controlProps)}
+            onControlMouseEnter={onControlMouseEnter}
+            onControlClick={onControlClick}
+            onControlKeyDown={onControlKeyDown}
+            getControlRef={getControlRef}
+          />
         );
       });
 

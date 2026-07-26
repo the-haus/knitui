@@ -15,6 +15,8 @@
 // fold (#15). a11y is set on both axes (#11): web `role="row"`/`role="columnheader"`
 // plus a native `accessibilityRole` counterpart.
 // ───────────────────────────────────────────────────────────────────────────
+import { useMemo } from "react";
+
 import { Box, Text } from "@knitui/components";
 import {
   createStyledContext,
@@ -183,11 +185,33 @@ const WeekdaysRowComponent = WeekdaysRowFrame.styleable<WeekdaysRowProps>(
     // 9. Locale + `firstDayOfWeek` come from `DatesProvider` (consumer props win).
     const ctx = useDatesContext();
 
-    const weekdays = getWeekdayNames({
-      locale: ctx.getLocale(locale),
-      format: weekdayFormat,
-      firstDayOfWeek: ctx.getFirstDayOfWeek(firstDayOfWeek),
-    });
+    const resolvedLocale = ctx.getLocale(locale);
+    const resolvedFirstDayOfWeek = ctx.getFirstDayOfWeek(firstDayOfWeek);
+
+    // The 7 labels are a pure function of these three inputs, and building them is
+    // not cheap: `getWeekdayNames` spends ~22 dayjs instances (a base date plus, per
+    // day, an `add` → `locale` → `format` clone chain) and 7 locale-table lookups.
+    // `Month` renders this row unconditionally, so unmemoized it was rebuilt on
+    // every grid render — including the ones caused by nothing but a web hover
+    // moving one cell over (`hoveredDate` lives above the whole calendar), ×
+    // `numberOfColumns`. Memoized on the resolved primitives, a hover frame reuses
+    // the labels and only a real locale/format/first-day change rebuilds them.
+    //
+    // Deliberately a per-instance `useMemo` and NOT a module-level cache (the
+    // pattern `../internal/month-days-cache.ts` uses for the day grid): the labels
+    // are only pure for a WEEKDAY-shaped format. `getWeekdayNames` derives its base
+    // date from `dayjs()` — today — so a date-bearing `weekdayFormat` (or a function
+    // renderer, whose identity is not a usable cache key) would produce output that
+    // a process-lifetime cache could serve stale across a midnight rollover.
+    const weekdays = useMemo(
+      () =>
+        getWeekdayNames({
+          locale: resolvedLocale,
+          format: weekdayFormat,
+          firstDayOfWeek: resolvedFirstDayOfWeek,
+        }),
+      [resolvedLocale, weekdayFormat, resolvedFirstDayOfWeek],
+    );
 
     // 7. Typed per-slot accessor (dev-warns unknown keys against the known set).
     const s = slotStyles<WeekdaysRowStyles>(styles, WEEKDAYS_ROW_SLOT_KEYS, "WeekdaysRow");

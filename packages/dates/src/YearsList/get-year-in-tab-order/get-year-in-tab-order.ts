@@ -8,6 +8,12 @@ interface GetYearInTabOrderInput {
   years: DateStringValue[][];
   minDate: DateStringValue | undefined;
   maxDate: DateStringValue | undefined;
+  /**
+   * Consulted TWICE per year below (once for `disabled`, once for `selected`), so
+   * callers should pass a getter wrapped in `memoizeByDate` — the same wrapper they
+   * use for their own cell loop, so the whole render resolves each year's props
+   * exactly once. See `internal/memoize-control-props.ts`.
+   */
   getYearControlProps: ((year: DateStringValue) => Partial<PickerControlProps>) | undefined;
 }
 
@@ -34,7 +40,12 @@ export function getYearInTabOrder({
     return selectedYear;
   }
 
-  const currentYear = enabledYears.find((year) => dayjs().isSame(year, "year"));
+  // One formatted "today" instead of a fresh `dayjs()` (plus its `startOf`/`endOf`
+  // clones) per candidate. `years` always comes from `getYearsData`, which emits
+  // zero-padded `YYYY-MM-DD`, so comparing the `YYYY` prefix is exactly the
+  // year-granularity `isSame` this replaces.
+  const currentYearPrefix = dayjs().format("YYYY");
+  const currentYear = enabledYears.find((year) => year.slice(0, 4) === currentYearPrefix);
 
   if (currentYear) {
     return currentYear;

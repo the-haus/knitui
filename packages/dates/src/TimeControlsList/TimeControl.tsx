@@ -121,6 +121,21 @@ function TimeControlImpl<Value extends number | string>(
   );
 }
 
-export const TimeControl = React.forwardRef(TimeControlImpl) as <Value extends number | string>(
+/**
+ * `React.memo` matters here more than anywhere else in the time picker: a `24h`
+ * dropdown with seconds renders 24 + 60 + 60 = 144 of these, and EVERY keystroke
+ * in the segment inputs updates `controller.values`, re-rendering `TimePicker` and
+ * with it all three columns. Only the two controls whose `active` flips actually
+ * need to re-render.
+ *
+ * All the props are primitives (`value`, `active`, `size`, `role`) except
+ * `onSelect`, which `TimeControlsList` stabilises with `useCallbackRef` — so the
+ * shallow compare is sound. The `ref` (which `memo` does not compare) is only ever
+ * attached to the ACTIVE control, and `active` is itself a compared prop, so a ref
+ * change never happens without a prop change to drive the re-render.
+ */
+export const TimeControl = React.memo(React.forwardRef(TimeControlImpl)) as <
+  Value extends number | string,
+>(
   props: TimeControlProps<Value> & React.RefAttributes<TamaguiElement>,
 ) => React.ReactElement | null;

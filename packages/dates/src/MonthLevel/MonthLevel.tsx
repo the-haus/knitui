@@ -217,27 +217,46 @@ const MonthLevelComponent = MonthLevelFrame.styleable<MonthLevelProps>(
 
     // 9. Locale comes from `DatesProvider` (consumer `locale` prop wins).
     const ctx = useDatesContext();
+    const resolvedLocale = ctx.getLocale(locale);
 
     // 10. Auto-disable the controls at the `minDate`/`maxDate` bounds (an explicit
     //     boolean override always wins).
-    const _nextDisabled =
-      typeof nextDisabled === "boolean"
-        ? nextDisabled
-        : maxDate
-          ? !dayjs(month).endOf("month").isBefore(maxDate)
-          : false;
+    //
+    // All three derivations are dayjs-heavy and none of them can change on a render
+    // caused by something else: 3 `dayjs(month)` constructions, an `endOf`/`startOf`
+    // clone each, plus a `.locale()` clone and a `format` for the label. The whole
+    // calendar re-renders per hovered day cell (`hoveredDate` lives above it), and
+    // this runs once PER COLUMN, so unmemoized it was paid on every hover frame.
+    // Memoized on exactly the inputs the three read — note `monthLabelFormat` and
+    // the `min`/`maxDate` bounds are depended on by IDENTITY, so a consumer's
+    // inline function or fresh `Date` still recomputes (correct, just no win).
+    const {
+      label,
+      nextDisabled: _nextDisabled,
+      previousDisabled: _previousDisabled,
+    } = React.useMemo(
+      () => ({
+        nextDisabled:
+          typeof nextDisabled === "boolean"
+            ? nextDisabled
+            : maxDate
+              ? !dayjs(month).endOf("month").isBefore(maxDate)
+              : false,
 
-    const _previousDisabled =
-      typeof previousDisabled === "boolean"
-        ? previousDisabled
-        : minDate
-          ? !dayjs(month).startOf("month").isAfter(minDate)
-          : false;
+        previousDisabled:
+          typeof previousDisabled === "boolean"
+            ? previousDisabled
+            : minDate
+              ? !dayjs(month).startOf("month").isAfter(minDate)
+              : false,
 
-    const label =
-      typeof monthLabelFormat === "function"
-        ? monthLabelFormat(month)
-        : dayjs(month).locale(ctx.getLocale(locale)).format(monthLabelFormat);
+        label:
+          typeof monthLabelFormat === "function"
+            ? monthLabelFormat(month)
+            : dayjs(month).locale(resolvedLocale).format(monthLabelFormat),
+      }),
+      [month, minDate, maxDate, nextDisabled, previousDisabled, resolvedLocale, monthLabelFormat],
+    );
 
     // 7. Route the header-named slots into `CalendarHeader`'s own `styles` map.
     const headerStyles: SlotStyles<CalendarHeaderStyles> = {

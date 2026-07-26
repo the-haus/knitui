@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import dayjs from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 
 import { Text, UnstyledButton } from "@knitui/components";
 import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
 
 import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
-import { useDatesContext } from "../DatesProvider";
+import { DatesProviderContext } from "../DatesProvider";
 import { controlA11yProps } from "../internal/a11y";
 import { webCursor } from "../internal/web-cursor";
 import type { DateStringValue } from "../types";
@@ -50,6 +50,26 @@ const dayFontVariant = {
 } as const;
 
 const DayContext = createStyledContext<{ size: DaySize }>({ size: "md" });
+
+/**
+ * Whether `day` falls on today's LOCAL calendar date, compared without
+ * allocating a single extra dayjs instance.
+ *
+ * `day.isSame(new Date(), "day")` — the obvious spelling — costs a `Date`, a
+ * dayjs instance wrapping it, and two more clones for dayjs' internal
+ * `startOf`/`endOf` bracket, i.e. ~4 allocations PER CELL (×42 cells, every
+ * render). Reading the three calendar fields off the instance we already have
+ * is exact (`year`/`month`/`date` are plain field reads, no clone) and costs
+ * only the one `Date` for "now".
+ */
+function isSameDayAsToday(day: Dayjs): boolean {
+  const now = new Date();
+  return (
+    day.date() === now.getDate() &&
+    day.month() === now.getMonth() &&
+    day.year() === now.getFullYear()
+  );
+}
 
 /**
  * The atomic calendar cell — an `UnstyledButton`-based control composed via
@@ -281,16 +301,37 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
     ...rest
   } = props;
 
-  const ctx = useDatesContext();
+  // The RAW context, not `useDatesContext()`. The hook's four `useCallback` getter
+  // helpers are convenience for components that resolve several settings; `Day`
+  // needs exactly one value — the locale for its fallback label — and it is the
+  // grid's hottest leaf (42 instances per month × `numberOfColumns`, all
+  // re-rendering on a hover frame). Going through the hook there cost 42 extra
+  // hook subscriptions and ~168 freshly allocated closures per grid render for a
+  // single string read. `locale || ctx.locale` below is the getter's body verbatim
+  // (`getLocale = (input) => input || ctx.locale`), so a standalone `<Day>`
+  // resolves its locale exactly as before.
+  const ctx = React.useContext(DatesProviderContext);
   const day = dayjs(date);
-  const isToday = day.isSame(new Date(), "day");
+
+  // Only the `highlightToday` border consults "is this today", so the comparison
+  // is skipped entirely when the border is off (the default).
+  const isToday = highlightToday && isSameDayAsToday(day);
 
   // Locale-aware default label, read from `DatesProvider`. A static (display-only)
-  // day announces nothing — it is not an interactive date. An explicit
-  // `aria-label` in `...rest` still wins (it is spread last).
-  const defaultAriaLabel = isStatic
+  // day announces nothing — it is not an interactive date.
+  //
+  // An explicit `aria-label` WINS, so it is read up-front and the fallback is
+  // only built when there is none: `Month` always passes its own `aria-label`
+  // through `...rest` (spread last), which means computing the fallback there
+  // was pure waste — a locale clone plus `format("D MMMM YYYY")`, the most
+  // expensive token set in the file, for a string that was always discarded,
+  // ×42 cells every render. Reading the explicit label here also means NATIVE
+  // (`accessibilityLabel` below) now announces the same custom label web does,
+  // instead of the generic date it used to fall back to.
+  const explicitAriaLabel = props["aria-label"];
+  const ariaLabel = isStatic
     ? undefined
-    : day.locale(ctx.getLocale(locale)).format("D MMMM YYYY");
+    : (explicitAriaLabel ?? day.locale(locale || ctx.locale).format("D MMMM YYYY"));
 
   // Mirror Mantine's data-attribute gating: a disabled day shows none of the
   // selection/range/weekend/outside styling, and today's border is suppressed
@@ -327,7 +368,7 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
       fullWidth={fullWidth}
       disabled={disabled}
       role={isStatic ? "presentation" : "button"}
-      aria-label={defaultAriaLabel}
+      aria-label={ariaLabel}
       aria-selected={isSelected || undefined}
       aria-disabled={disabled || undefined}
       aria-hidden={hidden || undefined}
@@ -335,7 +376,7 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
       // a static display cell announces nothing interactive (`role="none"`).
       {...controlA11yProps({
         role: isStatic ? "none" : "button",
-        label: defaultAriaLabel,
+        label: ariaLabel,
         selected: isSelected,
         disabled,
       })}

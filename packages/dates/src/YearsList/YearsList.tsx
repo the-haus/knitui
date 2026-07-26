@@ -18,6 +18,9 @@
 // frame/row/cell, not a per-render spread the optimiser could fold onto a whole
 // cell.
 // ───────────────────────────────────────────────────────────────────────────
+import * as React from "react";
+import { useMemo } from "react";
+
 import dayjs from "dayjs";
 
 import { Box } from "@knitui/components";
@@ -29,11 +32,14 @@ import {
   styled,
   withStaticProperties,
 } from "@knitui/core";
+import { useCallbackRef } from "@knitui/hooks";
 
 import { type CalendarSize, CELL_SPACING } from "../cell-metrics";
 import { useDatesContext } from "../DatesProvider";
+import { areCellPropsEqual } from "../internal/are-cell-props-equal";
 import { focusElement } from "../internal/focus-element";
 import { hasPreventDefault } from "../internal/has-prevent-default";
+import { memoizeByDate } from "../internal/memoize-control-props";
 import { PickerControl, type PickerControlProps } from "../PickerControl";
 import type {
   ControlKeyboardEvent,
@@ -120,6 +126,132 @@ const YearsListCell = styled(Box, {
     },
   } as const,
 });
+
+/** Props for the memoized year cell — see {@link YearsListControlCell}. */
+interface YearsListControlCellProps {
+  /** The cell's year, `YYYY-MM-DD`. */
+  year: DateStringValue;
+  /** Localized year label (resolved once per decade in the grid memo). */
+  label: string;
+  /** Resolved disabled state (bounds ∪ the per-year getter's own flag). */
+  disabled: boolean | undefined;
+
+  /** Grid position, used for roving focus. */
+  rowIndex: number;
+  cellIndex: number;
+
+  /** Roving tabindex for this cell. */
+  tabIndex: number;
+
+  size: CalendarSize;
+  fullWidth: boolean;
+  preventFocus: boolean | undefined;
+
+  /** `styles.cell` props for the wrapper. */
+  cellProps: GetProps<typeof YearsListCell> | undefined;
+
+  /** The raw `getYearControlProps(year)` result — source of the consumer's handlers. */
+  controlProps: Partial<PickerControlProps> | undefined;
+
+  /** `styles.control` merged UNDER `controlProps` — spread onto the leaf. */
+  mergedControlProps: Partial<PickerControlProps>;
+
+  /**
+   * The `__`-prefixed grid callbacks, pre-stabilised by `YearsList` with
+   * `useCallbackRef` — an unstable identity here would defeat the memo for every
+   * cell on every render.
+   */
+  onControlMouseEnter: (event: unknown, date: DateStringValue) => void;
+  onControlClick: (event: ControlPressEvent, date: DateStringValue) => void;
+  onControlKeyDown: (
+    event: ControlKeyboardEvent,
+    payload: { rowIndex: number; cellIndex: number; date: DateStringValue },
+  ) => void;
+  getControlRef: (
+    rowIndex: number,
+    cellIndex: number,
+    control: { focus: () => void; disabled: boolean | undefined },
+  ) => void;
+}
+
+/**
+ * One year cell, memoized — the `YearsList` twin of `Month`'s `MonthDayCell` and
+ * `MonthsList`'s `MonthsListControlCell`.
+ *
+ * A RANGE year picker updates `hoveredDate` on every web hover move, re-rendering
+ * the whole picker subtree; without this boundary all 10 `PickerControl` leaves
+ * re-rendered (and 10 refs detached/reattached, re-running `__getControlRef`) for a
+ * change that moved two cells' background colour.
+ *
+ * The boundary is deliberately an INTERNAL cell, not the public `PickerControl`.
+ * Tamagui's styled-context and theme reads happen inside the leaf and still
+ * propagate past a memo, so cells keep responding to theme/size changes.
+ */
+const YearsListControlCell = React.memo(function YearsListControlCell({
+  year,
+  label,
+  disabled,
+  rowIndex,
+  cellIndex,
+  tabIndex,
+  size,
+  fullWidth,
+  preventFocus,
+  cellProps,
+  controlProps,
+  mergedControlProps,
+  onControlMouseEnter,
+  onControlClick,
+  onControlKeyDown,
+  getControlRef,
+}: YearsListControlCellProps) {
+  // Tamagui hover handlers are not part of `PickerControl`'s public prop type;
+  // attach them via a precisely-typed object spread, the kit's pattern for web-only
+  // affordances (see `Month`). Native never fires it.
+  const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
+    onHoverIn: (event) => onControlMouseEnter(event, year),
+  };
+
+  return (
+    <YearsListCell role="cell" fullWidth={fullWidth} {...cellProps}>
+      <PickerControl
+        size={size}
+        fullWidth={fullWidth}
+        // explicit beats sugar: the `control` slot sits UNDER per-year
+        // `getYearControlProps`, and the consumer's own handlers are
+        // preserved (called before ours).
+        {...mergedControlProps}
+        disabled={disabled}
+        ref={(node) => {
+          if (node) {
+            getControlRef(rowIndex, cellIndex, {
+              focus: () => focusElement(node),
+              disabled,
+            });
+          }
+        }}
+        onKeyDown={(event: ControlKeyboardEvent) => {
+          controlProps?.onKeyDown?.(event);
+          onControlKeyDown(event, { rowIndex, cellIndex, date: year });
+        }}
+        onPress={(event: ControlPressEvent) => {
+          controlProps?.onPress?.(event);
+          onControlClick(event, year);
+        }}
+        onPressIn={(event: ControlPressInEvent) => {
+          controlProps?.onPressIn?.(event);
+          if (preventFocus && hasPreventDefault(event)) {
+            event.preventDefault();
+          }
+        }}
+        tabIndex={tabIndex}
+        {...hoverHandlers}
+      >
+        {controlProps?.children ?? label}
+      </PickerControl>
+    </YearsListCell>
+  );
+}, areCellPropsEqual);
 
 // ── 7. Per-slot `styles` sugar + per-item passthrough ───────────────────────────
 // The kit's ONE styling model is props on the parts. `styles` is thin sugar over
@@ -241,71 +373,80 @@ const YearsListComponent = YearsListFrame.styleable<YearsListProps>(function Yea
   // 7. Typed per-slot accessor (dev-warns unknown keys against the known set).
   const s = slotStyles<YearsListStyles>(styles, YEARS_LIST_SLOT_KEYS, "YearsList");
 
-  const years = getYearsData(decade);
+  const resolvedLocale = ctx.getLocale(locale);
+
+  // The 10 cells' grid, bounds and LABELS depend only on the decade, the locale,
+  // the format and the min/max bounds — never on the selection — yet they were
+  // rebuilt every render, each cell paying a `dayjs(year).locale(…).format(…)`
+  // (parse + locale clone + locale-table format) for a label fixed for the decade.
+  const yearsInfo = useMemo(() => {
+    const grid = getYearsData(decade);
+    return {
+      grid,
+      cells: grid.map((row) =>
+        row.map((year) => ({
+          year,
+          disabled: isYearDisabled({ year, minDate: minDateString, maxDate: maxDateString }),
+          label: dayjs(year).locale(resolvedLocale).format(yearsListFormat),
+        })),
+      ),
+    };
+  }, [decade, minDateString, maxDateString, resolvedLocale, yearsListFormat]);
+
+  // ONE per-render cache shared by `getYearInTabOrder` (which consults the getter
+  // twice per year) and the cell loop below (a third time). Not memoized across
+  // renders — the getter closes over live selection state.
+  const resolveControlProps = memoizeByDate(getYearControlProps);
 
   const yearInTabOrder = getYearInTabOrder({
-    years,
+    years: yearsInfo.grid,
     minDate: minDateString,
     maxDate: maxDateString,
-    getYearControlProps,
+    getYearControlProps: resolveControlProps,
   });
 
   const cellGap = withCellSpacing ? CELL_SPACING : 0;
 
-  const rows = years.map((yearsRow, rowIndex) => {
-    const cells = yearsRow.map((year, cellIndex) => {
-      const controlProps = getYearControlProps?.(year);
-      const isYearInTabOrder = dayjs(year).isSame(yearInTabOrder, "year");
-      const disabled =
-        isYearDisabled({ year, minDate: minDateString, maxDate: maxDateString }) ||
-        controlProps?.disabled;
+  // The cell memo can only bail out if every function prop it receives keeps a
+  // stable identity. All four of these arrive freshly built each render (the level
+  // group builds them per decade, `YearPicker` per render), so they are wrapped once
+  // here rather than being stabilised at each of their many call sites.
+  const onControlMouseEnter = useCallbackRef(__onControlMouseEnter);
+  const onControlClick = useCallbackRef(__onControlClick);
+  const onControlKeyDown = useCallbackRef(__onControlKeyDown);
+  const getControlRef = useCallbackRef(__getControlRef);
 
-      // Tamagui hover handlers are not part of `PickerControl`'s public prop
-      // type; attach them via a precisely-typed object spread, the kit's pattern
-      // for web-only affordances (see `Month`). Native never fires it.
-      const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
-        onHoverIn: (event) => __onControlMouseEnter?.(event, year),
-      };
+  const cellSlotProps = s.get("cell");
+
+  const rows = yearsInfo.cells.map((yearsRow, rowIndex) => {
+    const cells = yearsRow.map(({ year, disabled: outOfBounds, label }, cellIndex) => {
+      const controlProps = resolveControlProps?.(year);
+      // Both sides come from `getYearsData`'s canonical `YYYY-MM-DD`, so the `YYYY`
+      // prefix compare is exactly the year-granularity `isSame` it replaces.
+      const isYearInTabOrder =
+        yearInTabOrder !== undefined && year.slice(0, 4) === yearInTabOrder.slice(0, 4);
+      const disabled = outOfBounds || controlProps?.disabled;
 
       return (
-        <YearsListCell key={year} role="cell" fullWidth={fullWidth} {...s.get("cell")}>
-          <PickerControl
-            size={size}
-            fullWidth={fullWidth}
-            // explicit beats sugar: the `control` slot sits UNDER per-year
-            // `getYearControlProps`, and the consumer's own handlers are
-            // preserved (called before ours).
-            {...s.merge("control", controlProps)}
-            disabled={disabled}
-            ref={(node) => {
-              if (node) {
-                __getControlRef?.(rowIndex, cellIndex, {
-                  focus: () => focusElement(node),
-                  disabled,
-                });
-              }
-            }}
-            onKeyDown={(event: ControlKeyboardEvent) => {
-              controlProps?.onKeyDown?.(event);
-              __onControlKeyDown?.(event, { rowIndex, cellIndex, date: year });
-            }}
-            onPress={(event: ControlPressEvent) => {
-              controlProps?.onPress?.(event);
-              __onControlClick?.(event, year);
-            }}
-            onPressIn={(event: ControlPressInEvent) => {
-              controlProps?.onPressIn?.(event);
-              if (__preventFocus && hasPreventDefault(event)) {
-                event.preventDefault();
-              }
-            }}
-            tabIndex={__preventFocus || !isYearInTabOrder ? -1 : 0}
-            {...hoverHandlers}
-          >
-            {controlProps?.children ??
-              dayjs(year).locale(ctx.getLocale(locale)).format(yearsListFormat)}
-          </PickerControl>
-        </YearsListCell>
+        <YearsListControlCell
+          key={year}
+          year={year}
+          label={label}
+          disabled={disabled}
+          rowIndex={rowIndex}
+          cellIndex={cellIndex}
+          tabIndex={__preventFocus || !isYearInTabOrder ? -1 : 0}
+          size={size}
+          fullWidth={fullWidth}
+          preventFocus={__preventFocus}
+          cellProps={cellSlotProps}
+          controlProps={controlProps}
+          mergedControlProps={s.merge("control", controlProps)}
+          onControlMouseEnter={onControlMouseEnter}
+          onControlClick={onControlClick}
+          onControlKeyDown={onControlKeyDown}
+          getControlRef={getControlRef}
+        />
       );
     });
 

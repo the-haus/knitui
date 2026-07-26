@@ -18,7 +18,7 @@
 // the ported `@mantine/dates` build (the upstream `tz`/dayjs-timezone layer is
 // not part of this port).
 // ───────────────────────────────────────────────────────────────────────────
-import { createContext, type ReactNode } from "react";
+import { createContext, type ReactNode, useMemo } from "react";
 
 import type { DayOfWeek } from "../types";
 
@@ -70,11 +70,33 @@ export interface DatesProviderProps {
  * Components read it through `useDatesContext`.
  */
 export function DatesProvider({ settings, children }: DatesProviderProps) {
-  return (
-    <DatesProviderContext.Provider value={{ ...DATES_PROVIDER_DEFAULT_SETTINGS, ...settings }}>
-      {children}
-    </DatesProviderContext.Provider>
+  // The context value MUST keep a stable identity across renders. A context change
+  // propagates past every `React.memo` boundary below it, so an inline
+  // `value={{ ...defaults, ...settings }}` — a fresh object each render — defeats
+  // the memoized day cell (`Month`'s `MonthDayCell`) for all 42 cells of every
+  // month grid, which is exactly the boundary that keeps a web hover from
+  // re-rendering the whole calendar.
+  //
+  // `settings` itself is documented (and used throughout the stories/tests) as an
+  // INLINE literal, so memoizing on its identity would never hit. We therefore
+  // depend on the individual fields: the four primitives by value, and
+  // `weekendDays` by its joined value rather than its identity so an inlined
+  // `weekendDays={[0, 6]}` does not invalidate on every render either.
+  const { locale, firstDayOfWeek, weekendDays, labelSeparator, consistentWeeks } = settings;
+  const weekendDaysKey = weekendDays?.join(",");
+
+  const value = useMemo<DatesProviderValue>(
+    // The merge is kept verbatim (rather than rebuilt from the destructured
+    // locals) so the exact spread semantics are preserved — including a key that
+    // is present with an explicit `undefined`, which overrides its default.
+    () => ({ ...DATES_PROVIDER_DEFAULT_SETTINGS, ...settings }),
+    // `settings` is read inside but deliberately NOT a dependency — that is the
+    // whole point (see above); `weekendDays` is depended on via `weekendDaysKey`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locale, firstDayOfWeek, weekendDaysKey, labelSeparator, consistentWeeks],
   );
+
+  return <DatesProviderContext.Provider value={value}>{children}</DatesProviderContext.Provider>;
 }
 
 DatesProvider.displayName = "@knitui/dates/DatesProvider";

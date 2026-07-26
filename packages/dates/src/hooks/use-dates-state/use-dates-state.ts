@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import dayjs from "dayjs";
 
+import { isBeforeByPrefix, isSameByPrefix } from "../../internal/date-string-fast-path";
 import type {
   DatePickerType,
   DatePickerValue,
@@ -184,13 +185,32 @@ export function useDatesState<Type extends DatePickerType = "default">({
         }
       : onMouseLeave;
 
+  // ── The per-cell comparison helpers ────────────────────────────────────────
+  // `getControlProps` below is called for EVERY cell of the grid (42 for a day
+  // picker, ×2 for two columns), and it consults these three times per cell — so
+  // `dayjs(a).isSame(b, level)`, at ~4 allocations a call (the instance, plus
+  // dayjs' internal `startOf`/`endOf` clones), dominated the render. Both sides
+  // are canonical `YYYY-MM-DD` in every picker, so a prefix compare at the
+  // `level`'s granularity is exact and allocation-free; `isSameByPrefix` /
+  // `isBeforeByPrefix` return `null` for anything non-canonical, which falls back
+  // to the original dayjs comparison.
+  const isSameAtLevel = (a: DateStringValue | null, b: DateStringValue | null): boolean => {
+    if (a == null || b == null) {
+      return false;
+    }
+    return isSameByPrefix(a, b, level) ?? dayjs(a).isSame(b, level);
+  };
+
+  const isStrictlyBefore = (a: DateStringValue, b: DateStringValue): boolean =>
+    isBeforeByPrefix(a, b) ?? dayjs(a).isBefore(b);
+
   const isFirstInRange = (date: DateStringValue) => {
     if (!rangeView[0]) {
       return false;
     }
 
-    if (dayjs(date).isSame(rangeView[0], level)) {
-      return !(hoveredDate && dayjs(hoveredDate).isBefore(rangeView[0]));
+    if (isSameAtLevel(date, rangeView[0])) {
+      return !(hoveredDate && isStrictlyBefore(hoveredDate, rangeView[0]));
     }
 
     return false;
@@ -198,14 +218,14 @@ export function useDatesState<Type extends DatePickerType = "default">({
 
   const isLastInRange = (date: DateStringValue) => {
     if (rangeView[1]) {
-      return dayjs(date).isSame(rangeView[1], level);
+      return isSameAtLevel(date, rangeView[1]);
     }
 
     if (!rangeView[0] || !hoveredDate) {
       return false;
     }
 
-    return dayjs(hoveredDate).isBefore(rangeView[0]) && dayjs(date).isSame(rangeView[0], level);
+    return isStrictlyBefore(hoveredDate, rangeView[0]) && isSameAtLevel(date, rangeView[0]);
   };
 
   // NOTE: Mantine also returns a `data-autofocus` web-DOM attribute here; it is
@@ -213,9 +233,7 @@ export function useDatesState<Type extends DatePickerType = "default">({
   const getControlProps = (date: DateStringValue): RangeControlProps | SelectedControlProps => {
     if (type === "range") {
       return {
-        selected: rangeView.some(
-          (selection) => selection !== null && dayjs(selection).isSame(date, level),
-        ),
+        selected: rangeView.some((selection) => isSameAtLevel(selection, date)),
         inRange: isDateInRange(date),
         firstInRange: isFirstInRange(date),
         lastInRange: isLastInRange(date),
@@ -224,14 +242,12 @@ export function useDatesState<Type extends DatePickerType = "default">({
 
     if (type === "multiple") {
       return {
-        selected: storedArray.some(
-          (selection) => selection !== null && dayjs(selection).isSame(date, level),
-        ),
+        selected: storedArray.some((selection) => isSameAtLevel(selection, date)),
       };
     }
 
     const single = Array.isArray(stored) ? null : stored;
-    return { selected: single !== null && dayjs(single).isSame(date, level) };
+    return { selected: isSameAtLevel(single, date) };
   };
 
   const onHoveredDateChange = (date: DateStringValue) => {

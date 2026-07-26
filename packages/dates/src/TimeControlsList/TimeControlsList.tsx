@@ -37,6 +37,7 @@ import {
   type TamaguiElement,
   withStaticProperties,
 } from "@knitui/core";
+import { useCallbackRef } from "@knitui/hooks";
 
 import { type CalendarSize, CELL_SPACING } from "../cell-metrics";
 import { TimeControl, type TimeControlProps } from "./TimeControl";
@@ -204,8 +205,19 @@ function TimeControlsListComponent({
     "TimeControlsList",
   );
 
-  const range = getValuesRange(min, max, step);
-  const ordered = reversed ? [...range].reverse() : range;
+  // The column contents are a pure function of four primitives, but `TimePicker`
+  // re-renders on EVERY keystroke in the segment inputs (each one updates
+  // `controller.values`), which rebuilt all three columns' arrays — 24 + 60 + 60
+  // entries plus a `[...range].reverse()` copy — for a list that never changed.
+  const ordered = React.useMemo(() => {
+    const range = getValuesRange(min, max, step);
+    return reversed ? range.reverse() : range;
+  }, [min, max, step, reversed]);
+
+  // A stable `onSelect` is what makes the `React.memo` on `TimeControl` effective:
+  // the controller hands us a fresh arrow every render, which would otherwise fail
+  // the shallow prop compare for all 144 controls on every keystroke.
+  const stableOnSelect = useCallbackRef(onSelect);
 
   React.useEffect(() => {
     if (value === null) {
@@ -260,7 +272,7 @@ function TimeControlsListComponent({
               ref={active ? activeRef : undefined}
               value={control}
               active={active}
-              onSelect={onSelect}
+              onSelect={stableOnSelect}
               size={size}
               role="option"
               {...s.merge("control", controlProps)}

@@ -13,7 +13,15 @@ interface GetDateInTabOrderInput {
   minDate: DateStringValue | undefined;
   /** Upper bound, `YYYY-MM-DD`. */
   maxDate: DateStringValue | undefined;
-  /** Per-day prop getter — its `disabled`/`selected` participate in the choice. */
+  /**
+   * Per-day prop getter — its `disabled`/`selected` participate in the choice.
+   *
+   * It is consulted TWICE per date below (once for `disabled`, once for
+   * `selected`), so callers should pass a getter wrapped in
+   * `memoizeByDate` — the same wrapper they use for their own cell loop, so the
+   * whole render resolves each date's props exactly once. See
+   * `internal/memoize-control-props.ts`.
+   */
   getDayProps: ((date: DateStringValue) => Partial<DayProps>) | undefined;
   /** Predicate marking a day disabled. */
   excludeDate: ((date: DateStringValue) => boolean) | undefined;
@@ -54,7 +62,14 @@ export function getDateInTabOrder({
     return selectedDate;
   }
 
-  const currentDate = enabledDates.find((date) => dayjs().isSame(date, "date"));
+  // `dayjs().isSame(date, "date")` inside the predicate built a FRESH "now"
+  // instance (plus dayjs' internal `startOf`/`endOf` clones) for every candidate
+  // — ~4 allocations × up to 42 dates, to answer a question whose left-hand side
+  // never changes. One formatted "today" string compares exactly instead:
+  // `dates` always comes from `getMonthDays`, which emits zero-padded
+  // `YYYY-MM-DD`, so string equality is equivalent to a day-granularity `isSame`.
+  const today = dayjs().format("YYYY-MM-DD");
+  const currentDate = enabledDates.find((date) => date.slice(0, 10) === today);
 
   if (currentDate) {
     return currentDate;

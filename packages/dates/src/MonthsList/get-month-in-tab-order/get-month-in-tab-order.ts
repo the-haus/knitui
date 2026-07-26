@@ -8,6 +8,12 @@ interface GetMonthInTabOrderInput {
   months: DateStringValue[][];
   minDate: DateStringValue | undefined;
   maxDate: DateStringValue | undefined;
+  /**
+   * Consulted TWICE per month below (once for `disabled`, once for `selected`),
+   * so callers should pass a getter wrapped in `memoizeByDate` — the same wrapper
+   * they use for their own cell loop, so the whole render resolves each month's
+   * props exactly once. See `internal/memoize-control-props.ts`.
+   */
   getMonthControlProps: ((month: DateStringValue) => Partial<PickerControlProps>) | undefined;
 }
 
@@ -34,7 +40,12 @@ export function getMonthInTabOrder({
     return selectedMonth;
   }
 
-  const currentMonth = enabledMonths.find((month) => dayjs().isSame(month, "month"));
+  // One formatted "today" instead of a fresh `dayjs()` (plus its `startOf`/`endOf`
+  // clones) per candidate. `months` always comes from `getMonthsData`, which emits
+  // zero-padded `YYYY-MM-DD`, so comparing the `YYYY-MM` prefix is exactly the
+  // month-granularity `isSame` this replaces.
+  const currentMonthPrefix = dayjs().format("YYYY-MM");
+  const currentMonth = enabledMonths.find((month) => month.slice(0, 7) === currentMonthPrefix);
 
   if (currentMonth) {
     return currentMonth;
