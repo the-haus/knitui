@@ -1,0 +1,18 @@
+diff --git a/dist/extractor/bundle.cjs b/dist/extractor/bundle.cjs
+index 8c41c44..337c344 100644
+--- a/dist/extractor/bundle.cjs
++++ b/dist/extractor/bundle.cjs
+@@ -198,6 +198,13 @@ export default {}`,
+             path: proxyWormPath
+           };
+         });
++        build.onResolve({
++          filter: /^react-native-gesture-handler(?:\/.*)?$/
++        }, () => {
++          return {
++            path: proxyWormPath
++          };
++        });
+         build.onResolve({
+           filter: /^(framer-motion|motion)/
+         }, args => {

@@ -17,6 +17,9 @@ patchedDependencies:
   '@tamagui/animations-css@2.4.6':
     hash: 872b2ce52606fecf3df1bcfceaad2eb14653252730468a98221c3221fbc21102
     path: patches/@tamagui__animations-css@2.4.6.patch
+  '@tamagui/static@2.4.6':
+    hash: 3b62d2f6c665ab234dd33ce5d3a4ceaaf463197b3e84204946bfbc1eea75e76c
+    path: patches/@tamagui__static@2.4.6.patch
   expo-audio@57.0.2:
     hash: 8ce72f57e26d7493bdca553c8ee2d70c58882127ee77641e95e4d03e28636e86
     path: patches/expo-audio@57.0.2.patch

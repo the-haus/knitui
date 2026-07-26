@@ -79,6 +79,7 @@
     "patchedDependencies": {
       "react-native-teleport@1.1.7": "patches/react-native-teleport@1.1.7.patch",
       "@tamagui/animations-css@2.4.6": "patches/@tamagui__animations-css@2.4.6.patch",
+      "@tamagui/static@2.4.6": "patches/@tamagui__static@2.4.6.patch",
       "expo-modules-core@57.0.6": "patches/expo-modules-core@57.0.6.patch",
       "expo-audio@57.0.2": "patches/expo-audio@57.0.2.patch"
     }

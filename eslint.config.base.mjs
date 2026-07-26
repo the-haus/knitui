@@ -152,6 +152,42 @@ const base = [
     },
   },
 
+  // Shipped library source may not import the generated glyph barrels.
+  //
+  // `@knitui/icons` re-exports ~6.1k icon modules from one file and
+  // `@knitui/emoji` does the same for its glyph set. The kit SRC-SHIPS, so
+  // Metro compiles that barrel as-is and does NOT tree-shake: a single
+  // `import { IconCheck } from "@knitui/icons"` inside e.g. `ControlIconProvider`
+  // dragged all 6.1k icon modules into every component that renders a control
+  // icon (the `@knitui/components` graph measured 6,490 modules / 4,891 KB with
+  // the barrel vs 344 modules / 1,631 KB without it).
+  //
+  // Use the per-glyph subpaths instead — they resolve through the packages'
+  // `exports` wildcards. Stories, tests and `@knitui/demo` are exempt below:
+  // they legitimately browse the whole set and never ship to consumers.
+  {
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@knitui/icons",
+              message:
+                'Import the glyph directly — `import { IconCheck } from "@knitui/icons/IconCheck"` — or the provider from "@knitui/icons/context". The root barrel pulls all ~6.1k icon modules into the bundle (Metro does not tree-shake src-shipped packages).',
+            },
+            {
+              name: "@knitui/emoji",
+              message:
+                'Import the glyph directly — `import { EmojiGrinningCat } from "@knitui/emoji/EmojiGrinningCat"`. The root barrel pulls the whole emoji set into the bundle (Metro does not tree-shake src-shipped packages).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Plain JS / CJS files (build-tool plugins, configs, scripts) are CommonJS by
   // nature — `require()` is correct here, and they run in Node.
   {
@@ -171,6 +207,8 @@ const base = [
     rules: {
       "react-hooks/rules-of-hooks": "off",
       "react-hooks/exhaustive-deps": "off",
+      // Stories are dev-only and often pick a glyph at random — the barrel is fine.
+      "no-restricted-imports": "off",
     },
   },
 
@@ -180,6 +218,8 @@ const base = [
     languageOptions: { globals: { ...globals.jest, ...globals.node } },
     rules: {
       "@typescript-eslint/no-require-imports": "off",
+      // Tests never ship; importing a glyph from the barrel is fine here.
+      "no-restricted-imports": "off",
     },
   },
 ];
