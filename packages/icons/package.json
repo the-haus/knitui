@@ -41,6 +41,18 @@
       "types": "./src/Icon.tsx",
       "default": "./src/Icon.tsx"
     },
+    "./context": {
+      "source": "./src/internal/icon-context.tsx",
+      "react-native": "./src/internal/icon-context.tsx",
+      "types": "./src/internal/icon-context.tsx",
+      "default": "./src/internal/icon-context.tsx"
+    },
+    "./types": {
+      "source": "./src/types.ts",
+      "react-native": "./src/types.ts",
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
     "./registry": {
       "source": "./src/registry.ts",
       "react-native": "./src/registry.native.ts",
@@ -63,7 +75,6 @@
   },
   "files": [
     "src",
-    "lib",
     "!**/*.test.*",
     "!**/*.stories.*",
     "!**/__tests__/**",
