@@ -5,10 +5,6 @@ import { Button } from "../Button";
 import { render, screen } from "../test-utils";
 import { degToSvgCoords, gradientToCss, normalizeStops } from "./gradient-shared";
 
-// A theme stub is only consulted for `$token` colors; raw CSS colors pass
-// straight through `resolveThemeColor`, so these helper tests pass `{}`.
-const noTheme = {} as Parameters<typeof gradientToCss>[0];
-
 describe("gradient helpers", () => {
   it("normalizes the from/to shorthand to two 0–100% stops", () => {
     expect(normalizeStops({ from: "#f00", to: "#00f" })).toEqual([
@@ -49,12 +45,19 @@ describe("gradient helpers", () => {
   });
 
   it("builds a CSS linear-gradient with the angle (default 45deg)", () => {
-    expect(gradientToCss(noTheme, { from: "#f00", to: "#00f" })).toBe(
+    expect(gradientToCss({ from: "#f00", to: "#00f" })).toBe(
       "linear-gradient(45deg, #f00 0%, #00f 100%)",
     );
-    expect(gradientToCss(noTheme, { from: "#f00", to: "#00f", deg: 90 })).toBe(
+    expect(gradientToCss({ from: "#f00", to: "#00f", deg: 90 })).toBe(
       "linear-gradient(90deg, #f00 0%, #00f 100%)",
     );
+  });
+
+  // Web token resolution is theme-FREE: a `$token` maps straight to its CSS
+  // custom property, which is what lets `useGradient` skip `useTheme()`
+  // entirely (see theme-color-web.ts).
+  it("maps $token stops to CSS custom properties without a theme", () => {
+    expect(gradientToCss({})).toBe("linear-gradient(45deg, var(--color5) 0%, var(--color9) 100%)");
   });
 
   it("maps a CSS angle to SVG objectBoundingBox endpoints (0deg → bottom→top)", () => {

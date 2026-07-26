@@ -22,17 +22,40 @@ const PLAIN_FORMAT = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 20,
 });
 
+/**
+ * Fixed-scale formatters, cached by `decimalScale`.
+ *
+ * Constructing an `Intl.NumberFormat` resolves locale data and plural rules — one
+ * of the most expensive plain-object constructions in JS. `toPlainString` is
+ * reached ~3× per `RollingNumber` render (current digits, previous digits, and
+ * `buildValue`) on a component that re-renders on every animation tick, so
+ * building the formatter inline made every tick pay for it. The formatter depends
+ * only on `decimalScale`, and a component's `decimalScale` is a fixed prop, so the
+ * key space stays tiny — same reasoning as the no-scale `PLAIN_FORMAT` above,
+ * just parameterised.
+ */
+const SCALED_FORMATS = new Map<number, Intl.NumberFormat>();
+
+function getScaledFormat(decimalScale: number): Intl.NumberFormat {
+  let format = SCALED_FORMATS.get(decimalScale);
+  if (!format) {
+    format = new Intl.NumberFormat("en-US", {
+      useGrouping: false,
+      minimumFractionDigits: decimalScale,
+      maximumFractionDigits: decimalScale,
+    });
+    SCALED_FORMATS.set(decimalScale, format);
+  }
+  return format;
+}
+
 function toPlainString(num: number, decimalScale?: number): string {
   if (!Number.isFinite(num)) {
     return "0";
   }
 
   if (decimalScale !== undefined) {
-    return new Intl.NumberFormat("en-US", {
-      useGrouping: false,
-      minimumFractionDigits: decimalScale,
-      maximumFractionDigits: decimalScale,
-    }).format(num);
+    return getScaledFormat(decimalScale).format(num);
   }
 
   const str = String(num);

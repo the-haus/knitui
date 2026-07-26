@@ -27,7 +27,7 @@ import {
   pressScaleStyle,
   radiusVariant,
   type SizeKey,
-  webButton,
+  WEB_BUTTON_PROPS,
   webCursor,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
@@ -75,6 +75,14 @@ const ButtonFrame = styled(Box, {
     // `variant-colors` ladder so Button/ActionIcon and `theme="…"` stay in lockstep.
     variant: {
       ...controlColorVariant,
+      // `name: "Button"` collided with a `surface3`-templated entry in Tamagui's
+      // (deprecated) `defaultComponentThemes`, so until `core/config/themes.ts`
+      // set `componentThemes: false` this frame resolved inside a
+      // `<scheme>_Button` theme where `$borderColor` was offset from step 4 to
+      // step 7. `default` is the ONLY variant that reads `$borderColor` (every
+      // other one is an explicit `$colorN` or `transparent`, which the surface
+      // template left alone), so pin just that one to keep its shipped weight.
+      default: { ...controlColorVariant.default, borderColor: "$color7" },
     },
     size: {
       ...controlVariant,
@@ -165,6 +173,12 @@ export interface ButtonStyles {
   loader?: Partial<LoaderProps>;
 }
 
+/**
+ * `collect` options — a module constant, not an inline literal: it is invariant,
+ * and `Button` calls `collect` on every render.
+ */
+const BUTTON_COLLECT_OPTS = { defaultSlot: "Label", displayName: "Button" } as const;
+
 const BUTTON_SLOT_KEYS = [
   "left",
   "label",
@@ -224,7 +238,7 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
 
   // Normalize marker slots from `children`. Plain (non-marker) children fold
   // into `Label`, so `<Button>plain text</Button>` behaves exactly as before.
-  const slots = ButtonSlots.collect(children, { defaultSlot: "Label", displayName: "Button" });
+  const slots = ButtonSlots.collect(children, BUTTON_COLLECT_OPTS);
 
   // Precedence (slot-system-plan): marker slot → legacy prop → plain children.
   // `loading` still replaces the left visual, matching the prior behavior. The
@@ -279,7 +293,7 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
       aria-disabled={isDisabled || undefined}
       {...nativeIdProps}
       // Real focusable `<button>` on web so the `:focus-visible` outline fires.
-      {...webButton()}
+      {...WEB_BUTTON_PROPS}
     >
       {grad.layer}
       {left}

@@ -35,8 +35,15 @@ const CardContext = React.createContext<CardContextValue>({
 const CardFrame = styled(Box, {
   name: "Card",
   flexDirection: "column",
-  backgroundColor: "$background",
-  borderColor: "$borderColor",
+  // Pinned ramp steps, NOT `$background`/`$borderColor`. `name: "Card"` used to
+  // collide with Tamagui's (deprecated) `defaultComponentThemes`, which nested
+  // this frame into a `<scheme>_Card` theme whose `surface1` template offset
+  // `$background` to `$color2` and `$borderColor` to `$color5`. Those component
+  // themes are now off (`core/config/themes.ts` → `componentThemes: false`), so
+  // the offset is stated here instead — a card must read as a raised surface
+  // ABOVE the page background (`$color1`), which `$background` alone would not.
+  backgroundColor: "$color2",
+  borderColor: "$color5",
   borderRadius: "$md",
   padding: DEFAULT_PADDING,
   gap: "$sm",
@@ -121,7 +128,8 @@ const CardSection = CardSectionFrame.styleable<CardSectionProps>(function CardSe
       borderBottomWidth={withBorder && !isHorizontal ? 1 : undefined}
       borderLeftWidth={withBorder && isHorizontal ? 1 : undefined}
       borderRightWidth={withBorder && isHorizontal ? 1 : undefined}
-      borderColor={withBorder ? "$borderColor" : undefined}
+      // `$color5` (not `$borderColor`) to match `CardFrame` — see the note there.
+      borderColor={withBorder ? "$color5" : undefined}
       {...bleed}
       {...rest}
     />

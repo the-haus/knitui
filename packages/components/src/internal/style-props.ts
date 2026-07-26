@@ -479,9 +479,17 @@ export const webCursorStyle = <T extends string>(cursor: T): { cursor: T } | und
  * doesn't submit an enclosing form), gated to web — a no-op `{}` on native, where
  * there's no button host and outline-based focus rings don't apply anyway. Spread
  * onto the frame: `<Frame {...webButton()} />`. Mirrors `webCursor`'s web-gating.
+ *
+ * `isWeb` is a BUILD-time constant, so the result is one of two invariant objects
+ * — {@link WEB_BUTTON_PROPS}. It used to be freshly allocated on every render of
+ * every button-like control; prefer spreading the constant directly. Frozen
+ * because it is shared: callers spread it (`{...WEB_BUTTON_PROPS}`), never mutate it.
  */
-export const webButton = (): { render?: "button"; type?: string } =>
-  isWeb ? { render: "button", type: "button" } : {};
+export const WEB_BUTTON_PROPS: { render?: "button"; type?: string } = Object.freeze(
+  isWeb ? { render: "button" as const, type: "button" } : {},
+);
+
+export const webButton = (): { render?: "button"; type?: string } => WEB_BUTTON_PROPS;
 
 /**
  * Web-only reset for the native `<button>` user-agent `text-align: center`.
@@ -496,9 +504,17 @@ export const webButton = (): { render?: "button"; type?: string } =>
  * still wins. Mirrors {@link webButton} / {@link webCursorStyle} web-gating; pair
  * the two on any pressable that renders a real `<button>` and hosts text content
  * (e.g. `UnstyledButton`), so web text matches native's start-aligned default.
+ *
+ * Also build-time invariant, so it is the module constant
+ * {@link WEB_BUTTON_TEXT_RESET} rather than a per-render object — a fresh object
+ * (and, worse, the fresh `[reset, style]` array around it) invalidates Tamagui's
+ * style cache on every render. Frozen: it is only ever read.
  */
-export const webButtonTextReset = (): { textAlign: "left" } | undefined =>
-  isWeb ? { textAlign: "left" } : undefined;
+export const WEB_BUTTON_TEXT_RESET: { textAlign: "left" } | undefined = isWeb
+  ? Object.freeze({ textAlign: "left" as const })
+  : undefined;
+
+export const webButtonTextReset = (): { textAlign: "left" } | undefined => WEB_BUTTON_TEXT_RESET;
 
 /**
  * Mantine's `direction` (flex main-axis) cannot be a styled variant: Tamagui

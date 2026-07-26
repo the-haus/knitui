@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { type GetProps, styled, withStaticProperties } from "@knitui/core";
-import { IconX } from "@knitui/icons";
+import { IconX } from "@knitui/icons/IconX";
 
 import { ActionIcon } from "../ActionIcon";
 import { Box } from "../Box";

@@ -1,20 +1,13 @@
 import * as React from "react";
 
-import {
-  createStyledContext,
-  type GetProps,
-  styled,
-  useTheme,
-  withStaticProperties,
-} from "@knitui/core";
+import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
 import { useKeyboardActions, useUncontrolled } from "@knitui/hooks";
-import { IconCheck } from "@knitui/icons";
+import { IconCheck } from "@knitui/icons/IconCheck";
 
 import { Box } from "../Box";
 import { controlIconSize } from "../internal/control-icon-size";
 import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
-import { resolveThemeColor } from "../internal/resolve-theme-color";
 import {
   controlFontVariant,
   controlGapVariant,
@@ -25,6 +18,8 @@ import {
   webCursor,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
+import { useIconColor } from "../internal/use-icon-color";
+import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
 import { useToggle } from "../internal/use-toggle";
 import { Text } from "../Text";
 
@@ -312,18 +307,13 @@ const ChipComponent = ChipFrame.styleable<ChipProps>(function Chip(props, ref) {
   const s = slotStyles<ChipSlots>(styles, CHIP_SLOTS, "Chip");
 
   // The label slot must reach the `ChipLabel` that `renderTextChild` mounts, so
-  // wrap `ChipLabel` to fold in the slot props. Memoized so the wrapper's
-  // identity is stable across renders unless the slot props change.
-  const labelSlot = s.get("label");
-  const LabelWrapper = React.useMemo(
-    () =>
-      function ChipLabelSlot({ children: labelChildren }: { children: React.ReactNode }) {
-        return <ChipLabel {...labelSlot}>{labelChildren}</ChipLabel>;
-      },
-    [labelSlot],
-  );
+  // wrap `ChipLabel` to fold in the slot props. `useSlotTextWrapper` keys the memo
+  // on the slot props' SHALLOW VALUE, not their identity: the documented call is an
+  // inline literal (`styles={{ label: { … } }}`), which is a new object every
+  // render, so an identity-keyed memo never hit — the wrapper was a new component
+  // TYPE each render and React unmounted + remounted the label subtree.
+  const LabelWrapper = useSlotTextWrapper(ChipLabel, s.get("label"));
 
-  const theme = useTheme();
   const group = React.useContext(ChipGroupContext);
   const inGroup = group !== null && value !== undefined;
   const [selfOn, toggle] = useToggle(checked, defaultChecked, onChange);
@@ -348,9 +338,12 @@ const ChipComponent = ChipFrame.styleable<ChipProps>(function Chip(props, ref) {
   // resolve theme tokens or the font cascade). Colour tracks the combined state,
   // size tracks the control key via the canonical icon ladder. A `color` from the
   // `icon` slot overrides the state colour and is routed to the icon.
+  // `useIconColor` (not `useTheme()` + `resolveThemeColor`): on web the token →
+  // `var(--token)` mapping is a pure string transform, so no theme subscription is
+  // needed — which matters because this runs on every chip render even when the
+  // glyph is hidden (the hook must stay unconditional).
   const { color: iconSlotColor, ...iconSlotProps } = s.get("icon") ?? {};
-  const checkColor = resolveThemeColor(
-    theme,
+  const checkColor = useIconColor(
     typeof iconSlotColor === "string" ? iconSlotColor : CHIP_ICON_TOKEN[state],
   );
   const checkSize = controlIconSize(size);

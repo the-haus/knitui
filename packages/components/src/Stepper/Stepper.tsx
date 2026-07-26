@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
-import { IconCheck } from "@knitui/icons";
+import { IconCheck } from "@knitui/icons/IconCheck";
 
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";

@@ -98,22 +98,33 @@ export interface GroupProps extends GroupFrameProps {
 export const Group = GroupFrame.styleable<GroupProps>(function Group(props, ref) {
   const { children, grow = false, preventGrowOverflow = true, ...rest } = props;
 
-  if (!grow) {
+  const items = grow ? React.Children.toArray(children).filter(Boolean) : null;
+
+  // Memoised because it is the `style` handed to every non-Tamagui child (a
+  // memoized icon, a raw RN host). A fresh object per render is a fresh `style`
+  // identity, so the child's `React.memo` misses on every Group render — and on
+  // native react-native-svg then re-runs `StyleSheet.flatten` and rebuilds its
+  // root style array. It only actually depends on the child COUNT and the cap
+  // flag. Declared above the `!grow` early return so the hook order is stable
+  // when `grow` toggles.
+  const growStyle = React.useMemo<GrowStyle>(
+    () => ({
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 0,
+      minWidth: 0,
+      ...(preventGrowOverflow ? { maxWidth: `${100 / Math.max(items?.length ?? 1, 1)}%` } : {}),
+    }),
+    [items?.length, preventGrowOverflow],
+  );
+
+  if (!items) {
     return (
       <GroupFrame ref={ref} {...rest}>
         {children}
       </GroupFrame>
     );
   }
-
-  const items = React.Children.toArray(children).filter(Boolean);
-  const growStyle: GrowStyle = {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minWidth: 0,
-    ...(preventGrowOverflow ? { maxWidth: `${100 / Math.max(items.length, 1)}%` } : {}),
-  };
 
   return (
     <GroupFrame ref={ref} {...rest}>

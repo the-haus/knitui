@@ -339,48 +339,65 @@ type HoverHandlers = {
 };
 
 function HoverCardTarget({ children, refProp = "ref" }: HoverCardTargetProps) {
-  const ctx = useHoverCardContext();
+  // Destructured so the memo dependency lists below name plain locals — the
+  // exhaustive-deps rule can't narrow `ctx.x` member expressions here.
+  const { openDropdown, closeDropdown, targetSlot } = useHoverCardContext();
 
   const child = children as React.ReactElement<HoverHandlers>;
   const childProps = child.props;
 
   // Hover-intent handlers — HoverCard's reason to exist. Web uses mouse events,
   // native uses Tamagui's `onHoverIn`/`onHoverOut`.
-  const handlers: HoverHandlers = isWeb
-    ? {
-        onMouseEnter: (e) => {
-          childProps.onMouseEnter?.(e);
-          childProps.onHoverIn?.(e);
-          ctx.openDropdown();
-        },
-        onMouseLeave: (e) => {
-          childProps.onMouseLeave?.(e);
-          childProps.onHoverOut?.(e);
-          ctx.closeDropdown();
-        },
-      }
-    : {
-        onHoverIn: (e) => {
-          childProps.onHoverIn?.(e);
-          ctx.openDropdown();
-        },
-        onHoverOut: (e) => {
-          childProps.onHoverOut?.(e);
-          ctx.closeDropdown();
-        },
-      };
+  //
+  // Memoised, together with the clone below: a HoverCard re-renders on open /
+  // close and on every position update while open, and each of those rebuilt two
+  // closures and cloned a NEW trigger element, re-rendering the whole trigger
+  // subtree. `children` is a prop, so its identity survives HoverCard's own state
+  // churn; when nothing changed the memo returns the SAME element and React skips
+  // the subtree.
+  const handlers = React.useMemo<HoverHandlers>(
+    () =>
+      isWeb
+        ? {
+            onMouseEnter: (e) => {
+              childProps.onMouseEnter?.(e);
+              childProps.onHoverIn?.(e);
+              openDropdown();
+            },
+            onMouseLeave: (e) => {
+              childProps.onMouseLeave?.(e);
+              childProps.onHoverOut?.(e);
+              closeDropdown();
+            },
+          }
+        : {
+            onHoverIn: (e) => {
+              childProps.onHoverIn?.(e);
+              openDropdown();
+            },
+            onHoverOut: (e) => {
+              childProps.onHoverOut?.(e);
+              closeDropdown();
+            },
+          },
+    [childProps, openDropdown, closeDropdown],
+  );
 
   // Clone the child with the hover handlers + `target` slot sugar, then hand it to
   // `Popover.Target` (with `withPressToggle={false}` so it only attaches the
   // positioning reference ref, never a press toggle). The reference ref + width
   // handling all come from Popover's engine now.
-  const hovered = React.cloneElement(child, {
-    // `target` slot sugar layers UNDER the child's own props (the child's inline
-    // props win — "explicit beats sugar").
-    ...ctx.targetSlot,
-    ...childProps,
-    ...handlers,
-  } as Partial<HoverHandlers> & React.Attributes);
+  const hovered = React.useMemo(
+    () =>
+      React.cloneElement(child, {
+        // `target` slot sugar layers UNDER the child's own props (the child's inline
+        // props win — "explicit beats sugar").
+        ...targetSlot,
+        ...childProps,
+        ...handlers,
+      } as Partial<HoverHandlers> & React.Attributes),
+    [child, childProps, targetSlot, handlers],
+  );
 
   return (
     <Popover.Target refProp={refProp} withPressToggle={false}>

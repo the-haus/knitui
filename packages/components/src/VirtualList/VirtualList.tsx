@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { type LayoutChangeEvent, styled } from "@knitui/core";
+import { useCallbackRef } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { slotStyles } from "../internal/styles";
@@ -44,6 +45,23 @@ export type {
  * model, so no exact `estimatedItemSize` is required (a closer seed just means
  * less first-scroll correction). Mirrors the familiar `FlatList` / `FlashList`
  * surface for the v1 subset: vertical, single-column lists.
+ *
+ * ## Keep the row props stable
+ *
+ * Each mounted row is a memoized cell, so scrolling only re-renders the rows that
+ * actually enter or leave the window — but ONLY if the props handed to those rows
+ * keep their identity. For the memo to pay off, `renderItem` (and, when supplied,
+ * `getItemType`, `ItemSeparatorComponent` and `styles.item`) must be referentially
+ * stable: hoist them, or wrap them in `useCallback` / `useMemo`. An inline
+ * `renderItem={({ item }) => …}` is a new function on every parent render and
+ * therefore re-runs for every mounted row — cheap for a handful of rows, the
+ * dominant scroll cost for a large window.
+ *
+ * They are deliberately NOT stabilised internally (e.g. via `useCallbackRef`),
+ * because a `renderItem` closing over component state must be able to produce new
+ * output when that state changes. Pass `extraData` when your rows depend on state
+ * a stable `renderItem` cannot see: it is compared by the row memo and re-renders
+ * every mounted row.
  */
 const VirtualListFrame = styled(Box, {
   name: "VirtualList",
@@ -70,6 +88,17 @@ const VirtualListItem = styled(Box, {
 /* Memoized row cell                                                          */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Stable fallback for the optional `item` slot.
+ *
+ * `slots.get("item") ?? {}` allocated a FRESH object on every render, and that
+ * object is handed to the memoized {@link Row} as `itemProps` — so the common
+ * case (no `styles.item`) silently defeated the row memo and re-ran `renderItem`
+ * for every mounted row on every windowing render and every measurement-driven
+ * `bumpLayout`. One module-level constant keeps the reference identical forever.
+ */
+const EMPTY_ITEM_PROPS: Partial<BoxProps> = {};
+
 interface RowProps<T> {
   item: T;
   index: number;
@@ -80,6 +109,13 @@ interface RowProps<T> {
   separator: React.ReactNode;
   onMeasure: (index: number, height: number, type: string | number) => void;
   itemProps: Partial<BoxProps>;
+  /**
+   * Not read by the row — carried purely so `React.memo` compares it. This is
+   * what makes the documented `extraData` escape hatch work now that the row's
+   * other props can all be referentially stable: change `extraData` and every
+   * mounted row re-runs `renderItem`, even though its `item` did not change.
+   */
+  extraData?: unknown;
 }
 
 /**
@@ -154,7 +190,9 @@ function VirtualListInner<T>(
   const slots = slotStyles<VirtualListStyles>(styles, VIRTUAL_LIST_SLOTS, "VirtualList");
   const scrollAreaSlot = slots.get("scrollArea");
   const contentSlot = slots.get("content");
-  const itemSlot = slots.get("item") ?? {};
+  // Referentially stable when the caller passes no `styles.item` — see
+  // {@link EMPTY_ITEM_PROPS}; a fresh `{}` here would break every row's memo.
+  const itemSlot = slots.get("item") ?? EMPTY_ITEM_PROPS;
 
   const count = data.length;
 
@@ -185,12 +223,30 @@ function VirtualListInner<T>(
   const [layoutVersion, bumpLayout] = React.useReducer((v: number) => v + 1, 0);
   const [headerH, setHeaderH] = React.useState(0);
   const [footerH, setFooterH] = React.useState(0);
+  // The chrome heights are ALSO mirrored into refs, written by the same layout
+  // handlers that set the state. The scroll path below reads the refs, never the
+  // state: `useCallbackRef` refreshes its closure in a passive effect, so a scroll
+  // sample landing between a chrome commit and that flush would otherwise window
+  // against the previous header height. Refs close that gap; the state copies exist
+  // only because rendering (row tops, spacer height) needs them.
+  const headerHRef = React.useRef(0);
+  const footerHRef = React.useRef(0);
 
-  const maybeEndReached = React.useCallback(() => {
+  // ── the scroll path: every callback below has a STABLE identity ──
+  // These land (via `handleScroll`) on `ScrollArea`'s `onScrollPositionChange`,
+  // which is a dependency of its `reportScroll`, which is a dependency of its
+  // `useAnimatedScrollHandler`. A new identity per render therefore rebuilt the
+  // Reanimated worklet scroll handler on every windowing render — i.e. repeatedly
+  // WHILE the user is flinging. `useCallbackRef` keeps one identity forever and
+  // still invokes the latest closure, so the freshest props/state are always read.
+  // All live values they touch are refs (`layoutRef`, `scrollTopRef`,
+  // `viewportHRef`, `rangeRef`, `endReachedFiredRef`, `headerHRef`, `footerHRef`);
+  // the rest are props, which the latest closure supplies.
+  const maybeEndReached = useCallbackRef(() => {
     if (!onEndReached) return;
     const vh = viewportHRef.current;
     if (vh <= 0) return;
-    const total = getContentSize(layoutRef.current) + headerH + footerH;
+    const total = getContentSize(layoutRef.current) + headerHRef.current + footerHRef.current;
     const distanceFromEnd = total - (scrollTopRef.current + vh);
     if (distanceFromEnd <= onEndReachedThreshold * vh) {
       if (!endReachedFiredRef.current) {
@@ -200,16 +256,16 @@ function VirtualListInner<T>(
     } else {
       endReachedFiredRef.current = false;
     }
-  }, [onEndReached, onEndReachedThreshold, headerH, footerH]);
+  });
 
   // Recompute the mounted range from the live scroll + viewport, and only commit
   // to React state when the range actually changes (one render per row-crossing,
   // not per scroll frame).
-  const recomputeRange = React.useCallback(() => {
+  const recomputeRange = useCallbackRef(() => {
     const vh = viewportHRef.current;
     const next = findVisibleRange(
       layoutRef.current,
-      scrollTopRef.current - headerH,
+      scrollTopRef.current - headerHRef.current,
       vh,
       drawDistance,
     );
@@ -219,16 +275,13 @@ function VirtualListInner<T>(
       setRange(next);
       onRenderedRangeChange?.(next);
     }
-  }, [drawDistance, headerH, onRenderedRangeChange]);
+  });
 
-  const handleScroll = React.useCallback(
-    (pos: { x: number; y: number }) => {
-      scrollTopRef.current = pos.y;
-      recomputeRange();
-      maybeEndReached();
-    },
-    [recomputeRange, maybeEndReached],
-  );
+  const handleScroll = useCallbackRef((pos: { x: number; y: number }) => {
+    scrollTopRef.current = pos.y;
+    recomputeRange();
+    maybeEndReached();
+  });
 
   const handleFrameLayout = React.useCallback((e: LayoutChangeEvent) => {
     const h = e.nativeEvent.layout.height;
@@ -248,6 +301,10 @@ function VirtualListInner<T>(
 
   // After any commit that could move offsets (measurement, viewport, data, chrome),
   // re-window and re-check the end. Runs post-layout so measurements are settled.
+  // `recomputeRange` / `maybeEndReached` are stable, so this now fires only when one
+  // of the listed values actually changed instead of on every single render.
+  // `drawDistance` / `onEndReachedThreshold` are listed explicitly because they used
+  // to reach this list through those callbacks' identities.
   React.useEffect(() => {
     recomputeRange();
     maybeEndReached();
@@ -258,6 +315,8 @@ function VirtualListInner<T>(
     headerH,
     footerH,
     extraData,
+    drawDistance,
+    onEndReachedThreshold,
     recomputeRange,
     maybeEndReached,
   ]);
@@ -313,6 +372,7 @@ function VirtualListInner<T>(
           separator={ItemSeparatorComponent}
           onMeasure={handleMeasure}
           itemProps={itemSlot}
+          extraData={extraData}
         />,
       );
     }
@@ -342,7 +402,9 @@ function VirtualListInner<T>(
                 right={0}
                 onLayout={(e: LayoutChangeEvent) => {
                   const h = e.nativeEvent.layout.height;
-                  setHeaderH((prev) => (Math.abs(prev - h) > 0.5 ? h : prev));
+                  if (Math.abs(headerHRef.current - h) <= 0.5) return;
+                  headerHRef.current = h;
+                  setHeaderH(h);
                 }}
               >
                 {ListHeaderComponent}
@@ -357,7 +419,9 @@ function VirtualListInner<T>(
                 right={0}
                 onLayout={(e: LayoutChangeEvent) => {
                   const h = e.nativeEvent.layout.height;
-                  setFooterH((prev) => (Math.abs(prev - h) > 0.5 ? h : prev));
+                  if (Math.abs(footerHRef.current - h) <= 0.5) return;
+                  footerHRef.current = h;
+                  setFooterH(h);
                 }}
               >
                 {ListFooterComponent}

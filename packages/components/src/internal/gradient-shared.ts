@@ -16,6 +16,7 @@ import type * as React from "react";
 import type { useTheme } from "@knitui/core";
 
 import { resolveThemeColor } from "./resolve-theme-color";
+import { themeColorToCssVar } from "./theme-color-web";
 
 /** A single gradient color stop. `offset` is a 0–100 percentage along the line. */
 export interface GradientStop {
@@ -90,13 +91,16 @@ export const normalizeStops = (gradient: GradientValue): Required<GradientStop>[
 type Theme = ReturnType<typeof useTheme>;
 
 /**
- * Build the web `linear-gradient(...)` string. Each stop color is resolved
- * through {@link resolveThemeColor}, so a `$colorN` token becomes `var(--colorN)`
- * and the gradient still tracks the active theme via CSS variables.
+ * Build the web `linear-gradient(...)` string. Each stop color is mapped to its
+ * CSS custom property by {@link themeColorToCssVar}, so a `$colorN` token becomes
+ * `var(--colorN)` and the gradient still tracks the active theme via CSS
+ * variables — WITHOUT reading the theme object, which is why the web
+ * `useGradient` needs no `useTheme()` (see `theme-color-web.ts`). Web-only; the
+ * native painter resolves stops to concrete colors via {@link resolveStops}.
  */
-export const gradientToCss = (theme: Theme, gradient: GradientValue): string => {
+export const gradientToCss = (gradient: GradientValue): string => {
   const stops = normalizeStops(gradient)
-    .map((stop) => `${resolveThemeColor(theme, stop.color)} ${stop.offset}%`)
+    .map((stop) => `${themeColorToCssVar(stop.color)} ${stop.offset}%`)
     .join(", ");
   return `linear-gradient(${gradientDeg(gradient)}deg, ${stops})`;
 };

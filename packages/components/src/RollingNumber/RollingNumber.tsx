@@ -81,37 +81,47 @@ const resolveFontSize = (
     ? { token: fontSize, px: fontSize }
     : { token: `$${fontSize}` as TextProps["fontSize"], px: getFontSize(fontSize) };
 
+/** Resolved per-slot style sugar for the digit-column parts. */
+interface RollingDigitSlots {
+  viewport?: GetProps<typeof RollingNumberDigitViewport>;
+  strip?: GetProps<typeof RollingNumberDigitStrip>;
+  text?: GetProps<typeof RollingNumberDigitText>;
+}
+
 interface RollingDigitProps {
   digit: string;
   empty: boolean;
   digitHeight: number;
   fontSize: TextProps["fontSize"];
   fontFamily: TextProps["fontFamily"];
-  animate: boolean;
-  duration: number;
-  /** Resolved per-slot style sugar for the digit-column parts. */
-  slots: {
-    viewport?: GetProps<typeof RollingNumberDigitViewport>;
-    strip?: GetProps<typeof RollingNumberDigitStrip>;
-    text?: GetProps<typeof RollingNumberDigitText>;
-  };
+  /**
+   * The ready-made `{ transition }` object, built ONCE by the parent. Every
+   * column used to recompute the identical `transitionProps(timedTransition(…))`
+   * itself, and the fresh object also broke the `React.memo` below.
+   */
+  transition: ReturnType<typeof transitionProps>;
+  slots: RollingDigitSlots;
 }
 
 /** A single rolling digit — a 0–9 strip translated so the target digit shows.
  *  The continuous `translateY` interpolation rolls through the intermediate
- *  digits when the value changes. */
-function RollingDigit({
+ *  digits when the value changes.
+ *
+ *  Memoized: a number ticking from 1 to 2 changes ONE column, but the parent
+ *  re-renders on every tick, and each column is a viewport + strip + ten glyph
+ *  `Text`s. Without the memo a 6-digit value re-rendered ~78 styled nodes per
+ *  tick to move one strip. Every prop is either a primitive or hoisted/memoized
+ *  by the parent so the comparison can actually bail out. */
+const RollingDigit = React.memo(function RollingDigit({
   digit,
   empty,
   digitHeight,
   fontSize,
   fontFamily,
-  animate,
-  duration,
+  transition,
   slots,
 }: RollingDigitProps) {
   const index = parseInt(digit, 10) || 0;
-  const transition = animate ? transitionProps(timedTransition(duration)) : transitionProps(null);
 
   // `styles` slot sugar is lowest precedence — it spreads UNDER the
   // component-owned geometry/transition props, which always win.
@@ -140,7 +150,7 @@ function RollingDigit({
       </RollingNumberDigitStrip>
     </RollingNumberDigitViewport>
   );
-}
+});
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -211,14 +221,27 @@ const RollingNumberBase = RollingNumberRoot.styleable<RollingNumberProps>(
     } = props;
 
     const s = slotStyles<RollingNumberStyles>(styles, ROLLING_NUMBER_SLOT_KEYS, "RollingNumber");
-    const digitSlots = {
-      viewport: s.get("digitViewport"),
-      strip: s.get("digitStrip"),
-      text: s.get("digitText"),
-    };
+    // Both of these are props of the memoized `RollingDigit`, so they have to be
+    // referentially stable or the memo never bails out. `s.get(…)` hands back the
+    // consumer's own slot objects unchanged, so keying on them is exact.
+    const viewportSlot = s.get("digitViewport");
+    const stripSlot = s.get("digitStrip");
+    const textSlot = s.get("digitText");
+    const digitSlots = React.useMemo<RollingDigitSlots>(
+      () => ({ viewport: viewportSlot, strip: stripSlot, text: textSlot }),
+      [viewportSlot, stripSlot, textSlot],
+    );
 
     const reduced = useReducedMotion();
     const duration = reduced ? 0 : animationDuration;
+
+    // One `{ transition }` object for ALL columns instead of one per column per
+    // render. `null` (reduced motion) keeps the prop present so Tamagui's
+    // animation driver hook order is stable — see `transitionProps`.
+    const digitTransition = React.useMemo(
+      () => (duration > 0 ? transitionProps(timedTransition(duration)) : transitionProps(null)),
+      [duration],
+    );
 
     const { token: fontToken, px: fontSizePx } = resolveFontSize(fontSize);
     const digitHeight = Math.round(fontSizePx * 1.25);
@@ -267,8 +290,7 @@ const RollingNumberBase = RollingNumberRoot.styleable<RollingNumberProps>(
               digitHeight={digitHeight}
               fontSize={fontToken}
               fontFamily={fontFamily}
-              animate={duration > 0}
-              duration={duration}
+              transition={digitTransition}
               slots={digitSlots}
             />
           ) : (

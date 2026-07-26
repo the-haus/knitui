@@ -1,11 +1,14 @@
-import * as React from "react";
+import type * as React from "react";
 
-import { useTheme } from "@knitui/core";
-import { IconProvider } from "@knitui/icons";
+// Deep import on purpose: the `@knitui/icons` root barrel re-exports all ~6.1k
+// icon modules, and Metro does not tree-shake — importing it here would pull
+// every glyph into every component that renders a control icon. See the
+// `no-restricted-imports` guardrail in eslint.config.base.mjs.
+import { IconProvider } from "@knitui/icons/context";
 
 import { controlIconSize } from "./control-icon-size";
 import type { SizeKey } from "./control-metrics";
-import { resolveThemeColor } from "./resolve-theme-color";
+import { useIconColor } from "./use-icon-color";
 import { VARIANT_FOREGROUND_EMPHASIS } from "./variant-colors";
 
 type ForegroundVariant = keyof typeof VARIANT_FOREGROUND_EMPHASIS;
@@ -47,15 +50,17 @@ export function ControlIconProvider({
   stroke,
   children,
 }: ControlIconProviderProps) {
-  const theme = useTheme();
   const token = color ?? VARIANT_FOREGROUND_EMPHASIS[variant]?.color ?? "$color12";
-  const resolvedColor = resolveThemeColor(theme, token);
-  const iconSize = controlIconSize(size);
+  // Theme-free on web, theme-subscribing on native — see `use-icon-color.ts`.
+  const resolvedColor = useIconColor(token);
 
-  const value = React.useMemo(
-    () => ({ size: iconSize, color: resolvedColor, stroke }),
-    [iconSize, resolvedColor, stroke],
+  // Passed inline on purpose: `IconProvider` already memoises its context value
+  // on the PRIMITIVE `size`/`color`/`stroke` fields rather than on `value`'s
+  // identity, so a `useMemo` here would buy nothing and cost a deps array plus a
+  // retained object per control section.
+  return (
+    <IconProvider value={{ size: controlIconSize(size), color: resolvedColor, stroke }}>
+      {children}
+    </IconProvider>
   );
-
-  return <IconProvider value={value}>{children}</IconProvider>;
 }

@@ -192,6 +192,68 @@ const ANGLE_SLIDER_SLOT_KEYS = [
 ] as const satisfies readonly (keyof AngleSliderStyles)[];
 
 /* -------------------------------------------------------------------------- */
+/* Marks — memoized subtree                                                   */
+/* -------------------------------------------------------------------------- */
+
+interface AngleSliderMarksLayerProps {
+  marks: AngleSliderMark[];
+  /** `top` of each tick, derived from the resolved thumb size. */
+  tickTop: number;
+  /** `height` of each tick, derived from the resolved thumb size. */
+  tickHeight: number;
+  /** `top` of each mark label (negative — it sits outside the ring). */
+  labelOffset: number;
+  /** `minWidth` of each mark label. */
+  labelMinWidth: number;
+  marksProps?: Partial<GetProps<typeof AngleSliderMarks>>;
+  markProps?: Partial<GetProps<typeof AngleSliderMark>>;
+  markTickProps?: Partial<GetProps<typeof AngleSliderMarkTick>>;
+  markLabelProps?: Partial<GetProps<typeof AngleSliderMarkLabel>>;
+}
+
+/**
+ * The ring's marks layer, extracted and memoized.
+ *
+ * Dragging calls `setValue` on every pointermove, and the marks used to be mapped
+ * inline in the render body — so every frame rebuilt 2–3 Tamagui frames per mark
+ * even though NOTHING about a mark depends on the current angle (unlike `Slider`,
+ * there is no `filled` variant here). With the split, a drag frame re-renders only
+ * the thumb + centre label; the marks are skipped entirely by `React.memo` as long
+ * as `marks` and the geometry props are referentially stable.
+ */
+const AngleSliderMarksLayer = React.memo(function AngleSliderMarksLayer({
+  marks,
+  tickTop,
+  tickHeight,
+  labelOffset,
+  labelMinWidth,
+  marksProps,
+  markProps,
+  markTickProps,
+  markLabelProps,
+}: AngleSliderMarksLayerProps) {
+  return (
+    <AngleSliderMarks {...marksProps}>
+      {marks.map((mark, index) => (
+        <AngleSliderMark key={index} {...markProps} rotate={`${mark.value}deg`}>
+          <AngleSliderMarkTick top={tickTop} height={tickHeight} {...markTickProps} />
+          {mark.label != null ? (
+            <AngleSliderMarkLabel
+              top={labelOffset}
+              minWidth={labelMinWidth}
+              rotate={`${360 - mark.value}deg`}
+              {...markLabelProps}
+            >
+              {mark.label}
+            </AngleSliderMarkLabel>
+          ) : null}
+        </AngleSliderMark>
+      ))}
+    </AngleSliderMarks>
+  );
+});
+
+/* -------------------------------------------------------------------------- */
 /* AngleSlider                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -363,27 +425,17 @@ const AngleSliderComponent = AngleSliderRoot.styleable<AngleSliderProps>(
         {...rest}
       >
         {marks && marks.length > 0 ? (
-          <AngleSliderMarks {...s.get("marks")}>
-            {marks.map((mark, index) => (
-              <AngleSliderMark key={index} {...s.get("mark")} rotate={`${mark.value}deg`}>
-                <AngleSliderMarkTick
-                  top={resolvedThumbSize / 3}
-                  height={resolvedThumbSize / 1.5}
-                  {...s.get("markTick")}
-                />
-                {mark.label != null ? (
-                  <AngleSliderMarkLabel
-                    top={markLabelOffset}
-                    minWidth={markLabelMinWidth}
-                    rotate={`${360 - mark.value}deg`}
-                    {...s.get("markLabel")}
-                  >
-                    {mark.label}
-                  </AngleSliderMarkLabel>
-                ) : null}
-              </AngleSliderMark>
-            ))}
-          </AngleSliderMarks>
+          <AngleSliderMarksLayer
+            marks={marks}
+            tickTop={resolvedThumbSize / 3}
+            tickHeight={resolvedThumbSize / 1.5}
+            labelOffset={markLabelOffset}
+            labelMinWidth={markLabelMinWidth}
+            marksProps={s.get("marks")}
+            markProps={s.get("mark")}
+            markTickProps={s.get("markTick")}
+            markLabelProps={s.get("markLabel")}
+          />
         ) : null}
 
         {labelNode != null ? (

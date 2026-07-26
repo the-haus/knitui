@@ -6,7 +6,6 @@ import {
   isWeb,
   styled,
   type TamaguiElement,
-  useTheme,
   withStaticProperties,
 } from "@knitui/core";
 import { useElementSize, useId, useReducedMotion, useUncontrolled } from "@knitui/hooks";
@@ -16,6 +15,7 @@ import { CollapseBox } from "../internal/collapse-box";
 import { renderTextChild } from "../internal/render-text-child";
 import { webCursor } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
+import { themeColorToCssVar } from "../internal/theme-color-web";
 import { Text } from "../Text";
 
 /* -------------------------------------------------------------------------- */
@@ -45,6 +45,26 @@ const SpoilerControl = styled(Text, {
   hoverStyle: { textDecorationLine: "underline" },
   pressStyle: { opacity: 0.7 },
 });
+
+/**
+ * The collapsed-state bottom fade (web only — `isWeb` gates it below; native gets
+ * no `backgroundImage`). Built ONCE at module scope: the gradient fades into the
+ * theme's `background`, and on web a token maps to its CSS custom property by
+ * pure string transform (`theme-color-web.ts`), so the `var()` tracks the active
+ * theme by itself.
+ *
+ * Previously this read `theme.background?.val` per render, which cost a
+ * `useTheme()` (`useThemeWithState` = useId + useRef + useReducer + a DEP-LESS
+ * `useEffect` that fires after every render) and — because reading a field off
+ * Tamagui's theme proxy calls its `track()` — registered every `Spoiler` as a
+ * theme subscriber, including on native where the fade isn't even painted. The
+ * old `?? "#fff"` last resort survives as the CSS variable's own fallback.
+ */
+const SPOILER_FADE_BACKGROUND = (() => {
+  const backgroundVar = themeColorToCssVar("$background");
+  return backgroundVar.startsWith("var(") ? `${backgroundVar.slice(0, -1)}, #fff)` : backgroundVar;
+})();
+const SPOILER_FADE_GRADIENT = `linear-gradient(to bottom, transparent, ${SPOILER_FADE_BACKGROUND})`;
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -168,8 +188,6 @@ const SpoilerBase = SpoilerRoot.styleable<SpoilerProps>(function Spoiler(props, 
   // Animate the reveal unless reduced motion / a 0 duration asks us to snap.
   const animate = transitionDuration > 0 && !reduced;
 
-  const theme = useTheme();
-
   const ariaLabel = show ? hideAriaLabel : showAriaLabel;
 
   const toggle = React.useCallback(() => {
@@ -202,13 +220,7 @@ const SpoilerBase = SpoilerRoot.styleable<SpoilerProps>(function Spoiler(props, 
     ...(spoilerActive ? { "aria-labelledby": controlId } : {}),
   };
 
-  const webFade: WebFadeProps = isWeb
-    ? {
-        backgroundImage: `linear-gradient(to bottom, transparent, ${String(
-          theme.background?.val ?? "#fff",
-        )})`,
-      }
-    : {};
+  const webFade: WebFadeProps = isWeb ? { backgroundImage: SPOILER_FADE_GRADIENT } : {};
 
   return (
     <SpoilerRoot ref={ref} id={rootId} {...s.merge("root", rest)}>

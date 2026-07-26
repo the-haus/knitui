@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { GetProps, TamaguiElement } from "@knitui/core";
 import { getLineHeight, getTokenValue, styled, Theme } from "@knitui/core";
-import { useId } from "@knitui/hooks";
+import { useCallbackRef, useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { CloseButton, type CloseButtonProps } from "../CloseButton";
@@ -817,10 +817,15 @@ export const InputWrapper = InputWrapperFrame.styleable<InputWrapperProps>(
         .join(" ") || undefined;
     const isRequired = typeof withAsterisk === "boolean" ? withAsterisk : required;
     const { onPress: labelOnPress, ...restLabelProps } = labelProps ?? {};
-    const handleLabelPress: NonNullable<InputLabelProps["onPress"]> = (event) => {
+    // Stable identity (latest-callback pattern) so the memoized `InputLabel` isn't
+    // handed a fresh `onPress` on every keystroke in the field.
+    const handleLabelPress = useCallbackRef<
+      Parameters<NonNullable<InputLabelProps["onPress"]>>,
+      void
+    >((event) => {
       labelOnPress?.(event);
       focusInputById(inputId);
-    };
+    });
 
     const nodes: Record<InputWrapperOrderItem, React.ReactNode> = {
       label: label ? (
@@ -857,8 +862,19 @@ export const InputWrapper = InputWrapperFrame.styleable<InputWrapperProps>(
       ) : null,
     };
 
+    // The consumers of this context are the actual input elements of EVERY wrapped
+    // field in the kit (`Input`, `PillsInput`, `NativeSelect`, …), and context
+    // propagation walks straight past `React.memo` — so a fresh value object here
+    // re-rendered each of them on every render of the wrapper. Note `error` is a
+    // `ReactNode`: a consumer passing an inline element still gets a new value each
+    // render, which is honest (the value really did change identity).
+    const wrapperContext = React.useMemo<InputWrapperContextValue>(
+      () => ({ inputId, describedBy, size, error }),
+      [inputId, describedBy, size, error],
+    );
+
     return (
-      <InputWrapperContext.Provider value={{ inputId, describedBy, size, error }}>
+      <InputWrapperContext.Provider value={wrapperContext}>
         <InputWrapperFrame ref={ref} {...s.get("wrapper")} {...rest}>
           {inputWrapperOrder.map((part) => nodes[part])}
         </InputWrapperFrame>

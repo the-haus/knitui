@@ -155,17 +155,37 @@ export interface NotificationProps extends NotificationFrameProps {
 }
 
 /**
- * Pure-text body renders as a single themed `NotificationMessage`. Any element
- * present routes to the `NotificationContent` Box so rich content isn't trapped
- * inside a `<Text>` (text runs within it stay themed via `renderTextChild`).
+ * How the body children render: nothing at all, a pure-text body (a single themed
+ * `NotificationMessage`), or rich content. Any element present routes to the
+ * `NotificationContent` Box so rich content isn't trapped inside a `<Text>` (text
+ * runs within it stay themed via `renderTextChild`).
  */
-function isTextOnly(children: React.ReactNode): boolean {
-  const array = React.Children.toArray(children);
-  return array.length > 0 && array.every((c) => typeof c === "string" || typeof c === "number");
-}
+type NotificationBodyKind = "empty" | "text" | "rich";
 
-function hasRenderableChild(children: React.ReactNode): boolean {
-  return React.Children.toArray(children).length > 0;
+/**
+ * ## Cost
+ *
+ * This replaces a `hasRenderableChild(children)` + `isTextOnly(children)` pair
+ * that BOTH called `React.Children.toArray` — which flattens *and clones every
+ * element child* — so the same work ran twice per render, and a toast stack
+ * renders N notifications. One pass now, with the single-child shapes answered
+ * before `toArray` is reached at all (same fast-path ladder as `renderTextChild`).
+ * Classification is unchanged: `toArray` drops `null`/`undefined`/booleans, and
+ * does NOT flatten a Fragment (which therefore counts as one element → "rich").
+ */
+function classifyBody(children: React.ReactNode): NotificationBodyKind {
+  const type = typeof children;
+  if (type === "string" || type === "number") return "text";
+  if (children == null || type === "boolean") return "empty";
+  if (React.isValidElement(children)) return "rich";
+
+  const array = React.Children.toArray(children);
+  if (array.length === 0) return "empty";
+  for (let i = 0; i < array.length; i++) {
+    const child = array[i];
+    if (typeof child !== "string" && typeof child !== "number") return "rich";
+  }
+  return "text";
 }
 
 const NotificationComponent = NotificationFrame.styleable<NotificationProps>(
@@ -187,21 +207,22 @@ const NotificationComponent = NotificationFrame.styleable<NotificationProps>(
     const slots = slotStyles(styles, NOTIFICATION_SLOTS, "Notification");
     const rootId = useId(typeof id === "string" ? id : undefined);
     const titleId = title ? `${rootId}-title` : undefined;
-    const hasBody = hasRenderableChild(children);
-    const bodyId = hasBody ? `${rootId}-body` : undefined;
+    const bodyKind = classifyBody(children);
+    const bodyId = bodyKind !== "empty" ? `${rootId}-body` : undefined;
 
     const showBadge = loading || icon != null;
-    const bodyContent = hasBody ? (
-      isTextOnly(children) ? (
-        <NotificationMessage id={bodyId} {...slots.get("message")}>
-          {children}
-        </NotificationMessage>
-      ) : (
-        <NotificationContent id={bodyId} {...slots.get("content")}>
-          {renderTextChild(children, NotificationMessage)}
-        </NotificationContent>
-      )
-    ) : null;
+    const bodyContent =
+      bodyKind !== "empty" ? (
+        bodyKind === "text" ? (
+          <NotificationMessage id={bodyId} {...slots.get("message")}>
+            {children}
+          </NotificationMessage>
+        ) : (
+          <NotificationContent id={bodyId} {...slots.get("content")}>
+            {renderTextChild(children, NotificationMessage)}
+          </NotificationContent>
+        )
+      ) : null;
 
     return (
       <NotificationFrame

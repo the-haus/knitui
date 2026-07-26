@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { GetProps } from "@knitui/core";
 import { withStaticProperties } from "@knitui/core";
-import { useId, useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useId, useUncontrolled } from "@knitui/hooks";
 
 import {
   Combobox,
@@ -115,14 +115,6 @@ interface SelectContextValue {
   styles?: SlotStyles<SelectStyles>;
   /** Deprecated alias merged over the `clearButton` slot. */
   clearButtonProps?: Partial<ComboboxClearButtonProps>;
-  /** Trigger props the sugar wrapper assembled (chrome, aria, handlers). */
-  triggerProps?: Partial<SelectInputProps> & {
-    role?: string;
-    placeholder?: React.ReactNode;
-    id?: string;
-    ref?: React.Ref<SelectRef>;
-    clearSectionMode?: "clear" | "default" | "rightSection" | "both";
-  };
   // Event/behaviour handlers consumed by Select.Trigger.
   onClear: () => void;
   onChangeText: React.ChangeEventHandler<HTMLInputElement>;
@@ -141,6 +133,30 @@ const useSelectContext = (): SelectContextValue => {
   }
   return ctx;
 };
+
+/**
+ * Trigger props the sugar wrapper assembled (chrome, aria, ref, handlers). The
+ * sugar wrapper rebuilds this object on every render — `...inputProps` is a rest
+ * spread, so its identity can never be preserved — which is exactly why it rides
+ * its OWN context instead of the behaviour context above: `Select.Trigger` is the
+ * single consumer, while the option rows consume `SelectContext`. Merging the two
+ * made the behaviour context a fresh object every render and re-rendered every
+ * option row (context propagation walks past `React.memo`).
+ */
+type SelectFunneledTriggerProps = Partial<SelectInputProps> & {
+  role?: string;
+  placeholder?: React.ReactNode;
+  id?: string;
+  ref?: React.Ref<SelectRef>;
+  clearSectionMode?: "clear" | "default" | "rightSection" | "both";
+};
+
+const SelectTriggerPropsContext = React.createContext<SelectFunneledTriggerProps | undefined>(
+  undefined,
+);
+
+/** Shared empty funnel for the composable path (no sugar wrapper above). */
+const EMPTY_TRIGGER_PROPS: SelectFunneledTriggerProps = {};
 
 /* -------------------------------------------------------------------------- */
 /* Select.Root — the value / search / active-option state machine            */
@@ -226,7 +242,7 @@ export interface SelectRootProps {
    * by hand you render `<Select.Trigger>` with your own props instead.
    * @internal
    */
-  __triggerProps?: SelectContextValue["triggerProps"];
+  __triggerProps?: SelectFunneledTriggerProps;
 }
 
 function SelectRoot(props: SelectRootProps) {
@@ -281,26 +297,20 @@ function SelectRoot(props: SelectRootProps) {
   });
   const selectedOption = _value != null ? lockup[_value] : undefined;
 
-  const setValue = React.useCallback(
-    (next: string | null, option: ComboboxItem | null) => {
-      setValueState(next);
-      onChange?.(next, option);
-    },
-    [setValueState, onChange],
-  );
+  const setValue = useCallbackRef((next: string | null, option: ComboboxItem | null) => {
+    setValueState(next);
+    onChange?.(next, option);
+  });
 
   const [search, setSearchState] = useUncontrolled<string>({
     value: searchValue,
     defaultValue: defaultSearchValue,
     finalValue: selectedOption ? selectedOption.label : "",
   });
-  const setSearch = React.useCallback(
-    (next: string) => {
-      setSearchState(next);
-      onSearchChange?.(next);
-    },
-    [setSearchState, onSearchChange],
-  );
+  const setSearch = useCallbackRef((next: string) => {
+    setSearchState(next);
+    onSearchChange?.(next);
+  });
 
   const combobox = useCombobox({
     opened: dropdownOpened,
@@ -358,18 +368,18 @@ function SelectRoot(props: SelectRootProps) {
     }
   }, [flatOptions]);
 
-  const handleSubmit = React.useCallback(
-    (optionValue: string) => {
-      const option = lockup[optionValue];
-      if (!option || option.disabled) return;
-      onOptionSubmit?.(optionValue);
-      const next = allowDeselect && optionValue === _value ? null : optionValue;
-      setValue(next, next != null ? option : null);
-      if (!controlled) setSearch(next != null ? option.label : "");
-      combobox.closeDropdown();
-    },
-    [lockup, onOptionSubmit, allowDeselect, _value, setValue, controlled, setSearch, combobox],
-  );
+  // Stable identity, latest closure. `handleSubmit` lands on `<Combobox
+  // onOptionSubmit>`, which is a dep of Combobox's own context memo — a fresh
+  // function here churned that context and re-rendered every `Combobox.Option`.
+  const handleSubmit = useCallbackRef((optionValue: string) => {
+    const option = lockup[optionValue];
+    if (!option || option.disabled) return;
+    onOptionSubmit?.(optionValue);
+    const next = allowDeselect && optionValue === _value ? null : optionValue;
+    setValue(next, next != null ? option : null);
+    if (!controlled) setSearch(next != null ? option.label : "");
+    combobox.closeDropdown();
+  });
 
   const moveActive = (direction: 1 | -1) => {
     if (flatOptions.length === 0) return;
@@ -383,7 +393,12 @@ function SelectRoot(props: SelectRootProps) {
     setActiveValue(flatOptions[nextIndex].value);
   };
 
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
+  // Every handler below is `useCallbackRef`-stable (identity fixed, latest closure).
+  // That is what lets the context memo further down actually HIT: with fresh
+  // closures the memo either had to be invalidated every render (re-rendering every
+  // option row) or it would have served stale `onSearchChange`/`__triggerProps`
+  // callbacks. Stable + always-latest gets both.
+  const handleKeyDown = useCallbackRef<[React.KeyboardEvent<HTMLInputElement>], void>((event) => {
     if (disabled || readOnly) return;
     switch (event.key) {
       case "ArrowDown":
@@ -415,20 +430,20 @@ function SelectRoot(props: SelectRootProps) {
         break;
     }
     __triggerProps?.onKeyDown?.(event);
-  };
+  });
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleChange = useCallbackRef<[React.ChangeEvent<HTMLInputElement>], void>((event) => {
     setSearch(event.currentTarget.value);
     combobox.openDropdown();
     if (selectFirstOptionOnChange) selectFirstPending.current = true;
-  };
+  });
 
-  const handleFocus: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleFocus = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     if (searchable && openOnFocus) combobox.openDropdown();
     __triggerProps?.onFocus?.(event);
-  };
+  });
 
-  const handleBlur: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleBlur = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     if (autoSelectOnBlur && combobox.opened && activeValue != null) {
       // Commit the highlighted option; handleSubmit closes the dropdown and resets
       // the displayed label, superseding the default blur reset below.
@@ -438,22 +453,22 @@ function SelectRoot(props: SelectRootProps) {
       setSearch(selectedOption ? selectedOption.label : "");
     }
     __triggerProps?.onBlur?.(event);
-  };
+  });
 
-  const handleClick: React.MouseEventHandler<HTMLInputElement> = (event) => {
+  const handleClick = useCallbackRef<[React.MouseEvent<HTMLInputElement>], void>((event) => {
     if (searchable) {
       combobox.openDropdown();
     } else {
       combobox.toggleDropdown();
     }
     __triggerProps?.onClick?.(event);
-  };
+  });
 
-  const handleClear = React.useCallback(() => {
+  const handleClear = useCallbackRef(() => {
     setValue(null, null);
     setSearch("");
     onClear?.();
-  }, [setValue, setSearch, onClear]);
+  });
 
   const canClear = clearable && _value != null && !disabled && !readOnly;
   const inputValue = searchable ? search : (selectedOption?.label ?? "");
@@ -479,7 +494,6 @@ function SelectRoot(props: SelectRootProps) {
       renderOption,
       styles,
       clearButtonProps,
-      triggerProps: __triggerProps,
       onClear: handleClear,
       onChangeText: handleChange,
       onKeyDown: handleKeyDown,
@@ -487,9 +501,11 @@ function SelectRoot(props: SelectRootProps) {
       onBlur: handleBlur,
       onClick: handleClick,
     }),
-    // handlers are recreated each render (they close over render-scoped state); the
-    // context value is intentionally not stable, mirroring the original component.
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    // Deps are COMPLETE: every handler above is `useCallbackRef`-stable, so this memo
+    // genuinely hits and the context value only changes when observable state does.
+    // `__triggerProps` is deliberately absent — it rides its own context (see
+    // `SelectTriggerPropsContext`) because it is rebuilt every render by the sugar
+    // wrapper and only `Select.Trigger` reads it.
     [
       combobox,
       size,
@@ -510,7 +526,12 @@ function SelectRoot(props: SelectRootProps) {
       renderOption,
       styles,
       clearButtonProps,
-      __triggerProps,
+      handleClear,
+      handleChange,
+      handleKeyDown,
+      handleFocus,
+      handleBlur,
+      handleClick,
     ],
   );
 
@@ -518,18 +539,20 @@ function SelectRoot(props: SelectRootProps) {
 
   return (
     <SelectContext.Provider value={ctx}>
-      <Combobox
-        position="bottom"
-        width="target"
-        // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
-        // ("explicit beats sugar").
-        {...s.merge("root", comboboxProps)}
-        store={combobox}
-        onOptionSubmit={handleSubmit}
-        size={size}
-      >
-        {children}
-      </Combobox>
+      <SelectTriggerPropsContext.Provider value={__triggerProps}>
+        <Combobox
+          position="bottom"
+          width="target"
+          // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
+          // ("explicit beats sugar").
+          {...s.merge("root", comboboxProps)}
+          store={combobox}
+          onOptionSubmit={handleSubmit}
+          size={size}
+        >
+          {children}
+        </Combobox>
+      </SelectTriggerPropsContext.Provider>
     </SelectContext.Provider>
   );
 }
@@ -552,7 +575,7 @@ const SelectTrigger = React.forwardRef<SelectRef, SelectTriggerProps>(
     // composable caller (`<Select.Trigger placeholder=… />`) and the sugar caller
     // resolve to the same trigger. Explicit props on `<Select.Trigger>` win over the
     // funneled ones, which in turn win over the `trigger` slot sugar.
-    const funneled = ctx.triggerProps ?? {};
+    const funneled = React.useContext(SelectTriggerPropsContext) ?? EMPTY_TRIGGER_PROPS;
     const {
       role: _funneledRole,
       placeholder: funneledPlaceholder,
@@ -854,7 +877,7 @@ const SelectComponent = React.forwardRef<SelectRef, SelectProps>(function Select
 
   // The remaining chrome props are funneled to `Select.Trigger` via Root context so
   // the sugar path and the composable path converge on the same trigger element.
-  const triggerProps: SelectContextValue["triggerProps"] = {
+  const triggerProps: SelectFunneledTriggerProps = {
     ...inputProps,
     placeholder,
     id,

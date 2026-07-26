@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { withStaticProperties } from "@knitui/core";
-import { useId, useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useId, useUncontrolled } from "@knitui/hooks";
 
 import {
   Combobox,
@@ -146,12 +146,6 @@ interface MultiSelectContextValue {
   clearButtonProps?: Partial<ComboboxClearButtonProps>;
   /** Coexistence mode for the clear button + right section. */
   clearSectionMode?: "clear" | "default" | "rightSection" | "both";
-  /** Trigger props the sugar wrapper assembled (chrome, aria, ref). */
-  triggerProps?: Partial<MultiSelectInputProps> & {
-    placeholder?: string;
-    id?: string;
-    ref?: React.Ref<MultiSelectRef>;
-  };
   /** Remove a single value (pill remove / Backspace). */
   removeValue: (value: string) => void;
   // Event/behaviour handlers consumed by MultiSelect.Trigger.
@@ -169,6 +163,51 @@ const useMultiSelectContext = (): MultiSelectContextValue => {
   const ctx = React.useContext(MultiSelectContext);
   if (!ctx) {
     throw new Error("MultiSelect compound components must be rendered inside <MultiSelect.Root>");
+  }
+  return ctx;
+};
+
+/**
+ * Trigger props the sugar wrapper assembled (chrome, aria, ref). Rebuilt every
+ * render (`...inputProps` is a rest spread, so its identity can never be
+ * preserved), which is why it rides its OWN context: `MultiSelect.Trigger` is the
+ * only consumer, while the option rows consume `MultiSelectContext`.
+ */
+type MultiSelectFunneledTriggerProps = Partial<MultiSelectInputProps> & {
+  placeholder?: string;
+  id?: string;
+  ref?: React.Ref<MultiSelectRef>;
+};
+
+const MultiSelectTriggerPropsContext = React.createContext<
+  MultiSelectFunneledTriggerProps | undefined
+>(undefined);
+
+/** Shared empty funnel for the composable path (no sugar wrapper above). */
+const EMPTY_TRIGGER_PROPS: MultiSelectFunneledTriggerProps = {};
+
+/**
+ * The slice of Root state a PILL needs — deliberately WITHOUT `search`, so typing
+ * in the field cannot re-render the selected-value pills through context. The
+ * search text lives on `MultiSelectContext`, which the trigger/field consume; the
+ * pills subscribe here instead and `React.memo` on `{ value }` then actually holds.
+ */
+interface MultiSelectPillContextValue {
+  lockup: ReturnType<typeof getOptionsLockup>;
+  pillSize: ReturnType<typeof toEmbeddedControlSize>;
+  disabled?: boolean;
+  readOnly?: boolean;
+  renderPill?: ComboboxRenderPill;
+  styles?: SlotStyles<MultiSelectStyles>;
+  removeValue: (value: string) => void;
+}
+
+const MultiSelectPillContext = React.createContext<MultiSelectPillContextValue | null>(null);
+
+const useMultiSelectPillContext = (): MultiSelectPillContextValue => {
+  const ctx = React.useContext(MultiSelectPillContext);
+  if (!ctx) {
+    throw new Error("MultiSelect.Pill must be rendered inside <MultiSelect.Root>");
   }
   return ctx;
 };
@@ -277,7 +316,7 @@ export interface MultiSelectRootProps {
    * render `<MultiSelect.Trigger>` with your own props instead.
    * @internal
    */
-  __triggerProps?: MultiSelectContextValue["triggerProps"];
+  __triggerProps?: MultiSelectFunneledTriggerProps;
 }
 
 function MultiSelectRoot(props: MultiSelectRootProps) {
@@ -398,41 +437,33 @@ function MultiSelectRoot(props: MultiSelectRootProps) {
     }
   }, [flatOptions]);
 
-  const handleSubmit = React.useCallback(
-    (optionValue: string) => {
-      const option = lockup[optionValue];
-      if (!option || option.disabled) return;
-      onOptionSubmit?.(optionValue);
-      if (_value.includes(optionValue)) {
-        setValue(_value.filter((v) => v !== optionValue));
-        onRemove?.(optionValue);
-      } else if (_value.length < maxValues) {
-        setValue([..._value, optionValue]);
-      } else {
-        onMaxValues?.();
-      }
-      if (clearSearchOnChange) setSearch("");
-    },
-    [
-      lockup,
-      onOptionSubmit,
-      _value,
-      maxValues,
-      setValue,
-      onRemove,
-      onMaxValues,
-      setSearch,
-      clearSearchOnChange,
-    ],
-  );
-
-  const removeValue = React.useCallback(
-    (optionValue: string) => {
+  // Every handler in this Root is `useCallbackRef`-stable (identity fixed, latest
+  // closure). That is what lets the context memo below actually HIT — with fresh
+  // closures it either had to be invalidated every render (re-rendering every option
+  // row, since context propagation walks past `React.memo`) or it would have served
+  // stale callbacks. `handleSubmit` additionally lands on `<Combobox onOptionSubmit>`,
+  // a dep of Combobox's OWN context memo, so churn there hit every `Combobox.Option`.
+  const handleSubmit = useCallbackRef((optionValue: string) => {
+    const option = lockup[optionValue];
+    if (!option || option.disabled) return;
+    onOptionSubmit?.(optionValue);
+    if (_value.includes(optionValue)) {
       setValue(_value.filter((v) => v !== optionValue));
       onRemove?.(optionValue);
-    },
-    [setValue, _value, onRemove],
-  );
+    } else if (_value.length < maxValues) {
+      setValue([..._value, optionValue]);
+    } else {
+      onMaxValues?.();
+    }
+    if (clearSearchOnChange) setSearch("");
+  });
+
+  // Stable so each pill's `onRemove` closure is stable too (it used to depend on
+  // `_value`, giving every pill a fresh callback on every selection change).
+  const removeValue = useCallbackRef((optionValue: string) => {
+    setValue(_value.filter((v) => v !== optionValue));
+    onRemove?.(optionValue);
+  });
 
   const moveActive = (direction: 1 | -1) => {
     if (flatOptions.length === 0) return;
@@ -446,7 +477,7 @@ function MultiSelectRoot(props: MultiSelectRootProps) {
     setActiveValue(flatOptions[nextIndex].value);
   };
 
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
+  const handleKeyDown = useCallbackRef<[React.KeyboardEvent<HTMLInputElement>], void>((event) => {
     if (disabled || readOnly) return;
     switch (event.key) {
       case "ArrowDown":
@@ -489,38 +520,38 @@ function MultiSelectRoot(props: MultiSelectRootProps) {
         break;
     }
     onKeyDown?.(event);
-  };
+  });
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleChange = useCallbackRef<[React.ChangeEvent<HTMLInputElement>], void>((event) => {
     setSearch(event.currentTarget.value);
     combobox.openDropdown();
     if (selectFirstOptionOnChange) selectFirstPending.current = true;
-  };
+  });
 
-  const handleFocus: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleFocus = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     if (searchable) combobox.openDropdown();
     onFocus?.(event);
-  };
+  });
 
-  const handleBlur: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleBlur = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     combobox.closeDropdown();
     setSearch("");
     onBlur?.(event);
-  };
+  });
 
-  const handleFieldClick = React.useCallback(() => {
+  const handleFieldClick = useCallbackRef(() => {
     if (searchable) {
       combobox.openDropdown();
     } else {
       combobox.toggleDropdown();
     }
-  }, [searchable, combobox]);
+  });
 
-  const handleClear = React.useCallback(() => {
+  const handleClear = useCallbackRef(() => {
     onClear?.();
     setValue([]);
     setSearch("");
-  }, [onClear, setValue, setSearch]);
+  });
 
   const canClear = clearable && _value.length > 0 && !disabled && !readOnly;
 
@@ -550,7 +581,6 @@ function MultiSelectRoot(props: MultiSelectRootProps) {
       styles,
       clearButtonProps,
       clearSectionMode,
-      triggerProps: __triggerProps,
       removeValue,
       onClear: handleClear,
       onChangeText: handleChange,
@@ -559,9 +589,9 @@ function MultiSelectRoot(props: MultiSelectRootProps) {
       onBlur: handleBlur,
       onFieldClick: handleFieldClick,
     }),
-    // handlers are recreated each render (they close over render-scoped state); the
-    // context value is intentionally not stable, mirroring the original component.
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    // Deps are COMPLETE: every handler above is `useCallbackRef`-stable, so this memo
+    // genuinely hits. `__triggerProps` is deliberately absent — it rides its own
+    // context (it is rebuilt every render and only the Trigger reads it).
     [
       combobox,
       dropdownId,
@@ -587,34 +617,50 @@ function MultiSelectRoot(props: MultiSelectRootProps) {
       styles,
       clearButtonProps,
       clearSectionMode,
-      __triggerProps,
+      removeValue,
+      handleClear,
+      handleChange,
+      handleKeyDown,
+      handleFocus,
+      handleBlur,
+      handleFieldClick,
     ],
+  );
+
+  // Pill-only slice: no `search`, so typing cannot re-render the pills.
+  const pillCtx = React.useMemo<MultiSelectPillContextValue>(
+    () => ({ lockup, pillSize, disabled, readOnly, renderPill, styles, removeValue }),
+    [lockup, pillSize, disabled, readOnly, renderPill, styles, removeValue],
   );
 
   const s = slotStyles<MultiSelectStyles>(styles, MULTISELECT_SLOT_KEYS, "MultiSelect");
 
   return (
     <MultiSelectContext.Provider value={ctx}>
-      <Combobox
-        position="bottom"
-        width="target"
-        // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
-        // ("explicit beats sugar").
-        {...s.merge("root", comboboxProps)}
-        store={combobox}
-        onOptionSubmit={handleSubmit}
-        size={size}
-        readOnly={readOnly}
-      >
-        {children}
-      </Combobox>
-      <Combobox.HiddenInput
-        name={hiddenInputName}
-        form={form}
-        value={_value}
-        valuesDivider={hiddenInputValuesDivider}
-        disabled={disabled}
-      />
+      <MultiSelectPillContext.Provider value={pillCtx}>
+        <MultiSelectTriggerPropsContext.Provider value={__triggerProps}>
+          <Combobox
+            position="bottom"
+            width="target"
+            // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
+            // ("explicit beats sugar").
+            {...s.merge("root", comboboxProps)}
+            store={combobox}
+            onOptionSubmit={handleSubmit}
+            size={size}
+            readOnly={readOnly}
+          >
+            {children}
+          </Combobox>
+          <Combobox.HiddenInput
+            name={hiddenInputName}
+            form={form}
+            value={_value}
+            valuesDivider={hiddenInputValuesDivider}
+            disabled={disabled}
+          />
+        </MultiSelectTriggerPropsContext.Provider>
+      </MultiSelectPillContext.Provider>
     </MultiSelectContext.Provider>
   );
 }
@@ -628,11 +674,20 @@ export interface MultiSelectPillProps extends Partial<PillProps> {
   value: string;
 }
 
-function MultiSelectPill(props: MultiSelectPillProps) {
-  const ctx = useMultiSelectContext();
+/**
+ * Memoized so typing in the field doesn't re-render the whole pill row. Two things
+ * make the memo actually hold: the pill subscribes to `MultiSelectPillContext`
+ * (which carries no `search`) rather than the Root context, and `removeValue` is
+ * `useCallbackRef`-stable — previously each pill got a brand-new `onRemove` closure
+ * on every render, so keystroke latency scaled with the number of selected values.
+ */
+const MultiSelectPill = React.memo(function MultiSelectPill(props: MultiSelectPillProps) {
+  const ctx = useMultiSelectPillContext();
+  const { removeValue } = ctx;
   const s = slotStyles<MultiSelectStyles>(ctx.styles, MULTISELECT_SLOT_KEYS, "MultiSelect");
   const { value: itemValue, children, ...rest } = props;
   const option = ctx.lockup[itemValue];
+  const handleRemove = React.useCallback(() => removeValue(itemValue), [removeValue, itemValue]);
 
   // A custom `renderPill` REPLACES the built-in chip (Mantine parity).
   if (ctx.renderPill) {
@@ -641,7 +696,7 @@ function MultiSelectPill(props: MultiSelectPillProps) {
         {ctx.renderPill({
           option: option ?? { value: itemValue, label: itemValue },
           value: itemValue,
-          onRemove: () => ctx.removeValue(itemValue),
+          onRemove: handleRemove,
           disabled: ctx.disabled,
         })}
       </>
@@ -655,13 +710,13 @@ function MultiSelectPill(props: MultiSelectPillProps) {
       size={ctx.pillSize}
       withRemoveButton={!ctx.readOnly && !option?.disabled}
       disabled={ctx.disabled}
-      onRemove={() => ctx.removeValue(itemValue)}
+      onRemove={handleRemove}
       {...rest}
     >
       {children ?? option?.label ?? itemValue}
     </Pill>
   );
-}
+});
 
 /* -------------------------------------------------------------------------- */
 /* MultiSelect.Pills — the pill row wrapper (`Pill.Group`)                     */
@@ -711,7 +766,7 @@ const MultiSelectTrigger = React.forwardRef<MultiSelectRef, MultiSelectTriggerPr
 
     // The sugar `<MultiSelect>` wrapper funnels its chrome props + ref through
     // context so the composable and sugar callers resolve to the same trigger.
-    const funneled = ctx.triggerProps ?? {};
+    const funneled = React.useContext(MultiSelectTriggerPropsContext) ?? EMPTY_TRIGGER_PROPS;
     const {
       placeholder: funneledPlaceholder,
       id: funneledId,
@@ -1030,7 +1085,7 @@ const MultiSelectComponent = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     // The remaining chrome props are funneled to `MultiSelect.Trigger` via Root
     // context so the sugar path and the composable path converge on the same
     // trigger element.
-    const triggerProps: MultiSelectContextValue["triggerProps"] = {
+    const triggerProps: MultiSelectFunneledTriggerProps = {
       ...inputProps,
       placeholder,
       // Forward ONLY the field-chrome slots to the trigger's `PillsInput` →

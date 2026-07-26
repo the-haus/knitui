@@ -89,7 +89,14 @@ type CheckboxAriaProps = {
 /** Resolve box/border/icon colours from the variant + active (checked) state. */
 function checkColors(variant: CheckboxVariant, active: boolean): CheckColors {
   if (!active) {
-    return { background: "$background", border: "$borderColor", icon: "$color1" };
+    // Pinned ramp steps, NOT `$background`/`$borderColor`. `CheckboxBox` is
+    // `name: "Checkbox"`, which used to collide with Tamagui's (deprecated)
+    // `defaultComponentThemes` and nest into a `<scheme>_Checkbox` theme whose
+    // `surface2` template offset `$background` → `$color3` and `$borderColor` →
+    // `$color6`. Component themes are now off (`core/config/themes.ts` →
+    // `componentThemes: false`), so the unchecked box states its own steps: it
+    // needs a faint fill + a border strong enough to read as an empty target.
+    return { background: "$color3", border: "$color6", icon: "$color1" };
   }
   if (variant === "outline") {
     return { background: "transparent", border: "$color9", icon: "$color9" };

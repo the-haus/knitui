@@ -4,7 +4,7 @@ import { useReducedMotion } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { injectKeyframes } from "./keyframes-web";
-import { type LoopMotion, resolveMotion } from "./use-looping-animation.shared";
+import { isMotionActive, type LoopMotion, resolveMotion } from "./use-looping-animation.shared";
 
 export type {
   LoopMotion,
@@ -109,13 +109,17 @@ function staticStyle(motion: ReturnType<typeof resolveMotion>): LoopStyle["style
 export function useLoopingAnimation(motion: LoopMotion): LoopStyle {
   const reduced = useReducedMotion();
   const resolved = resolveMotion(motion);
+  // A disabled or non-moving loop must not run: a live `@keyframes` animation keeps
+  // a compositor animation alive per element for a frame that never changes (an
+  // un-`animated` Progress stripe row, a `Loader`'s three unused pulses).
+  const active = !reduced && isMotionActive(motion, resolved);
 
   // Inject during render (idempotent) so the rule exists before first paint.
   const { name, body, timing, alternate } = keyframesFor(resolved);
-  if (!reduced) injectKeyframes(name, body);
+  if (active) injectKeyframes(name, body);
 
   return React.useMemo<LoopStyle>(() => {
-    if (reduced) return { style: staticStyle(resolved) };
+    if (!active) return { style: staticStyle(resolved) };
     return {
       style: {
         animationName: name,
@@ -128,5 +132,5 @@ export function useLoopingAnimation(motion: LoopMotion): LoopStyle {
     // `resolved` is recomputed each render but value-stable per motion shape; the
     // primitive deps are what actually change the returned style.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduced, name, timing, alternate, resolved.durationMs]);
+  }, [active, name, timing, alternate, resolved.durationMs]);
 }

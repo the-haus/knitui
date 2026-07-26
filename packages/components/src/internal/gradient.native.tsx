@@ -8,6 +8,14 @@
  *
  * Stop colors are resolved to concrete values via `resolveStops` because
  * `react-native-svg` can't paint `$colorN` tokens. See `gradient-shared.ts`.
+ *
+ * The theme read + `useId` live INSIDE {@link GradientLayer}, which only mounts
+ * when a gradient actually exists. In the hook they ran on every render of every
+ * Button / ActionIcon / Badge / Avatar / CloseButton / ThemeIcon / Pill / Alert
+ * — a full `useThemeWithState` (useId + useRef + useReducer + a dep-less
+ * `useEffect` after every render) plus a regex `replace`, for a feature that is
+ * off unless `variant="gradient"`. `frameProps` is a static constant, so nothing
+ * the hook returns needs the theme.
  */
 import * as React from "react";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -20,17 +28,30 @@ import { degToSvgCoords, gradientDeg, resolveStops } from "./gradient-shared";
 
 export type { GradientStop, GradientValue } from "./gradient-shared";
 
-export const useGradient = (gradient: GradientValue | undefined): GradientResult => {
+/**
+ * The no-gradient result, shared and frozen so the (overwhelmingly common)
+ * off-path allocates nothing and keeps a stable `frameProps` identity across
+ * renders — a fresh `{}` per render would defeat downstream prop memoisation.
+ */
+const EMPTY_GRADIENT: GradientResult = Object.freeze({
+  frameProps: Object.freeze({}),
+  layer: null,
+});
+
+/** Frame props when a gradient IS painted — static, so it can be a constant. */
+const GRADIENT_FRAME_PROPS = Object.freeze({ overflow: "hidden" as const });
+
+/** The SVG fill layer. Mounted only when a `gradient` exists, so the theme
+ * subscription + `useId` are paid only by components that actually paint one. */
+function GradientLayer({ gradient }: { gradient: GradientValue }) {
   const theme = useTheme();
   // `useId` is colon-bearing; SVG ids must be colon-free to be valid `url(#…)` refs.
   const id = `knitui-grad-${React.useId().replace(/:/g, "")}`;
 
-  if (!gradient) return { frameProps: {}, layer: null };
-
   const stops = resolveStops(theme, gradient);
   const { x1, y1, x2, y2 } = degToSvgCoords(gradientDeg(gradient));
 
-  const layer = (
+  return (
     <Box position="absolute" top={0} left={0} right={0} bottom={0} pointerEvents="none">
       <Svg width="100%" height="100%">
         <Defs>
@@ -44,6 +65,9 @@ export const useGradient = (gradient: GradientValue | undefined): GradientResult
       </Svg>
     </Box>
   );
+}
 
-  return { frameProps: { overflow: "hidden" }, layer };
+export const useGradient = (gradient: GradientValue | undefined): GradientResult => {
+  if (!gradient) return EMPTY_GRADIENT;
+  return { frameProps: GRADIENT_FRAME_PROPS, layer: <GradientLayer gradient={gradient} /> };
 };

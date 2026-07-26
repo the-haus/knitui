@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { type GetProps, styled, withStaticProperties } from "@knitui/core";
-import { useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import {
@@ -23,7 +23,6 @@ import { ScrollArea } from "../ScrollArea";
 import { Text } from "../Text";
 import {
   filterTreeData,
-  findTreeNode,
   type RenderTreeNodePayload,
   Tree,
   type TreeController,
@@ -185,13 +184,6 @@ interface TreeSelectContextValue {
   styles?: SlotStyles<TreeSelectStyles>;
   /** Deprecated alias merged over the `clearButton` slot. */
   clearButtonProps?: Partial<ComboboxClearButtonProps>;
-  /** Trigger props the sugar wrapper assembled (chrome, aria, handlers). */
-  triggerProps?: Partial<TreeSelectInputProps> & {
-    placeholder?: React.ReactNode;
-    id?: string;
-    ref?: React.Ref<TreeSelectRef>;
-    clearSectionMode?: "clear" | "default" | "rightSection" | "both";
-  };
   // Event/behaviour handlers consumed by TreeSelect.Trigger / Node.
   onNodePress: (node: TreeNodeData) => void;
   onClear: () => void;
@@ -200,6 +192,43 @@ interface TreeSelectContextValue {
 }
 
 const TreeSelectContext = React.createContext<TreeSelectContextValue | null>(null);
+
+/**
+ * Trigger props the sugar wrapper assembled (chrome, aria, handlers, ref). Rebuilt
+ * every render (`...inputProps` is a rest spread, so its identity can never be
+ * preserved), which is why it rides its OWN context: `TreeSelect.Trigger` is the
+ * only consumer, while every node row consumes `TreeSelectContext`.
+ */
+type TreeSelectFunneledTriggerProps = Partial<TreeSelectInputProps> & {
+  placeholder?: React.ReactNode;
+  id?: string;
+  ref?: React.Ref<TreeSelectRef>;
+  clearSectionMode?: "clear" | "default" | "rightSection" | "both";
+};
+
+const TreeSelectTriggerPropsContext = React.createContext<
+  TreeSelectFunneledTriggerProps | undefined
+>(undefined);
+
+/** Shared empty funnel for the composable path (no sugar wrapper above). */
+const EMPTY_TRIGGER_PROPS: TreeSelectFunneledTriggerProps = {};
+
+/**
+ * Flatten a node tree into a `value → node` lookup. Built ONCE per `data` identity
+ * so selection and `onChange` are O(1) map hits instead of a full recursive DFS
+ * (`findTreeNode`) re-run in the render body on every keystroke.
+ */
+function buildTreeNodeLookup(data: TreeNodeData[]): Map<string, TreeNodeData> {
+  const lookup = new Map<string, TreeNodeData>();
+  const walk = (nodes: TreeNodeData[]) => {
+    for (const node of nodes) {
+      lookup.set(node.value, node);
+      if (Array.isArray(node.children)) walk(node.children);
+    }
+  };
+  walk(data);
+  return lookup;
+}
 
 const useTreeSelectContext = (): TreeSelectContextValue => {
   const ctx = React.useContext(TreeSelectContext);
@@ -277,7 +306,7 @@ export interface TreeSelectRootProps {
    * composing by hand you render `<TreeSelect.Trigger>` with your own props.
    * @internal
    */
-  __triggerProps?: TreeSelectContextValue["triggerProps"];
+  __triggerProps?: TreeSelectFunneledTriggerProps;
 }
 
 function TreeSelectRoot(props: TreeSelectRootProps) {
@@ -318,7 +347,10 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
     finalValue: null,
   });
 
-  const selectedNode = _value != null ? findTreeNode(_value, data) : null;
+  // One `value → node` map per `data` identity, replacing two full-tree DFS walks
+  // (render body + `setValue`) that re-ran on every render / keystroke.
+  const nodeLookup = React.useMemo(() => buildTreeNodeLookup(data), [data]);
+  const selectedNode = (_value != null ? nodeLookup.get(_value) : null) ?? null;
 
   const internalTree = useTree();
   const controller = tree ?? internalTree;
@@ -335,13 +367,15 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
     defaultValue: defaultSearchValue,
     finalValue: "",
   });
-  const setSearch = React.useCallback(
-    (next: string) => {
-      setSearchState(next);
-      onSearchChange?.(next);
-    },
-    [setSearchState, onSearchChange],
-  );
+  // Every handler in this Root is `useCallbackRef`-stable (identity fixed, latest
+  // closure). That is what lets the context memo below actually HIT — with fresh
+  // closures it either had to be invalidated every render (re-rendering every node
+  // row, since context propagation walks past `React.memo`) or it would have served
+  // stale callbacks.
+  const setSearch = useCallbackRef((next: string) => {
+    setSearchState(next);
+    onSearchChange?.(next);
+  });
 
   // Reset the search box when the dropdown closes (internal reset — bypass the
   // `onSearchChange` callback, matching `Select`'s close-sync effect). This MUST
@@ -360,49 +394,43 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
     [data, searchable, search],
   );
 
-  const setValue = React.useCallback(
-    (next: string | null) => {
-      setValueState(next);
-      onChange?.(next, next != null ? findTreeNode(next, data) : null);
-    },
-    [setValueState, onChange, data],
-  );
+  const setValue = useCallbackRef((next: string | null) => {
+    setValueState(next);
+    onChange?.(next, next != null ? (nodeLookup.get(next) ?? null) : null);
+  });
 
-  const handleNodePress = React.useCallback(
-    (node: TreeNodeData) => {
-      if (disabled || readOnly) return;
+  const handleNodePress = useCallbackRef((node: TreeNodeData) => {
+    if (disabled || readOnly) return;
 
-      const hasChildren = Array.isArray(node.children) && node.children.length > 0;
-      const next = allowDeselect && node.value === _value ? null : node.value;
-      setValue(next);
-      if (hasChildren) {
-        controller.toggleExpanded(node.value);
-      } else {
-        combobox.closeDropdown();
-      }
-    },
-    [allowDeselect, _value, setValue, controller, combobox, disabled, readOnly],
-  );
+    const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+    const next = allowDeselect && node.value === _value ? null : node.value;
+    setValue(next);
+    if (hasChildren) {
+      controller.toggleExpanded(node.value);
+    } else {
+      combobox.closeDropdown();
+    }
+  });
 
-  const handleClear = React.useCallback(() => {
+  const handleClear = useCallbackRef(() => {
     setValue(null);
     setSearch("");
     onClear?.();
-  }, [setValue, setSearch, onClear]);
+  });
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleChange = useCallbackRef<[React.ChangeEvent<HTMLInputElement>], void>((event) => {
     setSearch(event.currentTarget.value);
     combobox.openDropdown();
-  };
+  });
 
-  const handleClick: React.MouseEventHandler<HTMLInputElement> = (event) => {
+  const handleClick = useCallbackRef<[React.MouseEvent<HTMLInputElement>], void>((event) => {
     if (searchable) {
       combobox.openDropdown();
     } else {
       combobox.toggleDropdown();
     }
     __triggerProps?.onClick?.(event);
-  };
+  });
 
   const canClear = clearable && _value != null && !disabled && !readOnly;
   const inputValue = searchable && combobox.opened ? search : nodeLabelText(selectedNode);
@@ -425,15 +453,14 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
       canClear,
       styles,
       clearButtonProps,
-      triggerProps: __triggerProps,
       onNodePress: handleNodePress,
       onClear: handleClear,
       onChangeText: handleChange,
       onClick: handleClick,
     }),
-    // handlers are recreated each render (they close over render-scoped state);
-    // the context value is intentionally not stable, mirroring the original.
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    // Deps are COMPLETE: every handler above is `useCallbackRef`-stable, so this memo
+    // genuinely hits. `__triggerProps` is deliberately absent — it rides its own
+    // context (it is rebuilt every render and only the Trigger reads it).
     [
       combobox,
       controller,
@@ -451,7 +478,10 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
       canClear,
       styles,
       clearButtonProps,
-      __triggerProps,
+      handleNodePress,
+      handleClear,
+      handleChange,
+      handleClick,
     ],
   );
 
@@ -459,17 +489,19 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
 
   return (
     <TreeSelectContext.Provider value={ctx}>
-      <Combobox
-        position="bottom"
-        width="target"
-        // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
-        // ("explicit beats sugar").
-        {...s.merge("root", comboboxProps)}
-        store={combobox}
-        size={size}
-      >
-        {children}
-      </Combobox>
+      <TreeSelectTriggerPropsContext.Provider value={__triggerProps}>
+        <Combobox
+          position="bottom"
+          width="target"
+          // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
+          // ("explicit beats sugar").
+          {...s.merge("root", comboboxProps)}
+          store={combobox}
+          size={size}
+        >
+          {children}
+        </Combobox>
+      </TreeSelectTriggerPropsContext.Provider>
     </TreeSelectContext.Provider>
   );
 }
@@ -492,7 +524,7 @@ const TreeSelectTrigger = React.forwardRef<TreeSelectRef, TreeSelectTriggerProps
     // context so a composable caller (`<TreeSelect.Trigger placeholder=… />`) and
     // the sugar caller resolve to the same trigger. Explicit props on the part win
     // over the funneled ones, which in turn win over the `trigger` slot sugar.
-    const funneled = ctx.triggerProps ?? {};
+    const funneled = React.useContext(TreeSelectTriggerPropsContext) ?? EMPTY_TRIGGER_PROPS;
     const {
       placeholder: funneledPlaceholder,
       id: funneledId,
@@ -785,7 +817,7 @@ const TreeSelectComponent = InputBase.styleable<TreeSelectProps>(function TreeSe
   // The remaining chrome props are funneled to `TreeSelect.Trigger` via Root
   // context so the sugar path and the composable path converge on the same
   // trigger element.
-  const triggerProps: TreeSelectContextValue["triggerProps"] = {
+  const triggerProps: TreeSelectFunneledTriggerProps = {
     ...inputProps,
     placeholder,
     id,

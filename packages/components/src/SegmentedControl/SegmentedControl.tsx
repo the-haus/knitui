@@ -402,7 +402,18 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
                   const { x, y, width, height } = e.nativeEvent.layout;
                   layoutsRef.current[item.value] = { x, y, width, height };
                   if (item.value === current) {
-                    setActiveLayout({ x, y, width, height });
+                    // `onLayout` fires on every layout pass, not just on change —
+                    // return the previous state when nothing moved so React bails
+                    // out of the re-render instead of re-committing an equal object.
+                    setActiveLayout((prev) =>
+                      prev &&
+                      prev.x === x &&
+                      prev.y === y &&
+                      prev.width === width &&
+                      prev.height === height
+                        ? prev
+                        : { x, y, width, height },
+                    );
                   }
                 }}
               >

@@ -13,6 +13,7 @@ import {
   type SizeKey,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
+import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
 import { Text } from "../Text";
 
 type PillSize = SizeKey;
@@ -233,15 +234,11 @@ const PillComponent = PillFrame.styleable<PillProps>(function Pill(props, ref) {
   );
 
   // Bind the `label` slot props onto the label wrapper that `renderTextChild`
-  // emits for text children (`styles={{ label }}` → `<Pill.Label … />`).
-  const labelSlot = s.get("label");
-  const LabelWrapper = React.useMemo<React.FC<{ children: React.ReactNode }>>(
-    () =>
-      function PillLabelWrapper(wrapperProps) {
-        return <PillLabel {...labelSlot} {...wrapperProps} />;
-      },
-    [labelSlot],
-  );
+  // emits for text children (`styles={{ label }}` → `<Pill.Label … />`). The shared
+  // hook compares the slot props by VALUE: keyed on identity, the documented inline
+  // `styles={{ label: { … } }}` literal made the wrapper a new component TYPE every
+  // render, remounting the label of every pill in a group.
+  const LabelWrapper = useSlotTextWrapper(PillLabel, s.get("label"));
 
   return (
     <PillFrame

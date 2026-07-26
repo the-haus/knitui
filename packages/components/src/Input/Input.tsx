@@ -5,16 +5,15 @@ import {
   registerFocusable,
   styled,
   type TamaguiElement,
-  useTheme,
   useWebRef,
-  variableToString,
   withStaticProperties,
 } from "@knitui/core";
-import { useId } from "@knitui/hooks";
+import { useCallbackRef, useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { webCursor } from "../internal/style-props";
 import { pick } from "../internal/styles";
+import { themeColorToCssVar } from "../internal/theme-color-web";
 import { Text } from "../Text";
 import {
   DEFAULT_PLACEHOLDER_COLOR,
@@ -117,12 +116,20 @@ const StyledButtonInput = styled(Text, {
 type StyledInputProps = GetProps<typeof StyledInput>;
 type InputStyle = StyledInputProps["style"] & Record<`--${string}`, string | undefined>;
 
-const resolveThemeColor = (theme: ReturnType<typeof useTheme>, color: string) => {
-  const themeKey = color.startsWith("$") ? color.slice(1) : color;
-  const themeValue = themeKey ? theme[themeKey as keyof typeof theme] : undefined;
-
-  return themeValue ? variableToString(themeValue) : color;
-};
+/**
+ * Placeholder / selection colours as CSS custom properties, resolved ONCE at
+ * module scope.
+ *
+ * Both inputs are module constants (`"$color8"` / `"$blue5"`), and on web a
+ * `$token` maps to its CSS variable by pure string transform (see
+ * `theme-color-web.ts`) — the `var()` tracks the active theme by itself. So this
+ * needed no theme object, yet every `Input` used to call `useTheme()` for it,
+ * paying a `useThemeWithState` (useId + useRef + useReducer + a DEP-LESS
+ * `useEffect` that fires after EVERY render) plus a global theme-subscriber
+ * registration per mounted field — on every keystroke-driven re-render.
+ */
+const PLACEHOLDER_COLOR_VAR = themeColorToCssVar(DEFAULT_PLACEHOLDER_COLOR);
+const SELECTION_COLOR_VAR = themeColorToCssVar(DEFAULT_SELECTION_COLOR);
 
 const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRef) => {
   const {
@@ -187,7 +194,6 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
 
   const { ref, composedRef } = useWebRef<WebInputElement>(_forwardedRef);
   const [focused, setFocused] = React.useState(false);
-  const theme = useTheme();
   const wrapperContext = React.useContext(InputWrapperContext);
   const generatedInputId = useId(id);
   const inputId = wrapperContext?.inputId || generatedInputId;
@@ -212,15 +218,24 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
         ? "off"
         : autoCapitalizeProp;
 
-  // Handle selection changes
+  // Handle selection changes.
+  //
+  // `onSelectionChange` is held in a `useCallbackRef` (stable identity, always
+  // calls the latest version) and deliberately kept OUT of the effect deps:
+  // callers pass an inline arrow, so a fresh identity every render used to tear
+  // the DOM listener down and re-attach it on EVERY keystroke. `hasSelectionChange`
+  // gates attaching at all, so the "no handler = no listener" behaviour is kept
+  // while the listener itself now attaches once.
+  const selectionChangeRef = useCallbackRef(onSelectionChange);
+  const hasSelectionChange = Boolean(onSelectionChange);
   React.useEffect(() => {
-    if (!onSelectionChange) return;
+    if (!hasSelectionChange) return;
 
     const node = ref.current;
     if (!node) return;
 
     const handleSelectionChange = () => {
-      onSelectionChange({
+      selectionChangeRef({
         nativeEvent: {
           selection: {
             start: "selectionStart" in node ? (node.selectionStart ?? 0) : 0,
@@ -232,7 +247,7 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
 
     node.addEventListener("select", handleSelectionChange);
     return () => node.removeEventListener("select", handleSelectionChange);
-  }, [onSelectionChange, ref]);
+  }, [hasSelectionChange, selectionChangeRef, ref]);
 
   // Sync selection prop
   React.useEffect(() => {
@@ -307,8 +322,8 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     style && typeof style === "object" && !Array.isArray(style) ? style : undefined;
   const inputStyle: InputStyle = {
     ...(incomingStyle as object),
-    "--t_placeholderColor": resolveThemeColor(theme, DEFAULT_PLACEHOLDER_COLOR),
-    "--t_selectionColor": resolveThemeColor(theme, DEFAULT_SELECTION_COLOR),
+    "--t_placeholderColor": PLACEHOLDER_COLOR_VAR,
+    "--t_selectionColor": SELECTION_COLOR_VAR,
   };
 
   const inputHostProps = {

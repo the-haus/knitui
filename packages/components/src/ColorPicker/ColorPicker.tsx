@@ -272,10 +272,14 @@ function ColorPickerSaturation(props: ColorPickerSaturationProps) {
   const { parsed: value, value: color, size, focusable, saturationLabel, geometry } = ctx;
   const { onPartChange: onChange, onSaturationChangeEnd, onScrubStart, onScrubEnd } = ctx;
 
-  const [position, setPosition] = React.useState<MovePosition>({
-    x: value.s / 100,
-    y: 1 - value.v / 100,
-  });
+  // `ctx.parsed` IS the source of truth for the thumb, so the position is
+  // DERIVED during render instead of mirrored into state by an effect. The mirror
+  // cost a second render of the whole picker subtree for every pointermove:
+  // ctx change → render → effect → setPosition → render again.
+  const position: MovePosition = { x: value.s / 100, y: 1 - value.v / 100 };
+  // Raw (unrounded) last-move position, read by `onScrubEnd` — deliberately NOT
+  // written during render; `useMove` always reports the final move before
+  // `onScrubEnd`, so this is fresh whenever it is read.
   const positionRef = React.useRef(position);
 
   const { ref, rootProps } = useMove(
@@ -292,10 +296,6 @@ function ColorPickerSaturation(props: ColorPickerSaturationProps) {
       },
     },
   );
-
-  React.useEffect(() => {
-    setPosition({ x: value.s / 100, y: 1 - value.v / 100 });
-  }, [value.s, value.v]);
 
   const nudge = (next: MovePosition) => {
     const clamped = clampMovePosition(next);
@@ -411,7 +411,9 @@ function ColorSlider(props: ColorSliderEngineProps) {
 
   const s = slotStyles<ColorPickerStyles>(styles, COLOR_PICKER_SLOT_KEYS, "ColorPicker");
 
-  const [position, setPosition] = React.useState<MovePosition>({ x: value / maxValue, y: 0 });
+  // Derived during render from the incoming `value` — see the note in
+  // `ColorPickerSaturation`; the old mirror state + effect doubled every render.
+  const position: MovePosition = { x: value / maxValue, y: 0 };
   const positionRef = React.useRef(position);
 
   const getValue = (x: number) => (round_ ? Math.round(x * maxValue) : x * maxValue);
@@ -429,10 +431,6 @@ function ColorSlider(props: ColorSliderEngineProps) {
       },
     },
   );
-
-  React.useEffect(() => {
-    setPosition({ x: value / maxValue, y: 0 });
-  }, [value, maxValue]);
 
   const nudge = (x: number) => {
     const clamped = clampMovePosition({ x, y: 0 });
@@ -539,6 +537,9 @@ export interface ColorPickerAlphaSliderProps extends GetProps<typeof SliderFrame
 function ColorPickerAlphaSlider(props: ColorPickerAlphaSliderProps) {
   const ctx = useColorPickerContext();
   const { thumbProps, ...rest } = props;
+  // The gradient overlay and the thumb want the SAME hex; converting twice ran the
+  // HSVA→hex math twice per drag frame.
+  const hex = convertHsvaTo("hex", ctx.parsed);
   return (
     <ColorSlider
       value={ctx.parsed.a}
@@ -547,10 +548,10 @@ function ColorPickerAlphaSlider(props: ColorPickerAlphaSliderProps) {
       baseColor="#ffffff"
       overlays={[
         {
-          backgroundImage: `linear-gradient(90deg, transparent, ${convertHsvaTo("hex", ctx.parsed)})`,
+          backgroundImage: `linear-gradient(90deg, transparent, ${hex})`,
         },
       ]}
-      thumbColor={convertHsvaTo("hex", ctx.parsed)}
+      thumbColor={hex}
       size={ctx.size}
       focusable={ctx.focusable}
       aria-label={ctx.alphaLabel}
@@ -609,7 +610,15 @@ function ColorPickerSwatch(props: ColorPickerSwatchProps) {
   );
   const swatchSize = size ?? autoSize;
   const selected = ctx.value === color;
-  const checkColor = (luminance(color) < 0.5 ? "#fff" : "#000") as TextProps["color"];
+  // `luminance` runs `parseColor` (a multi-pattern regex scan) plus HSVA math, and
+  // this component subscribes to a context that legitimately changes on EVERY
+  // pointermove of a saturation/hue/alpha drag — so all N swatches re-render per
+  // frame. The check colour depends only on `color`, which never changes for a
+  // given swatch, so it is computed once per swatch instead of once per frame.
+  const checkColor = React.useMemo(
+    () => (luminance(color) < 0.5 ? "#fff" : "#000") as TextProps["color"],
+    [color],
+  );
   const numericSize = typeof swatchSize === "number" ? swatchSize : autoSize;
 
   return (
@@ -738,13 +747,18 @@ const ColorPickerRoot = React.forwardRef<
 
   const withAlpha = format === "hexa" || format === "rgba" || format === "hsla";
 
-  const handleChange = React.useCallback((color: Partial<HsvaColor>) => {
-    const next = { ...parsedRef.current, ...color };
-    parsedRef.current = next;
-    setParsed(next);
-    setValue(convertHsvaTo(formatRef.current, next));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // `setValue` from `useUncontrolled` is referentially stable AND reads the latest
+  // `onChange` through a ref, so listing it honestly keeps this callback stable
+  // across renders — the old `[]` + eslint-disable workaround is now dead.
+  const handleChange = React.useCallback(
+    (color: Partial<HsvaColor>) => {
+      const next = { ...parsedRef.current, ...color };
+      parsedRef.current = next;
+      setParsed(next);
+      setValue(convertHsvaTo(formatRef.current, next));
+    },
+    [setValue],
+  );
 
   const startScrubbing = React.useCallback(() => {
     scrubbingRef.current = true;
@@ -808,8 +822,7 @@ const ColorPickerRoot = React.forwardRef<
       onColorSwatchClick?.(color);
       onChangeEnd?.(convertHsvaTo(formatRef.current, parseColor(color)));
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onColorSwatchClick, onChangeEnd],
+    [onColorSwatchClick, onChangeEnd, setValue],
   );
 
   const ctx = React.useMemo<ColorPickerContextValue>(

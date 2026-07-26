@@ -6,8 +6,8 @@ import { renderTextChild } from "../internal/render-text-child";
 import {
   focusRingStyle,
   pressScaleStyle,
-  webButton,
-  webButtonTextReset,
+  WEB_BUTTON_PROPS,
+  WEB_BUTTON_TEXT_RESET,
   webCursor,
 } from "../internal/style-props";
 import { Text } from "../Text";
@@ -62,11 +62,18 @@ const UnstyledButtonComponent = UnstyledButtonFrame.styleable<UnstyledButtonProp
     const press = usePressScale();
     // On web the semantic `<button>` host carries a UA `text-align: center` that
     // would centre text content — diverging from native, where a pressable's text
-    // starts at the inline edge. `webButtonTextReset()` neutralises that (web-only)
+    // starts at the inline edge. `WEB_BUTTON_TEXT_RESET` neutralises that (web-only)
     // ahead of the caller's `style`, so the default matches native while explicit
     // alignment still overrides. It has to ride `style` rather than the frame
     // config because Tamagui filters `textAlign` off a View frame (see the helper).
-    const style_ = [webButtonTextReset(), style] as UnstyledButtonFrameProps["style"];
+    //
+    // The wrapping array is built ONLY when the caller passed a `style`: a fresh
+    // array on every render is a fresh `style` identity, which defeats Tamagui's
+    // style cache. With no caller style the reset constant is passed as-is (and on
+    // native it is `undefined`, i.e. exactly the previous `[undefined, undefined]`).
+    const style_ = (
+      style == null ? WEB_BUTTON_TEXT_RESET : [WEB_BUTTON_TEXT_RESET, style]
+    ) as UnstyledButtonFrameProps["style"];
     return (
       <UnstyledButtonFrame
         ref={ref}
@@ -74,7 +81,7 @@ const UnstyledButtonComponent = UnstyledButtonFrame.styleable<UnstyledButtonProp
         {...press}
         {...rest}
         aria-disabled={disabled || undefined}
-        {...webButton()}
+        {...WEB_BUTTON_PROPS}
         style={style_}
       >
         {renderTextChild(children, Text)}

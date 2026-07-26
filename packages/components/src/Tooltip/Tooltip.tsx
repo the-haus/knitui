@@ -68,13 +68,27 @@ export interface TooltipEvents {
 /* Styled label frame                                                         */
 /* -------------------------------------------------------------------------- */
 
+/*
+ * RAMP NOTE (`$colorN` steps below are MIRRORED, i.e. `13 - n`)
+ * ------------------------------------------------------------
+ * `name: "Tooltip"` collides with an `inverse`-templated entry in Tamagui's
+ * (deprecated) `defaultComponentThemes`. Until `core/config/themes.ts` set
+ * `componentThemes: false`, this frame — and `TooltipText` inside it — resolved
+ * against a `<scheme>_Tooltip` theme whose whole `$color1…$color12` ramp was
+ * reversed, so the authored `$color9` fill actually painted step 4 and the
+ * authored `$color1` label actually painted step 12. The steps are written
+ * pre-mirrored here so the tooltip keeps its shipped light-chip appearance now
+ * that nothing flips the ramp under it. Restoring the canonical filled pairing
+ * (`$color9` fill + `$color1` label) is a deliberate design change — see the
+ * changeset.
+ */
 const TooltipLabelFrame = styled(Box, {
   name: "Tooltip",
   // `fixed` is web-only viewport positioning; React Native supports only
   // `absolute`/`relative`/`static`. Pick the platform-correct value (mirrors
   // Popover.Dropdown) so the label isn't laid out in normal flow on native.
   position: isWeb ? ("fixed" as const) : ("absolute" as const),
-  backgroundColor: "$color9",
+  backgroundColor: "$color4",
   paddingVertical: "$xxs",
   paddingHorizontal: "$xs",
   borderRadius: "$sm",
@@ -94,7 +108,8 @@ const TooltipLabelFrame = styled(Box, {
 
 const TooltipText = styled(Text, {
   name: "TooltipText",
-  color: "$color1",
+  // MIRRORED step — renders inside `TooltipLabelFrame`. See the RAMP NOTE above.
+  color: "$color12",
   fontSize: "$sm",
 });
 
@@ -346,12 +361,23 @@ function TooltipTarget({ children, refProp: refPropOverride }: TooltipTargetProp
   const mergedRef = useMergedRef<TamaguiElement>(ctx.setReferenceRef, childRef);
 
   const child = children as React.ReactElement<InteractionProps>;
-  const handlers = buildTargetHandlers(child.props, ctx);
 
-  return React.cloneElement(child, {
-    [refProp]: mergedRef,
-    ...handlers,
-  } as Partial<InteractionProps> & React.Attributes);
+  // Memoised on the child's props + the target context. A Tooltip re-renders on
+  // every position update while open, and each of those rebuilt 2–5 handler
+  // closures and cloned a NEW element for the trigger — re-rendering the whole
+  // trigger subtree. `children` is a prop, so its identity is stable across
+  // Tooltip's own state churn; when nothing the clone depends on changed, the
+  // memo returns the SAME element and React skips the subtree entirely.
+  const handlers = React.useMemo(() => buildTargetHandlers(child.props, ctx), [child.props, ctx]);
+
+  return React.useMemo(
+    () =>
+      React.cloneElement(child, {
+        [refProp]: mergedRef,
+        ...handlers,
+      } as Partial<InteractionProps> & React.Attributes),
+    [child, refProp, mergedRef, handlers],
+  );
 }
 
 const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(props, ref) {

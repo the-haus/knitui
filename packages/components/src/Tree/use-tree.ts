@@ -8,10 +8,9 @@ import {
   getAllCheckedNodes,
   getAllChildrenNodes,
   getAllNodeValues,
+  getCheckedNodesMap,
   getChildrenNodesValues,
   getInitialTreeExpandedState,
-  isNodeChecked as isNodeCheckedFn,
-  isNodeIndeterminate as isNodeIndeterminateFn,
   type TreeExpandedState,
   type TreeNodeData,
 } from "./tree-data";
@@ -87,6 +86,11 @@ export interface TreeController {
   getCheckedNodes: () => CheckedNodeStatus[];
   isNodeChecked: (value: string) => boolean;
   isNodeIndeterminate: (value: string) => boolean;
+  /**
+   * Whether `value` is selected. Prefer this over scanning `selectedState` — it is
+   * a `Set` lookup, so asking per rendered node stays O(1) instead of O(selected).
+   */
+  isNodeSelected: (value: string) => boolean;
 }
 
 function shallowEqualArray<T>(a: readonly T[], b: readonly T[]): boolean {
@@ -343,15 +347,54 @@ export function useTree({
     return getAllCheckedNodes(data, _checkedState).result;
   }, [checkStrictly, _checkedState, data]);
 
-  const isNodeChecked = React.useCallback(
-    (value: string) =>
-      checkStrictly ? _checkedState.includes(value) : isNodeCheckedFn(value, data, _checkedState),
+  /**
+   * Checked-state derivation is done ONCE per `(data, checkedState)` pair. The
+   * documented pattern calls `isNodeChecked` + `isNodeIndeterminate` for every
+   * rendered node, and each of those standalone helpers walks the whole tree —
+   * so a naive wiring costs two full traversals per node per render. Here the
+   * traversal happens once and the per-node helpers are Map/Set lookups.
+   */
+  const checkedLookup = React.useMemo(
+    () => ({
+      values: new Set(_checkedState),
+      statuses: checkStrictly
+        ? new Map<string, CheckedNodeStatus>()
+        : getCheckedNodesMap(data, _checkedState),
+    }),
     [checkStrictly, _checkedState, data],
   );
 
+  const isNodeChecked = React.useCallback(
+    (value: string) => {
+      if (checkStrictly) {
+        return checkedLookup.values.has(value);
+      }
+      // A value listed directly in `checkedState` is checked even if the tree
+      // derivation would not mark it (e.g. a branch value pushed by a consumer).
+      return (
+        checkedLookup.values.has(value) || (checkedLookup.statuses.get(value)?.checked ?? false)
+      );
+    },
+    [checkStrictly, checkedLookup],
+  );
+
   const isNodeIndeterminate = React.useCallback(
-    (value: string) => (checkStrictly ? false : isNodeIndeterminateFn(value, data, _checkedState)),
-    [checkStrictly, _checkedState, data],
+    (value: string) =>
+      checkStrictly ? false : (checkedLookup.statuses.get(value)?.indeterminate ?? false),
+    [checkStrictly, checkedLookup],
+  );
+
+  /**
+   * Selection gets the same treatment as `checkedLookup` above: `Tree` asks "is
+   * this node selected?" once per rendered node, so an `Array.includes` scan there
+   * makes selection O(nodes × selected) on every render. Built once per selected-
+   * state identity; the per-node question is then a `Set` hit.
+   */
+  const selectedLookup = React.useMemo(() => new Set(_selectedState), [_selectedState]);
+
+  const isNodeSelected = React.useCallback(
+    (value: string) => selectedLookup.has(value),
+    [selectedLookup],
   );
 
   return React.useMemo(
@@ -382,6 +425,7 @@ export function useTree({
       getCheckedNodes,
       isNodeChecked,
       isNodeIndeterminate,
+      isNodeSelected,
     }),
     [
       checkStrictly,
@@ -410,6 +454,7 @@ export function useTree({
       getCheckedNodes,
       isNodeChecked,
       isNodeIndeterminate,
+      isNodeSelected,
     ],
   );
 }

@@ -1,18 +1,13 @@
 import * as React from "react";
 
-import {
-  type GetProps,
-  styled,
-  type TamaguiElement,
-  useTheme,
-  withStaticProperties,
-} from "@knitui/core";
-import { useDebouncedCallback, useMergedRef, useMove, useReducedMotion } from "@knitui/hooks";
+import { type GetProps, styled, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import { useDebouncedCallback, useMergedRef, useMove } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { useReducedTransition } from "../internal/motion";
 import { animateOnlyProps, hoverProps } from "../internal/style-props";
 import { slotStyles } from "../internal/styles";
+import { themeColorToCssVar } from "../internal/theme-color-web";
 import {
   DEFAULT_HIDE_DELAY,
   DEFAULT_IDLE_SCROLLBAR_SIZE,
@@ -85,6 +80,26 @@ const injectHideNativeScrollbarStyle = (): void => {
 const ANIMATE_OPACITY = ["opacity"];
 const ANIMATE_Y_THUMB = ["left", "right", "opacity"];
 const ANIMATE_X_THUMB = ["top", "bottom", "opacity"];
+
+/**
+ * Default colour the edge-fade gradients fade FROM — the surface behind the
+ * viewport, i.e. the theme's `background`.
+ *
+ * Resolved once at module scope to the token's CSS custom property (this is the
+ * web twin; `ScrollArea.native.tsx` owns native). It used to be read per render
+ * as `theme.background?.val`, which cost a `useTheme()` — `useThemeWithState`
+ * (useId + useRef + useReducer + a DEP-LESS `useEffect` firing after every
+ * render) — AND, because touching a field on Tamagui's theme proxy calls its
+ * `track()`, made every ScrollArea a full theme SUBSCRIBER, even with `shadows`
+ * off. The `var()` follows theme changes by itself, which is the whole point.
+ * The old JS `?? "rgba(0,0,0,0.15)"` last resort is preserved as the CSS
+ * variable's own fallback, so a document with no theme variables still fades.
+ */
+const EDGE_SHADOW_FALLBACK = "rgba(0,0,0,0.15)";
+const themeBackgroundVar = themeColorToCssVar("$background");
+const DEFAULT_EDGE_SHADOW_COLOR = themeBackgroundVar.startsWith("var(")
+  ? `${themeBackgroundVar.slice(0, -1)}, ${EDGE_SHADOW_FALLBACK})`
+  : themeBackgroundVar;
 
 /* -------------------------------------------------------------------------- */
 /* Styled frames                                                              */
@@ -249,8 +264,6 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const mergedScrollbarProps = slots.merge("scrollbar", scrollbarProps);
     const mergedThumbProps = slots.merge("thumb", thumbProps);
     const mergedCornerProps = slots.merge("corner", cornerProps);
-    const theme = useTheme();
-    const reducedMotion = useReducedMotion();
 
     const viewportNodeRef = React.useRef<TamaguiElement | null>(null);
     // Size changes rarely (mount/resize). Scroll changes every frame but is kept OUT
@@ -268,6 +281,8 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const geomRef = React.useRef({ yTrack: 0, xTrack: 0 });
     const rafRef = React.useRef<number | null>(null);
     const [scrolling, setScrolling] = React.useState(false);
+    // Mirrors `scrolling` so the per-event flash can skip a redundant setState.
+    const scrollingRef = React.useRef(false);
     const [dragging, setDragging] = React.useState(false);
     const hideTimeout = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -311,11 +326,21 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       setSize(next);
     }, []);
 
+    // Called once per scroll event. `setScrolling(true)` is guarded by a ref because
+    // React only bails on a same-value update AFTER re-entering the component — on a
+    // 120 Hz trackpad fling that is a wasted render pass per frame for the whole
+    // subtree. The hide timer is cheap to restart, so it stays unguarded.
     const flashScrollbars = React.useCallback(() => {
       if (type !== "hover" && type !== "scroll") return;
-      setScrolling(true);
+      if (!scrollingRef.current) {
+        scrollingRef.current = true;
+        setScrolling(true);
+      }
       clearTimeout(hideTimeout.current);
-      hideTimeout.current = setTimeout(() => setScrolling(false), scrollHideDelay);
+      hideTimeout.current = setTimeout(() => {
+        scrollingRef.current = false;
+        setScrolling(false);
+      }, scrollHideDelay);
     }, [type, scrollHideDelay]);
 
     const debouncedScrollEnd = useDebouncedCallback((pos: ScrollPosition) => {
@@ -350,9 +375,42 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const shadowEligible = resolveShadowEdges(shadows, axes);
     const anyShadow =
       shadowEligible.top || shadowEligible.bottom || shadowEligible.left || shadowEligible.right;
-    // Scroll offset mirror, used ONLY to drive the opt-in edge fades — updated per
-    // frame solely when `shadows` is set, so the common case never re-renders.
-    const [shadowScroll, setShadowScroll] = React.useState<ScrollPosition>({ x: 0, y: 0 });
+    // Which edges currently have content beyond them — the ONLY thing the opt-in edge
+    // fades need. Storing the booleans (rather than mirroring the raw scroll offset
+    // into state, as this used to) means a scroll re-renders at most FOUR times over
+    // its whole length — once per edge crossing — instead of once per frame. Each of
+    // those frames previously re-rendered the ScrollArea and restyled four Tamagui
+    // overlays while the browser was already busy scrolling.
+    const [edges, setEdges] = React.useState<EdgeState>({
+      top: false,
+      bottom: false,
+      left: false,
+      right: false,
+    });
+
+    // Recompute the edge-fade booleans off the live scroll offset + measured size, and
+    // re-render ONLY when one actually flips. No-op unless `shadows` is set.
+    const syncEdges = React.useCallback(() => {
+      if (!anyShadow) return;
+      const sz = sizeRef.current;
+      const { x, y } = scrollRef.current;
+      const next = getEdgeState({
+        viewportW: sz.viewportW,
+        viewportH: sz.viewportH,
+        contentW: sz.contentW,
+        contentH: sz.contentH,
+        scrollX: x,
+        scrollY: y,
+      });
+      setEdges((prev) =>
+        prev.top === next.top &&
+        prev.bottom === next.bottom &&
+        prev.left === next.left &&
+        prev.right === next.right
+          ? prev
+          : next,
+      );
+    }, [anyShadow]);
 
     // Paint the thumb offsets straight to the DOM (rAF-coalesced) — never through
     // React state — so a scroll never re-renders or restyles the Tamagui thumb. The
@@ -402,9 +460,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
         const y = node.scrollTop;
         scrollRef.current = { x, y };
         schedulePaint();
-        if (anyShadow) {
-          setShadowScroll((prev) => (prev.x === x && prev.y === y ? prev : { x, y }));
-        }
+        syncEdges();
         onScrollPositionChange?.({ x, y });
         flashScrollbars();
 
@@ -419,7 +475,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       },
       [
         schedulePaint,
-        anyShadow,
+        syncEdges,
         onScrollPositionChange,
         flashScrollbars,
         fireReachCallbacks,
@@ -446,26 +502,73 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     );
 
     // Re-read size whenever the viewport or its content resizes, and (when armed)
-    // follow the bottom as content grows. ResizeObserver is absent in jsdom —
-    // guard so the suite doesn't throw. Depend on the child count so we re-observe
-    // when content is added/removed without rebuilding on every render.
-    const childCount = React.Children.count(children);
+    // follow the bottom as content grows. The observer watches the viewport AND its
+    // direct children, because a `ResizeObserver` on a scroll container does NOT fire
+    // when its content grows — only the children's own boxes change.
+    //
+    // The observer is created ONCE and its observations are reconciled per commit.
+    // Rebuilding it whenever the child count changed (the previous approach) is exactly
+    // the wrong shape for the kit's most important scrolling case: a windowed list
+    // (`VirtualList`) inside a `ScrollArea` changes its child count on every window
+    // advance, i.e. mid-fling — so every advance tore down the observer and re-observed
+    // N nodes while the browser was scrolling. The callback is read through a ref so
+    // the observer never needs re-creating to see fresh props.
+    const onContentResizeRef = React.useRef<() => void>(() => {});
+    onContentResizeRef.current = () => {
+      const node = viewportNodeRef.current as HTMLElement | null;
+      if (!node) return;
+      readSize();
+      syncEdges();
+      if (stickToBottom && stuckRef.current && node.scrollHeight > prevContentHRef.current) {
+        programmaticRef.current = true;
+        node.scrollTop = node.scrollHeight;
+      }
+      prevContentHRef.current = node.scrollHeight;
+    };
+
+    const observerRef = React.useRef<ResizeObserver | null>(null);
+    const observedRef = React.useRef<Set<Element>>(new Set());
+
+    // ResizeObserver is absent in jsdom — guard so the suite doesn't throw.
     React.useEffect(() => {
       readSize();
+      // The fades depend on the measured size as well as the offset, so re-derive them
+      // whenever the size lands (they are no longer recomputed during render).
+      syncEdges();
+      if (typeof ResizeObserver === "undefined") return;
+      const observer = new ResizeObserver(() => onContentResizeRef.current());
+      observerRef.current = observer;
+      const observed = observedRef.current;
+      return () => {
+        observer.disconnect();
+        observerRef.current = null;
+        observed.clear();
+      };
+    }, [readSize, syncEdges]);
+
+    // Reconcile WHICH nodes are observed after every commit: add newly-mounted
+    // children, drop detached ones (`observe` on an already-observed element is a
+    // no-op, so the common case where nothing changed costs one loop over the
+    // children and no observer work at all).
+    React.useEffect(() => {
+      const observer = observerRef.current;
       const node = viewportNodeRef.current as HTMLElement | null;
-      if (!node || typeof ResizeObserver === "undefined") return;
-      const observer = new ResizeObserver(() => {
-        readSize();
-        if (stickToBottom && stuckRef.current && node.scrollHeight > prevContentHRef.current) {
-          programmaticRef.current = true;
-          node.scrollTop = node.scrollHeight;
+      if (!observer || !node) return;
+      const observed = observedRef.current;
+      const live = new Set<Element>([node, ...Array.from(node.children)]);
+      for (const el of live) {
+        if (!observed.has(el)) {
+          observer.observe(el);
+          observed.add(el);
         }
-        prevContentHRef.current = node.scrollHeight;
-      });
-      observer.observe(node);
-      for (const child of Array.from(node.children)) observer.observe(child);
-      return () => observer.disconnect();
-    }, [readSize, childCount, stickToBottom]);
+      }
+      for (const el of observed) {
+        if (!live.has(el)) {
+          observer.unobserve(el);
+          observed.delete(el);
+        }
+      }
+    });
 
     // Whether each axis can scroll at all (content overflows). Independent of
     // visibility, so it can decide whether the corner is needed.
@@ -726,18 +829,8 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     // `shadowEligible` / `anyShadow` are resolved above (near `handleScroll`). Only
     // compute overflow state when shadows are requested, off the gated `shadowScroll`
     // mirror so the fades stay correct without the thumb's imperative offset.
-    const edgeOverflow = anyShadow
-      ? getEdgeState({
-          viewportW: size.viewportW,
-          viewportH: size.viewportH,
-          contentW: size.contentW,
-          contentH: size.contentH,
-          scrollX: shadowScroll.x,
-          scrollY: shadowScroll.y,
-        })
-      : null;
-    const resolvedShadowColor =
-      shadowColor ?? (theme.background?.val as string | undefined) ?? "rgba(0,0,0,0.15)";
+    const edgeOverflow = anyShadow ? edges : null;
+    const resolvedShadowColor = shadowColor ?? DEFAULT_EDGE_SHADOW_COLOR;
 
     const renderEdgeShadow = (edge: Edge) => {
       if (!shadowEligible[edge] || !edgeOverflow) return null;

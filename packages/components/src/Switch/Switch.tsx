@@ -112,7 +112,7 @@ const SwitchTrack = styled(Box, {
     },
   } as const,
 
-  defaultVariants: { size: "md", on: false },
+  defaultVariants: { size: "sm", on: false },
 });
 
 const SwitchThumb = styled(Box, {
@@ -128,20 +128,31 @@ const SwitchThumb = styled(Box, {
     size: thumbSizeVariant,
   } as const,
 
-  defaultVariants: { size: "md" },
+  defaultVariants: { size: "sm" },
 });
 
-/** Small dot inside the thumb that echoes the track colour. */
+/**
+ * Small dot inside the thumb that echoes the track colour.
+ *
+ * RAMP NOTE: the `$colorN` steps here are MIRRORED (`13 - n`). This renders
+ * inside `SwitchThumb`, whose name collides with an `inverse`-templated entry in
+ * Tamagui's (deprecated) `defaultComponentThemes`; until
+ * `core/config/themes.ts` set `componentThemes: false`, the dot resolved its ramp
+ * from a `<scheme>_SwitchThumb` theme with `$color1…$color12` fully reversed
+ * (`$color5` → step 8, `$color9` → step 4). Written pre-mirrored so the dot keeps
+ * its shipped appearance. (`SwitchThumb` itself is safe: `$white` is a TOKEN, not
+ * a theme value, so no inversion ever reached it.)
+ */
 const ThumbIndicator = styled(Box, {
   name: "SwitchThumbIndicator",
   width: "40%",
   height: "40%",
   borderRadius: 999,
-  backgroundColor: "$color5",
+  backgroundColor: "$color8",
   ...transitionProps("fast"),
   ...animateOnlyProps(["backgroundColor"]),
   variants: {
-    on: { true: { backgroundColor: "$color9" } },
+    on: { true: { backgroundColor: "$color4" } },
   } as const,
 });
 
@@ -240,7 +251,7 @@ export interface SwitchProps
   onChange?: (checked: boolean) => void;
   /** @deprecated Tamagui-style alias for {@link SwitchProps.onChange}. */
   onCheckedChange?: (checked: boolean) => void;
-  /** Controls the size of every element. @default 'md' */
+  /** Controls the size of every element. @default 'sm' */
   size?: SwitchSize;
   /** Inner label shown in the track when unchecked. */
   offLabel?: React.ReactNode;
@@ -303,7 +314,7 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
 
   const ctx = React.useContext(SwitchGroupContext);
   const inGroup = ctx != null && value != null;
-  const size = sizeProp ?? ctx?.size ?? "md";
+  const size = sizeProp ?? ctx?.size ?? "sm";
 
   // When the user prefers reduced motion, drop the thumb-slide + colour
   // transitions to a null transition (instant). The slide stays transform-based
@@ -472,7 +483,7 @@ export interface SwitchGroupProps extends Omit<GetProps<typeof GroupFrame>, "onC
   defaultValue?: string[];
   /** Called with the next array of selected values. */
   onChange?: (value: string[]) => void;
-  /** Size shared with every child switch. @default 'md' */
+  /** Size shared with every child switch. @default 'sm' */
   size?: SwitchSize;
   /** Group label rendered above the switches. */
   label?: React.ReactNode;
@@ -497,7 +508,7 @@ const SwitchGroup = GroupFrame.styleable<SwitchGroupProps>(function SwitchGroup(
     value,
     defaultValue,
     onChange,
-    size = "md",
+    size = "sm",
     label,
     description,
     readOnly,

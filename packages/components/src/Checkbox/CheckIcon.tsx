@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { useTheme } from "@knitui/core";
-import { IconCheck, IconMinus } from "@knitui/icons";
+import { IconCheck } from "@knitui/icons/IconCheck";
+import { IconMinus } from "@knitui/icons/IconMinus";
 
 import { controlIconSize } from "../internal/control-icon-size";
-import { resolveThemeColor } from "../internal/resolve-theme-color";
 import { type SizeKey } from "../internal/style-props";
+import { useIconColor } from "../internal/use-icon-color";
 import { type TextProps } from "../Text";
 
 export type CheckboxIconSize = SizeKey;
@@ -41,8 +41,12 @@ export function CheckboxIcon({
   color = "$color1",
   ...rest
 }: CheckboxIconProps) {
-  const theme = useTheme();
-  const resolvedColor = resolveThemeColor(theme, typeof color === "string" ? color : "$color1");
+  // `useIconColor` instead of `useTheme()` + `resolveThemeColor`: on web the token
+  // → `var(--token)` mapping is a pure string transform, so the glyph needs no
+  // theme subscription at all (one per checkbox, plus the dep-less `useEffect`
+  // `useThemeWithState` fires after every render). Native still reads the theme,
+  // where `react-native-svg` needs a concrete colour. See `use-icon-color.ts`.
+  const resolvedColor = useIconColor(typeof color === "string" ? color : "$color1");
   const iconSize = controlIconSize(size);
 
   const Icon = indeterminate ? IconMinus : IconCheck;

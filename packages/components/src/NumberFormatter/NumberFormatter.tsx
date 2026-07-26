@@ -31,6 +31,33 @@ export interface NumberFormatterProps extends NumberFormatterFrameProps {
   thousandSeparator?: string | boolean;
 }
 
+/**
+ * Group-separator patterns, compiled once at module scope.
+ *
+ * `groupDigits` ran `new RegExp(...)` on every format call — i.e. once per table
+ * cell / list row on every render — recompiling one of only two realistic
+ * patterns. `thousandsGroupStyle` can only reach group size 3 (`thousand`) or 4
+ * (`wan`), so both are precompiled; an unusual size still works, it is built and
+ * cached on first use rather than rejected.
+ *
+ * Reusing a `/g` regex across calls is safe here: `String.prototype.replace`
+ * resets `lastIndex` before and after a global match, so no state leaks between
+ * calls.
+ */
+const GROUP_PATTERNS = new Map<number, RegExp>([
+  [3, /\B(?=(\d{3})+(?!\d))/g],
+  [4, /\B(?=(\d{4})+(?!\d))/g],
+]);
+
+function groupPattern(groupSize: number): RegExp {
+  let pattern = GROUP_PATTERNS.get(groupSize);
+  if (pattern === undefined) {
+    pattern = new RegExp(`\\B(?=(\\d{${groupSize}})+(?!\\d))`, "g");
+    GROUP_PATTERNS.set(groupSize, pattern);
+  }
+  return pattern;
+}
+
 function groupDigits(
   intPart: string,
   style: NonNullable<NumberFormatterProps["thousandsGroupStyle"]>,
@@ -51,7 +78,7 @@ function groupDigits(
   }
 
   const groupSize = style === "wan" ? 4 : 3;
-  return `${neg ? "-" : ""}${digits.replace(new RegExp(`\\B(?=(\\d{${groupSize}})+(?!\\d))`, "g"), sep)}`;
+  return `${neg ? "-" : ""}${digits.replace(groupPattern(groupSize), sep)}`;
 }
 
 function formatValue(props: NumberFormatterProps): string {
@@ -111,19 +138,47 @@ function formatValue(props: NumberFormatterProps): string {
 export const NumberFormatter = NumberFormatterFrame.styleable<NumberFormatterProps>(
   function NumberFormatter(props, ref) {
     const {
-      value: _value,
-      allowNegative: _allowNegative,
-      decimalScale: _decimalScale,
-      decimalSeparator: _decimalSeparator,
-      fixedDecimalScale: _fixedDecimalScale,
-      prefix: _prefix,
-      suffix: _suffix,
-      thousandSeparator: _thousandSeparator,
-      thousandsGroupStyle: _thousandsGroupStyle,
+      value,
+      allowNegative,
+      decimalScale,
+      decimalSeparator,
+      fixedDecimalScale,
+      prefix,
+      suffix,
+      thousandSeparator,
+      thousandsGroupStyle,
       ...textProps
     } = props;
 
-    const formatted = formatValue(props);
+    // Formatting is pure over these nine props (the defaults live in
+    // `formatValue`), so memoize it: this component renders per table cell / list
+    // row, and re-running the parse + rounding + grouping on every parent render —
+    // including renders where only a style prop moved — was wasted string work.
+    const formatted = React.useMemo(
+      () =>
+        formatValue({
+          value,
+          allowNegative,
+          decimalScale,
+          decimalSeparator,
+          fixedDecimalScale,
+          prefix,
+          suffix,
+          thousandSeparator,
+          thousandsGroupStyle,
+        }),
+      [
+        value,
+        allowNegative,
+        decimalScale,
+        decimalSeparator,
+        fixedDecimalScale,
+        prefix,
+        suffix,
+        thousandSeparator,
+        thousandsGroupStyle,
+      ],
+    );
     if (!formatted) return null;
 
     return (

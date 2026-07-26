@@ -98,50 +98,100 @@ export function getAllNodeValues(data: TreeNodeData[]): string[] {
 /* Checked-state derivation                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Single depth-first pass that resolves every node's aggregate status. Shared by
+ * all the derivation helpers below so none of them has to traverse twice.
+ *
+ * `acc` (when given) collects statuses in the original post-order; `map` (when
+ * given) indexes them by value for O(1) lookups. Returns the statuses collected
+ * for THIS level only (the caller uses its length to decide the parent's state).
+ */
+function collectCheckedNodes(
+  data: TreeNodeData[],
+  checkedValues: Set<string>,
+  acc: CheckedNodeStatus[] | null,
+  map: Map<string, CheckedNodeStatus> | null,
+): CheckedNodeStatus[] {
+  const currentTreeChecked: CheckedNodeStatus[] = [];
+
+  const collect = (item: CheckedNodeStatus) => {
+    currentTreeChecked.push(item);
+    acc?.push(item);
+    if (map) {
+      const existing = map.get(item.value);
+      // Node values are meant to be unique; if they are not, OR the flags so a
+      // map lookup still matches the `.some()` semantics it replaces.
+      map.set(
+        item.value,
+        existing
+          ? {
+              ...existing,
+              checked: existing.checked || item.checked,
+              indeterminate: existing.indeterminate || item.indeterminate,
+            }
+          : item,
+      );
+    }
+  };
+
+  for (const node of data) {
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      const innerChecked = collectCheckedNodes(node.children, checkedValues, acc, map);
+      if (innerChecked.length === node.children.length) {
+        const isChecked = innerChecked.every((item) => item.checked);
+        collect({
+          checked: isChecked,
+          indeterminate: !isChecked,
+          value: node.value,
+          hasChildren: true,
+        });
+      } else if (innerChecked.length > 0) {
+        collect({
+          checked: false,
+          indeterminate: true,
+          value: node.value,
+          hasChildren: true,
+        });
+      }
+    } else if (checkedValues.has(node.value)) {
+      collect({
+        checked: true,
+        indeterminate: false,
+        value: node.value,
+        hasChildren: false,
+      });
+    }
+  }
+
+  return currentTreeChecked;
+}
+
 /** Resolves the full checked/indeterminate status of every relevant node. */
 export function getAllCheckedNodes(
   data: TreeNodeData[],
   checkedState: string[],
   acc: CheckedNodeStatus[] = [],
 ): { result: CheckedNodeStatus[]; currentTreeChecked: CheckedNodeStatus[] } {
-  const currentTreeChecked: CheckedNodeStatus[] = [];
-
-  for (const node of data) {
-    if (Array.isArray(node.children) && node.children.length > 0) {
-      const innerChecked = getAllCheckedNodes(node.children, checkedState, acc);
-      if (innerChecked.currentTreeChecked.length === node.children.length) {
-        const isChecked = innerChecked.currentTreeChecked.every((item) => item.checked);
-        const item: CheckedNodeStatus = {
-          checked: isChecked,
-          indeterminate: !isChecked,
-          value: node.value,
-          hasChildren: true,
-        };
-        currentTreeChecked.push(item);
-        acc.push(item);
-      } else if (innerChecked.currentTreeChecked.length > 0) {
-        const item: CheckedNodeStatus = {
-          checked: false,
-          indeterminate: true,
-          value: node.value,
-          hasChildren: true,
-        };
-        currentTreeChecked.push(item);
-        acc.push(item);
-      }
-    } else if (checkedState.includes(node.value)) {
-      const item: CheckedNodeStatus = {
-        checked: true,
-        indeterminate: false,
-        value: node.value,
-        hasChildren: false,
-      };
-      currentTreeChecked.push(item);
-      acc.push(item);
-    }
-  }
-
+  const currentTreeChecked = collectCheckedNodes(data, new Set(checkedState), acc, null);
   return { result: acc, currentTreeChecked };
+}
+
+/**
+ * Per-value checked/indeterminate status for the whole tree, built in ONE pass.
+ * Callers that need the status of many nodes (i.e. every rendered row) should
+ * build this once and look nodes up, instead of calling `isNodeChecked` /
+ * `isNodeIndeterminate` per node — each of those traverses the whole tree.
+ */
+export function getCheckedNodesMap(
+  data: TreeNodeData[],
+  checkedState: string[],
+): Map<string, CheckedNodeStatus> {
+  const map = new Map<string, CheckedNodeStatus>();
+  if (checkedState.length === 0) {
+    return map;
+  }
+  collectCheckedNodes(data, new Set(checkedState), null, map);
+  return map;
 }
 
 /** `true` if `value` is fully checked (directly or via its descendants). */
@@ -156,8 +206,7 @@ export function isNodeChecked(
   if (checkedState.includes(value)) {
     return true;
   }
-  const checkedNodes = getAllCheckedNodes(data, checkedState).result;
-  return checkedNodes.some((node) => node.value === value && node.checked);
+  return getCheckedNodesMap(data, checkedState).get(value)?.checked ?? false;
 }
 
 /** `true` if `value` is partially checked (some-but-not-all descendants). */
@@ -169,8 +218,7 @@ export function isNodeIndeterminate(
   if (checkedState.length === 0) {
     return false;
   }
-  const checkedNodes = getAllCheckedNodes(data, checkedState).result;
-  return checkedNodes.some((node) => node.value === value && node.indeterminate);
+  return getCheckedNodesMap(data, checkedState).get(value)?.indeterminate ?? false;
 }
 
 /* -------------------------------------------------------------------------- */

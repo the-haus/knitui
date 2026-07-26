@@ -145,10 +145,20 @@ const LoaderComponent = LoaderFrame.styleable<LoaderProps>(function Loader(props
   // user's reduced-motion preference internally — they return a static first
   // frame with no animation and no timer — so the loader stays accessible (the
   // `progressbar` role + label are always present) without any motion churn.
-  const spin = useLoopingAnimation({ kind: "spin", durationMs: DURATIONS.loop });
-  const pulse0 = useLoopingAnimation({ kind: "pulse", durationMs: PULSE_MS[0], minOpacity: 0.3 });
-  const pulse1 = useLoopingAnimation({ kind: "pulse", durationMs: PULSE_MS[1], minOpacity: 0.3 });
-  const pulse2 = useLoopingAnimation({ kind: "pulse", durationMs: PULSE_MS[2], minOpacity: 0.3 });
+  // `enabled` gates SCHEDULING to the rendition actually rendered: a loop is a
+  // permanent animation (compositor keyframes / a reanimated `withRepeat` on the UI
+  // thread), so the three unused pulses of an `oval` loader — or the unused spin of
+  // a `dots`/`bars` one — would otherwise animate forever behind nothing.
+  const spinning = type === "oval";
+  const spin = useLoopingAnimation({
+    kind: "spin",
+    durationMs: DURATIONS.loop,
+    enabled: spinning,
+  });
+  const pulseProps = { kind: "pulse", minOpacity: 0.3, enabled: !spinning } as const;
+  const pulse0 = useLoopingAnimation({ ...pulseProps, durationMs: PULSE_MS[0] });
+  const pulse1 = useLoopingAnimation({ ...pulseProps, durationMs: PULSE_MS[1] });
+  const pulse2 = useLoopingAnimation({ ...pulseProps, durationMs: PULSE_MS[2] });
   const pulses = [pulse0, pulse1, pulse2] as const;
 
   // The animated `style` must ride on `LoopView` — a `Box` on web (forwards the

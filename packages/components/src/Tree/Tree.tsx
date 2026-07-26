@@ -237,7 +237,10 @@ const TreeNode = React.memo(function TreeNode(props: TreeNodePartProps) {
 
   const hasChildren = Array.isArray(node.children) && node.children.length > 0;
   const expanded = controller.expandedState[node.value] ?? false;
-  const selected = controller.selectedState.includes(node.value);
+  // `Set` lookup, not an `Array.includes` scan — this runs once per rendered node,
+  // so the scan made selection O(nodes × selected) per render. See `selectedLookup`
+  // in `use-tree.ts`.
+  const selected = controller.isNodeSelected(node.value);
 
   const handlePress = React.useCallback(() => {
     if (hasChildren && expandOnClick) {

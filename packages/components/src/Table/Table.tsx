@@ -62,6 +62,21 @@ const useTableContext = (): TableContextValue => {
   return ctx;
 };
 
+/**
+ * 0-based body-row index, provided by `Table.Tbody` around each `Table.Tr`;
+ * `undefined` outside a striped body (head/foot rows never stripe).
+ *
+ * Position is passed down by context rather than by cloning every row/cell with
+ * an injected prop: cloning re-allocated one element per row AND per cell on
+ * every render (a 500x8 table = ~4.5k throwaway elements) and, because the clone
+ * always produced fresh props, it also defeated any bail-out on referentially
+ * stable children.
+ */
+const TableRowIndexContext = React.createContext<number | undefined>(undefined);
+
+/** `true` for the leading cell of a row — gates the column divider border. */
+const TableFirstCellContext = React.createContext(false);
+
 /* -------------------------------------------------------------------------- */
 /* Frames                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -122,24 +137,19 @@ type CellFrameProps = Omit<GetProps<typeof CellFrame>, "columnBorder" | "header"
 
 export interface TableCellProps extends CellFrameProps {}
 
-interface InternalTableCellProps extends TableCellProps {
-  /** @internal first-cell flag injected by `Table.Tr` (gates column borders). */
-  __first?: boolean;
-}
-
 function makeCell(header: boolean, role: NonNullable<BoxProps["role"]>, displayName: string) {
-  const Cell = CellFrame.styleable<InternalTableCellProps>(function Cell(props, ref) {
+  const Cell = CellFrame.styleable<TableCellProps>(function Cell(props, ref) {
     const ctx = useTableContext();
-    const { __first, ...rest } = props;
+    const isFirst = React.useContext(TableFirstCellContext);
     return (
       <CellFrame
         ref={ref}
         role={role}
         header={header}
-        columnBorder={ctx.withColumnBorders && !__first}
+        columnBorder={ctx.withColumnBorders && !isFirst}
         paddingHorizontal={toSpace(ctx.horizontalSpacing)}
         paddingVertical={toSpace(ctx.verticalSpacing)}
-        {...rest}
+        {...props}
       />
     );
   });
@@ -159,26 +169,61 @@ const TableTd = makeCell(false, "cell", "Table.Td");
 
 export type TableTrProps = GetProps<typeof RowFrame>;
 
-interface InternalTableTrProps extends TableTrProps {
-  /** @internal 0-based row index injected by `Table.Tbody` (drives striping). */
-  __index?: number;
+/**
+ * Wraps a row's leading cell in `TableFirstCellContext` so column dividers only
+ * appear BETWEEN columns. Recurses through arrays and fragments the way
+ * `React.Children.map` flattens them, rebuilding only the branch that leads to
+ * the first cell — one extra element (plus one array copy) per row, instead of a
+ * clone of every cell. Returns `null` when the subtree renders no cell at all.
+ *
+ * Empty slots (`null` / `false` / `undefined`) are skipped rather than counted,
+ * so a conditionally rendered leading cell is still recognised as first — the
+ * old `__first: i === 0` flag counted them and mis-bordered that case.
+ */
+function markFirstCell(node: React.ReactNode): React.ReactNode | null {
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i += 1) {
+      const marked = markFirstCell(node[i] as React.ReactNode);
+      if (marked !== null) {
+        const next = node.slice() as React.ReactNode[];
+        next[i] = marked;
+        return next;
+      }
+    }
+    return null;
+  }
+
+  if (React.isValidElement(node)) {
+    if (node.type === React.Fragment) {
+      const props = node.props as { children?: React.ReactNode };
+      const inner = markFirstCell(props.children);
+      return inner === null ? node : React.cloneElement(node, undefined, inner);
+    }
+    return (
+      <TableFirstCellContext.Provider key={node.key ?? "first-cell"} value={true}>
+        {node}
+      </TableFirstCellContext.Provider>
+    );
+  }
+
+  // A text child occupies the leading slot but cannot carry the flag: nothing is
+  // marked, matching the old behavior. Empty slots keep the search going.
+  return node === null || node === undefined || typeof node === "boolean" ? null : node;
 }
 
-const TableTr = RowFrame.styleable<InternalTableTrProps>(function TableTr(props, ref) {
+const TableTr = RowFrame.styleable<TableTrProps>(function TableTr(props, ref) {
   const ctx = useTableContext();
-  const { __index, children, ...rest } = props;
+  const rowIndex = React.useContext(TableRowIndexContext);
+  const { children, ...rest } = props;
 
   const isStriped =
     ctx.striped !== undefined &&
-    __index !== undefined &&
-    (ctx.striped === "odd" ? __index % 2 === 0 : __index % 2 === 1);
+    rowIndex !== undefined &&
+    (ctx.striped === "odd" ? rowIndex % 2 === 0 : rowIndex % 2 === 1);
 
-  // Tag the first cell so column borders only appear BETWEEN columns.
-  const cells = React.Children.map(children, (child, i) =>
-    React.isValidElement<InternalTableCellProps>(child)
-      ? React.cloneElement(child, { __first: i === 0 })
-      : child,
-  );
+  // Only the first cell needs flagging, and only when dividers are on at all —
+  // with `withColumnBorders` off the flag can never change a cell's styling.
+  const cells = ctx.withColumnBorders ? (markFirstCell(children) ?? children) : children;
 
   return (
     <RowFrame
@@ -211,18 +256,24 @@ const TableTfoot = RowGroup.styleable<TableTfootProps>(function TableTfoot(props
   return <RowGroup ref={ref} role="rowgroup" {...props} />;
 });
 
-const TableTbody = RowGroup.styleable<TableTbodyProps>(function TableTbody(props, ref) {
-  const { children, ...rest } = props;
-  // Inject a row index so `Table.Tr` can stripe odd/even body rows.
+/** Publishes a 0-based index to each `Table.Tr` child so it can stripe itself. */
+function withRowIndices(children: React.ReactNode): React.ReactNode {
   let rowIndex = 0;
-  const rows = React.Children.map(children, (child) => {
-    if (React.isValidElement<InternalTableTrProps>(child) && child.type === TableTr) {
-      const cloned = React.cloneElement(child, { __index: rowIndex });
+  return React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && child.type === TableTr) {
+      const index = rowIndex;
       rowIndex += 1;
-      return cloned;
+      return <TableRowIndexContext.Provider value={index}>{child}</TableRowIndexContext.Provider>;
     }
     return child;
   });
+}
+
+const TableTbody = RowGroup.styleable<TableTbodyProps>(function TableTbody(props, ref) {
+  const ctx = useTableContext();
+  const { children, ...rest } = props;
+  // Row indices only matter for striping — skip the walk entirely without it.
+  const rows = ctx.striped === undefined ? children : withRowIndices(children);
   return (
     <RowGroup ref={ref} role="rowgroup" {...rest}>
       {rows}
@@ -389,9 +440,14 @@ const TableRoot = TableFrame.styleable<TableProps>(function Table(props, ref) {
 
   return (
     <TableContext.Provider value={ctx}>
-      <TableFrame ref={ref} role="table" {...s.merge("table", rest)}>
-        {content}
-      </TableFrame>
+      {/* Reset row/cell position so a table nested in a cell starts clean. */}
+      <TableRowIndexContext.Provider value={undefined}>
+        <TableFirstCellContext.Provider value={false}>
+          <TableFrame ref={ref} role="table" {...s.merge("table", rest)}>
+            {content}
+          </TableFrame>
+        </TableFirstCellContext.Provider>
+      </TableRowIndexContext.Provider>
     </TableContext.Provider>
   );
 });

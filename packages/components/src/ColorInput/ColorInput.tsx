@@ -228,11 +228,22 @@ const ColorInputComponent = React.forwardRef<ColorInputRef, ColorInputProps>(
 
     // The `swatch` slot reaches the dropdown picker's own swatch slot; explicit
     // `styles={{ picker: { styles } }}` wins (it is spread last).
+    //
+    // Memoized because this lands on `ColorPicker.Root`'s `styles` prop, which is a
+    // dependency of its context memo: a fresh object here re-provides the picker
+    // context on every render — i.e. on every keystroke in the hex field — which
+    // re-renders the whole swatch grid. `s.get(…)` returns the consumer's own slot
+    // objects unchanged, so keying on them is exact.
     const pickerSugar = s.get("picker");
-    const pickerStyles: SlotStyles<ColorPickerStyles> | undefined =
-      s.get("swatch") || pickerSugar?.styles
-        ? { swatch: s.get("swatch"), ...pickerSugar?.styles }
-        : undefined;
+    const swatchSugar = s.get("swatch");
+    const pickerSugarStyles = pickerSugar?.styles;
+    const pickerStyles = React.useMemo<SlotStyles<ColorPickerStyles> | undefined>(
+      () =>
+        swatchSugar || pickerSugarStyles
+          ? { swatch: swatchSugar, ...pickerSugarStyles }
+          : undefined,
+      [swatchSugar, pickerSugarStyles],
+    );
 
     return (
       <Popover

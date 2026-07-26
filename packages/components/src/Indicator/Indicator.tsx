@@ -282,6 +282,10 @@ const IndicatorBase = IndicatorContainer.styleable<IndicatorProps>(function Indi
     kind: "pulse",
     durationMs: DURATIONS.ambient,
     minOpacity: 0.45,
+    // Only a `processing` indicator pulses; without this gate every (static)
+    // indicator on screen scheduled a permanent compositor/UI-thread animation
+    // whose style is never spread.
+    enabled: Boolean(processing),
   });
   // One-shot scale-in entrance for the processing dot, via the shared `scale`
   // preset (`{ opacity: 0, scale: 0 }` + easing). `false` when not processing →

@@ -71,12 +71,16 @@ export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton
   // Reduced motion is handled inside the hook (it returns a static, animation-
   // free frame), so no separate `reduced` branch is needed here.
   const reduced = useReducedMotion();
+  const pulsing = animate && !reduced && visible;
   const loop = useLoopingAnimation({
     kind: "pulse",
     durationMs: DURATIONS.ambient,
     minOpacity: 0.45,
+    // Never schedule the loop for a skeleton that isn't pulsing (`animate={false}`,
+    // or already resolved to its real content): a live loop is a permanent
+    // compositor/UI-thread animation, and skeletons are rendered by the dozen.
+    enabled: pulsing,
   });
-  const pulsing = animate && !reduced;
 
   // When not visible, render children as-is (a transparent pass-through wrapper).
   if (!visible) {

@@ -50,4 +50,60 @@ describe("useSlotTextWrapper", () => {
     rerender(<Probe slot={{ color: "$red10" }} />);
     expect(seen[1]).not.toBe(seen[0]);
   });
+
+  // The case the hook previously got WRONG, and the one that actually ships: the
+  // documented usage is an inline `styles={{ label: { … } }}`, so `slotProps` is a
+  // fresh object every render. Keying the memo on identity meant the wrapper was a
+  // new element TYPE each render and React remounted the text subtree — the exact
+  // failure this hook exists to prevent, hitting only the callers who used the
+  // feature. Slot props are now compared by shallow value.
+  it("keeps a STABLE wrapper identity when slot props are an INLINE literal", () => {
+    const seen: React.ComponentType<{ children: React.ReactNode }>[] = [];
+
+    function Probe({ tick }: { tick: number }) {
+      // New object every render, same value — the idiomatic call.
+      const Wrapper = useSlotTextWrapper(Text, { color: "$blue10" });
+      seen.push(Wrapper);
+      return <Wrapper>label-{tick}</Wrapper>;
+    }
+
+    const { rerender } = render(<Probe tick={0} />);
+    rerender(<Probe tick={1} />);
+    rerender(<Probe tick={2} />);
+
+    expect(seen).toHaveLength(3);
+    expect(seen[1]).toBe(seen[0]);
+    expect(seen[2]).toBe(seen[0]);
+    expect(screen.getByText("label-2")).toBeInTheDocument();
+  });
+
+  it("updates in place rather than remounting when slot props are an inline literal", () => {
+    function Probe({ tick }: { tick: number }) {
+      const Wrapper = useSlotTextWrapper(Text, { color: "$blue10" });
+      return (
+        <Wrapper>
+          <Text testID="leaf">{tick}</Text>
+        </Wrapper>
+      );
+    }
+
+    const { rerender } = render(<Probe tick={0} />);
+    const first = screen.getByTestId("leaf");
+
+    rerender(<Probe tick={1} />);
+
+    // Same host instance ⇒ React reconciled instead of tearing the subtree down.
+    expect(screen.getByTestId("leaf")).toBe(first);
+  });
+
+  it("still produces a new wrapper when an inline slot prop is added or removed", () => {
+    const seen: React.ComponentType<{ children: React.ReactNode }>[] = [];
+    function Probe({ withColor }: { withColor: boolean }) {
+      seen.push(useSlotTextWrapper(Text, withColor ? { color: "$blue10" } : {}));
+      return null;
+    }
+    const { rerender } = render(<Probe withColor={false} />);
+    rerender(<Probe withColor />);
+    expect(seen[1]).not.toBe(seen[0]);
+  });
 });

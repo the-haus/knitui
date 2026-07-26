@@ -14,6 +14,9 @@ interface HighlightChunk {
   matchedTerm: string;
 }
 
+/** Shared result for the non-string-children path — never rendered, never mutated. */
+const NO_CHUNKS: readonly HighlightChunk[] = Object.freeze([]);
+
 type HighlightMarkProps = Omit<MarkProps, "children">;
 type HighlightStylesMap = Record<string, HighlightMarkProps>;
 
@@ -43,17 +46,22 @@ function isPerTermMap(
  * The deprecated `highlightStyles` alias therefore merges OVER the `mark` slot
  * ("explicit beats sugar"); a per-term entry, the documented exception with no
  * Pillar-B equivalent, is the most specific and wins outright for its term.
+ *
+ * `perTermStyles` is the ALREADY-DECIDED per-term map (`undefined` when `legacy`
+ * is the single-object form). Deciding it in here re-ran `isPerTermMap` — a fresh
+ * `Set` plus `Object.entries` — once per highlighted chunk, even though the answer
+ * only depends on `highlightStyles` + the term list; the caller now decides once.
  */
 function resolveHighlightStyles(
   slotMark: HighlightMarkProps | undefined,
   legacy: HighlightMarkProps | HighlightStylesMap | undefined,
-  terms: string[],
+  perTermStyles: HighlightStylesMap | undefined,
   matchedTerm: string,
 ): HighlightMarkProps {
   const base = slotMark ?? {};
   if (legacy === undefined) return base;
-  if (isPerTermMap(legacy, terms)) return { ...base, ...(legacy[matchedTerm] ?? {}) };
-  return { ...base, ...legacy };
+  if (perTermStyles !== undefined) return { ...base, ...(perTermStyles[matchedTerm] ?? {}) };
+  return { ...base, ...(legacy as HighlightMarkProps) };
 }
 
 /** Strip diacritics for accent-insensitive matching. */
@@ -198,6 +206,36 @@ export const Highlight = Text.styleable<HighlightProps>(function Highlight(props
   const s = slotStyles<HighlightStyles>(styles, HIGHLIGHT_SLOT_KEYS, "Highlight");
   const slotMark = s.get("mark");
 
+  // ## Cost
+  //
+  // This is the search-results primitive: N instances re-render on every
+  // keystroke of the query they highlight. The scan below is the expensive part —
+  // a full `normalize()` of `children` (`.normalize("NFD")` + a `\p{M}` strip +
+  // `.toLowerCase()`) plus an O(len × terms) walk — and it used to run on every
+  // render even when nothing it reads had changed. Memoized on its real inputs.
+  // (The hooks sit ABOVE the non-string-children early return so hook order stays
+  // stable if `children` changes shape; the scan itself is guarded by `typeof`.)
+  const terms = React.useMemo(
+    () => (Array.isArray(highlight) ? highlight : [highlight]),
+    [highlight],
+  );
+  const chunks = React.useMemo(
+    () =>
+      typeof children === "string"
+        ? highlighter(children, terms, { caseInsensitive, wholeWord, accentInsensitive })
+        : NO_CHUNKS,
+    [children, terms, caseInsensitive, wholeWord, accentInsensitive],
+  );
+  // Decide the `highlightStyles` shape ONCE per render rather than per matched
+  // chunk (see `resolveHighlightStyles`).
+  const perTermStyles = React.useMemo(
+    () =>
+      highlightStyles !== undefined && isPerTermMap(highlightStyles, terms)
+        ? highlightStyles
+        : undefined,
+    [highlightStyles, terms],
+  );
+
   if (typeof children !== "string") {
     return (
       <Text ref={ref} {...rest}>
@@ -205,9 +243,6 @@ export const Highlight = Text.styleable<HighlightProps>(function Highlight(props
       </Text>
     );
   }
-
-  const terms = Array.isArray(highlight) ? highlight : [highlight];
-  const chunks = highlighter(children, terms, { caseInsensitive, wholeWord, accentInsensitive });
 
   return (
     <Text ref={ref} {...rest}>
@@ -218,7 +253,7 @@ export const Highlight = Text.styleable<HighlightProps>(function Highlight(props
         const markProps = resolveHighlightStyles(
           slotMark,
           highlightStyles,
-          terms,
+          perTermStyles,
           part.matchedTerm,
         );
         return (

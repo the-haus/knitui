@@ -15,6 +15,7 @@ import { useOverlayChrome } from "../internal/overlay-chrome";
 import { renderTextChild } from "../internal/render-text-child";
 import { focusRingStyle, hoverProps, type shadowVariant, webCursor } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
+import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
 import {
   Popover,
   type PopoverArrowPosition,
@@ -502,14 +503,11 @@ const MenuItemComponent = MenuItemFrame.styleable<MenuItemProps>(function MenuIt
 
   // Bind the `itemLabel` slot onto the text wrapper so `renderTextChild` (which
   // only passes `children`) carries the sugar onto the auto-wrapped label text.
-  const itemLabelSlot = ctx.slots.itemLabel;
-  const LabelWrapper = React.useMemo(
-    () =>
-      function MenuItemLabelSlot(labelProps: { children: React.ReactNode }) {
-        return <MenuItemLabel {...itemLabelSlot} {...labelProps} />;
-      },
-    [itemLabelSlot],
-  );
+  // The shared hook compares the slot props by VALUE — the slot arrives off menu
+  // context, whose `slots` object is rebuilt whenever the caller passes an inline
+  // `styles` literal, so an identity-keyed memo handed every item a new component
+  // TYPE and remounted every item label on each menu render.
+  const LabelWrapper = useSlotTextWrapper(MenuItemLabel, ctx.slots.itemLabel);
 
   const sectionSlot = ctx.slots.itemSection;
 

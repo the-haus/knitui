@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { DURATIONS, type GetProps, styled, withStaticProperties } from "@knitui/core";
 import { useId, useKeyboardActions, useUncontrolled } from "@knitui/hooks";
-import { IconChevronDown } from "@knitui/icons";
+import { IconChevronDown } from "@knitui/icons/IconChevronDown";
 
 import { Box, type BoxProps } from "../Box";
 import { Collapse } from "../Collapse";
@@ -309,8 +309,12 @@ const AccordionItem = AccordionItemFrame.styleable<AccordionItemProps>(
     const s = useAccordionSlots();
     const isActive = ctx.isItemActive(value);
 
+    // Stable identity so item-context consumers (Control/Panel) only re-render
+    // when the item's own value/active state actually changes.
+    const itemCtx = React.useMemo(() => ({ value, isActive }), [value, isActive]);
+
     return (
-      <AccordionItemContext.Provider value={{ value, isActive }}>
+      <AccordionItemContext.Provider value={itemCtx}>
         <AccordionItemFrame
           ref={ref}
           variant={ctx.variant}

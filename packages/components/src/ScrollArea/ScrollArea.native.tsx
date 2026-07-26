@@ -68,6 +68,15 @@ const ANIMATE_OPACITY = ["opacity"];
    scrollable case uses the Pan engine, not a native nested ScrollView. */
 const PAN_ACTIVATE_THRESHOLD = 8;
 
+/**
+ * How often (ms) a scroll may cross to the JS thread when the ONLY consumer is the
+ * scrollbar auto-hide (`type="hover"`/`"scroll"` with no scroll callbacks — the
+ * default). The flash is a boolean plus a ~1s trailing timer, so a few hops per
+ * second is indistinguishable from every frame, while a per-frame `runOnJS` piled
+ * work onto the JS thread precisely while it was rendering the content being flung.
+ */
+const SCROLL_FLASH_INTERVAL_MS = 120;
+
 /* -------------------------------------------------------------------------- */
 /* UI-thread worklet helpers                                                  */
 /* -------------------------------------------------------------------------- */
@@ -76,6 +85,19 @@ const PAN_ACTIVATE_THRESHOLD = 8;
 function clampW(value: number, min: number, max: number): number {
   "worklet";
   return value < min ? min : value > max ? max : value;
+}
+
+/**
+ * UI-thread rate limiter for the `runOnJS` hop. Returns `true` (and re-arms) when a
+ * report is due: always, when `intervalMs` is 0, otherwise at most once per interval.
+ */
+function shouldReportW(last: { value: number }, intervalMs: number): boolean {
+  "worklet";
+  if (intervalMs <= 0) return true;
+  const now = Date.now();
+  if (now - last.value < intervalMs) return false;
+  last.value = now;
+  return true;
 }
 
 /**
@@ -307,10 +329,19 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const [size, setSize] = React.useState<Size>(ZERO_SIZE);
     const [scrolling, setScrolling] = React.useState(false);
     const [dragging, setDragging] = React.useState(false);
-    // Scroll offset mirror, used ONLY to drive the (opt-in) edge fades. Updated per
-    // frame solely when `shadows` is enabled, so the common case never re-renders.
-    const [shadowScroll, setShadowScroll] = React.useState<ScrollPosition>({ x: 0, y: 0 });
+    // Which edges have content beyond them — the ONLY thing the (opt-in) edge fades
+    // need. Keeping the BOOLEANS in state (rather than mirroring the raw offset, as
+    // this used to) means a fling re-renders at most four times over its whole length
+    // — once per edge crossing — instead of once per frame.
+    const [edges, setEdges] = React.useState<EdgeState>({
+      top: false,
+      bottom: false,
+      left: false,
+      right: false,
+    });
     const hideTimeout = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    // Mirrors `scrolling` so the flash can skip a redundant setState per sample.
+    const scrollingRef = React.useRef(false);
 
     const scrubRef = React.useRef<{ pending: boolean; paging: boolean }>({
       pending: false,
@@ -330,9 +361,17 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
 
     const flashScrollbars = React.useCallback(() => {
       if (type !== "hover" && type !== "scroll") return;
-      setScrolling(true);
+      // Guarded by a ref: React only bails on a same-value update after re-entering
+      // the component, so the unguarded version cost a render pass per sample.
+      if (!scrollingRef.current) {
+        scrollingRef.current = true;
+        setScrolling(true);
+      }
       clearTimeout(hideTimeout.current);
-      hideTimeout.current = setTimeout(() => setScrolling(false), scrollHideDelay);
+      hideTimeout.current = setTimeout(() => {
+        scrollingRef.current = false;
+        setScrolling(false);
+      }, scrollHideDelay);
     }, [type, scrollHideDelay]);
 
     const debouncedScrollEnd = useDebouncedCallback((pos: ScrollPosition) => {
@@ -361,13 +400,43 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       [reachThreshold, onReachTop, onReachBottom, onReachStart, onReachEnd],
     );
 
+    // Re-derive the edge-fade booleans from an offset + the measured size, re-rendering
+    // only when one actually flips. No-op unless `shadows` is set.
+    const syncEdges = React.useCallback(
+      (x: number, y: number) => {
+        if (!anyShadow) return;
+        const sz = sizeRef.current;
+        const next: EdgeState = {
+          top: y > 1,
+          bottom: sz.contentH - sz.viewportH - y > 1,
+          left: x > 1,
+          right: sz.contentW - sz.viewportW - x > 1,
+        };
+        setEdges((prev) =>
+          prev.top === next.top &&
+          prev.bottom === next.bottom &&
+          prev.left === next.left &&
+          prev.right === next.right
+            ? prev
+            : next,
+        );
+      },
+      [anyShadow],
+    );
+
+    // A size change can flip an edge without any scroll (content grew/shrank), and the
+    // fades are no longer derived during render — so re-sync when the size lands.
+    React.useEffect(() => {
+      syncEdges(scrollX.value, scrollY.value);
+    }, [syncEdges, size, scrollX, scrollY]);
+
     // Single JS entry point for a scroll sample — invoked from the UI thread via
     // `runOnJS`, and ONLY when something on the JS side actually consumes it.
     const reportScroll = React.useCallback(
       (x: number, y: number) => {
         onScrollPositionChange?.({ x, y });
         flashScrollbars();
-        if (anyShadow) setShadowScroll((prev) => (prev.x === x && prev.y === y ? prev : { x, y }));
+        syncEdges(x, y);
         if (stickToBottom) {
           const sz = sizeRef.current;
           stuckRef.current = isNearBottom(y, sz.contentH, sz.viewportH, stickToBottomThreshold);
@@ -378,7 +447,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       [
         onScrollPositionChange,
         flashScrollbars,
-        anyShadow,
+        syncEdges,
         fireReachCallbacks,
         debouncedScrollEnd,
         onScrollEnd,
@@ -387,11 +456,9 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       ],
     );
 
-    // Whether ANY JS-side consumer needs per-frame scroll samples. When false the
-    // scroll path stays 100% on the UI thread (no `runOnJS` at all).
-    const needsJsScroll =
-      type === "hover" ||
-      type === "scroll" ||
+    // Does a consumer need the ACTUAL per-frame samples (a value it reads, a threshold
+    // it crosses)? Only then may the offset cross to the JS thread every frame.
+    const needsScrollSamples =
       stickToBottom ||
       anyShadow ||
       Boolean(
@@ -402,6 +469,17 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
         onReachStart ||
         onReachEnd,
       );
+    // The DEFAULT configuration (`type="hover"`, no callbacks) needs the JS thread for
+    // one thing only: showing the scrollbars while the user scrolls. That is a boolean
+    // with a ~1s trailing timer, so hopping the bridge 60–120×/s for it was pure waste
+    // — and the worst kind, since `runOnJS` lands its work on the JS thread exactly
+    // while it is busy rendering the list being flung. Throttled to a few hops/s below.
+    const needsScrollFlash = type === "hover" || type === "scroll";
+    const needsJsScroll = needsScrollSamples || needsScrollFlash;
+    // 0 = every frame (a real consumer); otherwise the flash cadence.
+    const reportIntervalMs = needsScrollSamples ? 0 : SCROLL_FLASH_INTERVAL_MS;
+    // Timestamp of the last `runOnJS` hop, kept on the UI thread.
+    const lastReportSV = useSharedValue(0);
 
     /* ---------------- size tracking ---------------- */
 
@@ -468,10 +546,12 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
           "worklet";
           scrollX.value = event.contentOffset.x;
           scrollY.value = event.contentOffset.y;
-          if (needsJsScroll) runOnJS(reportScroll)(event.contentOffset.x, event.contentOffset.y);
+          if (needsJsScroll && shouldReportW(lastReportSV, reportIntervalMs)) {
+            runOnJS(reportScroll)(event.contentOffset.x, event.contentOffset.y);
+          }
         },
       },
-      [needsJsScroll, reportScroll],
+      [needsJsScroll, reportIntervalMs, lastReportSV, reportScroll],
     );
 
     /* ---------------- Pan engine ---------------- */
@@ -484,6 +564,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
         "worklet";
         if (!usePan || !needsJsScroll) return;
         if (prev && curr.x === prev.x && curr.y === prev.y) return;
+        if (!shouldReportW(lastReportSV, reportIntervalMs)) return;
         runOnJS(reportScroll)(curr.x, curr.y);
       },
     );
@@ -494,10 +575,16 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     // which hops to JS via `runOnJS` and stutters when JS is busy. Watches the
     // internal offset shared values, so it covers BOTH the native (Autosize) and
     // Pan engines with one reaction. No-op unless the caller passes the props.
+    // When neither prop is supplied the prepare worklet reads NO shared value, so
+    // reanimated registers no dependency and the reaction never runs — instead of
+    // allocating + comparing an `{x, y}` object on the UI thread every frame for
+    // nothing (the common case: nobody passes these).
+    const mirrorsOffset = Boolean(scrollValueX || scrollValueY);
     useAnimatedReaction(
-      () => ({ x: scrollX.value, y: scrollY.value }),
+      () => (mirrorsOffset ? { x: scrollX.value, y: scrollY.value } : null),
       (curr) => {
         "worklet";
+        if (!curr) return;
         if (scrollValueX) scrollValueX.value = curr.x;
         if (scrollValueY) scrollValueY.value = curr.y;
       },
@@ -708,37 +795,35 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
 
     /* ---------------- animated thumb styles (UI thread) ---------------- */
 
+    // The per-frame style carries a TRANSFORM ONLY. This split is the whole point: a
+    // `useAnimatedStyle` re-runs (and re-applies its result) whenever any shared value
+    // it reads changes, and a transform is a compositor-only mutation while `left`/
+    // `right`/`height` are LAYOUT props — pushing those through the animated style on
+    // every scroll frame dirtied Yoga and forced a layout pass per frame per thumb.
+    // The thumb's LENGTH is scroll-independent (`yBar.size`, plain style below) and the
+    // hover-grow inset lives in its own style, which only re-runs while `insetSV` is
+    // actually animating (~150ms on drag start/end).
     const yThumbStyle = useAnimatedStyle(() => {
       "worklet";
-      const { size: thumbSize, offset } = thumbGeometryW(
-        size.contentH,
-        size.viewportH,
-        yTrack,
-        scrollY.value,
-      );
-      return {
-        height: thumbSize,
-        left: insetSV.value,
-        right: insetSV.value,
-        transform: [{ translateY: offset }],
-      };
+      const { offset } = thumbGeometryW(size.contentH, size.viewportH, yTrack, scrollY.value);
+      return { transform: [{ translateY: offset }] };
     }, [size.contentH, size.viewportH, yTrack]);
+
+    const yThumbInsetStyle = useAnimatedStyle(() => {
+      "worklet";
+      return { left: insetSV.value, right: insetSV.value };
+    });
 
     const xThumbStyle = useAnimatedStyle(() => {
       "worklet";
-      const { size: thumbSize, offset } = thumbGeometryW(
-        size.contentW,
-        size.viewportW,
-        xTrack,
-        scrollX.value,
-      );
-      return {
-        width: thumbSize,
-        top: insetSV.value,
-        bottom: insetSV.value,
-        transform: [{ translateX: offset }],
-      };
+      const { offset } = thumbGeometryW(size.contentW, size.viewportW, xTrack, scrollX.value);
+      return { transform: [{ translateX: offset }] };
     }, [size.contentW, size.viewportW, xTrack]);
+
+    const xThumbInsetStyle = useAnimatedStyle(() => {
+      "worklet";
+      return { top: insetSV.value, bottom: insetSV.value };
+    });
 
     /* ---------------- content translate (Pan engine) ---------------- */
 
@@ -853,14 +938,10 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
 
     /* ---------------- edge shadows ---------------- */
 
-    // Plain (non-animated) overlays whose visibility is driven by the `shadowScroll`
-    // mirror — opt-in, so this React-state path only costs when `shadows` is set.
-    const edgeOverflow: EdgeState = {
-      top: shadowScroll.y > 1,
-      bottom: size.contentH - size.viewportH - shadowScroll.y > 1,
-      left: shadowScroll.x > 1,
-      right: size.contentW - size.viewportW - shadowScroll.x > 1,
-    };
+    // Plain (non-animated) overlays whose visibility is driven by the `edges` booleans
+    // derived in `reportScroll` — opt-in, so this React-state path only costs when
+    // `shadows` is set, and then only on an actual edge crossing.
+    const edgeOverflow: EdgeState = edges;
     const resolvedScrim = (shadowColor ?? "$color8") as BoxProps["backgroundColor"];
 
     const renderEdgeShadow = (edge: Edge) => {
@@ -911,7 +992,13 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             {/* Plain Animated.View carries the per-frame geometry (height/offset/
                 inset); the inner Tamagui Thumb fills it and supplies colour/radius/
                 `thumbProps`. Keeps reanimated off the styled component. */}
-            <Animated.View style={[{ position: "absolute", top: 0 }, yThumbStyle]}>
+            <Animated.View
+              style={[
+                { position: "absolute", top: 0, height: yBar.size },
+                yThumbInsetStyle,
+                yThumbStyle,
+              ]}
+            >
               <ScrollAreaThumb top={0} left={0} right={0} bottom={0} {...mergedThumbProps} />
             </Animated.View>
           </ScrollAreaScrollbar>
@@ -931,7 +1018,13 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             {...animateOnlyProps(ANIMATE_OPACITY)}
             {...mergedScrollbarProps}
           >
-            <Animated.View style={[{ position: "absolute", left: 0 }, xThumbStyle]}>
+            <Animated.View
+              style={[
+                { position: "absolute", left: 0, width: xBar.size },
+                xThumbInsetStyle,
+                xThumbStyle,
+              ]}
+            >
               <ScrollAreaThumb top={0} left={0} right={0} bottom={0} {...mergedThumbProps} />
             </Animated.View>
           </ScrollAreaScrollbar>

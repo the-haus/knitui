@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { withStaticProperties } from "@knitui/core";
-import { useId, useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useId, useUncontrolled } from "@knitui/hooks";
 
 import {
   Combobox,
@@ -104,13 +104,6 @@ interface AutocompleteContextValue {
   styles?: SlotStyles<AutocompleteStyles>;
   /** Deprecated alias merged over the `clearButton` slot. */
   clearButtonProps?: Partial<ComboboxClearButtonProps>;
-  /** Trigger props the sugar wrapper assembled (chrome, aria, handlers). */
-  triggerProps?: Partial<AutocompleteInputProps> & {
-    placeholder?: React.ReactNode;
-    id?: string;
-    ref?: React.Ref<AutocompleteRef>;
-    clearSectionMode?: "clear" | "default" | "rightSection" | "both";
-  };
   // Event/behaviour handlers consumed by Autocomplete.Trigger.
   onClear: () => void;
   onChangeText: React.ChangeEventHandler<HTMLInputElement>;
@@ -121,6 +114,26 @@ interface AutocompleteContextValue {
 }
 
 const AutocompleteContext = React.createContext<AutocompleteContextValue | null>(null);
+
+/**
+ * Trigger props the sugar wrapper assembled (chrome, aria, handlers, ref). Rebuilt
+ * every render (`...inputProps` is a rest spread, so its identity can never be
+ * preserved), which is why it rides its OWN context: `Autocomplete.Trigger` is the
+ * only consumer, while the option rows consume `AutocompleteContext`.
+ */
+type AutocompleteFunneledTriggerProps = Partial<AutocompleteInputProps> & {
+  placeholder?: React.ReactNode;
+  id?: string;
+  ref?: React.Ref<AutocompleteRef>;
+  clearSectionMode?: "clear" | "default" | "rightSection" | "both";
+};
+
+const AutocompleteTriggerPropsContext = React.createContext<
+  AutocompleteFunneledTriggerProps | undefined
+>(undefined);
+
+/** Shared empty funnel for the composable path (no sugar wrapper above). */
+const EMPTY_TRIGGER_PROPS: AutocompleteFunneledTriggerProps = {};
 
 const useAutocompleteContext = (): AutocompleteContextValue => {
   const ctx = React.useContext(AutocompleteContext);
@@ -200,7 +213,7 @@ export interface AutocompleteRootProps {
    * composing by hand you render `<Autocomplete.Trigger>` with your own props.
    * @internal
    */
-  __triggerProps?: AutocompleteContextValue["triggerProps"];
+  __triggerProps?: AutocompleteFunneledTriggerProps;
 }
 
 function AutocompleteRoot(props: AutocompleteRootProps) {
@@ -243,13 +256,16 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
     defaultValue,
     finalValue: "",
   });
-  const setValue = React.useCallback(
-    (next: string) => {
-      setValueState(next);
-      onChange?.(next);
-    },
-    [setValueState, onChange],
-  );
+  // Every handler in this Root is `useCallbackRef`-stable (identity fixed, latest
+  // closure). That is what lets the context memo below actually HIT: with fresh
+  // closures it either had to be invalidated every render (re-rendering every option
+  // row, since context propagation walks past `React.memo`) or it would have served
+  // stale callbacks. `handleSubmit` additionally lands on `<Combobox onOptionSubmit>`,
+  // a dep of Combobox's OWN context memo, so churn there hit every `Combobox.Option`.
+  const setValue = useCallbackRef((next: string) => {
+    setValueState(next);
+    onChange?.(next);
+  });
 
   const parsed = React.useMemo(() => getParsedComboboxData(data), [data]);
   const filterFn = filter ?? defaultOptionsFilter;
@@ -289,14 +305,11 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
     }
   }, [flatOptions]);
 
-  const handleSubmit = React.useCallback(
-    (optionValue: string) => {
-      setValue(optionValue);
-      onOptionSubmit?.(optionValue);
-      combobox.closeDropdown();
-    },
-    [setValue, onOptionSubmit, combobox],
-  );
+  const handleSubmit = useCallbackRef((optionValue: string) => {
+    setValue(optionValue);
+    onOptionSubmit?.(optionValue);
+    combobox.closeDropdown();
+  });
 
   const moveActive = (direction: 1 | -1) => {
     if (flatOptions.length === 0) return;
@@ -310,7 +323,7 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
     setActiveValue(flatOptions[nextIndex].value);
   };
 
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
+  const handleKeyDown = useCallbackRef<[React.KeyboardEvent<HTMLInputElement>], void>((event) => {
     if (disabled || readOnly) return;
     switch (event.key) {
       case "ArrowDown":
@@ -342,20 +355,20 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
         break;
     }
     __triggerProps?.onKeyDown?.(event);
-  };
+  });
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleChange = useCallbackRef<[React.ChangeEvent<HTMLInputElement>], void>((event) => {
     setValue(event.currentTarget.value);
     combobox.openDropdown();
     if (selectFirstOptionOnChange) selectFirstPending.current = true;
-  };
+  });
 
-  const handleFocus: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleFocus = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     if (openOnFocus) combobox.openDropdown();
     __triggerProps?.onFocus?.(event);
-  };
+  });
 
-  const handleBlur: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleBlur = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     if (autoSelectOnBlur && combobox.opened && activeValue != null) {
       // Commit the highlighted suggestion; handleSubmit fills the input + closes.
       handleSubmit(activeValue);
@@ -363,20 +376,20 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
       combobox.closeDropdown();
     }
     __triggerProps?.onBlur?.(event);
-  };
+  });
 
-  const handleClick: React.MouseEventHandler<HTMLInputElement> = (event) => {
+  const handleClick = useCallbackRef<[React.MouseEvent<HTMLInputElement>], void>((event) => {
     // Clicking the input is the usual way to focus it, so gate it on the same
     // flag as focus — otherwise `openOnFocus={false}` (open-on-type only) is
     // defeated by the click that focuses the field.
     if (openOnFocus) combobox.openDropdown();
     __triggerProps?.onClick?.(event);
-  };
+  });
 
-  const handleClear = React.useCallback(() => {
+  const handleClear = useCallbackRef(() => {
     setValue("");
     onClear?.();
-  }, [setValue, onClear]);
+  });
 
   const canClear = clearable && _value !== "" && !disabled && !readOnly;
 
@@ -397,7 +410,6 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
       renderOption,
       styles,
       clearButtonProps,
-      triggerProps: __triggerProps,
       onClear: handleClear,
       onChangeText: handleChange,
       onKeyDown: handleKeyDown,
@@ -405,9 +417,9 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
       onBlur: handleBlur,
       onClick: handleClick,
     }),
-    // handlers are recreated each render (they close over render-scoped state); the
-    // context value is intentionally not stable, mirroring the original component.
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    // Deps are COMPLETE: every handler above is `useCallbackRef`-stable, so this memo
+    // genuinely hits. `__triggerProps` is deliberately absent — it rides its own
+    // context (it is rebuilt every render and only the Trigger reads it).
     [
       combobox,
       size,
@@ -424,7 +436,12 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
       renderOption,
       styles,
       clearButtonProps,
-      __triggerProps,
+      handleClear,
+      handleChange,
+      handleKeyDown,
+      handleFocus,
+      handleBlur,
+      handleClick,
     ],
   );
 
@@ -432,18 +449,20 @@ function AutocompleteRoot(props: AutocompleteRootProps) {
 
   return (
     <AutocompleteContext.Provider value={ctx}>
-      <Combobox
-        position="bottom"
-        width="target"
-        // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
-        // ("explicit beats sugar").
-        {...s.merge("root", comboboxProps)}
-        store={combobox}
-        onOptionSubmit={handleSubmit}
-        size={size}
-      >
-        {children}
-      </Combobox>
+      <AutocompleteTriggerPropsContext.Provider value={__triggerProps}>
+        <Combobox
+          position="bottom"
+          width="target"
+          // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
+          // ("explicit beats sugar").
+          {...s.merge("root", comboboxProps)}
+          store={combobox}
+          onOptionSubmit={handleSubmit}
+          size={size}
+        >
+          {children}
+        </Combobox>
+      </AutocompleteTriggerPropsContext.Provider>
     </AutocompleteContext.Provider>
   );
 }
@@ -467,7 +486,7 @@ const AutocompleteTrigger = React.forwardRef<AutocompleteRef, AutocompleteTrigge
     // the sugar caller resolve to the same trigger. Explicit props on
     // `<Autocomplete.Trigger>` win over the funneled ones, which in turn win over
     // the `trigger` slot sugar.
-    const funneled = ctx.triggerProps ?? {};
+    const funneled = React.useContext(AutocompleteTriggerPropsContext) ?? EMPTY_TRIGGER_PROPS;
     const {
       placeholder: funneledPlaceholder,
       id: funneledId,
@@ -715,7 +734,7 @@ const AutocompleteComponent = React.forwardRef<AutocompleteRef, AutocompleteProp
 
     // The remaining chrome props are funneled to `Autocomplete.Trigger` via Root
     // context so the sugar path and the composable path converge on the same trigger.
-    const triggerProps: AutocompleteContextValue["triggerProps"] = {
+    const triggerProps: AutocompleteFunneledTriggerProps = {
       ...inputProps,
       placeholder,
       id,

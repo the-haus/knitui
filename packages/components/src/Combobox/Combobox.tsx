@@ -5,10 +5,9 @@ import {
   type GetProps,
   type RadiusTokens,
   styled,
-  useTheme,
   withStaticProperties,
 } from "@knitui/core";
-import { IconChevronDown } from "@knitui/icons";
+import { IconChevronDown } from "@knitui/icons/IconChevronDown";
 
 import { Box } from "../Box";
 import { CloseButton, type CloseButtonProps } from "../CloseButton";
@@ -16,7 +15,6 @@ import { CONTROL_ICON_SIZE, controlIconSize } from "../internal/control-icon-siz
 import { toEmbeddedControlSize } from "../internal/embedded-control-size";
 import { HiddenInput } from "../internal/hidden-input";
 import { renderTextChild } from "../internal/render-text-child";
-import { resolveThemeColor } from "../internal/resolve-theme-color";
 import {
   fontSizePassthroughVariant,
   fontSizeVariant,
@@ -24,6 +22,7 @@ import {
   type SizeKey,
   webCursor,
 } from "../internal/style-props";
+import { useIconColor } from "../internal/use-icon-color";
 import { Popover, type PopoverPosition, type PopoverWidth } from "../Popover";
 import { Text } from "../Text";
 import { type ComboboxStore, useCombobox } from "./use-combobox";
@@ -656,12 +655,17 @@ export interface ComboboxChevronProps extends Omit<
 const ComboboxChevron = ComboboxChevronText.styleable<ComboboxChevronProps>(
   function ComboboxChevron({ error, color, size, ...rest }, ref) {
     void error;
-    const theme = useTheme();
-    // Concrete colour for the SVG (defaults to the chevron's `$color11`); an
+    // Paintable colour for the SVG (defaults to the chevron's `$color11`); an
     // explicit `color`/slot value still wins. Size tracks the field's control key
     // via the canonical icon ladder. The wrapper `Box` keeps the open/close
     // rotation + slot passthrough.
-    const iconColor = resolveThemeColor(theme, typeof color === "string" ? color : "$color11");
+    //
+    // `useIconColor` rather than `useTheme()` + `resolveThemeColor`: on web the
+    // token → `var(--token)` mapping is a pure string transform, so the chevron of
+    // every Select/Autocomplete/MultiSelect no longer registers a theme subscriber
+    // (nor pays `useThemeWithState`'s dep-less per-render `useEffect`). Native
+    // still resolves through the theme, where the SVG needs a concrete colour.
+    const iconColor = useIconColor(typeof color === "string" ? color : "$color11");
     // `size` is the open-ended host type (SizeKey | bare string | number); the
     // ladder only keys on `SizeKey`/number, so narrow before mapping.
     const iconSize =

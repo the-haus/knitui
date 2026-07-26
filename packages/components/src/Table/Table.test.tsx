@@ -131,6 +131,78 @@ describe("Table", () => {
     expect(screen.getAllByLabelText("row-slot")).toHaveLength(3);
   });
 
+  // Striping and column dividers are emitted as Tamagui atomic classes, so these
+  // guards look for the generated class prefix rather than a resolved value.
+  const hasBackground = (el: Element) => /_bg-/.test(el.className);
+  const hasLeftBorder = (el: Element) => /_borderLeftWidth-/.test(el.className);
+
+  it("stripes body rows by position (composed path)", () => {
+    render(
+      <Table striped>
+        <Table.Tbody>
+          <Table.Tr>
+            <Table.Td>r0</Table.Td>
+          </Table.Tr>
+          <Table.Tr>
+            <Table.Td>r1</Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>,
+    );
+    const rows = screen.getAllByRole("row");
+    // `striped` (→ "odd") shades the first row, not the second.
+    expect(hasBackground(rows[0])).toBe(true);
+    expect(hasBackground(rows[1])).toBe(false);
+  });
+
+  it("stripes even body rows in the data path", () => {
+    render(<Table striped="even" data={{ body: [["x"], ["y"], ["z"]] }} />);
+    const rows = screen.getAllByRole("row");
+    expect(hasBackground(rows[0])).toBe(false);
+    expect(hasBackground(rows[1])).toBe(true);
+    expect(hasBackground(rows[2])).toBe(false);
+  });
+
+  it("draws column borders between columns only (not before the first cell)", () => {
+    render(
+      <Table withColumnBorders>
+        <Table.Tbody>
+          <Table.Tr>
+            <Table.Td>c0</Table.Td>
+            <Table.Td>c1</Table.Td>
+            <Table.Td>c2</Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>,
+    );
+    expect(hasLeftBorder(screen.getByText("c0"))).toBe(false);
+    expect(hasLeftBorder(screen.getByText("c1"))).toBe(true);
+    expect(hasLeftBorder(screen.getByText("c2"))).toBe(true);
+  });
+
+  it("finds the leading cell through nested arrays, fragments and empty slots", () => {
+    render(
+      <Table withColumnBorders>
+        <Table.Tbody>
+          <Table.Tr>
+            {null}
+            {[<Table.Td key="n0">n0</Table.Td>, <Table.Td key="n1">n1</Table.Td>]}
+          </Table.Tr>
+          <Table.Tr>
+            <>
+              <Table.Td>f0</Table.Td>
+              <Table.Td>f1</Table.Td>
+            </>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>,
+    );
+    expect(hasLeftBorder(screen.getByText("n0"))).toBe(false);
+    expect(hasLeftBorder(screen.getByText("n1"))).toBe(true);
+    expect(hasLeftBorder(screen.getByText("f0"))).toBe(false);
+    expect(hasLeftBorder(screen.getByText("f1"))).toBe(true);
+  });
+
   it("forwards a ref to the table element", () => {
     const ref = React.createRef<GetRef<typeof Table>>();
     render(

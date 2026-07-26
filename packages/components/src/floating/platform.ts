@@ -76,6 +76,17 @@ export function measure(
  * Reposition `onUpdate` whenever the layout could have changed: scroll (captured
  * so nested scroll containers count), window resize, and element resize. Calls
  * `onUpdate` once immediately so the first position is computed synchronously.
+ *
+ * Every trigger is **coalesced into one `requestAnimationFrame` per frame**. This is
+ * load-bearing for scroll performance, not a micro-optimisation: the capture-phase
+ * `scroll` listener fires for EVERY scrollable ancestor in the app, and a repositioning
+ * pass reads `getBoundingClientRect()` on the reference, the floating element and its
+ * offset parent — layout reads interleaved with the style writes of the previous pass,
+ * i.e. a forced synchronous reflow each time. Browsers can dispatch several scroll
+ * events (plus a `ResizeObserver` callback, plus a resize) within one frame, and each
+ * one used to run the full measure → `computePosition` → `setState` → restyle cycle.
+ * Painting at most once per frame is all the display can show anyway, and it collapses
+ * a burst of triggers into a single reflow.
  */
 export function autoUpdate(
   referenceNode: TamaguiElement | null,
@@ -84,7 +95,21 @@ export function autoUpdate(
 ): () => void {
   if (typeof window === "undefined") return () => {};
 
-  const handler = () => onUpdate();
+  let frame: number | null = null;
+  const canSchedule = typeof requestAnimationFrame === "function";
+
+  const handler = () => {
+    if (!canSchedule) {
+      onUpdate();
+      return;
+    }
+    if (frame != null) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      onUpdate();
+    });
+  };
+
   window.addEventListener("scroll", handler, { capture: true, passive: true });
   window.addEventListener("resize", handler, { passive: true });
 
@@ -97,9 +122,12 @@ export function autoUpdate(
     if (floating) observer.observe(floating);
   }
 
+  // The FIRST position is computed synchronously (not through the frame above) so the
+  // overlay never paints one frame at its un-positioned origin.
   onUpdate();
 
   return () => {
+    if (frame != null && typeof cancelAnimationFrame === "function") cancelAnimationFrame(frame);
     window.removeEventListener("scroll", handler, { capture: true });
     window.removeEventListener("resize", handler);
     observer?.disconnect();

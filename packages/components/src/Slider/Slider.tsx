@@ -199,10 +199,24 @@ const SliderTrackContainer = styled(Box, {
  * the raw `SLIDER_TRACK` number alongside the matching centring offset — the
  * shared `sliderTrackVariant` (which only sets `height`) can't express the
  * vertical axis, so the local number map is the geometry source here. */
+/*
+ * RAMP NOTE (`$colorN` steps below are MIRRORED, i.e. `13 - n`)
+ * ------------------------------------------------------------
+ * `SliderTrack` and `SliderThumb` collide by NAME with two entries in Tamagui's
+ * (deprecated) `defaultComponentThemes`, both templated `inverse`. Until
+ * `core/config/themes.ts` set `componentThemes: false` those frames — and every
+ * descendant, so `SliderBar` and `SliderLabelBubble` too — rendered inside a
+ * `<scheme>_SliderTrack` / `<scheme>_SliderThumb` theme whose ENTIRE `$color1…
+ * $color12` ramp was reversed. The steps here are therefore written pre-mirrored
+ * (`$color3` → `$color10`, `$color9` → `$color4`, `$color1` → `$color12`, …) so
+ * the slider keeps its shipped appearance now that the ramp is no longer flipped
+ * under it. See the changeset: un-mirroring these is a deliberate design change,
+ * not a cleanup.
+ */
 const SliderTrack = styled(Box, {
   name: "SliderTrack",
   position: "absolute",
-  backgroundColor: "$color3",
+  backgroundColor: "$color10",
   variants: { radius: radiusVariant } as const,
   defaultVariants: { radius: "xl" },
 });
@@ -211,7 +225,7 @@ const SliderTrack = styled(Box, {
 const SliderBar = styled(Box, {
   name: "SliderBar",
   position: "absolute",
-  backgroundColor: "$color9",
+  backgroundColor: "$color4",
   variants: { radius: radiusVariant } as const,
   defaultVariants: { radius: "xl" },
 });
@@ -221,12 +235,12 @@ const SliderThumb = styled(Box, {
   position: "absolute",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "$color1",
+  backgroundColor: "$color12",
   borderWidth: 2,
-  borderColor: "$color9",
+  borderColor: "$color4",
   borderRadius: 9999,
   ...webCursor("pointer"),
-  hoverStyle: { borderColor: "$color10" },
+  hoverStyle: { borderColor: "$color3" },
   ...focusRingStyle,
 });
 
@@ -288,8 +302,10 @@ const SliderLabelBubble = styled(Text, {
   paddingHorizontal: 6,
   paddingVertical: 2,
   borderRadius: "$sm",
-  backgroundColor: "$color9",
-  color: "$color1",
+  // MIRRORED steps — this renders inside `SliderThumb`, which used to invert the
+  // whole ramp under it. See the RAMP NOTE above `SliderTrack`.
+  backgroundColor: "$color4",
+  color: "$color12",
   fontSize: "$xs",
   pointerEvents: "none",
   // Force a single line cross-platform. Safe here (unlike inside the thumb)
@@ -339,6 +355,114 @@ const SLIDER_SLOT_KEYS = [
   "labelAnchor",
   "label",
 ] as const satisfies readonly (keyof SliderStyles)[];
+
+/* -------------------------------------------------------------------------- */
+/* Marks — memoized subtree (shared by Slider + RangeSlider)                  */
+/* -------------------------------------------------------------------------- */
+
+interface SliderMarkItemProps {
+  /** Position along the track as a `0–100` percentage. */
+  markPct: number;
+  label?: React.ReactNode;
+  filled: boolean;
+  vertical: boolean;
+  markProps?: Partial<GetProps<typeof SliderMarkDot>>;
+  markLabelProps?: Partial<GetProps<typeof SliderMarkLabel>>;
+}
+
+/**
+ * ONE mark dot (+ its optional label), memoized on its own props.
+ *
+ * The marks used to be re-mapped inline in the slider render body, so a drag —
+ * which calls `setValue` on every single pointermove — re-rendered 2–3 Tamagui
+ * frames per mark per frame (≈45 frames for a 20-mark slider). They can't be
+ * memoized as one opaque block keyed on `(marks, min, max, orientation)` alone,
+ * because `filled` genuinely depends on the live value: the mark palette is part
+ * of the value readout. So the memo is PER MARK instead — the parent
+ * `SliderMarks` re-maps cheaply (no styled components) on every value change, but
+ * only the 0–1 marks whose `filled` state actually FLIPPED re-render any frames.
+ * The visual result is byte-identical to the inline version.
+ */
+const SliderMarkItem = React.memo(function SliderMarkItem({
+  markPct,
+  label,
+  filled,
+  vertical,
+  markProps,
+  markLabelProps,
+}: SliderMarkItemProps) {
+  const dotPos: Partial<BoxProps> = vertical
+    ? { bottom: pct(markPct), left: "50%", marginLeft: -3, marginBottom: -3 }
+    : { left: pct(markPct), top: "50%", marginLeft: -3, marginTop: -3 };
+  const labelPos: Partial<BoxProps> = vertical
+    ? { left: "100%", bottom: pct(markPct), marginLeft: 8, marginBottom: -8 }
+    : { top: "100%", left: pct(markPct), marginTop: 8, marginLeft: -12, minWidth: 24 };
+  return (
+    <>
+      <SliderMarkDot
+        filled={filled}
+        {...markProps}
+        {...(dotPos as GetProps<typeof SliderMarkDot>)}
+      />
+      {label != null ? (
+        <SliderMarkLabel {...markLabelProps} {...(labelPos as GetProps<typeof SliderMarkLabel>)}>
+          {label}
+        </SliderMarkLabel>
+      ) : null}
+    </>
+  );
+});
+
+interface SliderMarksProps {
+  marks: SliderMark[];
+  min: number;
+  max: number;
+  vertical: boolean;
+  /**
+   * Inclusive lower bound of the filled span. `-Infinity` for the single-value
+   * `Slider` (everything up to the thumb is filled); the lower thumb for
+   * `RangeSlider`.
+   */
+  filledFrom: number;
+  /** Inclusive upper bound of the filled span. */
+  filledTo: number;
+  markProps?: Partial<GetProps<typeof SliderMarkDot>>;
+  markLabelProps?: Partial<GetProps<typeof SliderMarkLabel>>;
+}
+
+/**
+ * The marks layer. Memoized so a parent re-render that changes nothing about the
+ * marks (hover, focus, label-bubble visibility, a `styles` slot that isn't
+ * `mark`/`markLabel`) doesn't touch them at all; when the value DOES change, the
+ * per-mark memo above keeps the work proportional to the marks that actually
+ * changed rather than to the mark count.
+ */
+const SliderMarks = React.memo(function SliderMarks({
+  marks,
+  min,
+  max,
+  vertical,
+  filledFrom,
+  filledTo,
+  markProps,
+  markLabelProps,
+}: SliderMarksProps) {
+  return (
+    <>
+      {marks.map((mark, index) => (
+        <SliderMarkItem
+          key={index}
+          markPct={valueToPct(mark.value, min, max)}
+          label={mark.label}
+          filled={mark.value >= filledFrom && mark.value <= filledTo}
+          vertical={vertical}
+          markProps={markProps}
+          markLabelProps={markLabelProps}
+        />
+      ))}
+    </>
+  );
+});
 
 /* -------------------------------------------------------------------------- */
 /* Shared prop surface                                                        */
@@ -674,33 +798,19 @@ const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props,
           <SliderBar radius={radius} {...s.get("bar")} {...(fill as GetProps<typeof SliderBar>)} />
         </SliderTrack>
 
-        {marks?.map((mark, index) => {
-          const markPct = valueToPct(mark.value, dMin, dMax);
-          const filled = mark.value <= current;
-          const dotPos: Partial<BoxProps> = vertical
-            ? { bottom: pct(markPct), left: "50%", marginLeft: -3, marginBottom: -3 }
-            : { left: pct(markPct), top: "50%", marginLeft: -3, marginTop: -3 };
-          const labelPos: Partial<BoxProps> = vertical
-            ? { left: "100%", bottom: pct(markPct), marginLeft: 8, marginBottom: -8 }
-            : { top: "100%", left: pct(markPct), marginTop: 8, marginLeft: -12, minWidth: 24 };
-          return (
-            <React.Fragment key={index}>
-              <SliderMarkDot
-                filled={filled}
-                {...s.get("mark")}
-                {...(dotPos as GetProps<typeof SliderMarkDot>)}
-              />
-              {mark.label != null ? (
-                <SliderMarkLabel
-                  {...s.get("markLabel")}
-                  {...(labelPos as GetProps<typeof SliderMarkLabel>)}
-                >
-                  {mark.label}
-                </SliderMarkLabel>
-              ) : null}
-            </React.Fragment>
-          );
-        })}
+        {marks ? (
+          <SliderMarks
+            marks={marks}
+            min={dMin}
+            max={dMax}
+            vertical={vertical}
+            // Single thumb: everything at or below the value is filled.
+            filledFrom={-Infinity}
+            filledTo={current}
+            markProps={s.get("mark")}
+            markLabelProps={s.get("markLabel")}
+          />
+        ) : null}
 
         <SliderThumb
           width={knob.value}
@@ -1054,33 +1164,19 @@ const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
             />
           </SliderTrack>
 
-          {marks?.map((mark, index) => {
-            const markPct = valueToPct(mark.value, dMin, dMax);
-            const filled = mark.value >= valA && mark.value <= valB;
-            const dotPos: Partial<BoxProps> = vertical
-              ? { bottom: pct(markPct), left: "50%", marginLeft: -3, marginBottom: -3 }
-              : { left: pct(markPct), top: "50%", marginLeft: -3, marginTop: -3 };
-            const labelPos: Partial<BoxProps> = vertical
-              ? { left: "100%", bottom: pct(markPct), marginLeft: 8, marginBottom: -8 }
-              : { top: "100%", left: pct(markPct), marginTop: 8, marginLeft: -12, minWidth: 24 };
-            return (
-              <React.Fragment key={index}>
-                <SliderMarkDot
-                  filled={filled}
-                  {...s.get("mark")}
-                  {...(dotPos as GetProps<typeof SliderMarkDot>)}
-                />
-                {mark.label != null ? (
-                  <SliderMarkLabel
-                    {...s.get("markLabel")}
-                    {...(labelPos as GetProps<typeof SliderMarkLabel>)}
-                  >
-                    {mark.label}
-                  </SliderMarkLabel>
-                ) : null}
-              </React.Fragment>
-            );
-          })}
+          {marks ? (
+            <SliderMarks
+              marks={marks}
+              min={dMin}
+              max={dMax}
+              vertical={vertical}
+              // Two thumbs: the span BETWEEN them is filled.
+              filledFrom={valA}
+              filledTo={valB}
+              markProps={s.get("mark")}
+              markLabelProps={s.get("markLabel")}
+            />
+          ) : null}
 
           {renderThumb(0, valA, pctA)}
           {renderThumb(1, valB, pctB)}

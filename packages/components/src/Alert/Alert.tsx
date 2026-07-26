@@ -230,17 +230,37 @@ export interface AlertProps extends GetProps<typeof AlertFrame> {
 }
 
 /**
- * Pure-text body (`string`/`number`, including inline runs) renders as a single
- * themed `AlertMessage`. The moment an element is present — mixed or not — we use
- * the `AlertContent` Box instead so rich content isn't trapped inside a `<Text>`.
+ * How the body children render: nothing at all, a single themed `AlertMessage`
+ * (pure text — `string`/`number`, including inline runs), or the `AlertContent`
+ * Box. The moment an element is present — mixed or not — we use the Box so rich
+ * content isn't trapped inside a `<Text>`.
  */
-function isTextOnly(children: React.ReactNode): boolean {
-  const array = React.Children.toArray(children);
-  return array.length > 0 && array.every((c) => typeof c === "string" || typeof c === "number");
-}
+type AlertBodyKind = "empty" | "text" | "rich";
 
-function hasRenderableChild(children: React.ReactNode): boolean {
-  return React.Children.toArray(children).length > 0;
+/**
+ * ## Cost
+ *
+ * This replaces a `hasRenderableChild(children)` + `isTextOnly(children)` pair
+ * that BOTH called `React.Children.toArray` — which flattens *and clones every
+ * element child* — so the same work happened twice per render, and a toast-style
+ * stack renders N of these. One pass now, and the single-child shapes are answered
+ * before `toArray` is reached at all (same fast-path ladder as `renderTextChild`).
+ * Classification is unchanged: `toArray` drops `null`/`undefined`/booleans, and
+ * does NOT flatten a Fragment (which therefore counts as one element → "rich").
+ */
+function classifyBody(children: React.ReactNode): AlertBodyKind {
+  const type = typeof children;
+  if (type === "string" || type === "number") return "text";
+  if (children == null || type === "boolean") return "empty";
+  if (React.isValidElement(children)) return "rich";
+
+  const array = React.Children.toArray(children);
+  if (array.length === 0) return "empty";
+  for (let i = 0; i < array.length; i++) {
+    const child = array[i];
+    if (typeof child !== "string" && typeof child !== "number") return "rich";
+  }
+  return "text";
 }
 
 function getCloseButtonSize(size: AlertSize): AlertSize {
@@ -285,19 +305,20 @@ const AlertComponent = AlertFrame.styleable<AlertProps>(function Alert(props, re
 
   const rootId = useId(typeof id === "string" ? id : undefined);
   const titleId = title ? `${rootId}-title` : undefined;
-  const hasBody = hasRenderableChild(children);
-  const bodyId = hasBody ? `${rootId}-body` : undefined;
-  const bodyContent = hasBody ? (
-    isTextOnly(children) ? (
-      <AlertMessage id={bodyId} {...s.get("message")}>
-        {children}
-      </AlertMessage>
-    ) : (
-      <AlertContent id={bodyId} {...s.get("content")}>
-        {renderTextChild(children, AlertMessage)}
-      </AlertContent>
-    )
-  ) : null;
+  const bodyKind = classifyBody(children);
+  const bodyId = bodyKind !== "empty" ? `${rootId}-body` : undefined;
+  const bodyContent =
+    bodyKind !== "empty" ? (
+      bodyKind === "text" ? (
+        <AlertMessage id={bodyId} {...s.get("message")}>
+          {children}
+        </AlertMessage>
+      ) : (
+        <AlertContent id={bodyId} {...s.get("content")}>
+          {renderTextChild(children, AlertMessage)}
+        </AlertContent>
+      )
+    ) : null;
 
   // Pick a close-button variant whose glyph contrasts the panel fill: on a
   // `filled` ($color9) panel the close button matches it ($color1 glyph); on a

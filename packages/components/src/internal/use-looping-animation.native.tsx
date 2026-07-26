@@ -11,7 +11,7 @@ import Animated, {
 
 import { useReducedMotion } from "@knitui/hooks";
 
-import { type LoopMotion, resolveMotion } from "./use-looping-animation.shared";
+import { isMotionActive, type LoopMotion, resolveMotion } from "./use-looping-animation.shared";
 
 export type {
   LoopMotion,
@@ -64,8 +64,16 @@ const EASE_IN_OUT: Easer = Easing.bezier(0.42, 0, 0.58, 1);
  * rotate), `pulse` (alternating opacity), `shimmer` (repeating translate offset).
  */
 export function useLoopingAnimation(motion: LoopMotion): LoopStyle {
-  const reduced = useReducedMotion();
+  const reducedPreference = useReducedMotion();
   const resolved = resolveMotion(motion);
+  // A loop that is disabled (its style is never rendered) or visually inert (zero
+  // travel) must not be scheduled: `withRepeat` runs FOREVER, and every live loop
+  // re-evaluates its worklet and pushes a props update on the UI thread every
+  // frame. A screen full of `Skeleton`s, or a single `Loader` (which declares a
+  // spin + three pulses but renders one of them), otherwise paid for animations
+  // nothing displays. Folding it into `reduced` keeps the static-frame branch below
+  // as the single "not animating" path.
+  const reduced = reducedPreference || !isMotionActive(motion, resolved);
 
   // `progress` runs 0→1 forever; the worklet interpolates per motion kind. For
   // `pulse` we set `reverse=true` so each cycle ping-pongs (a seamless throb).

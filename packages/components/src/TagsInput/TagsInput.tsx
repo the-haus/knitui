@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { withStaticProperties } from "@knitui/core";
-import { useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useUncontrolled } from "@knitui/hooks";
 
 import {
   Combobox,
@@ -149,11 +149,6 @@ interface TagsInputContextValue {
   clearButtonProps?: Partial<ComboboxClearButtonProps>;
   /** Controls how the clear button coexists with the trigger's right section. */
   clearSectionMode?: "clear" | "default" | "rightSection" | "both";
-  /** Trigger props the sugar wrapper assembled (chrome, ref). */
-  triggerProps?: Partial<TagsInputFieldProps> & {
-    placeholder?: string;
-    ref?: React.Ref<TagsInputRef>;
-  };
   // Event/behaviour handlers consumed by TagsInput.Trigger.
   onClear: () => void;
   removeTag: (index: number) => void;
@@ -173,6 +168,90 @@ const useTagsInputContext = (): TagsInputContextValue => {
   }
   return ctx;
 };
+
+/**
+ * Trigger props the sugar wrapper assembled (chrome, ref). Rebuilt every render
+ * (`...inputProps` is a rest spread, so its identity can never be preserved), which
+ * is why it rides its OWN context: `TagsInput.Trigger` is the only consumer, while
+ * the option rows consume `TagsInputContext`.
+ */
+type TagsInputFunneledTriggerProps = Partial<TagsInputFieldProps> & {
+  placeholder?: string;
+  ref?: React.Ref<TagsInputRef>;
+};
+
+const TagsInputTriggerPropsContext = React.createContext<TagsInputFunneledTriggerProps | undefined>(
+  undefined,
+);
+
+/** Shared empty funnel for the composable path (no sugar wrapper above). */
+const EMPTY_TRIGGER_PROPS: TagsInputFunneledTriggerProps = {};
+
+/**
+ * The slice of Root state a tag CHIP needs — deliberately WITHOUT `search`, so
+ * typing in the field cannot re-render the tag chips through context. The search
+ * text lives on `TagsInputContext`, which the trigger/field consume; the chips
+ * subscribe here instead and `React.memo` on `{ value, index }` then actually holds.
+ */
+interface TagsInputChipContextValue {
+  pillSize: PillProps["size"];
+  disabled?: boolean;
+  readOnly?: boolean;
+  renderPill?: ComboboxRenderPill;
+  styles?: SlotStyles<TagsInputStyles>;
+  removeTag: (index: number) => void;
+}
+
+const TagsInputChipContext = React.createContext<TagsInputChipContextValue | null>(null);
+
+/**
+ * One tag chip in the data-driven `TagsInput.Trigger` row, memoized on
+ * `{ value, index }`. Reads `TagsInputChipContext` (no `search`) and gets a
+ * `useCallbackRef`-stable `removeTag`, so a keystroke no longer rebuilds every chip's
+ * `Pill` + `CloseButton` + icon SVG — previously keystroke latency scaled with the
+ * number of tags, each chip also getting a brand-new `onRemove` closure.
+ */
+const TagsInputChip = React.memo(function TagsInputChip({
+  value: item,
+  index,
+}: {
+  value: string;
+  index: number;
+}) {
+  const ctx = React.useContext(TagsInputChipContext);
+  if (!ctx) {
+    throw new Error("TagsInput chips must be rendered inside <TagsInput.Root>");
+  }
+  const { removeTag } = ctx;
+  const s = slotStyles<TagsInputStyles>(ctx.styles, TAGS_INPUT_SLOT_KEYS, "TagsInput");
+  const handleRemove = React.useCallback(() => removeTag(index), [removeTag, index]);
+
+  // A custom `renderPill` REPLACES the built-in chip (Mantine parity).
+  if (ctx.renderPill) {
+    return (
+      <>
+        {ctx.renderPill({
+          option: { value: item, label: item },
+          value: item,
+          onRemove: handleRemove,
+          disabled: ctx.disabled || ctx.readOnly,
+        })}
+      </>
+    );
+  }
+
+  return (
+    <Pill
+      {...s.get("pill")}
+      size={ctx.pillSize}
+      withRemoveButton={!ctx.readOnly}
+      disabled={ctx.disabled}
+      onRemove={handleRemove}
+    >
+      {item}
+    </Pill>
+  );
+});
 
 /* -------------------------------------------------------------------------- */
 /* TagsInput.Root — the free-text tag-list state machine                       */
@@ -276,7 +355,7 @@ export interface TagsInputRootProps {
    * `<TagsInput.Trigger>` with your own props instead.
    * @internal
    */
-  __triggerProps?: TagsInputContextValue["triggerProps"];
+  __triggerProps?: TagsInputFunneledTriggerProps;
 }
 
 function TagsInputRoot(props: TagsInputRootProps) {
@@ -361,88 +440,66 @@ function TagsInputRoot(props: TagsInputRootProps) {
   // filter memo and scopes the behaviour to actual input changes.
   const selectFirstPending = React.useRef(false);
 
-  const isDup = React.useCallback(
-    (tag: string, current: string[]) =>
-      isDuplicate
-        ? isDuplicate(tag, current)
-        : current.some((t) => t.toLowerCase() === tag.toLowerCase()),
-    [isDuplicate],
+  // Every handler in this Root is `useCallbackRef`-stable (identity fixed, latest
+  // closure — the ref is refreshed after every commit, and events always fire after
+  // a commit). That is what lets the context memo below actually HIT: with fresh
+  // closures it either had to be invalidated every render (re-rendering every option
+  // row AND every tag chip, since context propagation walks past `React.memo`) or it
+  // would have served stale callbacks. `handleSubmit` additionally lands on
+  // `<Combobox onOptionSubmit>`, a dep of Combobox's OWN context memo.
+  const isDup = useCallbackRef((tag: string, current: string[]) =>
+    isDuplicate
+      ? isDuplicate(tag, current)
+      : current.some((t) => t.toLowerCase() === tag.toLowerCase()),
   );
 
-  const addTag = React.useCallback(
-    (raw: string) => {
-      const tag = raw.trim();
-      if (tag.length === 0) return;
-      if (!allowDuplicates && isDup(tag, _value)) {
-        onDuplicate?.(tag);
-        setSearch("");
-        return;
-      }
-      if (_value.length >= maxTags) {
-        onMaxTags?.(tag);
-        return;
-      }
-      setValue([..._value, tag]);
-      if (clearSearchOnChange) setSearch("");
-    },
-    [
-      allowDuplicates,
-      isDup,
-      _value,
-      onDuplicate,
-      maxTags,
-      onMaxTags,
-      setValue,
-      setSearch,
-      clearSearchOnChange,
-    ],
-  );
+  const addTag = useCallbackRef((raw: string) => {
+    const tag = raw.trim();
+    if (tag.length === 0) return;
+    if (!allowDuplicates && isDup(tag, _value)) {
+      onDuplicate?.(tag);
+      setSearch("");
+      return;
+    }
+    if (_value.length >= maxTags) {
+      onMaxTags?.(tag);
+      return;
+    }
+    setValue([..._value, tag]);
+    if (clearSearchOnChange) setSearch("");
+  });
 
   // Commit a batch of tags in ONE pass — merges into the current value honouring
   // `maxTags` + duplicates, then `setValue` once. Used by the split-on-key and
   // split-on-paste paths (a per-tag `addTag` loop would read the render-time `_value`
   // for every call, so only the last tag would survive).
-  const commitTags = React.useCallback(
-    (tags: string[]) => {
-      const merged = _value.slice();
-      for (const raw of tags) {
-        const tag = raw.trim();
-        if (tag.length === 0) continue;
-        if (merged.length >= maxTags) {
-          onMaxTags?.(tag);
-          break;
-        }
-        if (!allowDuplicates && isDup(tag, merged)) {
-          onDuplicate?.(tag);
-          continue;
-        }
-        merged.push(tag);
+  const commitTags = useCallbackRef((tags: string[]) => {
+    const merged = _value.slice();
+    for (const raw of tags) {
+      const tag = raw.trim();
+      if (tag.length === 0) continue;
+      if (merged.length >= maxTags) {
+        onMaxTags?.(tag);
+        break;
       }
-      if (merged.length !== _value.length) setValue(merged);
-      if (clearSearchOnChange) setSearch("");
-    },
-    [
-      _value,
-      maxTags,
-      onMaxTags,
-      allowDuplicates,
-      isDup,
-      onDuplicate,
-      setValue,
-      clearSearchOnChange,
-      setSearch,
-    ],
-  );
+      if (!allowDuplicates && isDup(tag, merged)) {
+        onDuplicate?.(tag);
+        continue;
+      }
+      merged.push(tag);
+    }
+    if (merged.length !== _value.length) setValue(merged);
+    if (clearSearchOnChange) setSearch("");
+  });
 
-  const removeTag = React.useCallback(
-    (index: number) => {
-      const next = _value.slice();
-      const [removed] = next.splice(index, 1);
-      setValue(next);
-      if (removed != null) onRemove?.(removed);
-    },
-    [_value, setValue, onRemove],
-  );
+  // Stable so each chip's `onRemove` closure is stable too (it used to depend on
+  // `_value`, giving every chip a fresh callback on every render).
+  const removeTag = useCallbackRef((index: number) => {
+    const next = _value.slice();
+    const [removed] = next.splice(index, 1);
+    setValue(next);
+    if (removed != null) onRemove?.(removed);
+  });
 
   const suggestions = React.useMemo(() => filterPickedTags(parsed, _value), [parsed, _value]);
   const filterFn = filter ?? defaultOptionsFilter;
@@ -475,15 +532,12 @@ function TagsInputRoot(props: TagsInputRootProps) {
     setActiveValue(flatOptions[nextIndex].value);
   };
 
-  const handleSubmit = React.useCallback(
-    (optionValue: string) => {
-      onOptionSubmit?.(optionValue);
-      addTag(optionValue);
-    },
-    [onOptionSubmit, addTag],
-  );
+  const handleSubmit = useCallbackRef((optionValue: string) => {
+    onOptionSubmit?.(optionValue);
+    addTag(optionValue);
+  });
 
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
+  const handleKeyDown = useCallbackRef<[React.KeyboardEvent<HTMLInputElement>], void>((event) => {
     if (disabled || readOnly) return;
     const trimmed = search.trim();
 
@@ -531,9 +585,9 @@ function TagsInputRoot(props: TagsInputRootProps) {
         break;
     }
     onKeyDown?.(event);
-  };
+  });
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleChange = useCallbackRef<[React.ChangeEvent<HTMLInputElement>], void>((event) => {
     const newSearch = event.currentTarget.value;
     setSearch(newSearch);
     if (newSearch.length > 0) {
@@ -542,12 +596,12 @@ function TagsInputRoot(props: TagsInputRootProps) {
       combobox.closeDropdown();
     }
     if (selectFirstOptionOnChange) selectFirstPending.current = true;
-  };
+  });
 
   // Split a pasted string into tags on `splitChars` (combined with any pending search),
   // mirroring Mantine's paste behaviour. Web-only: native `TextInput` has no paste event
   // in this path, so a multi-value paste lands as one tag (the documented web-functional model).
-  const handlePaste: React.ClipboardEventHandler<HTMLInputElement> = (event) => {
+  const handlePaste = useCallbackRef<[React.ClipboardEvent<HTMLInputElement>], void>((event) => {
     onPaste?.(event);
     if (disabled || readOnly) return;
     const pasted = event.clipboardData?.getData("text/plain") ?? "";
@@ -555,24 +609,24 @@ function TagsInputRoot(props: TagsInputRootProps) {
     if (tags.length === 0) return;
     event.preventDefault();
     commitTags(tags);
-  };
+  });
 
-  const handleFocus: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleFocus = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     onFocus?.(event);
-  };
+  });
 
-  const handleBlur: React.FocusEventHandler<HTMLInputElement> = (event) => {
+  const handleBlur = useCallbackRef<[React.FocusEvent<HTMLInputElement>], void>((event) => {
     combobox.closeDropdown();
     if (acceptValueOnBlur) addTag(search);
     else setSearch("");
     onBlur?.(event);
-  };
+  });
 
-  const handleClear = React.useCallback(() => {
+  const handleClear = useCallbackRef(() => {
     setValue([]);
     setSearch("");
     onClear?.();
-  }, [setValue, setSearch, onClear]);
+  });
 
   const canClear = clearable && _value.length > 0 && !disabled && !readOnly;
 
@@ -597,7 +651,6 @@ function TagsInputRoot(props: TagsInputRootProps) {
       styles,
       clearButtonProps,
       clearSectionMode,
-      triggerProps: __triggerProps,
       onClear: handleClear,
       removeTag,
       onChangeText: handleChange,
@@ -606,9 +659,9 @@ function TagsInputRoot(props: TagsInputRootProps) {
       onBlur: handleBlur,
       onPaste: handlePaste,
     }),
-    // handlers are recreated each render (they close over render-scoped state); the
-    // context value is intentionally not stable, mirroring the original component.
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    // Deps are COMPLETE: every handler above is `useCallbackRef`-stable, so this memo
+    // genuinely hits. `__triggerProps` is deliberately absent — it rides its own
+    // context (it is rebuilt every render and only the Trigger reads it).
     [
       combobox,
       size,
@@ -629,28 +682,43 @@ function TagsInputRoot(props: TagsInputRootProps) {
       styles,
       clearButtonProps,
       clearSectionMode,
-      __triggerProps,
       removeTag,
+      handleClear,
+      handleChange,
+      handleKeyDown,
+      handleFocus,
+      handleBlur,
+      handlePaste,
     ],
+  );
+
+  // Chip-only slice: no `search`, so typing cannot re-render the tag chips.
+  const chipCtx = React.useMemo<TagsInputChipContextValue>(
+    () => ({ pillSize, disabled, readOnly, renderPill, styles, removeTag }),
+    [pillSize, disabled, readOnly, renderPill, styles, removeTag],
   );
 
   const s = slotStyles<TagsInputStyles>(styles, TAGS_INPUT_SLOT_KEYS, "TagsInput");
 
   return (
     <TagsInputContext.Provider value={ctx}>
-      <Combobox
-        position="bottom"
-        width="target"
-        // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
-        // ("explicit beats sugar").
-        {...s.merge("root", comboboxProps)}
-        store={combobox}
-        onOptionSubmit={handleSubmit}
-        size={size}
-        readOnly={readOnly}
-      >
-        {children}
-      </Combobox>
+      <TagsInputChipContext.Provider value={chipCtx}>
+        <TagsInputTriggerPropsContext.Provider value={__triggerProps}>
+          <Combobox
+            position="bottom"
+            width="target"
+            // Deprecated `comboboxProps` alias merged OVER the `root` slot sugar
+            // ("explicit beats sugar").
+            {...s.merge("root", comboboxProps)}
+            store={combobox}
+            onOptionSubmit={handleSubmit}
+            size={size}
+            readOnly={readOnly}
+          >
+            {children}
+          </Combobox>
+        </TagsInputTriggerPropsContext.Provider>
+      </TagsInputChipContext.Provider>
     </TagsInputContext.Provider>
   );
 }
@@ -721,7 +789,7 @@ const TagsInputTrigger = React.forwardRef<TagsInputRef, TagsInputTriggerProps>(
     // so a composable caller and the sugar caller resolve to the same trigger.
     // Explicit props on `<TagsInput.Trigger>` win over the funneled ones, which in
     // turn win over the `trigger` slot sugar.
-    const funneled = ctx.triggerProps ?? {};
+    const funneled = React.useContext(TagsInputTriggerPropsContext) ?? EMPTY_TRIGGER_PROPS;
     const { placeholder: funneledPlaceholder, ref: funneledRef, ...funneledRest } = funneled;
 
     const {
@@ -754,28 +822,12 @@ const TagsInputTrigger = React.forwardRef<TagsInputRef, TagsInputTriggerProps>(
       mode: ctx.clearSectionMode,
     });
 
-    const pills = ctx.value.map((item, index) =>
-      ctx.renderPill ? (
-        <React.Fragment key={`${item}-${index}`}>
-          {ctx.renderPill({
-            option: { value: item, label: item },
-            value: item,
-            onRemove: () => ctx.removeTag(index),
-            disabled: ctx.disabled || ctx.readOnly,
-          })}
-        </React.Fragment>
-      ) : (
-        <TagsInputPill
-          key={`${item}-${index}`}
-          size={ctx.pillSize}
-          withRemoveButton={!ctx.readOnly}
-          disabled={ctx.disabled}
-          onRemove={() => ctx.removeTag(index)}
-        >
-          {item}
-        </TagsInputPill>
-      ),
-    );
+    // `TagsInputChip` is memoized on `{ value, index }` and subscribes to the
+    // search-free chip context, so a keystroke re-renders the field but skips every
+    // chip. (The `renderPill` hatch and the `pill` slot sugar both live inside it.)
+    const pills = ctx.value.map((item, index) => (
+      <TagsInputChip key={`${item}-${index}`} value={item} index={index} />
+    ));
 
     return (
       <Combobox.Target>
@@ -1059,7 +1111,7 @@ const TagsInputComponent = React.forwardRef<TagsInputRef, TagsInputProps>(
 
     // The remaining chrome props are funneled to `TagsInput.Trigger` via Root context
     // so the sugar path and the composable path converge on the same trigger element.
-    const triggerProps: TagsInputContextValue["triggerProps"] = {
+    const triggerProps: TagsInputFunneledTriggerProps = {
       ...inputProps,
       placeholder,
       // Forward ONLY the field-chrome slots to the trigger's `PillsInput` →

@@ -19,17 +19,18 @@ import { Box } from "../Box";
  *
  * Documented divergence: Mantine's per-element descendant resets (heading/list/
  * table/code spacing applied to raw HTML) are NOT reproduced here.
+ *
+ * A plain `styled()` export, NOT a `.styleable()` wrapper: the wrapper existed
+ * only to pin `render="div"`, which `styled()` takes as a config value
+ * (`render?: string | React.ReactElement` is part of its options type), so the
+ * extra component layer — plus its own render pass and the `<Theme>` layer
+ * `themeable` wraps a named styleable in — bought nothing.
  */
-const TypographyFrame = styled(Box, {
+export const Typography = styled(Box, {
   name: "Typography",
   flexDirection: "column",
   gap: "$md",
+  render: "div",
 });
 
-export interface TypographyProps extends GetProps<typeof TypographyFrame> {}
-
-export const Typography = TypographyFrame.styleable<TypographyProps>(
-  function Typography(props, ref) {
-    return <TypographyFrame ref={ref} {...props} render="div" />;
-  },
-);
+export interface TypographyProps extends GetProps<typeof Typography> {}

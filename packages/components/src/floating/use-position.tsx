@@ -67,6 +67,43 @@ export type UsePositionReturn = {
   floatingStyles: { position: Strategy; top: number; left: number };
 };
 
+/**
+ * Cheap structural comparison for the middleware-data bag, used to bail out of
+ * re-renders when nothing moved. This runs on EVERY repositioning pass — i.e. once
+ * per animation frame while the page scrolls with an overlay open — so it must not
+ * allocate: the previous implementation `JSON.stringify`d both bags on every pass
+ * (two full serializations per frame, per open overlay) just to compare a handful of
+ * numbers (`arrow.x/y`, `hide.*`, `offset.x/y`, the reference width). One level of
+ * nesting is enough for every middleware the engine ships.
+ */
+const shallowEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  const aKeys = Object.keys(a as object);
+  const bKeys = Object.keys(b as object);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (
+      (a as Record<string, unknown>)[key] !== (b as Record<string, unknown>)[key] &&
+      !Object.is((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const middlewareDataEqual = (a: MiddlewareData, b: MiddlewareData): boolean => {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!(key in b)) return false;
+    if (!shallowEqual(a[key], b[key])) return false;
+  }
+  return true;
+};
+
 type PositionData = {
   x: number | null;
   y: number | null;
@@ -181,7 +218,7 @@ export function usePosition(props: UsePositionProps): UsePositionReturn {
             prev.y === y &&
             prev.placement === result.placement &&
             prev.strategy === cfg.strategy &&
-            JSON.stringify(prev.middlewareData) === JSON.stringify(result.middlewareData)
+            middlewareDataEqual(prev.middlewareData, result.middlewareData)
           ) {
             return prev;
           }

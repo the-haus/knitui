@@ -179,9 +179,13 @@ export function OptionsDropdown(props: OptionsDropdownProps) {
     "aria-label": ariaLabel,
   } = props;
 
+  // Multi-select membership is O(1) per option — building the set once keeps the
+  // whole render O(n + m) instead of O(n * m) (`value.includes` per option).
+  const valueSet = React.useMemo(() => (Array.isArray(value) ? new Set(value) : null), [value]);
+
   const options = React.useMemo(() => {
     const isChecked = (optionValue: string) =>
-      Array.isArray(value) ? value.includes(optionValue) : value != null && value === optionValue;
+      valueSet ? valueSet.has(optionValue) : value != null && value === optionValue;
 
     const renderItem = (item: ComboboxItem) => (
       <OptionRow
@@ -208,6 +212,7 @@ export function OptionsDropdown(props: OptionsDropdownProps) {
   }, [
     data,
     value,
+    valueSet,
     activeValue,
     withCheckIcon,
     checkIconPosition,

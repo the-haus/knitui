@@ -16,6 +16,7 @@ import {
   surfaceColorVariant,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
+import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
 import { Text } from "../Text";
 
 type BadgeSize = SizeKey;
@@ -177,14 +178,11 @@ const BadgeComponent = BadgeFrame.styleable<BadgeProps>(function Badge(props, re
 
   // Inject the `text` slot props into the wrapper `renderTextChild` auto-applies
   // around string/number children, so the label slot reaches the auto-wrapped text.
-  const textSlot = s.get("text");
-  const BadgeLabel = React.useMemo(
-    () =>
-      function BadgeLabel({ children: labelChildren }: { children: React.ReactNode }) {
-        return <BadgeText {...textSlot}>{labelChildren}</BadgeText>;
-      },
-    [textSlot],
-  );
+  // Via the shared hook: keying this memo on the slot object's IDENTITY meant the
+  // documented inline `styles={{ text: { … } }}` literal produced a new component
+  // TYPE every render, so React unmounted and remounted the label — and a Badge is
+  // a list item rendered N times. The hook compares the slot props by value.
+  const BadgeLabel = useSlotTextWrapper(BadgeText, s.get("text"));
 
   return (
     <BadgeFrame

@@ -188,6 +188,9 @@ const ProgressSection = ProgressSectionFrame.styleable<ProgressSectionProps>(
       axis: "x",
       distance: animated ? STRIPE_PERIOD : 0,
       durationMs: STRIPE_DURATION_MS,
+      // A `distance: 0` shimmer is inert, so the primitive already skips scheduling;
+      // stating it keeps the intent explicit for a plain `striped` bar.
+      enabled: Boolean(animated),
     });
 
     const pct = `${Math.max(0, Math.min(100, value))}%`;
