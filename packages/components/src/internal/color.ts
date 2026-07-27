@@ -45,7 +45,14 @@ export function hsvaToRgbaObject({ h, s, v, a }: HsvaColor): RgbaColor {
   const l = _v * (1 - _s);
   const c = _v * (1 - (_h - hh) * _s);
   const d = _v * (1 - (1 - _h + hh) * _s);
-  const module = hh % 6;
+  // Euclidean remainder, not `%`. An out-of-range hue reaches here unnormalised:
+  // `h` is a plain number on the public `HsvaColor` API, and `ColorPicker` feeds
+  // it straight through on every hue change. A negative one gave `hh = -1`, and
+  // `hh % 6 === -1` indexed off the FRONT of the three sector tuples below,
+  // producing `NaN` for every channel. (The *string* path can't get here —
+  // `VALIDATION_REGEXP.hsl` requires `\d+`, so `hsl(-60, …)` is rejected as
+  // invalid and resolves to black.)
+  const module = ((hh % 6) + 6) % 6;
 
   return {
     r: round([_v, c, l, l, d, _v][module] * 255),
