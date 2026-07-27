@@ -82,8 +82,11 @@ export function useListState<T>(initialValue: T[] = []): UseListStateReturn<T> {
     ({ from, to }: { from: number; to: number }) =>
       setState((current) => {
         const cloned = [...current];
-        const [item] = cloned.splice(from, 1);
-        cloned.splice(to, 0, item);
+        // Splice the removed slice straight back in rather than destructuring it:
+        // an out-of-range `from` yields an EMPTY slice, so nothing is inserted.
+        // The old `const [item] = …` handed `undefined` to the second splice and
+        // inserted a literal `undefined` into the list.
+        cloned.splice(to, 0, ...cloned.splice(from, 1));
         return cloned;
       }),
     [],
@@ -93,6 +96,9 @@ export function useListState<T>(initialValue: T[] = []): UseListStateReturn<T> {
     ({ from, to }: { from: number; to: number }) =>
       setState((current) => {
         const cloned = [...current];
+        // Both ends must exist — swapping against an out-of-range index used to
+        // write `undefined` over a real row rather than no-op.
+        if (from < 0 || from >= cloned.length || to < 0 || to >= cloned.length) return current;
         const fromItem = cloned[from];
         const toItem = cloned[to];
         cloned.splice(to, 1, fromItem);
@@ -116,7 +122,11 @@ export function useListState<T>(initialValue: T[] = []): UseListStateReturn<T> {
     <K extends keyof T>(index: number, prop: K, value: T[K]) =>
       setState((current) => {
         const cloned = [...current];
-        cloned[index] = { ...cloned[index], [prop]: value };
+        const existing = cloned[index];
+        // No row at `index` — nothing to patch. Spreading the miss produced a
+        // bare `{ [prop]: value }` masquerading as a `T`.
+        if (existing === undefined) return current;
+        cloned[index] = { ...existing, [prop]: value };
         return cloned;
       }),
     [],
