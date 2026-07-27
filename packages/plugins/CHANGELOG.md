@@ -1,5 +1,13 @@
 # @knitui/plugins
 
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies [ffc254e]
+- Updated dependencies [caa2d7e]
+  - @knitui/core@0.6.1
+
 ## 0.1.8
 
 ### Patch Changes
