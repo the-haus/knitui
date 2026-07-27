@@ -27,13 +27,13 @@
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "react-native": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
     "./src/*.stories": {

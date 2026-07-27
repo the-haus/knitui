@@ -27,19 +27,19 @@
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "react-native": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
     "./control-system": {
       "source": "./src/control-system.ts",
       "react-native": "./src/control-system.ts",
-      "types": "./src/control-system.ts",
+      "types": "./lib/typescript/control-system.d.ts",
       "default": "./src/control-system.ts"
     },
     "./src/*.stories": {

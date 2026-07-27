@@ -26,43 +26,43 @@
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "react-native": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
     "./Icon": {
       "source": "./src/Icon.tsx",
       "react-native": "./src/Icon.tsx",
-      "types": "./src/Icon.tsx",
+      "types": "./lib/typescript/Icon.d.ts",
       "default": "./src/Icon.tsx"
     },
     "./context": {
       "source": "./src/internal/icon-context.tsx",
       "react-native": "./src/internal/icon-context.tsx",
-      "types": "./src/internal/icon-context.tsx",
+      "types": "./lib/typescript/internal/icon-context.d.ts",
       "default": "./src/internal/icon-context.tsx"
     },
     "./types": {
       "source": "./src/types.ts",
       "react-native": "./src/types.ts",
-      "types": "./src/types.ts",
+      "types": "./lib/typescript/types.d.ts",
       "default": "./src/types.ts"
     },
     "./registry": {
       "source": "./src/registry.ts",
       "react-native": "./src/registry.native.ts",
-      "types": "./src/registry.ts",
+      "types": "./lib/typescript/registry.d.ts",
       "default": "./src/registry.ts"
     },
     "./Icon*": {
       "source": "./src/icons/Icon*.ts",
       "react-native": "./src/icons/Icon*.ts",
-      "types": "./src/icons/Icon*.ts",
+      "types": "./lib/typescript/icons/Icon*.d.ts",
       "default": "./src/icons/Icon*.ts"
     },
     "./src/*.stories": {
@@ -75,6 +75,7 @@
   },
   "files": [
     "src",
+    "lib/typescript",
     "!**/*.test.*",
     "!**/*.stories.*",
     "!**/__tests__/**",

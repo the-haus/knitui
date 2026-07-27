@@ -25,25 +25,25 @@
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "react-native": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
     "./styles": {
       "source": "./src/styles/index.ts",
       "react-native": "./src/styles/index.ts",
-      "types": "./src/styles/index.ts",
+      "types": "./lib/typescript/styles/index.d.ts",
       "default": "./src/styles/index.ts"
     },
     "./styles/*": {
       "source": "./src/styles/*.ts",
       "react-native": "./src/styles/*.ts",
-      "types": "./src/styles/*.ts",
+      "types": "./lib/typescript/styles/*.d.ts",
       "default": "./src/styles/*.ts"
     },
     "./src/*.stories": {

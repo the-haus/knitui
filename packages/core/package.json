@@ -26,19 +26,19 @@
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "react-native": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
     "./config": {
       "source": "./src/config/config.ts",
       "react-native": "./src/config/config.ts",
-      "types": "./src/config/config.ts",
+      "types": "./lib/typescript/config/config.d.ts",
       "default": "./src/config/config.ts"
     },
     "./package.json": "./package.json"

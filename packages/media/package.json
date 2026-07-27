@@ -27,31 +27,31 @@
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "react-native": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
     "./audio": {
       "source": "./src/audio/index.ts",
       "react-native": "./src/audio/index.ts",
-      "types": "./src/audio/index.ts",
+      "types": "./lib/typescript/audio/index.d.ts",
       "default": "./src/audio/index.ts"
     },
     "./video": {
       "source": "./src/video/index.ts",
       "react-native": "./src/video/index.ts",
-      "types": "./src/video/index.ts",
+      "types": "./lib/typescript/video/index.d.ts",
       "default": "./src/video/index.ts"
     },
     "./dsp": {
       "source": "./src/dsp/index.ts",
       "react-native": "./src/dsp/index.ts",
-      "types": "./src/dsp/index.ts",
+      "types": "./lib/typescript/dsp/index.d.ts",
       "default": "./src/dsp/index.ts"
     },
     "./src/*.stories": {
