@@ -90,6 +90,22 @@ export class ExpoVideoController extends BaseVideoController {
   /** The last source loaded, for `retry()`. */
   private lastSource: VideoSource;
 
+  /**
+   * The standing PLAY INTENT: whether playback has been asked for, independent of
+   * whether it took. Set by `play`/`replay`, cleared by `pause`.
+   *
+   * It exists because a play call can be silently dropped. `expo-video`'s web
+   * backend applies `play()` by iterating the `HTMLVideoElement`s currently
+   * MOUNTED into the player, so a call made while no view is attached iterates an
+   * empty set — no throw, no error status, no retry. That is not an edge case in a
+   * kit whose surface is a single teleported element: it is what happens on a cold
+   * mount (the call beats the view's own effect) and on every switch between
+   * players in the shared session (the surface is destroyed and a NEW element is
+   * built for the incoming player's frame). {@link attachView} re-applies this
+   * intent, which is what makes those two cases work at all.
+   */
+  private wantsPlay = false;
+
   constructor(
     player: VideoPlayer,
     config: VideoPlayerConfig = {},
@@ -113,12 +129,41 @@ export class ExpoVideoController extends BaseVideoController {
     this.bindEvents();
     this.syncFromPlayer();
     this.setTextTracks(textTracks);
-    if (config.autoPlay) player.play();
+    // Through `this.play()`, not `player.play()`: a constructed-then-mounted
+    // player has no view yet, so this is the canonical case of a dropped play
+    // call. Recording the intent is what makes `attachView` pick it up.
+    if (config.autoPlay) this.play();
   }
 
-  /** Called by the surface to register the `VideoView` handle. */
+  /**
+   * Called by the surface to register (or clear) the `VideoView` handle.
+   *
+   * This is also the only moment the controller learns that the thing playing its
+   * media has been swapped, so it does two things beyond storing the handle:
+   *
+   *  1. **Detach means nothing is playing.** The surface is destroyed whenever the
+   *     shared session hands the element to another player, and the outgoing
+   *     element takes its playback with it while never reporting a `pause` (it is
+   *     unmounted from the player first, so its events no longer count). Left
+   *     alone, the snapshot keeps claiming `playing: true` over a torn-down
+   *     element — and every consumer that branches on it, a play/pause toggle most
+   *     of all, then does the opposite of what it should.
+   *  2. **Attach re-applies the standing play intent.** See {@link wantsPlay}: a
+   *     `play()` that landed before this view existed reached no element and was
+   *     dropped in silence. Re-issuing it here is what lets a player mount and
+   *     autoplay, and what lets playback follow the element as the session moves
+   *     it from one player to the next.
+   *
+   * Idempotent by construction — `player.play()` on an already-playing player is a
+   * no-op on both backends, and a paused intent re-applies nothing.
+   */
   attachView(view: ExpoVideoViewHandle | null): void {
     this.view = view;
+    if (!view) {
+      this.setState({ playing: false });
+      return;
+    }
+    if (this.wantsPlay) this.player.play();
   }
 
   /* custom captions --------------------------------------------------------- */
@@ -298,15 +343,21 @@ export class ExpoVideoController extends BaseVideoController {
 
   /* imperative API ---------------------------------------------------------- */
 
+  // Each of these records the standing intent before driving the player, so a
+  // call the backend drops (no element mounted yet) is re-applied the moment a
+  // view attaches. See {@link wantsPlay} / {@link attachView}.
   play(): void {
+    this.wantsPlay = true;
     this.player.play();
   }
 
   pause(): void {
+    this.wantsPlay = false;
     this.player.pause();
   }
 
   replay(): void {
+    this.wantsPlay = true;
     this.player.replay();
   }
 
@@ -430,6 +481,9 @@ export class ExpoVideoController extends BaseVideoController {
     for (const subscription of this.subscriptions) subscription.remove();
     this.subscriptions = [];
     this.view = null;
+    // Drop the play intent with the controller, so a view attaching to a disposed
+    // controller can't resurrect playback.
+    this.wantsPlay = false;
     // Invalidate any in-flight cue fetch and drop the caches.
     this.loadToken++;
     this.customTrackById.clear();
