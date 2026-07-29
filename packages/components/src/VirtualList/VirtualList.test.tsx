@@ -5,11 +5,13 @@ import { Text } from "../Text";
 import { VirtualList } from "./VirtualList";
 import type { VirtualListHandle } from "./VirtualList";
 import {
+  areRowsMeasured,
   createLayoutState,
   findVisibleRange,
   getContentSize,
   getItemOffset,
   heightAt,
+  prependLayoutState,
   resizeLayoutState,
   setMeasured,
 } from "./VirtualList.shared";
@@ -130,6 +132,47 @@ describe("VirtualList layout engine", () => {
     resizeLayoutState(s, 1);
     expect(s.count).toBe(1);
     expect(getContentSize(s)).toBe(25);
+  });
+
+  it("carries measurements to their new index on a prepend", () => {
+    const s = createLayoutState(2, 100);
+    setMeasured(s, 0, 0, 30);
+    setMeasured(s, 1, 0, 40);
+
+    prependLayoutState(s, 3);
+
+    expect(s.count).toBe(5);
+    // The two measured rows are now 3 and 4 — and only they are measured.
+    expect(heightAt(s, 3)).toBe(30);
+    expect(heightAt(s, 4)).toBe(40);
+    expect(s.measured.slice(0, 3)).toEqual([false, false, false]);
+    // The head estimates off the running average (35) the measured rows established.
+    expect(heightAt(s, 0)).toBe(35);
+    expect(getItemOffset(s, 3)).toBe(105);
+    expect(getContentSize(s)).toBe(175);
+  });
+
+  it("routing a prepend through resize would misattribute — the bug prepend fixes", () => {
+    const s = createLayoutState(2, 100);
+    setMeasured(s, 0, 0, 30);
+    resizeLayoutState(s, 5);
+    // 30px stayed on index 0, which is now a different row entirely.
+    expect(heightAt(s, 0)).toBe(30);
+    expect(s.measured[2]).toBe(false);
+  });
+
+  it("reports whether a head band has settled", () => {
+    const s = createLayoutState(4, 100);
+    expect(areRowsMeasured(s, 0, 2)).toBe(false);
+    setMeasured(s, 0, 0, 10);
+    expect(areRowsMeasured(s, 0, 2)).toBe(false);
+    setMeasured(s, 1, 0, 10);
+    expect(areRowsMeasured(s, 0, 2)).toBe(true);
+    // An empty band is settled by definition — the anchor releases immediately
+    // when nothing was inserted above it.
+    expect(areRowsMeasured(s, 0, 0)).toBe(true);
+    // Clamped to the store, not read off the end.
+    expect(areRowsMeasured(s, 0, 99)).toBe(false);
   });
 });
 
