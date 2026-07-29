@@ -18,8 +18,9 @@ const DRAG_THRESHOLD = 5;
  *
  * Scoped to `pointerType === "mouse"`: touch and pen keep the container's own
  * native scrolling (with its momentum), which already works. Once travel passes
- * `DRAG_THRESHOLD` the drag captures the pointer and swallows the trailing
- * `click`, so releasing on a card scrolls the rail instead of opening the card.
+ * `DRAG_THRESHOLD` the drag captures the pointer, paints `grabbing` and swallows
+ * the trailing `click`, so releasing on a card scrolls the rail instead of
+ * opening the card. Idle hover is left alone (matching `useDragCursor`).
  */
 export function useDragScroll({ scrollRef, enabled, vertical }: DragScrollParams): void {
   React.useEffect(() => {
@@ -37,8 +38,9 @@ export function useDragScroll({ scrollRef, enabled, vertical }: DragScrollParams
     let startTop = 0;
     let pointerId = -1;
 
+    // Whatever the track's own styling asked for — restored on release. No idle
+    // `grab` hint: the cursor only changes once a drag is actually under way.
     const restoreCursor = el.style.cursor;
-    el.style.cursor = "grab";
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" || e.button !== 0) return;
@@ -71,7 +73,7 @@ export function useDragScroll({ scrollRef, enabled, vertical }: DragScrollParams
       if (!active) return;
       active = false;
       el.releasePointerCapture?.(pointerId);
-      el.style.cursor = "grab";
+      el.style.cursor = restoreCursor;
       el.style.userSelect = "";
       if (dragging) {
         // Swallow the click the browser fires after a drag-release (capture

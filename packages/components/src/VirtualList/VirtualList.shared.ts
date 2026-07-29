@@ -58,7 +58,14 @@ export interface VirtualListHandle {
   scrollToOffset(options: { offset: number; animated?: boolean }): void;
   /** Scroll to the very top. */
   scrollToTop(animated?: boolean): void;
-  /** Scroll to the very end (bottom). */
+  /**
+   * Scroll to the very end (bottom).
+   *
+   * Under `maintainVisibleContentPosition` a non-animated call HOLDS the end
+   * rather than hitting it once, re-deriving it as the rows there measure — which
+   * is what a list opening at the bottom of unmeasured content needs, since the
+   * total it aims at starts out mostly estimate.
+   */
   scrollToEnd(animated?: boolean): void;
   /** The current vertical scroll offset (px). */
   getScrollOffset(): number;
@@ -118,6 +125,47 @@ export interface VirtualListOwnProps<T> {
   onEndReachedThreshold?: number;
 
   /**
+   * Fired once as the start (top) comes within `onStartReachedThreshold`
+   * viewports — the mirror of {@link onEndReached}, for a list paginated
+   * BACKWARDS (a chat thread loading older messages, a log tailing history).
+   *
+   * Like `onEndReached` on a list shorter than its viewport, this fires on mount
+   * when the list rests at offset 0, because it genuinely IS at the start. A
+   * caller that opens the list scrolled elsewhere (`scrollToEnd` on a chat
+   * thread) should gate its loader until that initial scroll has been applied,
+   * or the first frame spends a page request on nothing.
+   *
+   * Pair it with `maintainVisibleContentPosition` — without it, the rows the
+   * user is reading slide down by the height of whatever gets prepended.
+   */
+  onStartReached?: () => void;
+  /**
+   * Distance from the start at which `onStartReached` fires, in units of visible
+   * length (a viewport). @default 0.5
+   */
+  onStartReachedThreshold?: number;
+
+  /**
+   * Hold the reading position across a layout change instead of letting the rows
+   * slide. Two things stop being jumpy:
+   *
+   * - A **prepend** (a `onStartReached` page of history) has its inserted height
+   *   added to the scroll offset in the same frame, so the row the user was
+   *   looking at does not move. Requires `keyExtractor` — a prepend is detected by
+   *   finding the previous first row's key at its new index, and index keys carry
+   *   no identity to find it by.
+   * - A non-animated **`scrollToEnd`** holds the bottom while the rows there
+   *   measure, rather than aiming once at a total that is still mostly estimate.
+   *
+   * Off by default: it takes over the scroll position, which a list that only
+   * grows at the tail has no reason to hand over. Either correction is abandoned
+   * the moment the user scrolls — continuing to correct through a live gesture
+   * would fight it — and as soon as the rows in question have all been measured,
+   * since nothing can move after that.
+   */
+  maintainVisibleContentPosition?: boolean;
+
+  /**
    * The set of currently-rendered row indices whenever it changes. Useful for
    * prefetch/telemetry; not a viewability report (that is phase 2).
    */
@@ -153,6 +201,8 @@ export const DEFAULT_ESTIMATED_ITEM_SIZE = 200;
 export const DEFAULT_DRAW_DISTANCE = 250;
 /** Default `onEndReached` threshold, in viewports. */
 export const DEFAULT_END_REACHED_THRESHOLD = 0.5;
+/** Default `onStartReached` threshold, in viewports. */
+export const DEFAULT_START_REACHED_THRESHOLD = 0.5;
 /** Height change (px) below which a measurement is treated as unchanged. */
 const MEASURE_EPSILON = 0.5;
 
@@ -222,9 +272,11 @@ export const heightAt = (state: LayoutState, i: number): number =>
 
 /**
  * Grow/shrink the store to `count` rows, preserving existing measurements by
- * index (correct for append/pop; a prepend/reorder without a stable
- * `keyExtractor` would misattribute — a known v1 limitation). Returns the new
- * state (same instance, mutated) so callers can keep their ref.
+ * index — correct for an append or a pop, which is what row `i` keeping its
+ * height means. A PREPEND is not that shape: use {@link prependLayoutState},
+ * which shifts the measurements along with the rows they belong to. (A reorder
+ * still misattributes; the store is indexed, not keyed.) Returns the new state
+ * (same instance, mutated) so callers can keep their ref.
  */
 export const resizeLayoutState = (state: LayoutState, count: number): LayoutState => {
   if (count === state.count) return state;
@@ -244,6 +296,44 @@ export const resizeLayoutState = (state: LayoutState, count: number): LayoutStat
   state.count = count;
   state.dirtyFrom = Math.min(state.dirtyFrom, keep);
   return state;
+};
+
+/**
+ * Insert `added` unmeasured rows at the HEAD, carrying every existing row's
+ * measurement to its new index.
+ *
+ * This is the store half of backwards pagination. {@link resizeLayoutState} grows
+ * the tail, so a prepend routed through it left row 0's height on row 0 — which is
+ * now a different row — and every measurement in the list read off by `added`
+ * places. The visible symptom is a list that reflows for the whole first scroll
+ * back up, since each row's real height has to be re-learned in a slot that
+ * already claimed to know it.
+ *
+ * Marks all offsets stale (`dirtyFrom = 0`): the head moved, so nothing downstream
+ * of it is still valid. Returns the same instance, mutated.
+ */
+export const prependLayoutState = (state: LayoutState, added: number): LayoutState => {
+  if (added <= 0) return state;
+  state.heights = new Array<number>(added).fill(state.estimate).concat(state.heights);
+  state.measured = new Array<boolean>(added).fill(false).concat(state.measured);
+  state.types = new Array<string | number>(added).fill(DEFAULT_TYPE).concat(state.types);
+  state.count += added;
+  state.offsets.length = state.count + 1;
+  state.dirtyFrom = 0;
+  return state;
+};
+
+/**
+ * Whether every row in `[from, to)` carries a real measurement — i.e. whether
+ * anything in that band can still move. Used to release the prepend anchor once
+ * the inserted rows have settled.
+ */
+export const areRowsMeasured = (state: LayoutState, from: number, to: number): boolean => {
+  const hi = Math.min(to, state.count);
+  for (let i = Math.max(0, from); i < hi; i++) {
+    if (!state.measured[i]) return false;
+  }
+  return true;
 };
 
 /**

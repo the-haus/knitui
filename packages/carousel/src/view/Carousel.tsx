@@ -10,6 +10,7 @@ import { IconChevronRight } from "@knitui/icons/IconChevronRight";
 import { IconChevronUp } from "@knitui/icons/IconChevronUp";
 
 import { useAutoplay } from "../hooks/useAutoplay";
+import { useDragCursor } from "../input/useDragCursor";
 import { useDragGesture } from "../input/useDragGesture";
 import { useKeyboard } from "../input/useKeyboard";
 import { useWheel } from "../input/useWheel";
@@ -142,6 +143,9 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
     count,
     controller: core.controller,
   });
+  // grab / grabbing on web. Native mode's own scroll surface gets it from
+  // `useDragScroll` instead (it drags `scrollLeft`, not the pan gesture).
+  useDragCursor({ hostRef, enabled: enabled && !native });
 
   // Measure the container when no explicit itemSize is given.
   const onLayout = React.useCallback(

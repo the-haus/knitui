@@ -98,5 +98,8 @@ export function useAudioPlaylistController(
     playbackRate: options.playbackRate,
   });
 
-  return { controller, store };
+  // `facade` rides along as `player`: the queue contract can't express the
+  // PLAYER-level surfaces (PCM sampling for a visualizer), and the slot id is an
+  // internal `useId` no caller could pass to `getFacade`. See the result type.
+  return { controller, store, player: facade };
 }
