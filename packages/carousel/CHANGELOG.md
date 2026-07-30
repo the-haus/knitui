@@ -1,5 +1,56 @@
 # @knitui/carousel
 
+## 0.3.6
+
+### Patch Changes
+
+- edcec97: Show a `grabbing` cursor while a mouse drag is actually under way
+
+  The transform-mode track is dragged by RNGH's `Gesture.Pan()` (`useDragGesture`,
+  shared with native), which knows nothing about cursors — so a mouse user got no
+  feedback at all that the rail was moving with the pointer. A new web-only
+  `useDragCursor` paints `grabbing` once travel passes the same 5px threshold the drag
+  itself uses, and restores whatever the carousel's own styling asked for on release.
+
+  Deliberately no idle `grab` hint: the cursor is untouched until a drag is genuinely
+  in progress, so hovering a carousel and plain clicks on a slide look exactly as they
+  did. The move/release listeners sit on the document rather than the host, because a
+  drag routinely travels and ends outside the carousel and a `pointerup` we never heard
+  would leave the cursor stuck on `grabbing` — as would unmounting mid-drag, which the
+  cleanup now also covers.
+
+  `scrollMode="native"` keeps getting its cursor from `useDragScroll` (it drags
+  `scrollLeft`, not the pan gesture), which is brought in line with the same rule: it
+  no longer stamps an idle `grab` on the track, and it restores the original cursor on
+  release instead of resetting to `grab` — previously it overwrote the track's own
+  cursor for the lifetime of the component.
+
+- 59d065b: Dependency refresh, all within the current majors and validated against Expo SDK 57
+  (`expo install --check` reports the workspace aligned):
+
+  - `react-native` 0.86.0 → 0.86.2 (and `@react-native/metro-config` to match; both stay
+    pinned as singletons in the root `pnpm.overrides`)
+  - `react-native-reanimated` 4.5.0 → 4.5.1 and `react-native-worklets` 0.10.0 → 0.10.1 —
+    the versions Expo SDK 57 expects
+  - `expo` 57.0.7 → 57.0.9 and the SDK-managed modules along with it (`expo-router`,
+    `expo-constants`, `expo-linking`, `expo-system-ui`, `expo-video`,
+    `@expo/metro-runtime`, `expo-build-properties`)
+  - `babel-preset-expo` 57.0.3 → 57.0.5, Storybook 10.5.3 → 10.5.5,
+    `@vitejs/plugin-react` 6.0.3 → 6.0.4, `next` 16.2.10 → 16.2.12,
+    `@react-navigation/*` patch bumps
+
+  The vendored `expo-modules-core` patch was re-pointed from 57.0.6 to 57.0.8 and still
+  applies cleanly. `expo-audio` deliberately stays on 57.0.2, where our native sampling
+  patch is pinned. Peer requirements for consumers are unchanged.
+
+- Updated dependencies [edcec97]
+- Updated dependencies [15a329c]
+- Updated dependencies [59d065b]
+  - @knitui/components@0.7.0
+  - @knitui/core@0.7.0
+  - @knitui/hooks@0.7.0
+  - @knitui/icons@0.7.0
+
 ## 0.3.5
 
 ### Patch Changes
