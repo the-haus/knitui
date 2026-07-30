@@ -240,18 +240,55 @@ export function createRasterStore(): RasterStore {
 }
 
 /**
- * How many times to retry `toDataURL`. The offscreen `Svg` may not be attached
- * (ref still null) or painted (empty bytes) yet — on the New Architecture
- * especially — so a single capture races the draw.
+ * How many EAGER retries of `toDataURL` before dropping to the patient cadence
+ * below. The offscreen `Svg` may not be attached (ref still null) or painted
+ * (empty bytes) yet — on the New Architecture especially — so a single capture
+ * races the draw.
  *
- * With {@link CAPTURE_BACKOFF_LIMIT_FRAMES} the retry *window* is ~80 frames
+ * With {@link CAPTURE_BACKOFF_LIMIT_FRAMES} the eager *window* is ~80 frames
  * (1+2+4+8×9), longer than the old flat 30, while the number of native view
  * snapshots per icon drops from 30 to 12.
+ *
+ * This is NOT a budget after which the capture fails — see
+ * {@link CAPTURE_IDLE_INTERVAL_FRAMES}.
  */
 const MAX_CAPTURE_ATTEMPTS = 12;
 
-/** Cap on the geometric backoff between attempts, in animation frames. */
+/** Cap on the geometric backoff between eager attempts, in animation frames. */
 const CAPTURE_BACKOFF_LIMIT_FRAMES = 8;
+
+/**
+ * Cadence, in animation frames, that a capture falls back to once the eager
+ * window is spent — and keeps for as long as its surface stays mounted.
+ *
+ * ── WHY GIVING UP IS NOT AN OPTION ────────────────────────────────────────────
+ * Exhausting {@link MAX_CAPTURE_ATTEMPTS} used to END the job: it released the
+ * concurrency slot and returned without ever calling `onCapture`. Nothing
+ * re-requested it, so the store slot stayed unresolved forever, `SvgImage`
+ * registered no MapLibre image, and every `SymbolLayer` drawing that icon
+ * silently drew NOTHING for the rest of the session. No log, no error, no retry.
+ *
+ * That is not a hypothetical. The eager window assumes the surface is racing its
+ * FIRST draw and will win within ~80 frames. A surface that is not being drawn at
+ * all breaks the assumption instead of losing the race: a map mounted offscreen to
+ * warm its GL context, a screen frozen by `freezeOnBlur`, an Android view pruned
+ * before it painted. Those all resolve LATER — the map is shown, the screen
+ * thaws — at which point the very next attempt would succeed. Ending the job
+ * throws that away, and turns a transient condition into a permanent one.
+ *
+ * So the eager window is now only a change of PACE. Past it the job hands its
+ * concurrency slot back (a surface that isn't painting must never keep a
+ * faster-succeeding icon queued behind it — with four icons and a cap of three,
+ * holding the slot would deadlock the queue) and keeps polling at this wider
+ * interval until it succeeds or the surface unmounts.
+ *
+ * ~1 s at 60 fps: cheap enough to leave running for a map's whole lifetime (one
+ * snapshot per second per stuck icon), tight enough that recovery is invisible
+ * once the surface does paint. Deliberately FIXED rather than growing — a backoff
+ * that decays would make the pathological case cheaper at the cost of the
+ * recovery latency this exists to bound.
+ */
+const CAPTURE_IDLE_INTERVAL_FRAMES = 60;
 
 /**
  * How many captures may be in flight at once.
@@ -279,10 +316,18 @@ function pumpCaptureQueue(): void {
  * Drive a react-native-svg surface to a PNG data URI, retrying across frames until
  * the view is attached and painted. Platform-agnostic: both the web and native
  * `Svg` instances expose the same `toDataURL(cb, {width,height})` contract and
- * hand back **raw base64** (no data-URI prefix). Concurrency-capped and backed
- * off geometrically — see {@link MAX_CONCURRENT_CAPTURES}. Returns a cleanup that
- * cancels any pending frame (and gives up the queue slot) so a
- * captured-then-unmounted surface can't call back.
+ * hand back **raw base64** (no data-URI prefix).
+ *
+ * Retries in two paces: an eager, geometrically-backed-off window
+ * ({@link MAX_CAPTURE_ATTEMPTS}) that wins the usual race against the first draw,
+ * then an indefinite patient poll ({@link CAPTURE_IDLE_INTERVAL_FRAMES}) for a
+ * surface that is not being drawn *yet*. It does not give up — read
+ * {@link CAPTURE_IDLE_INTERVAL_FRAMES} before adding a failure path, because the
+ * one this replaced lost every pin on a map warmed offscreen.
+ *
+ * Concurrency-capped — see {@link MAX_CONCURRENT_CAPTURES}; a job holds its slot
+ * only for the eager window. Returns a cleanup that cancels any pending frame (and
+ * gives up the queue slot) so a captured-then-unmounted surface can't call back.
  */
 export function runCapture(
   ref: { current: CapturableSvg | null },
@@ -294,12 +339,19 @@ export function runCapture(
   let raf = 0;
   let backoff = 1;
   let started = false;
-  let finished = false;
+  let slotReleased = false;
+  let warnedPatient = false;
 
-  /** Give up this job's concurrency slot (or dequeue it if it never started). */
-  const finish = (): void => {
-    if (finished) return;
-    finished = true;
+  /**
+   * Hand back this job's concurrency slot (or dequeue it if it never started).
+   *
+   * Deliberately NOT "the job is over": a job also releases its slot when it drops
+   * to the patient cadence and keeps polling. Conflating the two is what made
+   * exhaustion terminal.
+   */
+  const releaseSlot = (): void => {
+    if (slotReleased) return;
+    slotReleased = true;
     if (started) {
       activeCaptures -= 1;
       pumpCaptureQueue();
@@ -327,7 +379,24 @@ export function runCapture(
 
   const retry = (): void => {
     if (attempts++ >= MAX_CAPTURE_ATTEMPTS) {
-      finish();
+      // Past the eager window: give the slot back so nothing queues behind a
+      // surface that isn't painting, then keep trying, slowly, indefinitely.
+      releaseSlot();
+      // `typeof` guarded, not a bare `__DEV__`: this branch is reachable under a
+      // plain test runner or any consumer whose bundler does not define the global,
+      // where a bare reference is a ReferenceError — and throwing here would turn a
+      // slow icon into a crash. Same form `components/UserLocation` uses.
+      if (typeof __DEV__ !== "undefined" && __DEV__ && !warnedPatient) {
+        warnedPatient = true;
+        console.warn(
+          `SvgImage: a ${size.width}×${size.height} surface has not rasterized in ` +
+            `${MAX_CAPTURE_ATTEMPTS} attempts — still retrying every ` +
+            `${CAPTURE_IDLE_INTERVAL_FRAMES} frames. The usual cause is a host that ` +
+            `is mounted but never drawn (a map warmed offscreen, a frozen screen), ` +
+            `so the icon appears as soon as it paints.`,
+        );
+      }
+      scheduleIn(CAPTURE_IDLE_INTERVAL_FRAMES);
       return;
     }
     backoff = Math.min(backoff * 2, CAPTURE_BACKOFF_LIMIT_FRAMES);
@@ -348,7 +417,9 @@ export function runCapture(
         if (cancelled) return;
         if (base64) {
           onCapture(`data:image/png;base64,${base64}`, pngPixelWidth(base64));
-          finish();
+          // Success is the one place the job really is over: nothing is
+          // rescheduled after this, so releasing the slot ends it.
+          releaseSlot();
         } else {
           retry();
         }
@@ -368,7 +439,7 @@ export function runCapture(
   return () => {
     cancelled = true;
     if (raf) cancelAnimationFrame(raf);
-    finish();
+    releaseSlot();
   };
 }
 
@@ -436,3 +507,9 @@ export function useRasterizedSvg(
     return { uri: resolved.uri, scale };
   }, [resolved, request, ratio]);
 }
+
+// React Native's global dev flag, matching how the rest of the package guards
+// developer-only logging (see `svg/resource.ts`, `components/Images`). Declared
+// rather than imported: the bundlers inline it, and on web `@knitui/plugins`
+// defines it.
+declare const __DEV__: boolean;

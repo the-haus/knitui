@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createRasterStore, keyFor, pngPixelWidth } from "./rasterizer.shared";
+import {
+  type CapturableSvg,
+  createRasterStore,
+  keyFor,
+  pngPixelWidth,
+  runCapture,
+} from "./rasterizer.shared";
 
 /** Build base64 for a PNG whose IHDR declares the given pixel width. */
 function pngBase64(width: number): string {
@@ -148,5 +154,174 @@ describe("createRasterStore", () => {
     // Resolved immediately, and no surface is mounted for it.
     expect(store.getResolved("a")).toEqual({ uri: "uri-a", pixelWidth: 48 });
     expect(store.getRequests()).toHaveLength(0);
+  });
+});
+
+/**
+ * A manual animation-frame clock. `runCapture` schedules everything through
+ * `requestAnimationFrame`, so driving frames by hand is what makes its pacing
+ * observable at all — real timers would make these tests both slow and flaky.
+ */
+function fakeRaf() {
+  let nextId = 1;
+  let scheduled = new Map<number, () => void>();
+  return {
+    raf: (cb: () => void): number => {
+      const id = nextId++;
+      scheduled.set(id, cb);
+      return id;
+    },
+    caf: (id: number): void => {
+      scheduled.delete(id);
+    },
+    /** Advance `frames` frames, running whatever was due on each. */
+    tick(frames = 1): void {
+      for (let i = 0; i < frames; i++) {
+        const due = [...scheduled.values()];
+        scheduled = new Map();
+        for (const cb of due) cb();
+      }
+    },
+  };
+}
+
+/** A stand-in react-native-svg surface whose capture result the test controls. */
+function fakeSurface(result: () => string) {
+  const toDataURL = vi.fn((cb: (b64: string) => void) => cb(result()));
+  return { ref: { current: { toDataURL } }, toDataURL };
+}
+
+/**
+ * Frames needed to walk the whole eager window: `scheduleIn(1)` then a
+ * geometric backoff capped at 8, across {@link MAX_CAPTURE_ATTEMPTS} retries.
+ * Over-shoots deliberately — the assertions are about behaviour, not timing.
+ */
+const PAST_EAGER_WINDOW = 120;
+
+describe("runCapture", () => {
+  it("captures on the first attempt once the surface paints", () => {
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+    const surface = fakeSurface(() => pngBase64(48));
+    const onCapture = vi.fn();
+
+    const cancel = runCapture(surface.ref, { width: 24, height: 24 }, onCapture);
+    clock.tick(2);
+
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    // The data-URI prefix is added here, and the real pixel width is read back out
+    // of the PNG header so the caller can register the right density.
+    expect(onCapture.mock.calls[0][0]).toBe(`data:image/png;base64,${pngBase64(48)}`);
+    expect(onCapture.mock.calls[0][1]).toBe(48);
+    cancel();
+    vi.unstubAllGlobals();
+  });
+
+  it("retries while the surface is not yet attached", () => {
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+    const ref: { current: CapturableSvg | null } = { current: null };
+    const onCapture = vi.fn();
+
+    const cancel = runCapture(ref, { width: 24, height: 24 }, onCapture);
+    clock.tick(6);
+    expect(onCapture).not.toHaveBeenCalled();
+
+    // The host attaches the surface a few frames late — the usual case.
+    ref.current = { toDataURL: (cb) => cb(pngBase64(24)) };
+    clock.tick(20);
+
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    cancel();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps retrying past the eager window and still captures once the surface paints", () => {
+    // THE REGRESSION TEST. Exhausting the eager window used to END the job without
+    // ever calling `onCapture`: nothing re-requested it, so a surface that was
+    // mounted but not yet being DRAWN (a map warmed offscreen, a frozen screen)
+    // never produced a bitmap, `SvgImage` registered no MapLibre image, and every
+    // symbol layer drawing that icon silently drew nothing for the whole session.
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+
+    // Empty bytes is what an unpainted view hands back.
+    let painted = false;
+    const surface = fakeSurface(() => (painted ? pngBase64(32) : ""));
+    const onCapture = vi.fn();
+
+    const cancel = runCapture(surface.ref, { width: 24, height: 24 }, onCapture);
+    clock.tick(PAST_EAGER_WINDOW);
+
+    expect(onCapture).not.toHaveBeenCalled();
+    const attemptsSoFar = surface.toDataURL.mock.calls.length;
+    expect(attemptsSoFar).toBeGreaterThan(0);
+
+    // Still trying, at the patient cadence rather than not at all.
+    clock.tick(PAST_EAGER_WINDOW);
+    expect(surface.toDataURL.mock.calls.length).toBeGreaterThan(attemptsSoFar);
+
+    // The surface finally gets drawn — the next patient poll must pick it up.
+    painted = true;
+    clock.tick(PAST_EAGER_WINDOW);
+
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    expect(onCapture.mock.calls[0][1]).toBe(32);
+    cancel();
+    vi.unstubAllGlobals();
+  });
+
+  it("hands its concurrency slot back when it drops to the patient cadence", () => {
+    // Otherwise four icons against a cap of three would deadlock: three surfaces
+    // that are not painting would hold every slot forever and the fourth — which
+    // might well succeed immediately — would never start.
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+
+    const stuck = [0, 1, 2].map(() => fakeSurface(() => ""));
+    const last = fakeSurface(() => pngBase64(16));
+    const onCapture = vi.fn();
+    const cancels = [
+      ...stuck.map((s) => runCapture(s.ref, { width: 24, height: 24 }, vi.fn())),
+      runCapture(last.ref, { width: 24, height: 24 }, onCapture),
+    ];
+
+    // The cap is 3, so the fourth job is still queued and untouched.
+    clock.tick(4);
+    expect(last.toDataURL).not.toHaveBeenCalled();
+    expect(stuck.every((s) => s.toDataURL.mock.calls.length > 0)).toBe(true);
+
+    // Once the three stuck jobs go patient they release their slots, the queue
+    // pumps, and the fourth finally runs — and succeeds.
+    clock.tick(PAST_EAGER_WINDOW);
+    expect(onCapture).toHaveBeenCalledTimes(1);
+
+    for (const cancel of cancels) cancel();
+    vi.unstubAllGlobals();
+  });
+
+  it("stops for good when its surface unmounts", () => {
+    // The patient cadence is indefinite, so cleanup is the only thing that ends it.
+    // A leak here would poll a dead surface for the map's lifetime.
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+    const surface = fakeSurface(() => "");
+    const onCapture = vi.fn();
+
+    const cancel = runCapture(surface.ref, { width: 24, height: 24 }, onCapture);
+    clock.tick(PAST_EAGER_WINDOW);
+    const attemptsAtCancel = surface.toDataURL.mock.calls.length;
+
+    cancel();
+    clock.tick(PAST_EAGER_WINDOW * 3);
+
+    expect(surface.toDataURL.mock.calls.length).toBe(attemptsAtCancel);
+    expect(onCapture).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });
