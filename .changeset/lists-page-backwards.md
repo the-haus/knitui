@@ -35,8 +35,9 @@ Two fixes fall out of the same work:
   insert at the head: row 0's measured height stayed on row 0, now a different row,
   and every other measurement read off by the number of rows inserted. The list then
   reflowed for the entire first scroll back up, re-learning heights in slots that
-  already claimed to know them. A prepend now routes through a new
-  `prependLayoutState`, which carries each measurement to its row's new index.
+  already claimed to know them. With a `keyExtractor`, measurements are now keyed by
+  item rather than by slot, so a prepend carries each one to its row's new index —
+  see the keyed size model in the same release.
 - **`scrollToEnd` landed short on unmeasured content.** The destination comes from
   the total height, and on a list opening deep into content it has never measured
   that total is mostly estimate — so hitting it once leaves the last rows short of

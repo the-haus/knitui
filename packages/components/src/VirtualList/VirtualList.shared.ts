@@ -30,6 +30,12 @@ export interface VirtualListStyles {
   item?: Partial<BoxProps>;
 }
 
+/**
+ * How much of the list stays mounted beyond the live window — see
+ * {@link VirtualListOwnProps.keepMounted} for the ladder.
+ */
+export type KeepMounted = boolean | number | "all";
+
 /** Slot names of {@link VirtualListStyles}, for `slotStyles`. */
 export const VIRTUAL_LIST_SLOTS = [
   "scrollArea",
@@ -84,9 +90,12 @@ export interface VirtualListOwnProps<T> {
   renderItem: (info: VirtualListRenderItemInfo<T>) => React.ReactNode;
 
   /**
-   * Stable identity per row. Defaults to the index, which is only safe for
-   * append-only data — supply this whenever rows can be inserted/removed/reordered
-   * so measurements and React state track the right item.
+   * Stable identity per row. Supply this whenever rows can be inserted, removed,
+   * reordered or filtered: it is what makes the list's caches follow *items*
+   * instead of slots, so a measured height, a retained (`keepMounted`) row and its
+   * React state all move with their item. Without it the index is the identity,
+   * which is only correct for append/pop — a prepend shifts every measurement onto
+   * the wrong row and the list jumps while it re-measures.
    */
   keyExtractor?: (item: T, index: number) => string;
 
@@ -110,6 +119,39 @@ export interface VirtualListOwnProps<T> {
    * slightly before they scroll in. @default 250
    */
   drawDistance?: number;
+
+  /**
+   * How much stays mounted beyond the live window. Rows kept this way sit in the
+   * tree at their real offsets (clipped by the scroller), so their React state,
+   * DOM/native state and any in-flight work survive scrolling away and back — no
+   * re-fetch, no reset inputs, no video restarting.
+   *
+   * An escalating ladder, cheapest first:
+   *
+   * - `false` (default) — pure virtualization: leaving the window unmounts.
+   * - a number — keep at most that many already-seen rows outside the current
+   *   window, evicting the least-recently-visible first (an LRU warm pool).
+   *   The safe choice for long lists: bounded memory, and the rows the user is
+   *   likely to come back to are exactly the ones kept.
+   * - `true` — keep every row that has ever been mounted, for as long as it is in
+   *   `data`. Unbounded, but still LAZY: a row the user has never scrolled to has
+   *   never mounted, so a 10k-row list costs nothing until it is scrolled.
+   * - `"all"` — no windowing at all. Every row in `data` is mounted immediately,
+   *   whether or not it has ever been on screen, and `drawDistance` is moot. This
+   *   is the escape hatch for when rows must exist before they are seen — measuring
+   *   them all up front, letting `Ctrl-F`/find-in-page reach every row, printing,
+   *   or driving something that needs the whole tree. It gives up the entire point
+   *   of virtualization: mount cost is O(data), so keep it to lists of a size you
+   *   would have rendered with `.map()` anyway.
+   *
+   * Kept rows are still measured and still re-render on `extraData`. Under a number
+   * or `true` they do NOT widen {@link VirtualListOwnProps.onRenderedRangeChange},
+   * which keeps reporting the live window; under `"all"` the window IS the whole
+   * list, so it reports `{ start: 0, end: data.length - 1 }`.
+   *
+   * @default false
+   */
+  keepMounted?: KeepMounted;
 
   /** Re-render trigger for `renderItem` when external state changes (PureComponent-style). */
   extraData?: unknown;
@@ -203,8 +245,8 @@ export const DEFAULT_DRAW_DISTANCE = 250;
 export const DEFAULT_END_REACHED_THRESHOLD = 0.5;
 /** Default `onStartReached` threshold, in viewports. */
 export const DEFAULT_START_REACHED_THRESHOLD = 0.5;
-/** Height change (px) below which a measurement is treated as unchanged. */
-const MEASURE_EPSILON = 0.5;
+/** Height change (px) at or below which a measurement is treated as unchanged. */
+export const MEASURE_EPSILON = 0.5;
 
 /* -------------------------------------------------------------------------- */
 /* Layout store (pure, unit-tested)                                           */
@@ -221,6 +263,12 @@ const MEASURE_EPSILON = 0.5;
 interface AverageBucket {
   sum: number;
   count: number;
+}
+
+/** One row's measurement, cached against its stable key. */
+interface CachedMeasurement {
+  height: number;
+  type: string | number;
 }
 
 /**
@@ -241,9 +289,25 @@ export interface LayoutState {
   averages: Map<string | number, AverageBucket>;
   /** Lowest index whose offset may be stale; `count + 1` means clean. */
   dirtyFrom: number;
+  /**
+   * The key of each row, when the caller supplied a `keyExtractor`; `null` in
+   * index mode. Present keys make measurements follow *items* rather than slots —
+   * see {@link syncLayoutKeys}.
+   */
+  keys: readonly string[] | null;
+  /** Measurement per key, so a row keeps its height across data changes. */
+  cache: Map<string, CachedMeasurement>;
 }
 
 const DEFAULT_TYPE = 0;
+
+/**
+ * Retained multiple of `count` for the per-key measurement cache. Entries for
+ * rows no longer in `data` are kept until the cache outgrows this, so the common
+ * filter-then-restore (a search box) still finds its heights, while a long churn
+ * cannot grow the cache without bound.
+ */
+const CACHE_SLACK = 2;
 
 /** Create a layout store for `count` rows, seeding every row with `estimate`. */
 export const createLayoutState = (count: number, estimate: number): LayoutState => ({
@@ -255,6 +319,8 @@ export const createLayoutState = (count: number, estimate: number): LayoutState 
   offsets: new Array(count + 1).fill(0),
   averages: new Map(),
   dirtyFrom: 0,
+  keys: null,
+  cache: new Map(),
 });
 
 const bucketAverage = (bucket: AverageBucket | undefined, fallback: number): number => {
@@ -271,12 +337,78 @@ export const heightAt = (state: LayoutState, i: number): number =>
   state.measured[i] ? state.heights[i] : estimateFor(state, state.types[i]);
 
 /**
+ * Re-key the store to `keys` (one per row, in data order) and restore each row's
+ * measurement from the per-key cache.
+ *
+ * This is what makes a data change *identity-correct* rather than slot-correct, and
+ * it is the store half of backwards pagination. Index-keyed measurement is only
+ * right for append/pop: prepend one row and every height shifts to the wrong item,
+ * so the list reflows for the whole first scroll back up, re-learning heights in
+ * slots that already claimed to know them. Keyed by the caller's `keyExtractor`, a
+ * prepend, insert, removal, sort or filter moves each height with its item, and rows
+ * already measured never flash.
+ *
+ * Rebuilds the per-index arrays from the cache (O(n) — run only when the key list
+ * actually changes, not per render) and marks offsets stale from the first row that
+ * moved. Restored measurements deliberately do NOT re-feed the per-type running
+ * averages: they were counted when first measured.
+ */
+export const syncLayoutKeys = (state: LayoutState, keys: readonly string[]): void => {
+  const count = keys.length;
+  const prevCount = state.count;
+  let firstChanged = count;
+
+  const note = (i: number) => {
+    if (i < firstChanged) firstChanged = i;
+  };
+
+  for (let i = 0; i < count; i++) {
+    const hit = state.cache.get(keys[i]);
+    const height = hit ? hit.height : state.estimate;
+    const measured = hit !== undefined;
+    const type = hit ? hit.type : DEFAULT_TYPE;
+    if (
+      i >= prevCount ||
+      state.measured[i] !== measured ||
+      state.types[i] !== type ||
+      state.heights[i] !== height
+    ) {
+      note(i);
+    }
+    state.heights[i] = height;
+    state.measured[i] = measured;
+    state.types[i] = type;
+  }
+
+  if (count < prevCount) {
+    state.heights.length = count;
+    state.measured.length = count;
+    state.types.length = count;
+    note(count);
+  }
+  state.offsets.length = count + 1;
+  state.count = count;
+  state.keys = keys;
+  state.dirtyFrom = Math.min(state.dirtyFrom, firstChanged);
+
+  // Bound the cache: drop measurements for keys the data no longer holds, but only
+  // once it has grown past the slack, so short-lived removals keep their heights.
+  if (state.cache.size > count * CACHE_SLACK + 1) {
+    const live = new Set(keys);
+    for (const key of state.cache.keys()) {
+      if (!live.has(key)) state.cache.delete(key);
+    }
+  }
+};
+
+/**
  * Grow/shrink the store to `count` rows, preserving existing measurements by
- * index — correct for an append or a pop, which is what row `i` keeping its
- * height means. A PREPEND is not that shape: use {@link prependLayoutState},
- * which shifts the measurements along with the rows they belong to. (A reorder
- * still misattributes; the store is indexed, not keyed.) Returns the new state
- * (same instance, mutated) so callers can keep their ref.
+ * index — correct for an append or a pop, which is what row `i` keeping its height
+ * means, and the only option in index mode (no `keyExtractor`). A PREPEND is not
+ * that shape, and neither is a reorder or a filter: supply a `keyExtractor` and
+ * {@link syncLayoutKeys} keeps every measurement attached to its item across any
+ * data change instead. Returns the new state (same instance, mutated) so callers
+ * can keep their ref.
  */
 export const resizeLayoutState = (state: LayoutState, count: number): LayoutState => {
   if (count === state.count) return state;
@@ -295,31 +427,6 @@ export const resizeLayoutState = (state: LayoutState, count: number): LayoutStat
   state.offsets.length = count + 1;
   state.count = count;
   state.dirtyFrom = Math.min(state.dirtyFrom, keep);
-  return state;
-};
-
-/**
- * Insert `added` unmeasured rows at the HEAD, carrying every existing row's
- * measurement to its new index.
- *
- * This is the store half of backwards pagination. {@link resizeLayoutState} grows
- * the tail, so a prepend routed through it left row 0's height on row 0 — which is
- * now a different row — and every measurement in the list read off by `added`
- * places. The visible symptom is a list that reflows for the whole first scroll
- * back up, since each row's real height has to be re-learned in a slot that
- * already claimed to know it.
- *
- * Marks all offsets stale (`dirtyFrom = 0`): the head moved, so nothing downstream
- * of it is still valid. Returns the same instance, mutated.
- */
-export const prependLayoutState = (state: LayoutState, added: number): LayoutState => {
-  if (added <= 0) return state;
-  state.heights = new Array<number>(added).fill(state.estimate).concat(state.heights);
-  state.measured = new Array<boolean>(added).fill(false).concat(state.measured);
-  state.types = new Array<string | number>(added).fill(DEFAULT_TYPE).concat(state.types);
-  state.count += added;
-  state.offsets.length = state.count + 1;
-  state.dirtyFrom = 0;
   return state;
 };
 
@@ -369,6 +476,9 @@ export const setMeasured = (
   state.heights[i] = height;
   state.measured[i] = true;
   state.dirtyFrom = Math.min(state.dirtyFrom, i);
+  // Mirror into the per-key cache so the measurement survives a data change.
+  const key = state.keys?.[i];
+  if (key !== undefined) state.cache.set(key, { height, type });
   return true;
 };
 
@@ -446,4 +556,182 @@ export const findVisibleRange = (
   const start = firstRowEndingAfter(state, top);
   const end = Math.max(start, lastRowStartingBefore(state, bottom));
   return { start, end };
+};
+
+/* -------------------------------------------------------------------------- */
+/* Retention pool (pure, unit-tested)                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The `keepMounted` warm pool: which already-seen rows stay mounted after they
+ * leave the window. A `Set` doubles as the LRU order — JS iterates insertion
+ * order, and re-visiting a row is `delete` + `add`, which moves it to the back —
+ * so the front of the set is always the least-recently-visible row and eviction
+ * is a forward walk.
+ */
+export interface RetainState {
+  /** Every retained index, oldest-visible first. */
+  seen: Set<number>;
+  /**
+   * Bumped on every content change. The component derives its mounted extras from
+   * the pool during render rather than mirroring them into state (state would go
+   * stale the moment a data change remapped the pool mid-render); this counter is
+   * what lets that derivation be cached across the renders in between.
+   */
+  version: number;
+}
+
+/** Create an empty retention pool. */
+export const createRetainState = (): RetainState => ({ seen: new Set(), version: 0 });
+
+/** Empty extras list — a shared constant so "nothing retained" is one identity. */
+export const NO_RETAINED: readonly number[] = [];
+
+/** The `keepMounted` value that turns windowing off entirely. */
+export const MOUNT_ALL = "all";
+
+/** Whether `keepMounted` asks for the whole list to be mounted up front. */
+export const isMountAll = (keepMounted: KeepMounted | undefined): boolean =>
+  keepMounted === MOUNT_ALL;
+
+/**
+ * Resolve the `keepMounted` prop to a pool capacity: `0` (off), a positive integer,
+ * or `Infinity` (unbounded). `"all"` resolves to `0` — with every row inside the
+ * window there is nothing left for a pool to hold.
+ */
+export const resolveRetainLimit = (keepMounted: KeepMounted | undefined): number => {
+  if (keepMounted === true) return Infinity;
+  if (typeof keepMounted === "number") return keepMounted > 0 ? Math.floor(keepMounted) : 0;
+  return 0;
+};
+
+/**
+ * Fold the live window `range` into the pool: rows in the window are (re)marked
+ * most-recently-visible (which is also how a row first enters the pool), rows the
+ * data no longer has are dropped, and once the rows outside the window exceed
+ * `limit` the least-recently-visible ones are evicted until they fit. A `limit` of
+ * `0` empties the pool, so turning `keepMounted` off releases everything.
+ *
+ * Mutates `state`, bumping `state.version` only when something actually changed,
+ * and is idempotent for an unchanged `(range, count, limit)`. Read the result with
+ * {@link retainedOutside}.
+ */
+export const retainRange = (
+  state: RetainState,
+  range: { start: number; end: number },
+  count: number,
+  limit: number,
+): void => {
+  const { seen } = state;
+  let changed = false;
+
+  if (limit <= 0) {
+    if (seen.size > 0) {
+      seen.clear();
+      state.version++;
+    }
+    return;
+  }
+
+  // Rows the data no longer has can never be rendered again.
+  for (const i of seen) {
+    if (i >= count) {
+      seen.delete(i);
+      changed = true;
+    }
+  }
+
+  // Re-insert the live rows so the window is always the most-recently-visible end
+  // of the LRU order. Re-inserting an already-present row reorders the pool without
+  // changing which rows it holds — that is a change the render does not care about
+  // (the window is mounted regardless), so it does not bump the version.
+  const first = Math.max(0, range.start);
+  const last = Math.min(range.end, count - 1);
+  for (let i = first; i <= last; i++) {
+    if (!seen.delete(i)) changed = true;
+    seen.add(i);
+  }
+
+  const inWindow = (i: number): boolean => i >= first && i <= last;
+
+  let extras = 0;
+  for (const i of seen) {
+    if (!inWindow(i)) extras++;
+  }
+  // Evict oldest-first; the live window is never evictable (it is mounted anyway).
+  if (extras > limit) {
+    for (const i of seen) {
+      if (extras <= limit) break;
+      if (inWindow(i)) continue;
+      seen.delete(i);
+      extras--;
+      changed = true;
+    }
+  }
+
+  if (changed) state.version++;
+};
+
+/**
+ * The retained rows that fall OUTSIDE `range`, ascending — exactly the extra rows
+ * to mount on top of the window. Pure: safe to call during render.
+ */
+export const retainedOutside = (
+  state: RetainState,
+  range: { start: number; end: number },
+  count: number,
+): number[] => {
+  const out: number[] = [];
+  for (const i of state.seen) {
+    if (i < 0 || i >= count) continue;
+    if (i >= range.start && i <= range.end) continue;
+    out.push(i);
+  }
+  // Ascending, so mounted children stay in reading order (they are absolutely
+  // positioned, so this is about tab/screen-reader order, not layout).
+  out.sort((a, b) => a - b);
+  return out;
+};
+
+/**
+ * Move the pool's indices onto a new key list, so "already mounted" tracks the
+ * *item* across a data change instead of the slot it happened to occupy. Rows that
+ * left the data drop out; the LRU order is preserved (a `Set` rebuilt in iteration
+ * order keeps oldest-visible first). A no-op when nothing is retained.
+ */
+export const remapRetainState = (
+  state: RetainState,
+  oldKeys: readonly string[],
+  newKeys: readonly string[],
+): void => {
+  if (state.seen.size === 0) return;
+  const indexByKey = new Map<string, number>();
+  for (let i = 0; i < newKeys.length; i++) indexByKey.set(newKeys[i], i);
+  const next = new Set<number>();
+  for (const i of state.seen) {
+    const key = oldKeys[i];
+    if (key === undefined) continue;
+    const at = indexByKey.get(key);
+    if (at !== undefined) next.add(at);
+  }
+  state.seen = next;
+  state.version++;
+};
+
+/**
+ * One-level equality for two prop bags. Used to give an inline `styles.item`
+ * object a stable identity across renders, so a caller writing the idiomatic
+ * `styles={{ item: { … } }}` literal does not defeat every row's memo.
+ */
+export const shallowEqualProps = (
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): boolean => {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  for (const key of aKeys) {
+    if (!Object.is(a[key], b[key])) return false;
+  }
+  return true;
 };

@@ -42,6 +42,63 @@ const RowCard = ({ row }: { row: Row }) => (
   </Box>
 );
 
+/**
+ * Lets a story show how many rows are really mounted. Rows report in on mount and
+ * out on unmount, so the tally is the live size of the mounted set — no DOM peeking,
+ * so it reads the same on native.
+ */
+const MountTallyContext = React.createContext<((delta: number) => void) | null>(null);
+
+const MountCounter = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  const [mounted, setMounted] = React.useState(0);
+  const report = React.useCallback((delta: number) => setMounted((n) => n + delta), []);
+  return (
+    <Box gap="$xs" width={240}>
+      <Text fontWeight="700" fontSize="$sm">
+        {title}
+      </Text>
+      <Text color="$colorSubtle" fontSize="$sm">
+        {`${mounted} rows mounted`}
+      </Text>
+      <Box height={340} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+        <MountTallyContext.Provider value={report}>{children}</MountTallyContext.Provider>
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * A row that owns state nothing outside it can restore — the case `keepMounted`
+ * exists for. Unmount it and the count is gone.
+ */
+const CounterRow = ({ row }: { row: Row }) => {
+  const [count, setCount] = React.useState(0);
+  const report = React.useContext(MountTallyContext);
+  React.useEffect(() => {
+    report?.(1);
+    return () => report?.(-1);
+  }, [report]);
+  return (
+    <Box
+      height={row.height}
+      paddingHorizontal="$md"
+      flexDirection="row"
+      alignItems="center"
+      justifyContent="space-between"
+      gap="$sm"
+      borderBottomWidth={1}
+      borderColor="$borderColor"
+      backgroundColor={count > 0 ? "$blue2" : "$background"}
+    >
+      <Text fontWeight="600">{row.label}</Text>
+      {/* Button defaults to alignSelf="flex-start" so it never stretches; centre it. */}
+      <Button size="sm" alignSelf="center" onPress={() => setCount((c) => c + 1)}>
+        {`count ${count}`}
+      </Button>
+    </Box>
+  );
+};
+
 const meta = {
   title: "Data Display/VirtualList",
   component: VirtualList,
@@ -50,7 +107,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "VirtualList is a fast, windowed, variable-height list that renders only the rows near the viewport (plus a render-ahead buffer). One source runs on web and React Native by riding ScrollArea and driving windowing off `onScrollPositionChange`; row heights are measured via `onLayout` and fed to a per-type running-average size model, so no exact `estimatedItemSize` is required. Mirrors the familiar FlatList / FlashList surface (`data`, `renderItem`, `keyExtractor`, `getItemType`, `onEndReached`, `ListHeaderComponent`/`ListFooterComponent`/`ListEmptyComponent`/`ItemSeparatorComponent`) plus an imperative handle (`scrollToIndex` / `scrollToOffset` / `scrollToEnd`).",
+          "VirtualList is a fast, windowed, variable-height list that renders only the rows near the viewport (plus a render-ahead buffer). One source runs on web and React Native by riding ScrollArea and driving windowing off `onScrollPositionChange`; row heights are measured via `onLayout` and fed to a per-type running-average size model, so no exact `estimatedItemSize` is required. Mirrors the familiar FlatList / FlashList surface (`data`, `renderItem`, `keyExtractor`, `getItemType`, `onEndReached`, `ListHeaderComponent`/`ListFooterComponent`/`ListEmptyComponent`/`ItemSeparatorComponent`) plus an imperative handle (`scrollToIndex` / `scrollToOffset` / `scrollToEnd`). Set `keepMounted` when rows own state that must survive scrolling out of view — a bounded LRU warm pool (`keepMounted={40}`) or everything ever mounted (`keepMounted`).",
       },
     },
   },
@@ -203,6 +260,89 @@ export const InfiniteScroll: Story = {
           }
           height="100%"
         />
+      </Box>
+    );
+  },
+};
+
+/**
+ * `keepMounted` — rows keep their own state after scrolling out of view.
+ *
+ * Both lists render the same stateful row (a per-row counter). Bump a few counters
+ * near the top, scroll to the bottom, then scroll back: the plain list unmounted
+ * those rows and their counts are back to 0, while the `keepMounted` list kept them
+ * in the tree. A number bounds the pool — the least-recently-visible rows are
+ * evicted first — so memory stays bounded on a long list.
+ */
+export const KeepMounted: Story = {
+  render: () => {
+    const data = React.useMemo(() => makeData(500), []);
+    const renderItem = React.useCallback(
+      ({ item }: { item: Row }) => <CounterRow row={item} />,
+      [],
+    );
+    return (
+      <Box flexDirection="row" gap="$md">
+        {(
+          [
+            { title: "Default (unmounts)", keep: false as const },
+            { title: "keepMounted={40}", keep: 40 },
+          ] satisfies Array<{ title: string; keep: boolean | number }>
+        ).map(({ title, keep }) => (
+          <Box key={title} gap="$xs" width={240}>
+            <Text fontWeight="700" fontSize="$sm">
+              {title}
+            </Text>
+            <Box height={360} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+              <VirtualList<Row>
+                data={data}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                keepMounted={keep}
+                height="100%"
+              />
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    );
+  },
+};
+
+/**
+ * `keepMounted="all"` — windowing off entirely.
+ *
+ * Every row in `data` is mounted from the first commit, whether or not it has ever
+ * been on screen, so find-in-page reaches every row and nothing measures late. This
+ * gives up what virtualization buys you — mount cost is O(data) — so it is for lists
+ * of a size you would have `.map()`ed anyway. The counter shows how many rows are
+ * really in the tree; compare it with the windowed list beside it.
+ */
+export const MountEverything: Story = {
+  render: () => {
+    const data = React.useMemo(() => makeData(60), []);
+    const renderItem = React.useCallback(
+      ({ item }: { item: Row }) => <CounterRow row={item} />,
+      [],
+    );
+    return (
+      <Box flexDirection="row" gap="$md">
+        {(
+          [
+            { title: "Windowed (default)", keep: false as const },
+            { title: 'keepMounted="all"', keep: "all" as const },
+          ] satisfies Array<{ title: string; keep: boolean | "all" }>
+        ).map(({ title, keep }) => (
+          <MountCounter key={title} title={title}>
+            <VirtualList<Row>
+              data={data}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              keepMounted={keep}
+              height="100%"
+            />
+          </MountCounter>
+        ))}
       </Box>
     );
   },
