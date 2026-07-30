@@ -1,5 +1,82 @@
 # @knitui/media
 
+## 0.4.0
+
+### Minor Changes
+
+- edcec97: `useAudioPlaylistController` exposes the single-track player underneath the queue
+
+  The hook now returns a third field, `player`: the `AudioController` slot the playlist
+  drives, stable for the hook's lifetime.
+
+  It exists for the surfaces that belong to the PLAYER rather than the queue, which the
+  playlist contract cannot express. The motivating one is spectrum sampling —
+  `useAudioSpectrum` needs `setSamplingEnabled` and `sampleUpdate`, which live on the
+  single-track controller only, because a playlist has no notion of PCM. Before this
+  there was no supported way to reach the sampler from a playlist at all: the facade is
+  private on the controller and its slot id is an internal `useId` no caller could pass
+  to `getFacade`, so a visualizer over a queue was simply not buildable.
+
+  ```tsx
+  const { controller, store, player } = useAudioPlaylistController({ sources });
+  useAudioSpectrum(player, { onFrame: (bands) => viz.current?.push(bands) });
+  ```
+
+  Playback still goes through `controller`: transport calls on `player` move the slot
+  without telling the queue, and the two snapshots then disagree.
+
+### Patch Changes
+
+- edcec97: Stop web video silently dropping a `play()` made before its view exists
+
+  `expo-video`'s web backend applies `play()` by iterating the `HTMLVideoElement`s
+  currently mounted into the player, so a call made while no view is attached iterates
+  an empty set: no throw, no error status, no retry, nothing to observe. In a kit whose
+  surface is a single teleported element that is not an edge case — it is what happens
+  on a cold mount, where the call beats the view's own effect, and on every switch
+  between players in the shared session, where the surface is destroyed and a NEW
+  element is built for the incoming player's frame. `autoPlay` was the plainest
+  casualty: it ran in the constructor, before any view could exist.
+
+  The controller now tracks a standing play INTENT — set by `play()`/`replay()`,
+  cleared by `pause()` and by `dispose()` — and `attachView` re-applies it, which is
+  what makes both cases work. It is idempotent by construction: `player.play()` on an
+  already-playing player is a no-op on both backends, and a paused intent re-applies
+  nothing.
+
+  `attachView(null)` also now marks the snapshot as not playing. Detaching is the only
+  moment the controller learns its element has been handed to another player, and the
+  outgoing element takes its playback with it while never reporting a `pause` — it is
+  unmounted from the player first, so its events no longer count. The snapshot was left
+  claiming `playing: true` over a torn-down element, and every consumer that branches
+  on it — a play/pause toggle most of all — then did the opposite of what it should.
+
+- 59d065b: Dependency refresh, all within the current majors and validated against Expo SDK 57
+  (`expo install --check` reports the workspace aligned):
+
+  - `react-native` 0.86.0 → 0.86.2 (and `@react-native/metro-config` to match; both stay
+    pinned as singletons in the root `pnpm.overrides`)
+  - `react-native-reanimated` 4.5.0 → 4.5.1 and `react-native-worklets` 0.10.0 → 0.10.1 —
+    the versions Expo SDK 57 expects
+  - `expo` 57.0.7 → 57.0.9 and the SDK-managed modules along with it (`expo-router`,
+    `expo-constants`, `expo-linking`, `expo-system-ui`, `expo-video`,
+    `@expo/metro-runtime`, `expo-build-properties`)
+  - `babel-preset-expo` 57.0.3 → 57.0.5, Storybook 10.5.3 → 10.5.5,
+    `@vitejs/plugin-react` 6.0.3 → 6.0.4, `next` 16.2.10 → 16.2.12,
+    `@react-navigation/*` patch bumps
+
+  The vendored `expo-modules-core` patch was re-pointed from 57.0.6 to 57.0.8 and still
+  applies cleanly. `expo-audio` deliberately stays on 57.0.2, where our native sampling
+  patch is pinned. Peer requirements for consumers are unchanged.
+
+- Updated dependencies [edcec97]
+- Updated dependencies [15a329c]
+- Updated dependencies [59d065b]
+  - @knitui/components@0.7.0
+  - @knitui/core@0.7.0
+  - @knitui/hooks@0.7.0
+  - @knitui/icons@0.7.0
+
 ## 0.3.3
 
 ### Patch Changes
