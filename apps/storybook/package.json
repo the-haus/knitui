@@ -10,9 +10,9 @@
     "clean": "rimraf storybook-static .turbo"
   },
   "devDependencies": {
-    "@storybook/addon-docs": "^10.5.3",
-    "@storybook/react-vite": "^10.5.3",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@storybook/addon-docs": "^10.5.5",
+    "@storybook/react-vite": "^10.5.5",
+    "@vitejs/plugin-react": "^6.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "rimraf": "^6.0.1",
