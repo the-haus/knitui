@@ -1,4 +1,4 @@
-import type { TamaguiProviderProps } from "@tamagui/core";
+import type { TamaguiProviderProps, ViewProps } from "@tamagui/core";
 
 export type ColorScheme = "light" | "dark";
 export type ColorSchemePreference = ColorScheme | "system";
@@ -19,4 +19,14 @@ export interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "de
    * back to the kit's built-in config when omitted.
    */
   config?: TamaguiProviderProps["config"];
+  /**
+   * Fill for the full-screen background the provider paints behind every route.
+   * Defaults to the theme's `$background`.
+   *
+   * Pass `"transparent"` when the host already paints the page background
+   * itself — a web page with its own CSS background (gradients, washes, a
+   * `--custom-property` scheme) would otherwise be covered by this layer, since
+   * it sits above the document and spans the whole window.
+   */
+  backgroundColor?: ViewProps["backgroundColor"];
 }

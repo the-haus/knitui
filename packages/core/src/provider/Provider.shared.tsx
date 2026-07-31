@@ -76,6 +76,7 @@ export function SharedProvider({
   defaultColorScheme = "system",
   forceColorScheme,
   config = defaultConfig,
+  backgroundColor = "$background",
   children,
   ...rest
 }: ProviderProps) {
@@ -112,8 +113,11 @@ export function SharedProvider({
          * the navigator header, and the OS safe areas — so the theme color is
          * never clipped to route content and switching color scheme repaints the
          * whole screen (including the status-bar/home-indicator regions).
+         *
+         * A host that already paints its own page background passes
+         * `backgroundColor="transparent"` to keep this layer out of the way.
          */}
-        <View flex={1} backgroundColor="$background">
+        <View flex={1} backgroundColor={backgroundColor}>
           {/*
            * `PortalProvider` (react-native-teleport) enables native view
            * re-parenting and mounts a full-screen host named "root". Overlays
