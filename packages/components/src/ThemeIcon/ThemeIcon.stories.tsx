@@ -42,7 +42,7 @@ const GRADIENT_PRESETS = {
 const GRADIENT_THEMES = ["blue", "red", "green", "orange", "pink", "teal"] as const;
 
 const meta = {
-  title: "Data display/ThemeIcon",
+  title: "Data Display/ThemeIcon",
   component: ThemeIcon,
   parameters: {
     layout: "centered",
