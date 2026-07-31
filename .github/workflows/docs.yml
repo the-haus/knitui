@@ -99,10 +99,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # @knitui/hooks lib-ships (its `main` points at lib/, which does not exist in
-      # a fresh checkout) and the docs import it transitively through the kit.
-      - name: Build lib-shipping workspace deps
-        run: pnpm exec turbo run build --filter=@knitui/hooks
+      # Prop extraction is only correct against BUILT declarations. Eleven packages
+      # resolve `types` to ./lib/typescript/index.d.ts, so in a fresh checkout
+      # `ts.createProgram` cannot follow a cross-package type import — and instead
+      # of failing, it reclassifies every inherited Tamagui prop as one the
+      # component declares itself (own: 3147 -> 8477). The site would build, and
+      # every prop table on it would be wrong.
+      #
+      # Building only @knitui/hooks, as this step used to, was not enough: hooks is
+      # merely the one whose *runtime* entry needs lib/. Build all of packages/* so
+      # the generated data matches a developer's fully-built tree. Apps are excluded
+      # (the aggregate Storybook alone would dominate this job).
+      - name: Build workspace packages (declarations for prop extraction)
+        run: pnpm exec turbo run build --filter='./packages/*'
 
       - name: Regenerate docs data
         run: pnpm docs:generate
