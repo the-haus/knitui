@@ -1,0 +1,37 @@
+{
+  "name": "@knitui/story-runtime",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Headless Storybook CSF resolver — renders a story module the way Storybook does, with no @storybook/* runtime. Shared by @knitui/demo and @knitui/docs.",
+  "license": "MIT",
+  "source": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "react-native": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rimraf .turbo"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "react": "19.2.3"
+  }
+}

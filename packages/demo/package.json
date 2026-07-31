@@ -41,7 +41,8 @@
     "@knitui/map": "workspace:*",
     "@knitui/media": "workspace:*",
     "@knitui/mediaquery": "workspace:*",
-    "@knitui/sheet": "workspace:*"
+    "@knitui/sheet": "workspace:*",
+    "@knitui/story-runtime": "workspace:*"
   },
   "peerDependencies": {
     "@maplibre/maplibre-react-native": "*",
