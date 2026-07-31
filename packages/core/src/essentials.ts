@@ -29,6 +29,13 @@ export {
   getVariableValue,
   // platform branch (true on web / react-native-web, false on native)
   isWeb,
+  // the write half of `getConfig` — makes a config THE active one process-wide.
+  // `<Provider>` already does this for the config it is handed (see
+  // `provider/Provider.shared.tsx`), so an app should rarely reach for it; it is
+  // exported because an app that wants to assert the invariant itself, or repair
+  // it after some third party's stray `createTamagui`, previously had no way to
+  // do so without importing `@tamagui/*` directly.
+  setConfig,
   // raw Tamagui text primitive (the kit's styled `Text` lives in components;
   // the vendored Input reads `Text.staticConfig.validStyles`)
   Text,
