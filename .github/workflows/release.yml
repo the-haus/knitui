@@ -12,6 +12,7 @@ permissions:
   contents: write # push the version PR / tags
   pull-requests: write # open the "Version Packages" PR
   id-token: write # npm provenance
+  actions: read # the docs job below is a reusable workflow
 
 env:
   TURBO_TELEMETRY_DISABLED: 1
@@ -21,6 +22,11 @@ jobs:
     name: Version or Publish
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      # 'true' only when `pnpm release` actually published to npm — i.e. this push
+      # was the "Version Packages" PR landing, not a regular commit. The docs job
+      # keys off it so knitui.dev tracks published versions and nothing else.
+      published: ${{ steps.changesets.outputs.published }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -42,6 +48,7 @@ jobs:
       # Creates/updates a "Version Packages" PR when changesets are pending,
       # or runs `pnpm release` (build + changeset publish) once that PR is merged.
       - name: Create Release PR or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm version-packages
@@ -56,3 +63,16 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
+
+  # knitui.dev is republished on every version update and only on a version
+  # update: this runs when the step above actually published to npm, so the
+  # deployed docs are built from the commit that carries the new versions —
+  # version numbers, changelog and prop tables all agree with the tarballs.
+  docs:
+    name: Docs → knitui.dev
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    uses: ./.github/workflows/docs.yml
+    with:
+      environment: production
+    secrets: inherit

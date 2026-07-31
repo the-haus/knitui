@@ -1,17 +1,32 @@
 # Documentation site → Cloudflare Pages
 #
-# Builds apps/docs (a static Next.js export) and deploys it. Pull requests get a
-# preview deploy; pushes to main go to production.
+# Builds apps/docs (a static Next.js export) and, depending on how it was
+# triggered, deploys it:
 #
-# The build is gated on the docs guardrails, so a component that gains a story
-# without a page — or a stale `src/generated/**` — fails here rather than shipping
-# a 404 or a wrong prop table.
+#   pull_request (same repo)  → preview deploy, on a branch alias
+#   push to main              → build and verify ONLY, nothing is published
+#   workflow_call             → production deploy when `environment: production`
+#   workflow_dispatch         → either, operator's choice
 #
-# ONE-TIME SETUP (repo owner): add repository secrets
-#   CLOUDFLARE_API_TOKEN   — token with "Cloudflare Pages: Edit"
-#   CLOUDFLARE_ACCOUNT_ID
-# and create the Pages project (`knitui-docs`). Without them the build still runs
-# and the deploy steps are skipped.
+# knitui.dev therefore only ever changes when `.github/workflows/release.yml`
+# calls this workflow after an actual npm publish. A plain push to main still
+# builds, so a component that gains a story without a page — or a stale
+# `src/generated/**` — fails here rather than at release time.
+#
+# On a release commit this workflow runs twice: once on its own `push` trigger
+# (verify) and once called by Release (verify + deploy). The concurrency group
+# below keys on the deploy target so those two runs cannot cancel each other.
+#
+# ONE-TIME SETUP (repo owner):
+#   1. Cloudflare Pages project `knitui-dev` — created. Set its production branch
+#      to `main`, or a production deploy lands as a preview instead.
+#   2. Add repository secrets:
+#        CLOUDFLARE_API_TOKEN   — token with "Cloudflare Pages: Edit"
+#        CLOUDFLARE_ACCOUNT_ID  — the id in your dash.cloudflare.com URL
+#   3. Move the knitui.dev zone onto Cloudflare's nameservers, then attach
+#      knitui.dev as a custom domain on the Pages project. An apex custom domain
+#      needs the zone on Cloudflare — apex CNAMEs are not valid DNS.
+# Without the token the build still runs and the deploy step is skipped.
 
 name: Docs
 
@@ -30,14 +45,35 @@ on:
       - "apps/docs/**"
       - "scripts/docs/**"
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Where to publish the result"
+        type: choice
+        default: verify-only
+        options:
+          - verify-only
+          - production
+  workflow_call:
+    inputs:
+      environment:
+        description: "`production` publishes to knitui.dev; anything else builds and verifies only."
+        type: string
+        default: verify-only
 
+# Keyed on the deploy target as well as the ref, so the verify run and the
+# release-triggered production run of the same commit are independent. A
+# production deploy is never cancelled mid-flight.
 concurrency:
-  group: docs-${{ github.ref }}
-  cancel-in-progress: true
+  group: docs-${{ github.ref }}-${{ inputs.environment || 'verify-only' }}
+  cancel-in-progress: ${{ inputs.environment != 'production' }}
 
 env:
   TURBO_TELEMETRY_DISABLED: 1
   NEXT_TELEMETRY_DISABLED: 1
+  # The Pages project name. Not a secret, and it MUST match the project in
+  # Cloudflare (`knitui-dev`) or the deploy fails with "project not found".
+  # The account id stays in secrets — see the deploy job.
+  CF_PAGES_PROJECT: knitui-dev
 
 jobs:
   build:
@@ -94,6 +130,25 @@ jobs:
           test -f apps/docs/out/sitemap.xml
           test -f apps/docs/out/llms.txt
           test -d apps/docs/out/pagefind
+          # `_headers` is Cloudflare's per-path header config. It ships from
+          # public/, so a rename there would silently drop the cache and security
+          # headers rather than fail anything.
+          test -f apps/docs/out/_headers
+
+      # Cloudflare Pages rejects a deployment over 20,000 files. The export is
+      # one JS chunk per lazily-loaded story plus an HTML + RSC payload per page,
+      # so this grows with the component count — warn well before it bites.
+      - name: Check the Cloudflare Pages file budget
+        run: |
+          files=$(find apps/docs/out -type f | wc -l)
+          echo "$files files ($(du -sh apps/docs/out | cut -f1))"
+          if [ "$files" -ge 20000 ]; then
+            echo "::error::$files files exceeds Cloudflare Pages' 20,000-file limit"
+            exit 1
+          fi
+          if [ "$files" -ge 16000 ]; then
+            echo "::warning::$files files — approaching Cloudflare Pages' 20,000-file limit"
+          fi
 
       - name: Upload site
         uses: actions/upload-artifact@v4
@@ -105,24 +160,52 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Pages
     needs: build
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Production only when Release calls this workflow after a publish (or an
+    # operator dispatches it). Otherwise: a preview for same-repo pull requests,
+    # and nothing at all for pushes to main.
+    if: >-
+      inputs.environment == 'production' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The first deploy uploads the whole export (~13k files); later ones upload
+    # only the hashes Cloudflare does not already have.
+    timeout-minutes: 30
+    env:
+      # `secrets` is NOT an available context in a step-level `if:` — it resolves
+      # to empty there, which would skip the deploy forever. Reading the token
+      # through `env` is what makes the guard below work.
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: docs-site
           path: out
 
+      # Cloudflare treats a deployment as production when its branch matches the
+      # project's production branch; anything else becomes a preview alias.
+      - name: Resolve the target branch
+        id: target
+        run: |
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            echo "branch=main" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${{ github.head_ref || github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       # Skipped (rather than failed) until the Pages project and its secrets exist,
       # so the build half of this workflow is useful from day one.
       - name: Deploy
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        if: env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
             pages deploy out
-            --project-name=knitui-docs
-            --branch=${{ github.head_ref || github.ref_name }}
+            --project-name=${{ env.CF_PAGES_PROJECT }}
+            --branch=${{ steps.target.outputs.branch }}
+
+      - name: Note a skipped deploy
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "::warning::CLOUDFLARE_API_TOKEN is not set — the site was built but not deployed"

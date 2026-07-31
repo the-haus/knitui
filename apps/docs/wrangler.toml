@@ -4,11 +4,15 @@
 # output directory explicitly. It is committed anyway so an operator can run
 #
 #   pnpm --filter @knitui/docs build
-#   wrangler pages deploy out
+#   wrangler pages deploy
 #
 # from this directory without extra flags, and so the project name and output path
 # live next to the app rather than only in CI YAML.
+#
+# Note the deploy takes NO directory argument here: wrangler rejects one when
+# `pages_build_output_dir` is set. CI passes `out` because it runs from the
+# downloaded artifact, where this file is absent.
 
-name = "knitui-docs"
+name = "knitui-dev"
 compatibility_date = "2026-01-01"
 pages_build_output_dir = "out"
