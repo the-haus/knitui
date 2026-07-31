@@ -6,6 +6,19 @@
       "slug": "core",
       "releases": [
         {
+          "version": "0.8.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`Provider` accepts `backgroundColor` for the full-screen layer it paints behind every route. It still defaults to the theme's `$background`; hosts that paint their own page background (a web page with CSS gradients or custom properties) can now pass `\"transparent\"` so that background is not covered."
+            },
+            {
+              "kind": "patch",
+              "text": "`<Provider>` now registers the config it is handed as the active Tamagui config, and `setConfig` joins `getConfig` in the `@knitui/core` surface. Tamagui keeps one config per process and `createTamagui` registers its result as a side effect of being called, but `<TamaguiProvider config={…}>` does not register what it is passed — it only reads `getCSS()` and `animations`. So an app that built its own config with `createTheme` was in a two-writer race with the kit's built-in config (the `config` prop's default), and which one ended up resolving `$token`s was decided by module evaluation order: - webpack evaluates the built-in config eagerly, so in a Next app the app's config could win during SSR and lose on the client — raw colour tokens resolved in the server HTML and silently stopped resolving after hydration. - Metro's `inlineRequires` defers that import to its first use, so any code that merely touched the built-in config (a diagnostic comparing it against `getConfig()`, say) evaluated it at that moment and clobbered the app's config mid-render. Only raw tokens were affected, which is what made it hard to spot: theme values (`$background`, `$color10`, `$borderColor`) resolve through the theme and both configs ship the same theme names, so the app looked correct while every custom `$brandColor` resolved to nothing. The provider is where a consumer states which config is theirs, so it is now where that becomes true; it also re-asserts on later renders, so a stray late `createTamagui` no longer poisons the session."
+            }
+          ]
+        },
+        {
           "version": "0.7.0",
           "changes": [
             {
@@ -76,6 +89,19 @@
       "name": "@knitui/components",
       "slug": "components",
       "releases": [
+        {
+          "version": "0.8.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
+            }
+          ]
+        },
         {
           "version": "0.7.0",
           "changes": [
@@ -267,6 +293,19 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.8.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0"
+            }
+          ]
+        },
+        {
           "version": "0.7.0",
           "changes": [
             {
@@ -451,6 +490,19 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.8.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0"
+            }
+          ]
+        },
+        {
           "version": "0.7.0",
           "changes": [
             {
@@ -592,6 +644,19 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.7",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
+            }
+          ]
+        },
         {
           "version": "0.3.6",
           "changes": [
@@ -769,6 +834,15 @@
       "slug": "map",
       "releases": [
         {
+          "version": "0.4.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "`SvgImage` no longer gives up on a raster whose surface has not painted yet. Exhausting the eager capture window ended the job without ever calling `onCapture`, and nothing re-requests a raster — so the store slot stayed unresolved forever, no MapLibre image was registered, and every `SymbolLayer` drawing that icon silently drew nothing for the rest of the session, with no log and no retry. The eager window assumed the surface was racing its first draw and would win within ~80 frames. A surface that is not being drawn at all breaks that assumption rather than losing the race: a map mounted offscreen to warm its GL context, a screen frozen by `freezeOnBlur`, an Android view pruned before it painted. All of those resolve later, at which point the next attempt would have succeeded — so ending the job turned a transient condition into a permanent one. The window is now only a change of pace. Past it a job hands its concurrency slot back and keeps polling at ~1s until it succeeds or its surface unmounts; returning the slot matters, because surfaces that are not painting would otherwise hold every slot forever and starve one that would succeed immediately. A dev-only `console.warn` (`typeof`-guarded, so a bundler that does not define `__DEV__` cannot turn a slow icon into a crash) now names the likely cause on the transition to the patient cadence."
+            }
+          ]
+        },
+        {
           "version": "0.4.2",
           "changes": [
             {
@@ -837,6 +911,19 @@
       "name": "@knitui/media",
       "slug": "media",
       "releases": [
+        {
+          "version": "0.4.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
+            }
+          ]
+        },
         {
           "version": "0.4.0",
           "changes": [
@@ -1008,6 +1095,19 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.8.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0"
+            }
+          ]
+        },
+        {
           "version": "0.7.0",
           "changes": [
             {
@@ -1145,6 +1245,19 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.3.7",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
+            }
+          ]
+        },
         {
           "version": "0.3.6",
           "changes": [
@@ -1314,6 +1427,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.8.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/hooks@0.8.0"
+            }
+          ]
+        },
+        {
           "version": "0.7.0",
           "changes": [
             {
@@ -1434,6 +1560,19 @@
       "name": "@knitui/plugins",
       "slug": "plugins",
       "releases": [
+        {
+          "version": "0.1.11",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0"
+            }
+          ]
+        },
         {
           "version": "0.1.10",
           "changes": [
@@ -1560,6 +1699,89 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.8.0",
+      "entries": [
+        {
+          "package": "@knitui/core",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`Provider` accepts `backgroundColor` for the full-screen layer it paints behind every route. It still defaults to the theme's `$background`; hosts that paint their own page background (a web page with CSS gradients or custom properties) can now pass `\"transparent\"` so that background is not covered."
+            },
+            {
+              "kind": "patch",
+              "text": "`<Provider>` now registers the config it is handed as the active Tamagui config, and `setConfig` joins `getConfig` in the `@knitui/core` surface. Tamagui keeps one config per process and `createTamagui` registers its result as a side effect of being called, but `<TamaguiProvider config={…}>` does not register what it is passed — it only reads `getCSS()` and `animations`. So an app that built its own config with `createTheme` was in a two-writer race with the kit's built-in config (the `config` prop's default), and which one ended up resolving `$token`s was decided by module evaluation order: - webpack evaluates the built-in config eagerly, so in a Next app the app's config could win during SSR and lose on the client — raw colour tokens resolved in the server HTML and silently stopped resolving after hydration. - Metro's `inlineRequires` defers that import to its first use, so any code that merely touched the built-in config (a diagnostic comparing it against `getConfig()`, say) evaluated it at that moment and clobbered the app's config mid-render. Only raw tokens were affected, which is what made it hard to spot: theme values (`$background`, `$color10`, `$borderColor`) resolve through the theme and both configs ship the same theme names, so the app looked correct while every custom `$brandColor` resolved to nothing. The provider is where a consumer states which config is theirs, so it is now where that becomes true; it also re-asserts on later renders, so a stray late `createTamagui` no longer poisons the session."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/hooks@0.8.0"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.7.0",
       "entries": [
@@ -2130,6 +2352,20 @@
       ]
     },
     {
+      "version": "0.4.3",
+      "entries": [
+        {
+          "package": "@knitui/map",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "`SvgImage` no longer gives up on a raster whose surface has not painted yet. Exhausting the eager capture window ended the job without ever calling `onCapture`, and nothing re-requests a raster — so the store slot stayed unresolved forever, no MapLibre image was registered, and every `SymbolLayer` drawing that icon silently drew nothing for the rest of the session, with no log and no retry. The eager window assumed the surface was racing its first draw and would win within ~80 frames. A surface that is not being drawn at all breaks that assumption rather than losing the race: a map mounted offscreen to warm its GL context, a screen frozen by `freezeOnBlur`, an Android view pruned before it painted. All of those resolve later, at which point the next attempt would have succeeded — so ending the job turned a transient condition into a permanent one. The window is now only a change of pace. Past it a job hands its concurrency slot back and keeps polling at ~1s until it succeeds or its surface unmounts; returning the slot matters, because surfaces that are not painting would otherwise hold every slot forever and starve one that would succeed immediately. A dev-only `console.warn` (`typeof`-guarded, so a bundler that does not define `__DEV__` cannot turn a slow icon into a crash) now names the likely cause on the transition to the patient cadence."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.4.2",
       "entries": [
         {
@@ -2152,6 +2388,19 @@
             {
               "kind": "patch",
               "text": "Point every `types` entry at the built declarations (`lib/typescript/*.d.ts`) instead of at the shipped TypeScript source. These packages ship their source and resolve it at runtime (`source`, `react-native` and `default` all still point into `src`), but `types` pointed there too — so a consumer's `tsc` typechecked the kit's raw source as part of their own build. That is slow, and it surfaces errors that depend on the consumer's own compiler settings, since `skipLibCheck` does not apply to `.ts` source files. Resolving `types` to real `.d.ts` files makes declaration handling both faster and inert. `@knitui/icons` also adds `lib/typescript` to `files`; its declarations were previously built but never published, so the new `types` path would not have existed in the tarball. `@knitui/emoji` deliberately keeps `types` on its source: its per-emoji modules ship as pre-generated `.js`/`.d.ts` pairs inside `src`, which `tsc` does not re-emit, so its built barrel cannot resolve them."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
             }
           ]
         }
@@ -2256,6 +2505,37 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.7",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
             }
           ]
         }
@@ -2872,6 +3152,24 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[737463e] - @knitui/core@0.2.0 - @knitui/hooks@0.2.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.1.11",
+      "entries": [
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8de27f7]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0"
             }
           ]
         }
