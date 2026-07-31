@@ -1,0 +1,112 @@
+export const meta = {
+  title: "Quickstart",
+  description:
+    "Wrap your app in one Provider, render your first component, and understand what the Provider sets up for you.",
+};
+
+# Quickstart
+
+## 1. Wrap your app once
+
+```tsx
+import { Provider } from "@knitui/core";
+
+export default function App() {
+  return (
+    <Provider defaultColorScheme="system">
+      <YourApp />
+    </Provider>
+  );
+}
+```
+
+`Provider` is not just a theme context. It sets up four things you would
+otherwise wire yourself:
+
+| It mounts | Why you need it |
+| --- | --- |
+| `TamaguiProvider` with the kit's config | Tokens, themes and the `$token` prop vocabulary |
+| The color-scheme controller | `defaultColorScheme="system"` follows the OS; `useColorScheme()` reads and sets it |
+| `GestureHandlerRootView` | Sliders, drag-to-dismiss, carousels and sheets need it at the root |
+| The portal host | `Modal`, `Drawer`, `Popover`, `Tooltip` and `Portal` teleport their content here |
+
+<Callout kind="warning">
+  Mount exactly one `Provider`, at the root. A second nested one creates a second
+  portal host, and overlays start rendering into the wrong layer.
+</Callout>
+
+## 2. Render something
+
+```tsx
+import { Button, Card, Group, Text, TextInput } from "@knitui/components";
+
+export function SignIn() {
+  return (
+    <Card padding="lg" gap="$md">
+      <Text fontWeight="600">Sign in</Text>
+      <TextInput label="Email" placeholder="you@example.com" />
+      <Group>
+        <Button variant="light">Cancel</Button>
+        <Button>Continue</Button>
+      </Group>
+    </Card>
+  );
+}
+```
+
+That code renders unchanged on iOS, Android and the web.
+
+## 3. Learn the three props that repeat everywhere
+
+Almost every component in the kit answers to the same vocabulary, so learning it
+once covers the whole library:
+
+- **`size`** — `xxs` … `xxl`, resolved through one
+  [`controlMetrics`](/docs/foundations/sizing) table. A `size="lg"` `Button`, a
+  `size="lg"` `TextInput` and a `size="lg"` `Badge` line up.
+- **`variant`** — how the theme's colour ramp is applied: `filled`, `light`,
+  `outline`, `subtle`, `default`, `white`, `transparent`, `gradient`. See
+  [Variants & colors](/docs/foundations/variants-and-colors).
+- **`styles`** — per-slot styling, targeting a component's internal parts by
+  name. See [Slots & styles](/docs/foundations/slots-and-styles).
+
+```tsx
+<Button
+  size="lg"
+  variant="light"
+  styles={{ label: { textTransform: "uppercase" } }}
+>
+  Continue
+</Button>
+```
+
+## 4. Style with tokens, not numbers
+
+Every style prop takes a token: `p="$md"`, `gap="$sm"`, `br="$lg"`, `c="$color11"`.
+Tokens keep spacing and colour consistent and make theming work.
+
+```tsx
+<Box p="$lg" gap="$md" br="$md" bg="$color2" borderColor="$borderColor" borderWidth={1}>
+  <Text c="$color11">Inside a themed surface</Text>
+</Box>
+```
+
+Raw numbers still work where you need them (`p={13}`), but a token is almost
+always the right answer. See [Tokens](/docs/foundations/tokens).
+
+## 5. Go deeper
+
+<CardGrid>
+  <CardLink href="/docs/foundations/tokens" title="Tokens">
+    The scales every component resolves against.
+  </CardLink>
+  <CardLink href="/docs/foundations/color-and-themes" title="Color & themes">
+    Palette ramps, semantic tokens, the `theme` prop.
+  </CardLink>
+  <CardLink href="/docs/getting-started/ssr" title="Server rendering">
+    Getting the kit through hydration in Next.js.
+  </CardLink>
+  <CardLink href="/docs/guides/cross-platform-authoring" title="Cross-platform authoring">
+    What differs between web and native, and how the kit handles it.
+  </CardLink>
+</CardGrid>

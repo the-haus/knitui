@@ -1,0 +1,143 @@
+export const meta = {
+  title: "Troubleshooting",
+  description:
+    "Symptom-indexed fixes for the failures that actually happen when integrating Knit UI: duplicate React Native copies, reanimated instances, Skia load order, portal layers and keyboard handling.",
+};
+
+# Troubleshooting
+
+Indexed by what you see, not by what causes it.
+
+## "property is not writable" / "Cannot read property 'default' of undefined" on Hermes
+
+**Two copies of `react-native` in the tree.** Almost always a version mismatch
+between your app's pin and a library's pin.
+
+```bash
+npm ls react-native      # or: pnpm why react-native
+```
+
+Fix it by pinning one version for the whole project. In a pnpm workspace:
+
+```json title="package.json"
+{
+  "pnpm": {
+    "overrides": {
+      "react-native": "0.86.2",
+      "react": "19.2.3"
+    }
+  }
+}
+```
+
+## "Another instance of Reanimated was detected"
+
+Same class of problem, one layer up: two `react-native-reanimated` copies. Add
+`react-native-reanimated` (and `react-native-worklets`, which travels with it) to
+the same overrides block. A mismatched pin in any dependency is enough.
+
+## Icons or components render but the app is enormous / slow to start
+
+You are importing a barrel that re-exports thousands of modules.
+`@knitui/icons` and `@knitui/emoji` are generated packages — the icons barrel
+alone re-exports ~6,100 modules — and the kit **src-ships**, so your bundler
+compiles what it reaches.
+
+On Next.js, `withKnitui` already sets `optimizePackageImports` for them. Elsewhere,
+import the glyph directly:
+
+```tsx
+import { IconCheck } from "@knitui/icons/IconCheck"; // not from the barrel
+```
+
+## Skia canvases are blank on the web
+
+`@shopify/react-native-skia`'s web build captures `global.CanvasKit` **when the
+module evaluates**, so the WASM runtime has to be loaded before anything imports
+the Skia barrel:
+
+```tsx
+import { loadGraphicsRuntime } from "@knitui/graphics/runtime";
+
+await loadGraphicsRuntime(); // then, and only then:
+const { GraphicCanvas } = await import("@knitui/graphics");
+```
+
+If several canvases blank at once, you have hit the browser's live WebGL context
+cap (about 16). Mount canvases one at a time, or unmount them when they scroll
+out of view.
+
+## An overlay renders behind everything, or not at all
+
+Overlays teleport into the portal host mounted by `Provider`. Check that:
+
+1. there is exactly **one** `Provider`, at the root;
+2. you are not rendering an overlay above it in the tree;
+3. on the web, your content sets `pointerEvents` — the portal layer is
+   `pointer-events: none` so its full-viewport box doesn't swallow clicks, and
+   content needs `auto` or `box-none` to be interactive.
+
+## A dropdown closes the moment I tap an option (Android)
+
+The tap lands while the keyboard is dismissing. The scroll container needs:
+
+```tsx
+<ScrollArea keyboardShouldPersistTaps="handled">
+```
+
+`Combobox`, `Select` and friends set this internally — if you have built your own
+dropdown on `ScrollArea`, set it yourself.
+
+## A `readOnly` TextInput ignores presses (Android)
+
+`editable={false}` makes Android set `pointerEvents: "box-none"`, so no press
+reaches the input. When you use a read-only input as a popover trigger, drive the
+overlay from focus instead of press:
+
+```tsx
+<Popover withPressToggle={false}>
+```
+
+## Vertical list rows shrink to nothing
+
+`ScrollArea` with `scrollbars="xy"` nests a horizontal `ScrollView`, which lets
+its children size to content — so rows collapse. For a vertical list, use
+`scrollbars="y"`.
+
+## `Collapse` never opens on native
+
+The content was measured while clipped, so its height came back as 0. Pass the
+cross-axis size down, or let `Collapse` measure with the content pinned absolute —
+this is handled inside the kit, so if you see it in your own height animation,
+that is the cause.
+
+## Storybook or Vite: "no export default" from a reanimated file
+
+reanimated 4's web entry pulls CommonJS dependencies that need interop. Force
+them through the dep optimizer:
+
+```ts title="vite.config.ts"
+optimizeDeps: {
+  include: ["react-native-reanimated", "react-native-worklets"],
+}
+```
+
+## Tamagui: "skipped loading N modules"
+
+The static compiler could not `require()` a source-shipped package while
+building its config. It is a warning, not an error — extraction just falls back
+to runtime styling for those modules. To silence it:
+
+```bash
+TAMAGUI_IGNORE_BUNDLE_ERRORS=1
+```
+
+## Next.js: styles arrive a frame late
+
+`NextTamaguiProvider` is missing from the root layout, or sits below the component
+that renders first. See [Server rendering](/docs/getting-started/ssr).
+
+## Still stuck?
+
+Open an issue with the platform, the kit version, and a minimal reproduction:
+[github.com/the-haus/knitui/issues](https://github.com/the-haus/knitui/issues).

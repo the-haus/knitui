@@ -1,0 +1,107 @@
+export const meta = {
+  title: "Theming an app",
+  description: "End to end: brand ramps, accents, tokens, fonts, and where to put the config.",
+};
+
+# Theming an app
+
+## 1. Build a config
+
+```tsx title="theme.ts"
+import { createTheme } from "@knitui/core";
+
+export const config = createTheme({
+  brand: "#7C3AED",
+  accents: { teal: "#14b8a6" },
+  neutral: "#71717a",
+  radius: "rounded",
+  space: "comfortable",
+  fonts: { body: "Inter", heading: "Sora" },
+});
+```
+
+At module scope, once. Building it inside a component makes a new config object per
+render and invalidates every style.
+
+## 2. Hand it to the Provider
+
+```tsx
+import { Provider } from "@knitui/core";
+
+import { config } from "./theme";
+
+<Provider config={config} defaultColorScheme="system">
+  {children}
+</Provider>;
+```
+
+## 3. Use positions, not colours
+
+In app code, reference the ramp and the semantic aliases:
+
+```tsx
+<Box bg="$background" borderColor="$borderColor" borderWidth={1} p="$lg">
+  <Title order={3}>Invoice</Title>
+  <Text c="$color11">Due in 14 days</Text>
+</Box>
+```
+
+Never a hex. A hard-coded colour is the one thing dark mode cannot fix.
+
+## 4. Theme regions, not components
+
+```tsx
+<Box theme="red" p="$md" gap="$sm">
+  <Text c="$color11">Danger zone</Text>
+  <Button>Delete account</Button>
+</Box>
+```
+
+Everything below inherits, so hover, press, border and focus stay coherent.
+
+## 5. Load the fonts
+
+Registering `fonts: { body: "Inter" }` names a family; it does not install one. On
+native, load the file:
+
+```tsx
+import { useFonts } from "expo-font";
+
+const [loaded] = useFonts({ Inter: require("./assets/Inter.ttf") });
+if (!loaded) return null;
+```
+
+On the web, use `next/font` or a `@font-face`. Names must match what you registered.
+
+## 6. Semantic aliases of your own
+
+For product concepts, map to the ramp once rather than repeating a choice:
+
+```tsx title="theme.ts"
+export const semantic = {
+  overdue: "$red10",
+  paid: "$green10",
+  draft: "$color9",
+} as const;
+```
+
+```tsx
+<Badge theme="red">{overdueCount} overdue</Badge>
+```
+
+Prefer `theme` where a whole component should recolour, and a token where a single
+value should.
+
+## 7. Check both schemes and both platforms
+
+The usual failures: a hex that disappears in dark mode, a shadow that vanishes on a
+dark background, a brand colour whose 9-step fill has poor contrast with white
+text. All three are visible in ten seconds with the scheme toggle, and invisible in
+a code review.
+
+## Reference
+
+- [Theme builder](/docs/foundations/theme-builder) — every `createTheme` option
+- [Color & themes](/docs/foundations/color-and-themes) — what the ramp positions mean
+- [Tokens](/docs/foundations/tokens) — the scales
+- [Dark mode](/docs/foundations/dark-mode) — scheme handling and persistence

@@ -1,0 +1,95 @@
+export const meta = {
+  title: "Performance",
+  description:
+    "Bundle size, list virtualisation, animation on the UI thread, and the resource limits that actually bite.",
+};
+
+# Performance
+
+## Bundle size
+
+Three things dominate, in order:
+
+**1. Generated barrels.** `@knitui/icons` re-exports ~6,100 modules and
+`@knitui/emoji` ~3,800. Because the kit src-ships, your bundler compiles what it
+reaches. On Next, `withKnitui` sets `optimizePackageImports`; elsewhere import the
+glyph directly:
+
+```tsx
+import { IconCheck } from "@knitui/icons/IconCheck";
+```
+
+**2. Satellite kits you do not need.** Skia (`@knitui/graphics`), MapLibre
+(`@knitui/map`) and the media players are heavy. Load them behind an interaction
+or a route:
+
+```tsx
+const Map = dynamic(() => import("./Map"), { ssr: false });
+```
+
+**3. `.styleable()` frames.** Most kit components keep a runtime wrapper, so the
+web output is not pure static CSS. That is the composability trade-off — budget for
+it rather than hoping extraction removes it.
+
+## Long lists
+
+Past a few hundred rows, use
+[`VirtualList`](/docs/components/data-display/virtual-list) rather than mapping into
+a `ScrollArea`. It windows variable-height rows and keeps a mounted pool (an LRU)
+so scrolling back does not remount, with caches keyed by item identity rather than
+index.
+
+```tsx
+<VirtualList data={items} keyExtractor={(item) => item.id} renderItem={renderRow} />
+```
+
+Two rules that matter more than the component choice:
+
+- **Stable keys.** Index keys defeat the pool and remount everything on insert.
+- **Memoised rows.** A row that re-renders on every parent render undoes the
+  windowing.
+
+## Carousels
+
+`@knitui/carousel` mounts a live window plus a warm pool rather than every slide.
+If slides come back blank while flinging, the window is too small for the velocity —
+raise the overscan rather than mounting everything.
+
+## Animation
+
+Animate on the UI thread. In practice that means Reanimated shared values on
+native and CSS/rAF on the web, which is what the kit's motion layer already does —
+so prefer its `animation` props and `usePressScale` over hand-rolling with React
+state. A `setState` per frame is a dropped frame per frame.
+
+<Callout kind="platform">
+  A looping animation on native needs a real `Animated` host element. Use the
+  hook's `asLoopHost`; spreading loop styles onto a Tamagui frame silently does
+  nothing.
+</Callout>
+
+## Resource limits
+
+| Limit | Consequence |
+| --- | --- |
+| ~16 live WebGL contexts per page | Stack more Skia canvases and they fail to attach a surface |
+| One shared `<audio>`/`<video>` per medium | Two players on screen contend; only the active one works |
+| Android list scrolling | Mount cost per row is far higher than on desktop web |
+
+Mount one canvas or player at a time, and unmount when it scrolls away — the docs
+site does both with an `IntersectionObserver`.
+
+## Measuring, not guessing
+
+- **Native:** a real device fling plus `adb shell dumpsys gfxinfo` for the jank
+  percentage. Simulator numbers do not transfer.
+- **Web:** Lighthouse per route, and a bundle budget in CI. This site enforces a
+  per-route JS budget so a regression fails the build instead of being noticed
+  later.
+
+## Startup
+
+Native startup is dominated by module evaluation. `optimizePackageImports`-style
+rewriting helps on the web; on native, the equivalent is not importing a barrel in
+the first place. Import from the specific path in library code and in any module
+that loads at startup.

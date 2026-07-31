@@ -1,0 +1,67 @@
+export const meta = {
+  title: "Elevation",
+  description:
+    "One shadow ladder, emitted as cross-platform boxShadow, theme-aware through $dropShadowColor.",
+};
+
+# Elevation
+
+Every component inherits a `shadow` prop from `Box`, taking one step of a shared
+ladder. No component has its own shadow definition.
+
+<Example id="components/inputs/button" story="Shadows" />
+
+```tsx
+<Card shadow="md">Raised surface</Card>
+<Box shadow="xl" p="$lg">Floating panel</Box>
+```
+
+Steps: `xxs`, `xs`, `sm`, `md`, `lg`, `xl`, `xxl`. Nothing has a shadow unless you
+ask for one — elevation is opt-in, so a flat design stays flat.
+
+## How it is emitted
+
+Shadows are written as a cross-platform `boxShadow` at source rather than as the
+old React Native `shadowOffset`/`shadowRadius`/`elevation` trio. That means one
+declaration renders on iOS, Android and the web, and the values do not drift
+between platforms.
+
+The colour comes from a theme token, so shadows darken correctly in dark mode
+instead of staying black-on-black.
+
+<Callout kind="warning">
+  That token is `$dropShadowColor`. It was originally called `shadowColor`, which
+  collides with React Native's reserved style prop and produced washed-out shadows
+  on iOS — an own-prop named like a style prop is a trap worth remembering if you
+  build your own frames.
+</Callout>
+
+## Choosing a step
+
+| Step | Use for |
+| --- | --- |
+| `xxs` – `xs` | a hairline lift; cards in a dense list |
+| `sm` – `md` | resting cards, menus, popovers |
+| `lg` – `xl` | modals, drawers, anything above an overlay |
+| `xxl` | dragged or lifted-to-cursor surfaces |
+
+Pair elevation with the [zIndex scale](/docs/foundations/tokens#z-index): a thing
+that sits above another should look like it.
+
+## In your own components
+
+```tsx
+import { styled } from "@knitui/core";
+import { Box } from "@knitui/components";
+
+const Panel = styled(Box, {
+  name: "Panel",
+  variants: {
+    raised: {
+      true: { shadow: "md" },
+    },
+  } as const,
+});
+```
+
+Because the ladder is a variant on `Box`, extending a frame keeps it.

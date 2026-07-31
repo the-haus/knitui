@@ -1,0 +1,66 @@
+export const meta = {
+  title: "Vite",
+  description: "Running Knit UI in a Vite + react-native-web app.",
+};
+
+# Vite
+
+## Install
+
+```bash
+npm install @knitui/core @knitui/components @knitui/plugins \
+  react-native-web react-native-reanimated react-native-worklets
+```
+
+## Configure
+
+```ts title="vite.config.ts"
+import { knitui } from "@knitui/plugins/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [react(), knitui()],
+});
+```
+
+`knitui()` sets the pieces Vite does not do on its own:
+
+- `process.env.TAMAGUI_TARGET = "web"` and `__DEV__`;
+- react-native platform extensions with `.web.*` preferred, so packages like
+  `expo-image` resolve their web build instead of Flow-typed native internals;
+- the `react-native` → `react-native-web` alias for the bare imports that remain;
+- dep-optimizer entries for the packages that ship untranspiled TypeScript.
+
+## Mount
+
+```tsx title="src/main.tsx"
+import { Provider } from "@knitui/core";
+import { createRoot } from "react-dom/client";
+
+import { App } from "./App";
+
+createRoot(document.getElementById("root")!).render(
+  <Provider defaultColorScheme="system">
+    <App />
+  </Provider>,
+);
+```
+
+## Reanimated on the web
+
+reanimated 4's web entry pulls a few CommonJS dependencies that need interop. If
+you see `"no export default"` from inside reanimated, add them to the optimizer:
+
+```ts
+optimizeDeps: {
+  include: ["react-native-reanimated", "react-native-worklets"],
+}
+```
+
+## Storybook
+
+The same configuration works under `@storybook/react-vite` — this repo's own
+per-package Storybooks are set up exactly this way, so
+[`.storybook/main.ts` in `@knitui/components`](https://github.com/the-haus/knitui/blob/main/packages/components/.storybook/main.ts)
+is a working reference.

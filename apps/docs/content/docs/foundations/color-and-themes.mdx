@@ -1,0 +1,112 @@
+export const meta = {
+  title: "Color & themes",
+  description:
+    "The 12-step palette ramps, semantic tokens, the theme prop, and how light and dark are two views of one system.",
+};
+
+# Color & themes
+
+## A theme is a ramp
+
+Colour in the kit is not a palette of names, it is a **12-step ramp** addressed by
+position. `$color1` is the quietest surface, `$color12` the highest-contrast text.
+Every component reads positions, never hex values, which is what lets one prop
+recolour a whole subtree.
+
+| Steps | Role |
+| --- | --- |
+| 1–2 | app background, subtle surfaces |
+| 3–5 | component backgrounds: rest, hover, press |
+| 6–8 | borders: rest, hover, focus |
+| 9–10 | solid accent fill, and its hover |
+| 11–12 | accent text on a tint, and high-contrast text |
+
+The ramp shape is Radix-derived, which is why a component built against positions
+looks right in both light and dark without per-scheme code.
+
+## Semantic tokens
+
+On top of the ramp sit aliases that say what a colour is *for*:
+
+```tsx
+<Box bg="$background" borderColor="$borderColor" borderWidth={1}>
+  <Text c="$color">Body text</Text>
+  <Text c="$color11">Secondary text</Text>
+</Box>
+```
+
+`$background`, `$backgroundHover`, `$backgroundPress`, `$backgroundFocus`,
+`$borderColor`, `$borderColorHover`, `$borderColorFocus`, `$color`,
+`$placeholderColor`, and the elevation token `$dropShadowColor`.
+
+Prefer an alias when one exists: it survives a redesign that renumbers the ramp.
+
+<Callout kind="warning">
+  The elevation colour token is `$dropShadowColor`, **not** `shadowColor` — that
+  name is reserved by React Native's style system, and using it produced
+  washed-out shadows on iOS.
+</Callout>
+
+## The `theme` prop
+
+```tsx
+<Button theme="red">Delete</Button>
+```
+
+`theme` swaps which ramp `$color*` resolves to, for that component and everything
+below it. Built-in accents: `blue`, `red`, `green`, `yellow`, `pink`, `gray`.
+
+Because it nests, you can theme a region:
+
+```tsx
+<Box theme="red" p="$md" gap="$sm">
+  <Text c="$color11">Danger zone</Text>
+  <Button>Delete account</Button>
+</Box>
+```
+
+## Light and dark
+
+One system, two resolutions. `Provider` owns the choice:
+
+```tsx
+<Provider defaultColorScheme="system">   // follow the OS
+<Provider defaultColorScheme="dark">     // start dark
+<Provider forceColorScheme="light">      // pin it
+```
+
+Read and change it anywhere:
+
+```tsx
+import { useColorScheme } from "@knitui/core";
+
+const { colorScheme, setColorScheme, toggleColorScheme } = useColorScheme();
+```
+
+See [Dark mode](/docs/foundations/dark-mode) for the details, including what to do
+about a flash of the wrong theme on a static site.
+
+## Your brand
+
+`createTheme` takes a brand hex (or a Radix colour name) and derives the light and
+dark ramps for you:
+
+```tsx
+import { createTheme, Provider } from "@knitui/core";
+
+const config = createTheme({
+  brand: "#7C3AED",
+  accents: { teal: "#14b8a6" },
+  neutral: "#71717a",
+});
+
+<Provider config={config} defaultColorScheme="system">
+```
+
+Full options on [Theme builder](/docs/foundations/theme-builder).
+
+## Raw colours
+
+There are three raw tokens — `$white`, `$black`, `$transparent` — and they mean
+exactly what they say in every theme. Everything else should come from the ramp,
+because a hard-coded hex is the one thing dark mode cannot fix.

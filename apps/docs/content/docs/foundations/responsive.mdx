@@ -1,0 +1,91 @@
+export const meta = {
+  title: "Responsive",
+  description: "Breakpoints, breakpoint props, useMedia, and SSR-safe media queries with @knitui/mediaquery.",
+};
+
+# Responsive
+
+## Breakpoints
+
+<BreakpointTable />
+
+They come from the config, so [`createTheme({ breakpoints })`](/docs/foundations/theme-builder)
+rebuilds the media queries and every consumer follows.
+
+## Breakpoint props
+
+Any style prop accepts an object keyed by breakpoint:
+
+```tsx
+<Box p={{ xxs: "$sm", md: "$lg" }} flexDirection={{ xxs: "column", sm: "row" }} />
+<SimpleGrid cols={{ xxs: 1, sm: 2, lg: 4 }} gap="$md" />
+```
+
+Values are min-width based and cascade upwards, so `xxs` is your base.
+
+## In JavaScript
+
+```tsx
+import { useMedia } from "@knitui/core";
+
+function Nav() {
+  const media = useMedia();
+  return media.sm ? <Sidebar /> : <Drawer />;
+}
+```
+
+`useMedia` is reactive on both platforms — on native it tracks the window
+dimensions, on the web it uses `matchMedia`.
+
+<Callout kind="warning">
+  Rendering *different components* per breakpoint means remounting when the
+  viewport crosses it, which loses state. Prefer styling one tree responsively
+  and reserve component swaps for genuinely different UIs, like nav.
+</Callout>
+
+## SSR-safe queries
+
+Server rendering has no viewport, so a naive `matchMedia` read produces a
+hydration mismatch. [`@knitui/mediaquery`](/docs/mediaquery/playground) exists for
+that case:
+
+```tsx
+import { MediaQueryProvider, useMediaQuery } from "@knitui/mediaquery";
+
+// seed from the request's user agent so the first paint is close
+<MediaQueryProvider userAgent={headers().get("user-agent")}>
+```
+
+```tsx
+const isWide = useMediaQuery("(min-width: 992px)");
+```
+
+On native it parses the query and answers from `Dimensions`, so the same call
+works on device.
+
+## Viewport and element size
+
+```tsx
+import { useElementSize, useViewportSize } from "@knitui/hooks";
+```
+
+- [`useViewportSize`](/docs/hooks/use-viewport-size) — window dimensions, both
+  platforms.
+- [`useElementSize`](/docs/hooks/use-element-size) — an element's measured box.
+
+<Callout kind="platform">
+  On the web `useElementSize` returns a **callback ref**, not a one-shot effect
+  observer — attach it to the element rather than reading a ref in an effect, or a
+  node that mounts later never gets measured.
+</Callout>
+
+## Orientation and platform
+
+```tsx
+import { useOs } from "@knitui/hooks";
+
+const os = useOs(); // "ios" | "android" | "macos" | "windows" | "linux" | "web" | undefined
+```
+
+Use it for genuine platform affordances (keyboard hints, store links), not for
+layout — layout should follow size, not OS.

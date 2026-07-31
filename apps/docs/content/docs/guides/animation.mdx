@@ -1,0 +1,115 @@
+export const meta = {
+  title: "Animation",
+  description: "Reanimated 4 on the UI thread, the web's CSS path, and the rules that keep both working.",
+};
+
+# Animation
+
+## Use the kit's motion layer first
+
+Most animation you need is already tokenised. Overlays take an `animation` preset,
+controls have press feedback, height transitions have a component:
+
+```tsx
+<Popover animation="fade" />
+<Transition mounted={open} transition="slide-up">…</Transition>
+<Collapse in={open}>…</Collapse>
+```
+
+See [Motion](/docs/foundations/motion) for the tokens and presets.
+
+## When you animate yourself
+
+`@knitui/core` re-exports what you need, so you never import Reanimated directly:
+
+```tsx
+import { useSharedValue, withSpring, withTiming, useAnimatedStyle } from "@knitui/core";
+```
+
+```tsx
+const offset = useSharedValue(0);
+const style = useAnimatedStyle(() => ({ transform: [{ translateX: offset.value }] }));
+
+// later, off the render path:
+offset.value = withSpring(120);
+```
+
+## The rules
+
+**1. Values live in shared values, not React state.** A `setState` per frame is a
+dropped frame per frame. React state is for *what* is animating, shared values are
+for *how far*.
+
+**2. Never put an object with methods in a shared value.** Keep data in shared
+values and derive the object inside `useDerivedValue`. This matters most with Skia:
+
+```tsx
+// works on native, breaks on web
+const path = useSharedValue(Skia.Path.Make());
+
+// correct on both
+const points = useSharedValue<number[]>([]);
+const path = useDerivedValue(() => buildPath(points.value), [points]);
+```
+
+**3. Listening to a shared value is platform-split.**
+
+<Callout kind="platform">
+  Reanimated 4 throws if you call `SharedValue.addListener` from JS on native. Use
+  `useAnimatedReaction` there and `addListener` on the web — the kit's
+  `useSharedValueListener` is exactly that split, and is the thing to copy.
+</Callout>
+
+**4. Loops need a Reanimated host on native.** A looping style must land on an
+`Animated` component; a Tamagui frame is not one. `useLoopingAnimation` returns an
+`asLoopHost` you spread onto the right element.
+
+**5. Respect reduced motion.**
+
+```tsx
+import { useReducedMotion } from "@knitui/hooks";
+
+const reduced = useReducedMotion();
+offset.value = reduced ? 120 : withSpring(120);
+```
+
+Collapse the duration rather than skipping the animation, so nothing is left
+mid-transition.
+
+## Gestures
+
+```tsx
+import { Gesture, GestureDetector } from "@knitui/core";
+
+const pan = Gesture.Pan().onChange((event) => {
+  offset.value += event.changeX;
+});
+
+<GestureDetector gesture={pan}>
+  <Animated.View style={style} />
+</GestureDetector>;
+```
+
+`Provider` already mounts `GestureHandlerRootView`, so there is nothing else to
+wire.
+
+For drag maths, use `pageX`/`pageY` minus a measured origin.
+`locationX`/`locationY` are relative to whichever view received the touch, so the
+value jumps the moment the finger crosses a child boundary — visible as a thumb
+that flickers.
+
+## Web specifics
+
+On the web the same code paths compile to CSS transitions and
+`requestAnimationFrame` painters. Two consequences worth knowing: an
+`useAnimatedReaction` that fires on native may never fire on the web (route the
+change through a rAF painter instead), and CSS transforms need units — a
+`perspective` has to be `px`.
+
+## Debugging
+
+- A style that never changes: the value is being written during render, not after.
+- Movement on native but not the web: a worklet-only path — check for an
+  `useAnimatedReaction` doing the work.
+- Jank on Android: measure with `adb shell dumpsys gfxinfo`, not by eye, and check
+  whether anything is calling `setState` per frame.

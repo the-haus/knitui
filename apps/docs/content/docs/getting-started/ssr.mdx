@@ -1,0 +1,97 @@
+export const meta = {
+  title: "Server rendering",
+  description:
+    "How to server-render Knit UI in Next.js: the style flush, what hydrates, and which components must stay client-only.",
+};
+
+# Server rendering
+
+Knit UI server-renders. This documentation site is a static export of Next.js
+with the kit rendering the examples, so the pattern below is the one it uses.
+
+## The style flush
+
+react-native-web and Tamagui generate styles **while rendering**. On the server
+those styles must be written into the initial HTML, or the page ships unstyled
+and React reports a hydration mismatch. `@knitui/plugins/next` does that:
+
+```tsx title="app/layout.tsx"
+import { NextTamaguiProvider } from "@knitui/plugins/next";
+import { Provider } from "@knitui/core";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <NextTamaguiProvider>
+          <Provider defaultColorScheme="system">{children}</Provider>
+        </NextTamaguiProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+Two different providers, two different jobs:
+
+- **`NextTamaguiProvider`** — build/SSR concern. Flushes
+  `StyleSheet.getSheet()` (react-native-web's atomic CSS) and `config.getCSS()`
+  (theme and token variables) into the server HTML via `useServerInsertedHTML`.
+- **`Provider`** — runtime concern. Theming, color scheme, gestures, portal host.
+
+## Client components
+
+The kit's components use context and hooks, so they are **not** React Server
+Components. Any file that renders them needs `"use client"`:
+
+```tsx
+"use client";
+
+import { Button } from "@knitui/components";
+
+export function SubmitButton() {
+  return <Button>Save</Button>;
+}
+```
+
+This does not cost you server-rendered HTML: a client component still renders on
+the server for the initial payload — it just hydrates afterwards. Put the
+boundary as high as is convenient (one `Providers` file) rather than sprinkling
+`"use client"` through the tree.
+
+## Components that need `ssr: false`
+
+A handful reach for `document` or a layout measurement as they mount, and cannot
+prerender. Load those with `next/dynamic`:
+
+```tsx
+const Charts = dynamic(() => import("./Charts"), { ssr: false });
+```
+
+That applies to anything built on Skia (`@knitui/graphics`), MapLibre
+(`@knitui/map`), and the media players (`@knitui/media`) — all of which need a
+real canvas or element — plus any surface that measures itself before it can size
+(`ScrollArea` with autosized content, `VirtualList`).
+
+<Callout kind="platform">
+  `Portal`, `Modal`, `Drawer`, `Tooltip` and `Popover` render into the portal host
+  mounted by `Provider`. They server-render fine while closed; their content only
+  exists once opened, which is client-side by definition.
+</Callout>
+
+## Static export
+
+The kit works with `output: "export"`. Nothing in it requires a Node runtime at
+request time — the CSS is inlined at build, and every interactive part is
+client-side. This site is built that way.
+
+## Checklist
+
+1. `withKnitui` in `next.config.mjs`, and build with `--webpack`.
+2. Workspace packages and RN-flavoured deps listed in `transpilePackages`.
+3. `NextTamaguiProvider` in the root layout, wrapping `Provider`.
+4. `"use client"` on files that render kit components.
+5. `ssr: false` for Skia / map / media surfaces.
+
+If you see unstyled content for a frame before it snaps into place, step 3 is
+missing or is inside a client component that renders below the flush.

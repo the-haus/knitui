@@ -1,0 +1,85 @@
+export const meta = {
+  title: "Gradients",
+  description: 'variant="gradient" plus the gradient prop — one API, CSS on the web and SVG on native.',
+};
+
+# Gradients
+
+Gradients are a variant, not a separate component. Set `variant="gradient"` and
+supply `gradient`:
+
+```tsx
+<Button variant="gradient" gradient={{ from: "#f97316", to: "#ec4899", deg: 45 }}>
+  Upgrade
+</Button>
+```
+
+<Example id="components/inputs/button" story="Gradient" />
+
+## The value
+
+Two shapes are accepted. Two stops:
+
+```tsx
+gradient={{ from: "#0ea5e9", to: "#22d3ee", deg: 45 }}
+```
+
+…or many:
+
+```tsx
+gradient={{
+  deg: 90,
+  stops: [
+    { color: "#f97316", offset: 0 },
+    { color: "#22c55e", offset: 50 },
+    { color: "#8b5cf6", offset: 100 },
+  ],
+}}
+```
+
+`deg` is degrees clockwise from a left-to-right sweep. Offsets are percentages.
+
+<Example id="components/inputs/button" story="GradientAngles" />
+
+## Which components take one
+
+Anything whose variant ladder includes `gradient`: `Button`, `ActionIcon`,
+`Badge`, `Alert`, `Avatar`, `Pill`, `ThemeIcon`, `Chip`. Their pages list it in the
+variant table.
+
+For an arbitrary surface, use the hook directly:
+
+```tsx
+import { useGradient } from "@knitui/components";
+```
+
+## Two implementations
+
+<Callout kind="platform">
+  On the web a gradient is a `backgroundImage`. On native there is no such style, so
+  the kit renders an absolutely-positioned `react-native-svg` `LinearGradient`
+  behind the content. Same prop, same result — but on native the gradient is a real
+  child element, which matters if you are measuring or clipping.
+</Callout>
+
+## Text on a gradient
+
+Foreground colour comes from the variant ladder's contrast step, so light text on
+a dark sweep is handled. If your gradient runs light-to-dark, check both ends —
+contrast is computed once, not per pixel.
+
+<Example id="components/inputs/button" story="GradientPresets" />
+
+## Theming
+
+A gradient is an explicit colour, so it does **not** follow the `theme` prop. If
+you want brand gradients that survive a re-theme, define them once in your app:
+
+```tsx
+export const gradients = {
+  brand: { from: "#6366f1", to: "#ec4899", deg: 45 },
+  success: { from: "#22c55e", to: "#15803d", deg: 45 },
+} as const;
+```
+
+…and reference them by name. That keeps the one place to change them.

@@ -1,0 +1,99 @@
+export const meta = {
+  title: "Next.js",
+  description: "Running Knit UI in a Next.js App Router app, including the compiler, SSR flush and static export.",
+};
+
+# Next.js
+
+## Install
+
+```bash
+npm install @knitui/core @knitui/components @knitui/plugins \
+  react-native-web react-native-reanimated react-native-teleport
+```
+
+## Configure
+
+```js title="next.config.mjs"
+import { withKnitui } from "@knitui/plugins/next-plugin";
+
+export default withKnitui({
+  reactStrictMode: true,
+  transpilePackages: [
+    "react-native-web",
+    "react-native-reanimated",
+    "react-native-gesture-handler",
+    "@knitui/core",
+    "@knitui/components",
+    // …plus any satellite package you use
+  ],
+});
+```
+
+```json title="package.json"
+{
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack"
+  }
+}
+```
+
+<Callout kind="warning">
+  The `--webpack` flag is not optional. The Tamagui compiler is a webpack plugin
+  and Next 16 defaults to Turbopack, which skips it — you would get correct
+  rendering but no build-time style extraction.
+</Callout>
+
+`transpilePackages` is required because the kit source-ships; Next has to compile
+its TypeScript rather than consume a prebuilt bundle.
+
+## Root layout
+
+```tsx title="app/layout.tsx"
+import { NextTamaguiProvider } from "@knitui/plugins/next";
+
+import { Providers } from "./providers";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <NextTamaguiProvider>
+          <Providers>{children}</Providers>
+        </NextTamaguiProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+```tsx title="app/providers.tsx"
+"use client";
+
+import { Provider } from "@knitui/core";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <Provider defaultColorScheme="system">{children}</Provider>;
+}
+```
+
+The split matters: `NextTamaguiProvider` flushes generated CSS into the server
+HTML, `Provider` is the runtime context. See
+[Server rendering](/docs/getting-started/ssr) for what hydrates and what has to
+stay client-only.
+
+## Static export
+
+`output: "export"` works — nothing in the kit needs a request-time server. This
+documentation site is a static export with the kit rendering every example.
+
+## Pitfalls
+
+- **A component throws about `document`.** Load it with
+  `dynamic(..., { ssr: false })`. Skia, MapLibre and media surfaces always need
+  this.
+- **Cold start is slow, bundle is huge.** You are pulling a generated barrel;
+  `withKnitui` sets `optimizePackageImports`, but check you have not added
+  `@knitui/icons` to `transpilePackages` without it.
+- **Styles flash in late.** `NextTamaguiProvider` is missing or too deep.

@@ -1,0 +1,91 @@
+export const meta = {
+  title: "Migrating from Mantine",
+  description:
+    "Knit UI's API is deliberately Mantine-shaped. Here is what maps directly, what changed, and why.",
+};
+
+# Migrating from Mantine
+
+The kit's API lineage is Mantine: `size`, `variant`, `styles`, compound
+components, the same component names. That is deliberate — it is a good API, and it
+makes this migration mostly mechanical.
+
+What changes is everything downstream of "this runs on native too".
+
+## Maps directly
+
+| Mantine | Knit UI |
+| --- | --- |
+| `<Button variant="light" size="lg">` | identical |
+| `<Group>`, `<Stack>`, `<Grid>`, `<SimpleGrid>`, `<Container>`, `<Center>` | identical names and intent |
+| `<TextInput label description error>` | identical field contract |
+| `<Menu><Menu.Target/><Menu.Dropdown/></Menu>` | identical compound shape |
+| `styles={{ label: {...} }}` | identical idea, typed slot keys |
+| `useDisclosure`, `useUncontrolled`, `useListState`, `useClipboard`, `usePagination` | same hooks in `@knitui/hooks` |
+| `<Divider>` | `Separator` (alias `Divider` exists) |
+| `<Space>` | `Spacer` (alias `Space` exists) |
+
+## Changed, on purpose
+
+**No `color` prop — use `theme`.**
+
+```tsx
+// Mantine
+<Button color="red">Delete</Button>
+
+// Knit UI
+<Button theme="red">Delete</Button>
+```
+
+`theme` swaps the whole ramp for the subtree, so text, border, hover, press and
+focus recolour coherently — and children inherit it. A `color` prop can only tint
+one surface.
+
+**Styles are props, not CSS objects.** Slot styles are spread onto the styled part,
+so they take component props and token values, including pseudo-state props:
+
+```tsx
+<Button styles={{ label: { fontWeight: "700" }, left: { opacity: 0.6 } }} />
+<Box hoverStyle={{ bg: "$color3" }} />   // not `:hover` in a css object
+```
+
+**Tokens instead of theme-function callbacks.** No `sx={(theme) => …}`; use token
+props directly (`p="$md"`, `c="$color11"`), which work identically on native.
+
+**`onPress`, not `onClick`.** `onClick` is web-only. The kit standardises on
+`onPress` everywhere; on the web it lands on a real `<button>`.
+
+**`onChangeText` for text inputs.** React Native's signature — you get the string,
+not an event.
+
+**Flex defaults are React Native's.** `flexDirection` is `column` and
+`flexShrink` is `0`, on every platform. This is the change most likely to surprise
+you in a layout port. See [Layout](/docs/foundations/layout).
+
+**Sizes come from one table.** Mantine sizes each component independently; here
+`size` reads [`controlMetrics`](/docs/foundations/sizing), so a `size="lg"` button
+and a `size="lg"` input are the same height by construction. Some absolute values
+therefore differ from Mantine's.
+
+**No CSS modules, no PostCSS, no `@mantine/core/styles.css`.** Styling is the
+Tamagui compiler plus tokens; there is no stylesheet to import.
+
+## Not (yet) present
+
+`@mantine/form`, `@mantine/notifications` as a global store, `@mantine/spotlight`,
+`@mantine/tiptap`, `@mantine/charts`. `Modals` has a ported manager; forms are
+deliberately left to React Hook Form or TanStack Form — see
+[Forms](/docs/guides/forms).
+
+## Suggested order
+
+1. Install and wrap the app in one `Provider`; delete the Mantine provider and its
+   stylesheet import.
+2. Codemod the mechanical renames: `onClick` → `onPress`, `color=` → `theme=`,
+   `onChange` → `onChangeText` on text inputs.
+3. Fix layout: audit every `flexDirection`/`display: flex` assumption.
+4. Replace `sx`/`className` with token props and `styles` slots.
+5. Re-check spacing — the scales are close but not identical.
+6. Then, and only then, run it on a device.
+
+Steps 3 and 6 are where the real work is. Everything before them is find-and-replace.

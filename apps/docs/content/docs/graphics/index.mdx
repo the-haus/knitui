@@ -1,0 +1,98 @@
+export const meta = {
+  title: "Graphics",
+  description:
+    "@knitui/graphics — Skia canvases, effects, shadows and audio visualizers on native and web.",
+};
+
+# Graphics
+
+`@knitui/graphics` is the Skia layer: a canvas, a few effect views, and the
+data-driven audio visualizer — plus a re-export of Skia itself so you do not need a
+second import path.
+
+```bash
+npx expo install @knitui/graphics @shopify/react-native-skia
+```
+
+```tsx
+import { GraphicsProvider, GraphicCanvas } from "@knitui/graphics";
+```
+
+## Web needs the runtime loaded first
+
+<Callout kind="warning">
+  Skia's web build captures `global.CanvasKit` **when the module evaluates**, so the
+  WASM runtime must be in place before anything imports the Skia barrel:
+
+  ```tsx
+  import { loadGraphicsRuntime } from "@knitui/graphics/runtime";
+
+  await loadGraphicsRuntime();               // no-op on native
+  const { GraphicCanvas } = await import("@knitui/graphics");
+  ```
+
+  Get the order wrong and canvases render blank with no error.
+</Callout>
+
+## What is in it
+
+<CardGrid>
+  <CardLink href="/docs/graphics/core/graphics-provider" title="GraphicsProvider">
+    Sets up the Skia context for the tree.
+  </CardLink>
+  <CardLink href="/docs/graphics/effects/effect-view" title="EffectView">
+    Shader-backed effects over content.
+  </CardLink>
+  <CardLink href="/docs/graphics/effects/shadow-view" title="ShadowView">
+    Skia-drawn shadows beyond what the style system can express.
+  </CardLink>
+  <CardLink href="/docs/graphics/audio-visualizer" title="AudioVisualizer">
+    Data-driven spectrum rendering — pair with `@knitui/media`'s DSP.
+  </CardLink>
+  <CardLink href="/docs/graphics/audio-mesh" title="AudioMesh">
+    A mesh visualisation driven by the same data.
+  </CardLink>
+</CardGrid>
+
+The package is deliberately small: it does **not** wrap Skia's drawing API. Use Skia
+directly through the re-export and let this package handle setup, platform loading
+and the two or three composites worth sharing.
+
+## The WebGL context budget
+
+<Callout kind="platform">
+  Every canvas holds a live WebGL context and browsers cap them at roughly 16. Past
+  that, CanvasKit fails to attach a surface ("failed to attach a stencil buffer") and
+  canvases go blank — including ones that worked a moment ago.
+
+  Render one canvas at a time on a gallery-style page, and unmount canvases that
+  scroll out of view. The examples on these pages do exactly that.
+</Callout>
+
+## Animating Skia correctly
+
+Keep **data** in shared values and build Skia objects inside `useDerivedValue`:
+
+```tsx
+// breaks on web
+const path = useSharedValue(Skia.Path.Make());
+
+// correct on both platforms
+const points = useSharedValue<number[]>([]);
+const path = useDerivedValue(() => buildPath(points.value), [points]);
+```
+
+An `SkPath` in a shared value survives on native and fails on the web, which makes
+it a nasty bug to find. See [Animation](/docs/guides/animation).
+
+## Audio visualisation
+
+The visualizer takes band data, not audio — the DSP lives in
+[`@knitui/media/dsp`](/docs/media). That split is deliberate: analysis is pure
+TypeScript and testable, drawing is Skia and platform-bound.
+
+```tsx
+const { bands } = useAudioSpectrum({ bandCount: 32 });
+
+<AudioVisualizer bands={bands} />;
+```

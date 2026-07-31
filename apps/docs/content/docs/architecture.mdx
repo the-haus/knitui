@@ -1,0 +1,89 @@
+export const meta = {
+  title: "Architecture",
+  description:
+    "How the packages fit together, what src-shipping means for your bundler, and where the platform splits live.",
+};
+
+# Architecture
+
+## The layers
+
+```
+your app
+  ├── @knitui/components      what you render      (100+ components)
+  ├── @knitui/core            how it looks         (config, tokens, themes, Provider, styled)
+  ├── @knitui/hooks           platform-aware hooks
+  ├── @knitui/icons           generated glyphs
+  └── @knitui/plugins         build integration    (babel · metro · next · vite · webpack)
+        └── Tamagui + react-native / react-native-web
+```
+
+Satellite kits — `dates`, `carousel`, `map`, `media`, `graphics`, `sheet`,
+`mediaquery`, `emoji` — sit beside `components` and depend on `core`. Install only
+what you use.
+
+<PackageTable />
+
+## src-shipping
+
+The kit's `main` points at `./src/index.ts`, not a built bundle. Two reasons:
+
+1. **Platform resolution.** `Input.tsx` and `Input.native.tsx` both exist; your
+   bundler picks. A prebuilt bundle would have had to pick for you.
+2. **Extraction.** The Tamagui compiler needs real source to flatten `styled()`
+   calls into atomic CSS.
+
+The cost is that your bundler compiles the kit, which is why
+[`@knitui/plugins`](/docs/getting-started/bundler-setup) exists and why
+`transpilePackages` is required on Next.
+
+Types are the exception: `types` resolves to built declarations (`lib/typescript`),
+so a consumer's `tsc` does not have to re-check the kit's source.
+
+## Platform splits
+
+Three conventions, in increasing separation:
+
+| Pattern | Means |
+| --- | --- |
+| One `.tsx` | Identical on all platforms (most components) |
+| One `.tsx` with `isWeb` branches | Small divergence — a `position: fixed` that native has no equivalent for |
+| `.tsx` + `.native.tsx` | Genuinely different implementations |
+| `+ .shared.ts` | Both platforms delegate to one logic module |
+
+`.shared` is the interesting one: it is how a scroll engine, a snap engine or a
+DSP pipeline stays a single pure-TypeScript implementation while the thin platform
+files wire it to Reanimated worklets or to `requestAnimationFrame`.
+
+Components with a real native split: `FileButton`, `Input`, `NativeSelect`,
+`Popover`, `Modal`, `ScrollArea`, `Transition` — plus the drag primitives. Each
+one's page says so, and links both files.
+
+## Where things run
+
+| Concern | Native | Web |
+| --- | --- | --- |
+| Styling | Tamagui runtime | atomic CSS + runtime for `.styleable()` frames |
+| Animation | Reanimated worklets (UI thread) | CSS transitions / rAF painters |
+| Gestures | react-native-gesture-handler | RNGH's web build + pointer events |
+| Portals | react-native-teleport | teleport into the host in `Provider` |
+| Text | native text nodes | react-native-web text |
+
+## The rendering surfaces
+
+The kit is exercised by three surfaces that all read the same story files, which is
+how they stay honest:
+
+- **Storybook** — per-package, plus an aggregate build; the contributor surface.
+- **The device gallery** (`@knitui/demo`) — the same stories rendered in an Expo app
+  and a Next app, so iOS/Android parity is checked continuously.
+- **This site** — the same stories again, mounted live in prose.
+
+They share one CSF resolver (`@knitui/story-runtime`), so a story cannot look right
+in one and wrong in another.
+
+## Release model
+
+Changesets, published to npm under the `@knitui` scope. Packages version
+independently; `core` and `components` move together in practice. See
+[Contributing](/docs/contributing).

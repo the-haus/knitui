@@ -1,0 +1,16 @@
+export const meta = {
+  title: "VirtualList",
+  description: "VirtualList is a fast, windowed, variable-height list that renders only the rows near the viewport (plus a render-ahead buffer). One source runs on web and React Native by riding ScrollArea and driving windowing off `onScrollPositionChange`; row heights are measured via `onLayout` and fed to a per-type running-average size model, so no exact `estimatedItemSize` is required. Mirrors the familiar FlatList / FlashList surface (`data`, `renderItem`, `keyExtractor`, `getItemType`, `onEndReached`, `ListHeaderComponent`/`ListFooterComponent`/`ListEmptyComponent`/`ItemSeparatorComponent`) plus an imperative handle (`scrollToIndex` / `scrollToOffset` / `scrollToEnd`). Set `keepMounted` when rows own state that must survive scrolling out of view — a bounded LRU warm pool (`keepMounted={40}`) or everything ever mounted (`keepMounted`).",
+};
+
+<ComponentHeader id="components/data-display/virtual-list" />
+
+{/* scaffolded: replace this comment with real prose */}
+
+## Playground
+
+<Playground id="components/data-display/virtual-list" />
+
+<Examples id="components/data-display/virtual-list" />
+
+<PropsTable id="components/data-display/virtual-list" />

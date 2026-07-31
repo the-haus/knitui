@@ -1,0 +1,99 @@
+export const meta = {
+  title: "Testing",
+  description: "Testing components built on Knit UI: jsdom unit tests, real host elements, and visual regression.",
+};
+
+# Testing
+
+## Unit tests in jsdom
+
+The kit's own components are tested with Jest + `@testing-library/react` in jsdom,
+against `react-native-web`. The same setup works for your components.
+
+```js title="jest.config.js"
+module.exports = {
+  preset: undefined,
+  testEnvironment: "jsdom",
+  transform: { "^.+\\.[jt]sx?$": ["babel-jest", { presets: ["babel-preset-expo"] }] },
+  moduleNameMapper: { "^react-native$": "react-native-web" },
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+};
+```
+
+The two load-bearing lines are the `react-native` → `react-native-web` mapping and
+`babel-preset-expo` (the kit src-ships untranspiled TypeScript).
+
+## Wrap in the Provider
+
+Components need the theme context. Make one helper and use it everywhere:
+
+```tsx title="test-utils.tsx"
+import { Provider } from "@knitui/core";
+import { render } from "@testing-library/react";
+
+export function renderWithProvider(ui: React.ReactElement) {
+  return render(<Provider forceColorScheme="light">{ui}</Provider>);
+}
+```
+
+`forceColorScheme` keeps snapshots deterministic.
+
+## Assert real host elements
+
+```tsx
+// good — fails if the component stops rendering a real button
+expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+
+// weak — passes even if it became a div
+expect(screen.getByTestId("save")).toBeTruthy();
+```
+
+This is the convention in the kit's own tests, and it exists to catch exactly one
+class of regression: a refactor that keeps the styling and drops the semantics.
+If your test can pass with a `<div>`, it is not testing accessibility.
+
+## Interaction
+
+```tsx
+import userEvent from "@testing-library/user-event";
+
+const user = userEvent.setup();
+await user.click(screen.getByRole("button", { name: "Open" }));
+await user.keyboard("{ArrowDown}{Enter}");
+```
+
+`userEvent` over `fireEvent` — it produces the full event sequence, which is what
+composite widgets (menus, comboboxes) actually listen for.
+
+## What jsdom cannot tell you
+
+- **Layout.** No real layout engine, so measured sizes are zero. Components that
+  depend on measurement (`Collapse`, `VirtualList`, `ScrollArea` autosize) need a
+  mocked size or a browser test.
+- **Native behaviour.** jsdom runs the web build. Android's `readOnly` press
+  swallowing and keyboard dismissal are invisible there.
+- **Animation.** Worklets do not run.
+
+For those, run the real thing — this repo's stories render in Storybook, an Expo
+app and a Next app for precisely this reason.
+
+## Visual regression
+
+The kit uses Playwright against its Storybook build. The same approach works for an
+app: build Storybook (or a page), screenshot the stories, compare.
+
+```bash
+pnpm --filter @knitui/components test:visual
+```
+
+Pin the color scheme and disable animations for stable pixels.
+
+## Testing on device
+
+```bash
+adb shell dumpsys gfxinfo <package> reset   # then interact, then:
+adb shell dumpsys gfxinfo <package>
+```
+
+The jank percentage from a real fling is the only performance number that
+transfers. Simulator timings do not.

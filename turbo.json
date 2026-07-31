@@ -4,8 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "tsconfig*.json", "package.json"],
-      "outputs": ["lib/**", "dist/**"]
+      "inputs": ["src/**", "content/**", "tsconfig*.json", "package.json"],
+      "outputs": ["lib/**", "dist/**", "out/**", ".next/**"]
     },
     "typecheck": {
       "dependsOn": ["^build"],

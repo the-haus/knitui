@@ -1,0 +1,82 @@
+export const meta = {
+  title: "Typography",
+  description: "Text, Title and the font-size scale — plus how line height is resolved.",
+};
+
+# Typography
+
+Three components carry text: [`Text`](/docs/components/typography/text) for
+everything inline, [`Title`](/docs/components/typography/title) for headings, and
+[`Paragraph`](/docs/components/typography/paragraph) for prose blocks.
+
+<Example id="components/typography/text" story="Sizes" />
+
+## The scale
+
+<TokenScale scale="fontSize" />
+
+Sizes are token keys, so `size="sm"` on a `Text` and `size="sm"` on a `Button`
+label are the same 14px.
+
+## Line height is a ratio
+
+Line height is stored as a multiplier and resolved against the font size, and the
+ladder deliberately humps rather than climbs:
+
+<TokenScale scale="lineHeight" />
+
+<SourceNote note="lineHeight" />
+
+Read a resolved value with `getFontSize` / `getLineHeight` from `@knitui/core` if
+you need to match it in your own layout maths.
+
+## Headings
+
+```tsx
+<Title order={1}>Page title</Title>
+<Title order={3}>Section</Title>
+```
+
+`order` sets both the visual step **and** the host element — `order={3}` renders an
+`<h3>` on the web. That coupling is intentional: it keeps document outline and
+visual hierarchy from drifting apart. Override the look with `size` if a design
+needs an `h2` that reads small.
+
+## Truncation
+
+```tsx
+<Text truncate>One line, ellipsised</Text>
+<Text lineClamp={3}>Up to three lines…</Text>
+```
+
+Both are platform-split internally — CSS line clamping on the web, native
+`numberOfLines` on device — behind one prop.
+
+## Inheritance
+
+`Text` accepts `inherit` to take colour and size from its parent instead of the
+scale, which is what makes nesting work:
+
+```tsx
+<Text c="$color11">
+  Mostly muted, with <Text inherit fontWeight="700">emphasis</Text> inside.
+</Text>
+```
+
+## Fonts
+
+Register families through the [theme builder](/docs/foundations/theme-builder):
+
+```tsx
+createTheme({ fonts: { body: "Inter", heading: "Sora", mono: "JetBrains Mono" } });
+```
+
+Then `fontFamily="$mono"` resolves. On native, load the font file itself with
+`expo-font` (or your own loader) — registering a name in the config does not
+install it.
+
+## Related
+
+`Anchor`, `Blockquote`, `Code`, `Highlight`, `Mark`, `Kbd`, `List` and
+`NumberFormatter` all build on `Text` and share the same scale — see the
+[Typography section](/docs/components/typography/text).

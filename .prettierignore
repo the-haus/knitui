@@ -7,6 +7,8 @@
 **/.turbo/
 **/.tamagui/
 **/coverage/
+# @knitui/docs static export (`next build` + postbuild; ~10k emitted files)
+apps/docs/out/
 
 # Dependencies & lockfiles
 **/node_modules/
@@ -18,3 +20,8 @@ tmp/
 # @knitui/emoji generated data modules (~3800 machine-generated .js glyphs;
 # also eslint-ignored — see packages/emoji/eslint.config.mjs)
 packages/emoji/src/emojis/
+# @knitui/docs generated data, written by scripts/docs/*. These are committed (CI
+# diffs them against a fresh `pnpm docs:generate` to catch stale prop tables), so
+# they must stay byte-identical to what the generators emit — formatting them here
+# would make every check-generated run report drift.
+apps/docs/src/generated/

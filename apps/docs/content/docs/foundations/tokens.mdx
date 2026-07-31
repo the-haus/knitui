@@ -1,0 +1,81 @@
+export const meta = {
+  title: "Tokens",
+  description:
+    "The space, size, radius, font-size and line-height scales every Knit UI component resolves against — with the real values, read from the source.",
+};
+
+# Tokens
+
+Every style prop in the kit takes a token: `p="$md"`, `gap="$sm"`, `br="$lg"`,
+`fz="$sm"`. Tokens are what make spacing consistent, theming possible, and a
+design change a one-line edit.
+
+The tables below are generated from
+[`packages/core/src/config/scales.ts`](https://github.com/the-haus/knitui/blob/main/packages/core/src/config/scales.ts),
+so they are the values your components actually resolve.
+
+## One key, several scales
+
+A token key resolves **per property**. `$md` on `height` is `size.md`; on
+`padding` it is `space.md`; on `fontSize` it is `fontSize.md`; on `borderRadius`
+it is `radius.md`. That is why a single `size="md"` can set a control's height,
+padding, font and radius coherently.
+
+```tsx
+<Box p="$md" br="$md" height="$md" />
+// padding 12 · radius 8 · height 40
+```
+
+<AllTokenScales />
+
+## Line height
+
+Line height is a **multiplier**, resolved against the font size. The ladder is a
+hump rather than a climb, and the reasoning is worth reading:
+
+<SourceNote note="lineHeight" />
+
+<TokenScale scale="lineHeight" />
+
+## zIndex
+
+<ZIndexTable />
+
+## Breakpoints
+
+<BreakpointTable />
+
+Use them through `useMedia()` or [`@knitui/mediaquery`](/docs/mediaquery/playground) —
+see [Responsive](/docs/foundations/responsive).
+
+## Colour tokens
+
+Colour comes from the active theme rather than a fixed scale, so it lives on its
+own page: [Color & themes](/docs/foundations/color-and-themes).
+
+The short version: `$color1` … `$color12` is a 12-step ramp of the active theme,
+plus semantic aliases (`$background`, `$borderColor`, `$color`, `$placeholderColor`)
+and state variants (`$backgroundHover`, `$borderColorFocus`, …).
+
+## Shorthands
+
+The kit registers shorthand props for the properties you reach for constantly:
+
+| Shorthand | Property |
+| --- | --- |
+| `p` `px` `py` `pt` `pr` `pb` `pl` | padding and its axes/sides |
+| `m` `mx` `my` `mt` `mr` `mb` `ml` | margin and its axes/sides |
+| `bg` | `backgroundColor` |
+| `c` | `color` |
+| `br` | `borderRadius` |
+| `fz` | `fontSize` |
+| `maw` `miw` `mah` `mih` | max/min width and height |
+
+They are typed identically to their long forms, and both are always available.
+
+## Adding to the scales
+
+Extend rather than replace — see
+[Theme builder](/docs/foundations/theme-builder), which takes preset names
+(`radius: "rounded"`, `space: "comfortable"`) or explicit overrides
+(`size: { md: 18 }`) and rebuilds the config around them.

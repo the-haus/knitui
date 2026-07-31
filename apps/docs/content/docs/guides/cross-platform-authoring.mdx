@@ -1,0 +1,103 @@
+export const meta = {
+  title: "Cross-platform authoring",
+  description:
+    "What actually differs between web, iOS and Android when building on Knit UI — and the patterns the kit uses to absorb it.",
+};
+
+# Cross-platform authoring
+
+The kit hides most platform difference. This page is about the rest, because the
+parts that leak are worth knowing before they bite.
+
+## You should not need `Platform.OS`
+
+If you find yourself branching on platform in app code to use a kit component,
+that is a gap — open an issue. Inside the kit, divergence is handled by splitting
+files, not by runtime branches:
+
+| Pattern | When |
+| --- | --- |
+| `Thing.tsx` | identical everywhere |
+| `Thing.tsx` with an `isWeb` branch | one property has no native equivalent (`position: "fixed"`) |
+| `Thing.tsx` + `Thing.native.tsx` | genuinely different implementations |
+| `+ Thing.shared.ts` | both platforms delegate to one pure module |
+
+`.shared` is the pattern to copy in your own code: keep the logic
+platform-free and pure, and let two thin files wire it to Reanimated worklets or
+to `requestAnimationFrame`.
+
+## Layout: React Native's defaults win
+
+`flexDirection` defaults to `column`, `alignItems` to `stretch`, `flexShrink` to
+`0` — on **all** platforms, including the web. That is the single biggest
+adjustment for a web developer. See [Layout](/docs/foundations/layout).
+
+There is no `position: fixed` on native; `Affix` renders `absolute` there and pins
+to the nearest filling ancestor instead of the viewport.
+
+## Text is not a `div`
+
+On native, text must be inside a text node — you cannot put a `View` inside a
+`Text`. The kit's `Text` handles nesting for you (string children are wrapped,
+element children are placed), but if you build your own text-ish component,
+mixing element and string children is where it breaks.
+
+## Gestures and animation run somewhere else
+
+Animation on native runs as a **worklet on the UI thread**. Two consequences:
+
+- values you animate must live in shared values, not React state;
+- you cannot close over arbitrary JS in an animation callback.
+
+<Callout kind="platform">
+  Reanimated 4 removed the ability to call `SharedValue.addListener` from JS on
+  native — it throws. Use `useAnimatedReaction` on native and `addListener` on the
+  web; the kit's `useSharedValueListener` does exactly that split.
+</Callout>
+
+For Skia, keep **data** in shared values and build the `SkPath` inside
+`useDerivedValue`. A path object in a shared value works on native and breaks on
+the web.
+
+## The keyboard
+
+Handled with the platform `Keyboard` API plus `KeyboardAvoidingView` /
+`KeyboardAwareScrollView` — no third-party keyboard controller. Two Android
+specifics the kit already absorbs, and that you will hit if you hand-roll:
+
+- a tap in a scrollable list while the keyboard is dismissing is swallowed unless
+  `keyboardShouldPersistTaps="handled"`;
+- a `readOnly` (`editable={false}`) `TextInput` receives no press events, so use
+  focus rather than press to drive an attached overlay.
+
+## Measurement
+
+Measured layout arrives **after** first paint on native, and a clipped element
+measures as zero. Any height animation therefore needs the content pinned
+absolute while it measures — which is what `Collapse` does.
+
+On the web, use a **callback ref** for size observation, not a one-shot effect,
+or an element that mounts later never gets measured.
+
+## Drag maths
+
+Use `pageX`/`pageY` minus a measured origin. `locationX`/`locationY` are relative
+to whichever view received the touch, so as soon as the finger crosses a child
+boundary the numbers jump — visible as a thumb that flickers.
+
+## Resource limits are real
+
+- Browsers cap live WebGL contexts (about 16). Skia canvases each hold one.
+- One shared `<audio>`/`<video>` element per medium in `@knitui/media`, teleported
+  into the active player.
+- Long lists need windowing on device far earlier than on desktop web.
+
+The docs site itself respects all three: canvases and players mount one at a time,
+and examples mount as they scroll into view.
+
+## Test on the thing
+
+jsdom tests catch API mistakes, not platform ones. This repo runs its stories in
+three surfaces — Storybook, an Expo app and a Next app — precisely because a
+component can be correct in one and wrong in another. Do the same before shipping:
+if you have not seen it on Android, you do not know that it works.

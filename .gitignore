@@ -5,6 +5,7 @@ node_modules/
 **/dist/
 **/lib/
 **/.turbo/
+*.tsbuildinfo
 
 # test / visual-regression output
 **/coverage/

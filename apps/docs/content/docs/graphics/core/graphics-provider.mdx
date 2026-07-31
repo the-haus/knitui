@@ -1,0 +1,21 @@
+export const meta = {
+  title: "GraphicsProvider",
+  description: "Initializes the Skia graphics runtime. On native it's a pass-through (Skia is linked into the app); on web it loads the CanvasKit WASM blob and renders `fallback` until it's ready, exposing the state via `useGraphicsReady()`. Wrap your app once, near the root — every graphics component must render beneath it on web. (Storybook already wraps all stories in one, so this is just for illustration.)",
+};
+
+<ComponentHeader id="graphics/core/graphics-provider" />
+
+{/* scaffolded: replace this comment with real prose */}
+
+<Callout kind="platform">
+  Rendered through Skia. On the web each canvas holds a WebGL context and browsers
+  cap how many can be live at once, so examples on this page mount one at a time.
+</Callout>
+
+## Playground
+
+<Playground id="graphics/core/graphics-provider" />
+
+<Examples id="graphics/core/graphics-provider" />
+
+<PropsTable id="graphics/core/graphics-provider" />

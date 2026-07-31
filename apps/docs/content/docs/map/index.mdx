@@ -1,0 +1,98 @@
+export const meta = {
+  title: "Map",
+  description:
+    "@knitui/map — MapLibre on native and web behind one declarative API, with sources, layers, markers and GPU-drawn SVG icons.",
+};
+
+# Map
+
+`@knitui/map` puts MapLibre GL (web) and MapLibre React Native (device) behind one
+declarative API: the same `<Map>`, the same sources, the same layers.
+
+```bash
+npx expo install @knitui/map @maplibre/maplibre-react-native
+npm install maplibre-gl   # web
+```
+
+```tsx
+import { Map, GeoJSONSource, CircleLayer } from "@knitui/map";
+
+<Map style={{ flex: 1 }} styleUrl={style} initialCamera={{ center: [4.9, 52.37], zoom: 11 }}>
+  <GeoJSONSource id="stops" data={stops}>
+    <CircleLayer id="stops-circles" circleRadius={5} circleColor="#0ea5e9" />
+  </GeoJSONSource>
+</Map>;
+```
+
+<Callout kind="platform">
+  Map views fill their container rather than sizing to content, so give the parent an
+  explicit height (or `flex: 1`). A map in an auto-height box renders 0px tall.
+</Callout>
+
+## The API shape
+
+Sources hold data, layers draw it — the MapLibre style-spec model, expressed as
+components:
+
+<CardGrid>
+  <CardLink href="/docs/map/map-view" title="MapView">
+    The map surface, camera and events.
+  </CardLink>
+  <CardLink href="/docs/map/sources/geo-json-source" title="Sources">
+    GeoJSON, raster, image, and the SVG icon rasterizer.
+  </CardLink>
+  <CardLink href="/docs/map/layers/circle-layer" title="Layers">
+    Circle, line, fill, fill-extrusion, symbol, heatmap, background, light.
+  </CardLink>
+  <CardLink href="/docs/map/markers-and-annotations/marker" title="Markers & annotations">
+    React content anchored to coordinates, callouts, view annotations.
+  </CardLink>
+  <CardLink href="/docs/map/user-location" title="User location">
+    The location puck and follow modes.
+  </CardLink>
+  <CardLink href="/docs/map/interactivity" title="Interactivity">
+    Hit testing, feature queries, gestures.
+  </CardLink>
+</CardGrid>
+
+Layer props are the style-spec paint and layout properties, typed against a pinned
+`@maplibre/maplibre-gl-style-spec`, so an invalid expression is a compile error
+rather than a silent no-op.
+
+## Markers vs symbol layers
+
+This is the decision that determines whether your map is usable at scale.
+
+**`Marker`** renders React content at a coordinate. Use it for tens of points, or
+when the content must be interactive.
+
+**`SymbolLayer` + `SvgImage`** rasterises an SVG once, uploads it to the GPU, and
+draws thousands of instances. Use it past a few hundred points.
+
+```tsx
+import { SvgImage, SymbolLayer } from "@knitui/map";
+
+<SvgImage id="pin" svg={pinSvg} sdf />
+<SymbolLayer id="pins" iconImage="pin" iconAllowOverlap />
+```
+
+`SvgImage` is one rasterizer for both platforms (an offscreen `react-native-svg`
+host feeding `addImage`), which is what makes a 4,000-point clustered map viable on
+device.
+
+<Callout kind="warning">
+  `SvgImage`'s `pixelRatio` currently upscales the bitmap without passing the scale
+  through to `addImage`, so icons render `pixelRatio`× too large. Use SDF icons,
+  which side-step it.
+</Callout>
+
+## Clustering
+
+GeoJSON sources support MapLibre's built-in clustering; combine it with a symbol
+layer for the cluster bubbles and a second one for leaves.
+
+## What it does not depend on
+
+`@knitui/map` deliberately avoids react-native-web and Tamagui — it is the map
+layer, not a themed component — so it stays usable in a non-kit app and its bundle
+does not pull the design system.

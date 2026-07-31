@@ -1,0 +1,57 @@
+export const meta = {
+  title: "Principles",
+  description: "The five decisions that shape every component in Knit UI.",
+};
+
+# Principles
+
+## 1. One source, three platforms
+
+A component is written once. `Button.tsx` renders a real `<button>` on the web and
+a native pressable on device. Where the platforms genuinely differ, the kit splits
+the file (`Input.native.tsx`) rather than branching at runtime — and the component
+page tells you it did.
+
+The test is that you never write `Platform.OS` in app code to use the kit.
+
+## 2. Systems over one-offs
+
+Size comes from one table. Colour comes from one ladder. Elevation, motion, focus
+and icon sizing each have exactly one definition. A new component wires into those
+systems rather than inventing its own — which is why learning `Button` teaches you
+`TextInput`, and why re-tuning a scale moves the whole library at once.
+
+See [Sizing](/docs/foundations/sizing),
+[Variants & colors](/docs/foundations/variants-and-colors),
+[Motion](/docs/foundations/motion).
+
+## 3. Composable by default
+
+Every component exposes its internal parts as named slots, and `styles` targets
+them. You should never have to wrap a component in a `Box` and fight specificity —
+that breaks on native anyway. See [Slots & styles](/docs/foundations/slots-and-styles).
+
+## 4. Tokens, not numbers
+
+Props take `"$md"`, not `12`. Raw numbers still work, but every default in the kit
+is a token, so a theme change reaches everything. See [Tokens](/docs/foundations/tokens).
+
+## 5. Documented from source
+
+The examples in these docs are the kit's own Storybook stories, mounted live. The
+prop tables are extracted from the TypeScript types. The token tables are read out
+of the config. None of it is transcribed by hand, so none of it can quietly go
+stale — and CI fails if a component gains a story with no page.
+
+## What follows from this
+
+Some consequences are worth stating plainly, because they are trade-offs rather
+than free wins:
+
+- **No `color` prop.** Colour comes from `theme` + `variant`, so a recolour stays
+  coherent across text, border, hover, press and focus ring.
+- **Most components cannot fully flatten.** Slot-based composability implies a
+  runtime wrapper, so the web output carries react-native-web's shape rather than
+  becoming pure static markup.
+- **Peers are load-bearing.** Gesture handling, animation, SVG and portals are
+  real native dependencies, not optional extras.

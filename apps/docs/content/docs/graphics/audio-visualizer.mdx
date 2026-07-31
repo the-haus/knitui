@@ -1,0 +1,21 @@
+export const meta = {
+  title: "AudioVisualizer",
+  description: "A data-driven Skia audio visualizer. An external driver only ever pushes new TARGET states (a row of 0..1 levels) via the imperative ref handle (`ref.push(levels)`) or a `target` SharedValue — the easing TRANSITION between states lives inside the component, paced on the display clock (`requestAnimationFrame`), double-buffered, off the React render path, and self-suspending when idle. `useDerivedValue` worklets build the `SkPath`s so the per-frame paint never re-renders React. Filled with a Skia gradient and optional glow. Identical on native and web (web needs `<GraphicsProvider>` + CanvasKit). Reduced-motion snaps to each target. The stories below drive it with a synthetic ticker.",
+};
+
+<ComponentHeader id="graphics/audio-visualizer" />
+
+{/* scaffolded: replace this comment with real prose */}
+
+<Callout kind="platform">
+  Rendered through Skia. On the web each canvas holds a WebGL context and browsers
+  cap how many can be live at once, so examples on this page mount one at a time.
+</Callout>
+
+## Playground
+
+<Playground id="graphics/audio-visualizer" />
+
+<Examples id="graphics/audio-visualizer" />
+
+<PropsTable id="graphics/audio-visualizer" />

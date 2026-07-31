@@ -1,0 +1,57 @@
+export const meta = {
+  title: "Packages",
+  description: "Every Knit UI package, its version, its exports and its peer dependencies.",
+};
+
+# Packages
+
+Versions and export counts are read from each package's `package.json` and barrel
+at build time, so this table is never stale.
+
+<PackageTable />
+
+## What to install
+
+**Always:** `@knitui/core` + `@knitui/components`.
+
+**As needed:** the satellite kits. Each is independent — installing
+`@knitui/dates` does not pull in maps or media.
+
+**Build-time only:** `@knitui/plugins`, in your bundler config. See
+[Bundler setup](/docs/getting-started/bundler-setup).
+
+## Peer dependencies
+
+Peers are the part of installing a React Native design system that actually goes
+wrong, so here they are per package, with the optional ones marked.
+
+<PeerDependencyTable />
+
+<Callout kind="warning">
+  On Expo, install every peer with `npx expo install`, not `npm install` — the SDK
+  pins native module versions and `expo install --check` will tell you when
+  something has drifted. A mismatched `react-native` or `react-native-reanimated`
+  is the cause of most first-launch crashes.
+</Callout>
+
+## Subpath exports
+
+Several packages expose more than their barrel:
+
+| Entry | What it is |
+| --- | --- |
+| `@knitui/components/control-system` | The size/colour/icon contract other packages build controls against |
+| `@knitui/core/config` | The Tamagui config, for build plugins |
+| `@knitui/graphics/runtime` | `loadGraphicsRuntime()` — the CanvasKit preloader for the web |
+| `@knitui/plugins/babel-plugin` · `/metro` · `/next-plugin` · `/vite` · `/webpack` | Build integrations |
+| `@knitui/plugins/next` | `NextTamaguiProvider` — the SSR style flush |
+| `@knitui/media/dsp` | Pure-TypeScript FFT and spectrum analysis |
+
+## Versioning
+
+Packages are versioned independently and published with
+[Changesets](https://github.com/changesets/changesets). `core` and `components`
+move together in practice; satellites move on their own.
+
+See [Compatibility](/docs/api/compatibility) for the React / React Native / Expo
+matrix, and the [changelog](/changelog) for what changed.

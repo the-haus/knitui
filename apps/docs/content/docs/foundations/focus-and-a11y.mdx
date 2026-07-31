@@ -1,0 +1,76 @@
+export const meta = {
+  title: "Focus & a11y",
+  description:
+    "The two-layer focus contract, keyboard activation, roles and labels — what the kit guarantees and what you still owe.",
+};
+
+# Focus & a11y
+
+## The two-layer focus contract
+
+A focus ring is only useful if the thing can be focused. In this kit those are two
+separate facts, and they are enforced together:
+
+1. `focusRingStyle` draws the ring on the web, keyed to `:focus-visible`;
+2. the frame must **also** be focusable — a real `<button>`/`<input>`, or a `Box`
+   made focusable through `useKeyboardActions`.
+
+A guardrail test asserts the pairing: a component that applies the ring without
+being focusable fails CI. That exists because the failure is invisible in review —
+the styles look right, the ring simply never fires.
+
+## What the kit gives you
+
+- **Real semantic elements on the web.** `Button` renders `<button>`, `TextInput`
+  renders `<input>`, `Anchor` renders `<a href>`. Keyboard activation, form
+  participation and screen-reader roles come from the platform, not from ARIA
+  patches.
+- **Keyboard maps on composite widgets.** `Menu`, `Combobox`, `Select`, `Tabs`,
+  `Accordion`, `Pagination`, `Stepper` and `Tree` implement arrow-key navigation,
+  `Home`/`End`, type-ahead where it applies, and `Escape` to dismiss.
+- **Focus trapping in overlays.** `Modal`, `Drawer` and `Dialog` trap focus while
+  open and restore it to the trigger on close. `FocusTrap` is available directly.
+- **Labelled fields.** Every input wires `label`, `description` and `error` to the
+  control with generated ids, so the accessible name and description are correct
+  without you passing `aria-*`.
+- **Live regions.** `Alert` sets `role="alert"`; `Notification` announces.
+
+## What you still owe
+
+- **An accessible name for icon-only controls.** An `ActionIcon` with no label is
+  a mystery to a screen reader:
+
+  ```tsx
+  <ActionIcon aria-label="Delete item"><IconTrash /></ActionIcon>
+  ```
+
+- **Meaningful `alt` on images.** `Image` forwards it; empty `alt=""` for
+  decoration is a choice you have to make.
+- **Colour is never the only signal.** The variant ladder gives you fill, border
+  and text together — use text or an icon as well as `theme="red"`.
+- **Order.** Focus order follows DOM order on the web and mount order on native;
+  visual reordering with absolute positioning does not reorder focus.
+
+## Native differences
+
+<Callout kind="platform">
+  React Native has no `:focus-visible` and no tab key. On device, "focus" means
+  accessibility focus (VoiceOver / TalkBack) or input focus. The kit maps roles and
+  labels to the platform accessibility APIs, but the ring itself is a web concern.
+</Callout>
+
+Notable native-only behaviours the kit handles for you:
+
+- `readOnly` inputs on Android receive no press events, so focus-driven overlays
+  need `withPressToggle={false}`;
+- dropdown lists need `keyboardShouldPersistTaps="handled"`, or the first tap is
+  swallowed by the keyboard dismissing;
+- the keyboard is handled with `KeyboardAvoidingView` and the RN `Keyboard` API,
+  not a third-party controller.
+
+## Testing it
+
+Component tests in this repo assert real host elements — `getByRole("button")`
+rather than a `testID` — precisely so a refactor that drops semantics fails.
+Copy that habit: if your test can pass with a `<div>`, it is not testing
+accessibility.

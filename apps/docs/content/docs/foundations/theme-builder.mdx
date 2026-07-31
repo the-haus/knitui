@@ -1,0 +1,122 @@
+export const meta = {
+  title: "Theme builder",
+  description:
+    "createTheme, extendTheme and themePresets — build a branded Tamagui config from a hex, with every option optional.",
+};
+
+# Theme builder
+
+`createTheme` builds a complete config from brand inputs. **Every option is
+optional** and falls back to the kit's defaults, so you override as little as you
+need.
+
+```tsx
+import { createTheme, Provider } from "@knitui/core";
+
+export const config = createTheme({
+  brand: "#7C3AED",
+});
+
+export function App({ children }) {
+  return (
+    <Provider config={config} defaultColorScheme="system">
+      {children}
+    </Provider>
+  );
+}
+```
+
+One hex is enough: the light and dark 12-step ramps are derived for you.
+
+## Brand and accents
+
+```tsx
+createTheme({
+  brand: "violet",                              // a @tamagui/colors ramp name…
+  // brand: "#7C3AED",                          // …or a hex
+  // brand: { light: "violet", dark: "purple" },// …or per scheme
+  brandThemeName: "primary",                    // theme="primary" (default "brand")
+  accents: { teal: "#14b8a6", brandish: "indigo" },
+  includeDefaultAccents: true,                  // keep blue/red/green/…
+  includeTamaguiColors: ["violet", "sand"],     // register extra Radix ramps
+  neutral: "#71717a",                           // the UI chrome ramp
+});
+```
+
+Each accent becomes a usable `theme` value: `<Button theme="teal">`.
+
+## Tokens
+
+```tsx
+createTheme({
+  radius: "rounded",        // "default" | "rounded" | "sharp" | { md: 12, … }
+  space: "comfortable",     // "default" | "compact" | "comfortable" | { … }
+  size: { md: 18 },
+  fontSizes: { xl: 24 },
+  zIndex: { 6: 600 },
+  colors: { brandRaw: "#7C3AED" },
+});
+```
+
+Presets exist because the three scales have to stay in proportion; picking
+`space: "comfortable"` also moves `size` unless you override it.
+
+## Fonts
+
+```tsx
+createTheme({
+  fonts: {
+    body: "Inter",
+    heading: { family: "Sora", weight: { 7: "800" } },
+    mono: "JetBrains Mono",
+  },
+  defaultFont: "body",
+});
+```
+
+Named fonts beyond `body`/`heading` are registered too, so `fontFamily="$mono"`
+works.
+
+## Responsive and motion
+
+```tsx
+createTheme({
+  breakpoints: { md: 900 },              // rebuilds the media queries
+  media: { tall: { minHeight: 800 } },   // custom queries
+  animations: myDriver,                  // replace the animation driver
+  shorthands: { bgc: "backgroundColor" },
+});
+```
+
+## Extending instead of replacing
+
+`extendTheme` takes an existing config and layers on top, which is what you want
+when you only need one more accent:
+
+```tsx
+import { extendTheme } from "@knitui/core";
+
+const config = extendTheme({ accents: { brandPink: "#ec4899" } });
+```
+
+## Presets
+
+`themePresets` ships ready-made configurations to start from:
+
+```tsx
+import { themePresets, Provider } from "@knitui/core";
+
+<Provider config={themePresets.violet} />
+```
+
+## Validation
+
+Bad input fails loudly rather than rendering something odd —
+`validateThemeOptions` runs inside `createTheme` and reports which key was wrong
+and what it accepts. That matters because a mistyped ramp silently falls back to
+grey otherwise.
+
+## Where to put it
+
+Build the config once at module scope and pass it to `Provider`. Do not build it
+inside a component — a new config object per render invalidates every style.

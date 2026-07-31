@@ -1,0 +1,128 @@
+# Documentation site → Cloudflare Pages
+#
+# Builds apps/docs (a static Next.js export) and deploys it. Pull requests get a
+# preview deploy; pushes to main go to production.
+#
+# The build is gated on the docs guardrails, so a component that gains a story
+# without a page — or a stale `src/generated/**` — fails here rather than shipping
+# a 404 or a wrong prop table.
+#
+# ONE-TIME SETUP (repo owner): add repository secrets
+#   CLOUDFLARE_API_TOKEN   — token with "Cloudflare Pages: Edit"
+#   CLOUDFLARE_ACCOUNT_ID
+# and create the Pages project (`knitui-docs`). Without them the build still runs
+# and the deploy steps are skipped.
+
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "apps/docs/**"
+      - "scripts/docs/**"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "apps/docs/**"
+      - "scripts/docs/**"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  build:
+    name: Build & verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      # The kit src-ships, so the docs build compiles ~180 component modules plus
+      # every story chunk. Give Node headroom, as the Storybook workflow does.
+      NODE_OPTIONS: --max-old-space-size=6144
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # @knitui/hooks lib-ships (its `main` points at lib/, which does not exist in
+      # a fresh checkout) and the docs import it transitively through the kit.
+      - name: Build lib-shipping workspace deps
+        run: pnpm exec turbo run build --filter=@knitui/hooks
+
+      - name: Regenerate docs data
+        run: pnpm docs:generate
+
+      - name: Docs guardrails
+        run: node scripts/docs/check-coverage.mjs --check-generated
+
+      - name: Lint
+        run: pnpm --filter @knitui/docs lint
+
+      - name: Build site
+        run: pnpm --filter @knitui/docs exec next build --webpack
+
+      - name: Post-build (sitemap · llms.txt · search index)
+        run: pnpm --filter @knitui/docs exec node ./scripts/postbuild.mjs
+
+      - name: Check the build actually produced pages
+        run: |
+          count=$(find apps/docs/out -name '*.html' | wc -l)
+          echo "$count HTML pages"
+          if [ "$count" -lt 200 ]; then
+            echo "::error::expected 200+ pages, got $count"
+            exit 1
+          fi
+          test -f apps/docs/out/sitemap.xml
+          test -f apps/docs/out/llms.txt
+          test -d apps/docs/out/pagefind
+
+      - name: Upload site
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: apps/docs/out
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: build
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs-site
+          path: out
+
+      # Skipped (rather than failed) until the Pages project and its secrets exist,
+      # so the build half of this workflow is useful from day one.
+      - name: Deploy
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy out
+            --project-name=knitui-docs
+            --branch=${{ github.head_ref || github.ref_name }}

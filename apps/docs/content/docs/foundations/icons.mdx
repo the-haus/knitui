@@ -1,0 +1,75 @@
+export const meta = {
+  title: "Icons",
+  description:
+    "@knitui/icons, the ControlIconProvider that auto-sizes glyphs inside controls, and ThemeIcon.",
+};
+
+# Icons
+
+## The package
+
+[`@knitui/icons`](/docs/icons/icon) ships the Tabler icon set as React Native SVG
+components — one component per glyph, ~6,100 of them.
+
+```tsx
+import { IconCheck } from "@knitui/icons";
+
+<IconCheck size={20} color="$color11" />
+```
+
+<Callout kind="warning">
+  Import from the barrel only in app code your bundler can tree-shake, and never in
+  a library. The barrel re-exports thousands of modules; on Next.js `withKnitui`
+  sets `optimizePackageImports` to rewrite it, elsewhere prefer the direct path
+  (`@knitui/icons/IconCheck`).
+</Callout>
+
+The generator merges each icon's paths into a single `<Path>` at build time, with
+a verification step, so a glyph is one draw call rather than a dozen — which is
+what makes long icon lists viable on Android.
+
+## Icons inside controls
+
+You rarely set an icon's size or colour inside a component. Controls publish their
+icon metrics through a provider, and the glyph reads them:
+
+```tsx
+<Button leftSection={<IconCheck />}>Confirm</Button>
+<ActionIcon size="lg"><IconTrash /></ActionIcon>
+```
+
+Both the size and the colour come from the control's own size and variant, via
+`ControlIconProvider` and the `CONTROL_ICON_SIZE` ladder. Pass an explicit `size`
+only to deliberately break the ladder.
+
+The same mechanism is public, so your own control can size icons the kit's way:
+
+```tsx
+import { ControlIconProvider, controlIconSize } from "@knitui/components/control-system";
+```
+
+## ThemeIcon
+
+[`ThemeIcon`](/docs/components/data-display/theme-icon) is a themed square holding
+a glyph — the icon equivalent of a `Badge`:
+
+<Example id="components/data-display/theme-icon" story="Variants" />
+
+## Bringing your own icons
+
+Any component works as an icon, as long as it accepts `size` and `color`. The
+kit's providers pass those props down, so a custom SVG set drops in:
+
+```tsx
+<IconProvider value={{ Check: MyCheckIcon }}>
+```
+
+`IconProvider` also lets you swap the icons the kit uses internally — the chevron
+in `Accordion`, the check in `Checkbox`, the clear button in `Combobox` — without
+patching components.
+
+## Emoji
+
+[`@knitui/emoji`](/docs/emoji) is the same idea for Noto emoji: build-time compiled
+to node trees, so there is no runtime SVG parsing and no font dependency. Use it
+when you need emoji to look identical across platforms.

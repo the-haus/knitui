@@ -1,0 +1,128 @@
+export const meta = {
+  title: "Composing components",
+  description: "Slots, compound parts, styled() and when to build your own on top of the kit.",
+};
+
+# Composing components
+
+Four levels, cheapest first. Use the lowest one that does the job.
+
+## 1. Props
+
+Props win over everything, including a component's own computed styles:
+
+```tsx
+<Button variant="light" size="lg" px="$xl" br="$xl">
+  Continue
+</Button>
+```
+
+## 2. Slot styles
+
+For a part you do not render yourself:
+
+```tsx
+<TextInput
+  label="Email"
+  styles={{
+    label: { fontWeight: "700" },
+    input: { fontFamily: "$mono" },
+    error: { fontStyle: "italic" },
+  }}
+/>
+```
+
+Keys are typed against that component's slots and listed on its page. See
+[Slots & styles](/docs/foundations/slots-and-styles).
+
+## 3. Compound parts
+
+For structure you *do* render:
+
+```tsx
+<Menu>
+  <Menu.Target>
+    <ActionIcon aria-label="Options"><IconDots /></ActionIcon>
+  </Menu.Target>
+  <Menu.Dropdown>
+    <Menu.Label>Danger</Menu.Label>
+    <Menu.Item onPress={remove}>Delete</Menu.Item>
+  </Menu.Dropdown>
+</Menu>
+```
+
+Compound members carry their own props and their own slot styles.
+
+## 4. `styled()`
+
+For a new component that should behave like a kit component:
+
+```tsx
+import { styled } from "@knitui/core";
+import { Button } from "@knitui/components";
+
+export const CtaButton = styled(Button, {
+  name: "CtaButton",
+  minWidth: 180,
+  variants: {
+    emphasis: {
+      high: { shadow: "md", fontWeight: "700" },
+      low: { variant: "subtle" },
+    },
+  } as const,
+});
+```
+
+Start from the closest frame, not from `Box` — you inherit the size and variant
+ladders. See [styled()](/docs/foundations/styled).
+
+## Building a composite of your own
+
+A product-level component that wires several kit components together should look
+like a kit component from the outside: take `size` and `variant`, accept `styles`,
+forward the rest.
+
+```tsx
+import { Box, Button, Text, TextInput } from "@knitui/components";
+import { type SizeKey, DEFAULT_SIZE } from "@knitui/components/control-system";
+
+export function InlineSubscribe({
+  size = DEFAULT_SIZE,
+  onSubmit,
+  ...rest
+}: {
+  size?: SizeKey;
+  onSubmit: (email: string) => void;
+} & React.ComponentProps<typeof Box>) {
+  const [email, setEmail] = useState("");
+
+  return (
+    <Box flexDirection="row" gap="$sm" alignItems="flex-end" {...rest}>
+      <TextInput
+        size={size}
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        flex={1}
+      />
+      <Button size={size} onPress={() => onSubmit(email)}>
+        Subscribe
+      </Button>
+    </Box>
+  );
+}
+```
+
+Three things make that idiomatic: `size` threads through to both children,
+`...rest` lands on the frame so callers can position it, and nothing hard-codes a
+colour or a pixel.
+
+## Anti-patterns
+
+- **Wrapping to restyle.** A `Box` around a component cannot restyle it — no
+  cascade on native. Use `styles`.
+- **Cloning children to inject props.** Fragile and breaks with compound
+  components. Use context, or the slot the component already gives you.
+- **Re-deriving sizes.** If you find yourself writing `height: 40`, read
+  [`controlMetrics`](/docs/foundations/sizing) instead.
+- **A `color` prop.** Take `theme`, so the whole subtree recolours coherently.

@@ -1,0 +1,75 @@
+export const meta = {
+  title: "Why Knit UI",
+  description:
+    "What Knit UI is for, what it is not for, and how it compares to the alternatives on either side of it.",
+};
+
+# Why Knit UI
+
+## The problem
+
+If you ship a product on iOS, Android and the web, you normally maintain **two**
+design systems: a React Native one and a web one. They start aligned and drift —
+different sizing scales, different theming, different names for the same variant,
+two sets of bugs, two review surfaces.
+
+Knit UI exists so that there is one. A `Button` here is one file that renders a
+real `<button>` on the web and a native pressable on device, from the same props,
+tokens and variants.
+
+## When it fits
+
+- You have a React Native app and a web app, and want them to look and behave the
+  same.
+- You want a design system with real systems — one sizing table, one colour
+  ladder, one motion vocabulary — rather than a component grab-bag.
+- You are prepared to run a build integration: the kit source-ships and the
+  Tamagui compiler needs a plugin in your bundler.
+
+## When it does not
+
+- **Web only, and performance is everything.** A DOM-native library will ship less
+  JavaScript. Most kit components use `.styleable()`, so they cannot fully flatten
+  to static CSS — that is the price of slot-level composability.
+- **You want unstyled primitives.** This kit is opinionated: it has a look, a
+  scale and a ramp. Headless libraries exist for a reason.
+- **You cannot take native peers.** Gesture handling, animation, SVG and portals
+  are real dependencies here, not optional extras.
+
+## Compared to
+
+**Mantine (web).** The kit's API lineage — `size`, `variant`, `styles`,
+compound components — is deliberately Mantine-shaped, because it is a good API and
+the migration path matters. What is different: it runs on native, colours come from
+ramp positions rather than a palette + `color` prop, and sizing is one table rather
+than per-component. See [Migrating from Mantine](/docs/guides/migrating-from-mantine).
+
+**Tamagui (the layer below).** Knit UI *is* built on Tamagui. Tamagui gives you the
+styling engine, the compiler and the token system; it does not give you 100
+finished, accessible components with a coherent sizing and colour system. If you
+want to build your own kit, use Tamagui directly. If you want one that exists, use
+this.
+
+**React Native Paper / NativeBase.** Material or their own idiom, native-first,
+weaker web story. Choose them if you want Material specifically.
+
+**shadcn/ui.** Web-only, copy-in, Tailwind. Excellent if you are web-only and want
+to own the code. Not an option on device.
+
+## What you get, concretely
+
+- 100+ components in [`@knitui/components`](/docs/api/packages), plus satellite kits
+  for dates, carousel, maps, media, graphics and sheets.
+- One `Provider` that sets up theming, gestures and the portal host.
+- Real accessibility: semantic host elements on the web, keyboard maps on composite
+  widgets, focus trapping in overlays, and a guardrail test that a focus ring is
+  only drawn on something focusable.
+- Docs generated from the source — the examples are the kit's Storybook stories,
+  the prop tables come from the types.
+
+## What it costs
+
+Honest list: a bundler plugin per platform, native peer dependencies you must keep
+in step with your Expo SDK, and a web bundle heavier than a DOM-only library. Those
+are the trade-offs, and the [guides](/docs/guides/performance) tell you how to keep
+them in hand rather than pretending they are absent.

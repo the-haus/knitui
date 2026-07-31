@@ -1,0 +1,93 @@
+export const meta = {
+  title: "Variants & colors",
+  description:
+    "How the variant prop applies a theme's colour ramp, and the ladder that keeps filled, light, outline and subtle consistent across every component.",
+};
+
+# Variants & colors
+
+`variant` decides **how** a component applies the active theme's colour ramp.
+`theme` decides **which** ramp. No component takes a `color` prop.
+
+<Example id="components/inputs/button" story="Variants" />
+
+## The variants
+
+| Variant | Fill | Text | Border |
+| --- | --- | --- | --- |
+| `filled` | solid accent (`$color9`) | contrast (white or near-black) | none |
+| `light` | tinted accent (`$color3`) | accent (`$color11`) | none |
+| `outline` | transparent | accent | accent |
+| `subtle` | transparent, tint on hover | accent | none |
+| `default` | neutral surface | neutral text | neutral border |
+| `white` | white | accent | none |
+| `transparent` | none, no hover | accent | none |
+| `gradient` | the `gradient` prop | contrast | none |
+
+Interactive components resolve these through `controlColorVariant`; static
+surfaces (`Alert`, `Badge`, `Pill`) use `surfaceColorVariant`, which is the same
+ladder without the hover/press states. Both live in one table —
+[`internal/variant-colors.ts`](https://github.com/the-haus/knitui/blob/main/packages/components/src/internal/variant-colors.ts) —
+which is the colour twin of [`controlMetrics`](/docs/foundations/sizing).
+
+## Recolouring with `theme`
+
+```tsx
+<Group>
+  <Button>default accent</Button>
+  <Button theme="red">destructive</Button>
+  <Button theme="green">confirm</Button>
+</Group>
+```
+
+`theme` swaps the ramp the variant reads from, so all eight variants keep working
+and every nested component inherits it. That is why there is no `color` prop:
+a `color` would only tint one surface, while `theme` recolours the whole subtree
+coherently — text, border, hover, press and focus ring together.
+
+<Example id="components/inputs/button" story="Themed" />
+
+## The ramp
+
+A theme is a 12-step ramp, addressed as `$color1` … `$color12`:
+
+| Steps | Used for |
+| --- | --- |
+| 1–2 | app and subtle surfaces |
+| 3–5 | component backgrounds — normal, hover, press |
+| 6–8 | borders — normal, hover, focus |
+| 9–10 | solid accent fills, and their hover |
+| 11–12 | text on a subtle background, and high-contrast text |
+
+Semantic aliases sit on top: `$background`, `$backgroundHover`, `$borderColor`,
+`$borderColorFocus`, `$color`, `$placeholderColor`. Prefer the alias where one
+exists — it survives a theme redesign that renumbers the ramp.
+
+## Which components use the ladder
+
+`Button`, `ActionIcon`, `Alert`, `Avatar`, `Badge`, `Pill`, `ThemeIcon`,
+`CloseButton` and `Chip` derive their colours from the variant table.
+
+Some components — `Stepper`, `Switch`, `Table`, `Tabs` — drive colour from the
+raw ramp instead, because their chrome does not decompose into "fill, text,
+border". That is allowed, and their pages state it.
+
+## Building on it
+
+The ladders are exported so your own controls can match:
+
+```tsx
+import {
+  VARIANT_FILL,
+  VARIANT_FOREGROUND_EMPHASIS,
+  VARIANT_INTERACTION,
+  type VariantKey,
+} from "@knitui/components/control-system";
+```
+
+Spread them onto a `styled()` frame's variants rather than re-deriving colours —
+that is how `@knitui/media`'s player chrome stays visually identical to the kit's
+own controls.
+
+See also: [Color & themes](/docs/foundations/color-and-themes),
+[Gradients](/docs/foundations/gradients).

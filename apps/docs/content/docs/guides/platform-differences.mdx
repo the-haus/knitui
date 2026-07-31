@@ -1,0 +1,76 @@
+export const meta = {
+  title: "Platform differences",
+  description:
+    "A matrix of what differs between web, iOS and Android in Knit UI, and which components carry a real native implementation.",
+};
+
+# Platform differences
+
+Everything in `@knitui/components` runs on all three platforms. This page lists the
+places where the *implementation* differs, because those are the places where
+behaviour can differ too.
+
+## Components with a real native implementation
+
+These ship a `.native.tsx` alongside the shared file:
+
+| Component | Why it splits |
+| --- | --- |
+| [`Input`](/docs/components/inputs/input) | native resolves styles onto a bare RN `TextInput` |
+| [`NativeSelect`](/docs/components/inputs/native-select) | uses the platform picker on device |
+| [`FileButton`](/docs/components/inputs/file-button) | hidden `<input type=file>` on the web, document picker on device |
+| [`Modal`](/docs/components/overlays/modal) | different measurement and drag-dismiss host |
+| [`Popover`](/docs/components/overlays/popover) | positioning and dismiss-on-scroll |
+| [`ScrollArea`](/docs/components/navigation/scroll-area) | worklet scrollbars vs rAF painters |
+| [`Transition`](/docs/components/overlays/transition) | Reanimated vs CSS transitions |
+
+Others branch inline on `isWeb` for a single property: `Affix` (`fixed` has no
+native equivalent), `BackgroundImage`, `ColorPicker`, `Drawer`, and the truncation
+paths in `Text`/`Title`.
+
+## Behaviour differences worth knowing
+
+| Area | Web | Native |
+| --- | --- | --- |
+| Focus ring | `:focus-visible` | accessibility focus; no ring |
+| Tab order | DOM order | mount order; no tab key |
+| `position: fixed` | supported | absolute, pinned to nearest filling ancestor |
+| Shadows | `box-shadow` | same declaration, mapped to platform shadow |
+| Text nesting | any child allowed | element children must not be inside a text node |
+| Measurement | callback ref + `ResizeObserver` | `onLayout`, after first paint |
+| Scroll to end | scroll event | `onMomentumScrollEnd` + reach callbacks |
+| Keyboard | none | avoids/insets; taps can be swallowed while dismissing |
+| Animation | CSS / rAF | Reanimated worklets on the UI thread |
+| WebGL / canvas | ~16 live contexts | per-view surface |
+
+## Native-only gotchas the kit absorbs
+
+You do not have to handle these — they are listed so that if you see the symptom
+in your own code, you know the cause.
+
+- A `readOnly` (`editable={false}`) `TextInput` on Android receives **no** press
+  events. Focus-driven overlays therefore need `withPressToggle={false}`.
+- A tap in a scrollable list while the keyboard dismisses is swallowed unless
+  `keyboardShouldPersistTaps="handled"`.
+- `ScrollArea` with `scrollbars="xy"` nests a horizontal `ScrollView`, which lets
+  rows size to content — they collapse. Use `"y"` for vertical lists.
+- A clipped element measures as height 0, so height animations must measure with
+  the content pinned absolute.
+- Dismiss-on-scroll must ignore keyboard-driven reflow, or a popover closes itself
+  when the keyboard appears.
+
+## Web-only gotchas
+
+- `useElementSize` must be a **callback ref**; a one-shot effect misses nodes that
+  mount later.
+- reanimated's web build touches `global` at module scope — `withKnitui` defines it
+  as `globalThis`, which is why the Next plugin is not optional.
+- Skia's web build captures `global.CanvasKit` at module evaluation, so the runtime
+  must be loaded first.
+
+## Testing across platforms
+
+jsdom tests run the **web** build, so none of the native rows above are covered by
+them. This repo renders the same stories in Storybook, an Expo app and a Next app
+for that reason. If you have not seen your component on Android, you do not know
+that it works.

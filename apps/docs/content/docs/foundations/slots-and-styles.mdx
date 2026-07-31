@@ -1,0 +1,107 @@
+export const meta = {
+  title: "Slots & styles",
+  description:
+    "Every component exposes its internal parts as named slots, and the styles prop targets them — the kit's answer to composability without wrapper soup.",
+};
+
+# Slots & styles
+
+A component is rarely one box. A `Button` is a frame, a label, a left section, a
+right section and a loader. When you need to restyle one of those parts, the kit
+gives you a name for it instead of a `!important`.
+
+```tsx
+<Button
+  styles={{
+    label: { textTransform: "uppercase", letterSpacing: 1 },
+    left: { opacity: 0.6 },
+  }}
+>
+  Continue
+</Button>
+```
+
+Every public component in the kit accepts `styles`, and the keys are typed
+against that component's own slot map — a typo is a compile error, not a silent
+no-op. Each component page lists its slots.
+
+<Example id="components/inputs/button" story="Styles" />
+
+## The rules
+
+1. **Slot styles are props, not CSS.** The object is spread onto the matching
+   styled part, so anything that part accepts works — tokens, variants, pseudo
+   states (`hoverStyle`, `pressStyle`).
+2. **Explicit props win.** If you set `styles={{ label: { color: "red" } }}` and
+   the component also computes a label colour from `variant`, your value wins.
+3. **Slots are stable API.** They are covered by the same guardrail tests as the
+   props, so a refactor cannot quietly rename one.
+
+## Compound components
+
+Where a component has parts you *render* rather than parts it renders for you,
+they are exposed as static members:
+
+```tsx
+<Card>
+  <Card.Section>Header</Card.Section>
+  <Text>Body</Text>
+</Card>
+
+<Menu>
+  <Menu.Target>
+    <Button>Open</Button>
+  </Menu.Target>
+  <Menu.Dropdown>
+    <Menu.Label>Actions</Menu.Label>
+    <Menu.Item onPress={rename}>Rename</Menu.Item>
+    <Menu.Item color="$red10" onPress={remove}>Delete</Menu.Item>
+  </Menu.Dropdown>
+</Menu>
+```
+
+Both mechanisms coexist: `styles` reaches the parts you do not render, compound
+members are the parts you do.
+
+## Why not wrappers?
+
+The alternative — wrapping a component in a `Box` and hoping specificity works —
+breaks on native (no cascade), breaks flattening (the compiler cannot see
+through), and breaks composition (your wrapper is not the component's frame). Slot
+styles keep one element and one style pass.
+
+## Building a slotted component
+
+The primitives are in `@knitui/core`:
+
+```tsx
+import { createSlot, defineSlots } from "@knitui/core";
+```
+
+`defineSlots` declares the slot map, `createSlot` builds a part that reads its
+styles from context. A component built this way gets a typed `styles` prop for
+free, and `styles` sugar automatically applies to consumer-rendered parts too.
+
+See [`Combobox`](/docs/components/inputs/combobox) for the fullest worked example
+in the kit — it is the template the composability rollout used — and
+[`Button`](/docs/components/inputs/button) for the simplest.
+
+## Escape hatch
+
+When slots are not enough, `styled()` from `@knitui/core` lets you extend a
+component's frame directly:
+
+```tsx
+import { styled } from "@knitui/core";
+import { Button } from "@knitui/components";
+
+const WideButton = styled(Button, {
+  name: "WideButton",
+  minWidth: 200,
+  variants: {
+    emphasis: { high: { fontWeight: "700" } },
+  } as const,
+});
+```
+
+See [styled()](/docs/foundations/styled).

@@ -1,0 +1,14 @@
+# Cloudflare Pages project config for the Knit UI docs site.
+#
+# Strictly optional: `.github/workflows/docs.yml` passes `--project-name` and the
+# output directory explicitly. It is committed anyway so an operator can run
+#
+#   pnpm --filter @knitui/docs build
+#   wrangler pages deploy out
+#
+# from this directory without extra flags, and so the project name and output path
+# live next to the app rather than only in CI YAML.
+
+name = "knitui-docs"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "out"

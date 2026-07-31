@@ -1,0 +1,70 @@
+export const meta = {
+  title: "Icons",
+  description: "@knitui/icons — the Tabler icon set as React Native SVG components, one per glyph.",
+};
+
+# Icons
+
+`@knitui/icons` ships the Tabler set — about 6,100 icons — as React Native SVG
+components that work on all three platforms.
+
+```bash
+npx expo install @knitui/icons react-native-svg
+```
+
+```tsx
+import { IconCheck } from "@knitui/icons";
+
+<IconCheck size={20} color="$color11" />;
+```
+
+<Callout kind="warning">
+  The barrel re-exports thousands of modules, and the kit src-ships — so a bundler
+  that cannot tree-shake it will compile all of them. On Next.js `withKnitui` sets
+  `optimizePackageImports`; elsewhere, and in any library code, import the glyph
+  directly:
+
+  ```tsx
+  import { IconCheck } from "@knitui/icons/IconCheck";
+  ```
+</Callout>
+
+## Inside controls
+
+You rarely size an icon by hand. Controls publish their icon metrics, and the glyph
+reads them:
+
+```tsx
+<Button leftSection={<IconCheck />}>Confirm</Button>
+<ActionIcon size="lg"><IconTrash /></ActionIcon>
+```
+
+Size and colour follow the control's own `size` and `variant` via
+`ControlIconProvider` and the `CONTROL_ICON_SIZE` ladder. See
+[Icons](/docs/foundations/icons).
+
+## One path per glyph
+
+The generator merges each icon's paths into a single `<Path>` at build time, with a
+verification step comparing the merged output against the original. One draw call
+per icon instead of a dozen is the difference between a smooth and a janky icon
+list on Android.
+
+## Browse them
+
+<Example id="icons/icon" story="Playground" />
+
+The full set is searchable in the [Storybook icon browser](https://the-haus.github.io/knitui/icons/).
+
+## Replacing the kit's own icons
+
+`IconProvider` overrides the icons components use internally — `Accordion`'s
+chevron, `Checkbox`'s check, `Combobox`'s clear button — without patching anything:
+
+```tsx
+<IconProvider value={{ ChevronDown: MyChevron }}>
+  <App />
+</IconProvider>
+```
+
+Any component works, as long as it accepts `size` and `color`.

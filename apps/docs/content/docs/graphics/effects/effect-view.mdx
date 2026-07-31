@@ -1,0 +1,21 @@
+export const meta = {
+  title: "EffectView",
+  description: "A drop-in `<div>` replacement that paints a stack of Skia effects onto itself. Pass `effects` as one array of `{ effect, ...props }` descriptors — frame paints (`fill`, `border`, `glow`, `shadow`) and component-backed effects (`dottedGrid`, `checkerboard`, `noise`, `image`, `blurredImage`). Array order is stacking order; you pass data, never a component. Geometry (corner radius and size) is read off the element's own `style`. All layers paint into at most two shared Skia canvases (one behind the content, one in front), clipped with a Skia `Group`. A native counterpart (`View.native.tsx`) wraps a React Native `View`.",
+};
+
+<ComponentHeader id="graphics/effects/effect-view" />
+
+{/* scaffolded: replace this comment with real prose */}
+
+<Callout kind="platform">
+  Rendered through Skia. On the web each canvas holds a WebGL context and browsers
+  cap how many can be live at once, so examples on this page mount one at a time.
+</Callout>
+
+## Playground
+
+<Playground id="graphics/effects/effect-view" />
+
+<Examples id="graphics/effects/effect-view" />
+
+<PropsTable id="graphics/effects/effect-view" />

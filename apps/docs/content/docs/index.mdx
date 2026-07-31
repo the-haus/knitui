@@ -1,0 +1,86 @@
+export const meta = {
+  title: "What is Knit UI",
+  description:
+    "Knit UI is a cross-platform component kit: 100+ React Native + web components sharing one design system, one sizing scale and one theming model.",
+};
+
+# What is Knit UI
+
+Knit UI is a component kit that renders on **iOS, Android and the web from one
+source**. You import a component once and it works on every platform — same
+props, same tokens, same behaviour — because it is built on React Native and
+Tamagui rather than on the DOM.
+
+<CardGrid>
+  <CardLink href="/docs/getting-started/installation" title="Install it">
+    Expo, bare React Native, Next.js or Vite — with the peer dependencies each one needs.
+  </CardLink>
+  <CardLink href="/docs/getting-started/quickstart" title="Quickstart">
+    Wrap your app in one `Provider` and render your first component.
+  </CardLink>
+  <CardLink href="/docs/foundations/tokens" title="Foundations">
+    The token scales, theme ramps and sizing tables every component shares.
+  </CardLink>
+  <CardLink href="/docs/components/inputs/button" title="Components">
+    Live examples, generated prop tables, style slots and platform notes.
+  </CardLink>
+</CardGrid>
+
+## The shape of it
+
+The kit is a set of packages, each independently versioned and installable:
+
+| Package | What it is |
+| --- | --- |
+| `@knitui/core` | The design system itself: Tamagui config, tokens, themes, `Provider`, `styled()`, motion |
+| `@knitui/components` | The main kit — 100+ components, from `Box` to `Combobox` to `VirtualList` |
+| `@knitui/hooks` | Platform-aware hooks the kit is built from, usable on their own |
+| `@knitui/icons` | Tabler icons as React Native SVG components |
+| `@knitui/emoji` | Noto emoji, build-time compiled to node trees |
+| `@knitui/dates` | Calendars, date/time pickers and inputs |
+| `@knitui/carousel` | A gesture-driven carousel with ten layout modes |
+| `@knitui/map` | MapLibre for native and web behind one API |
+| `@knitui/media` | Audio and video players, playlists, recording, DSP |
+| `@knitui/graphics` | Skia canvases, effects and visualizers |
+| `@knitui/sheet` | Bottom sheets |
+| `@knitui/mediaquery` | SSR-safe media queries and breakpoints |
+| `@knitui/plugins` | Build integration for metro, next, vite, webpack and babel |
+
+`@knitui/core` is the "how it looks" layer; `@knitui/components` is the "what you
+render" layer. You almost always want both.
+
+## What makes it different
+
+**One source, three platforms.** Not a web library with a React Native port, and
+not a mobile library with a web shim. A single `Button.tsx` produces a real
+`<button>` on the web and a native pressable on device.
+
+**Systems, not one-offs.** Size comes from one `controlMetrics` table, colour
+from one variant ladder, elevation from one shadow scale, motion from one set of
+tokens. A `Button`, a `TextInput` and a `Menu` all speak the same `size`,
+`variant` and `styles` language — so learning one component teaches you the rest.
+
+**Composable by default.** Every component exposes its internal parts as styled
+slots, and the `styles` prop targets them by name:
+
+```tsx
+<Button styles={{ label: { textTransform: "uppercase" }, left: { opacity: 0.6 } }}>
+  Continue
+</Button>
+```
+
+**Documented from source.** The examples on these pages are the kit's own
+Storybook stories, mounted live. The prop tables are extracted from the
+TypeScript types. Neither is written by hand, so neither can drift.
+
+<Callout kind="platform">
+  Where behaviour genuinely differs between platforms, pages say so in a callout
+  like this one rather than pretending the difference away.
+</Callout>
+
+## Try it
+
+<Example id="components/inputs/button" story="Variants" />
+
+Every example carries a **Show code** toggle with the exact source, a link to the
+story file on GitHub, and a link to the same story in Storybook.

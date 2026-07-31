@@ -1,0 +1,48 @@
+export const meta = {
+  title: "Style props",
+  description:
+    "The full inherited style surface every Knit UI component carries, from its Box frame.",
+};
+
+# Style props
+
+Every component in the kit is a `styled(Box)` frame, so every component accepts
+the same style surface — around 500 props, including shorthands and the React
+Native style properties Tamagui maps.
+
+Component pages do not enumerate these; they show a count and link here.
+
+## The ones you will actually type
+
+| Shorthand | Property | Takes |
+| --- | --- | --- |
+| `p` `px` `py` `pt` `pr` `pb` `pl` | padding | `$space` token or number |
+| `m` `mx` `my` `mt` `mr` `mb` `ml` | margin | `$space` token or number |
+| `gap` | gap | `$space` token or number |
+| `bg` | backgroundColor | theme colour token |
+| `c` | color | theme colour token |
+| `br` | borderRadius | `$radius` token or number |
+| `fz` | fontSize | `$fontSize` token or number |
+| `w` `h` | width, height | `$size` token, number, or `"100%"` |
+| `maw` `miw` `mah` `mih` | max/min width and height | as above |
+
+Plus the state props — `hoverStyle`, `pressStyle`, `focusStyle`, `disabledStyle` —
+which take the same objects:
+
+```tsx
+<Box bg="$color2" hoverStyle={{ bg: "$color3" }} pressStyle={{ bg: "$color4" }} />
+```
+
+## Breakpoint objects
+
+Any of them accepts a breakpoint map:
+
+```tsx
+<Box p={{ xxs: "$sm", md: "$lg" }} />
+```
+
+See [Responsive](/docs/foundations/responsive).
+
+## The full surface
+
+<StylePropsTable />

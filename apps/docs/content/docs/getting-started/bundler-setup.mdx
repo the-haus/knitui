@@ -1,0 +1,99 @@
+export const meta = {
+  title: "Bundler setup",
+  description:
+    "@knitui/plugins wires the Tamagui compiler and the react-native-web resolution rules into babel, metro, next, vite and webpack.",
+};
+
+# Bundler setup
+
+The kit **source-ships**: `main` points at `./src/index.ts`, not a built bundle.
+That is deliberate — it keeps platform-split files (`.native.tsx`, `.web.tsx`)
+resolvable by your bundler, and it means the Tamagui compiler can see real source
+and flatten it. The cost is that your bundler has to be told about it, which is
+what [`@knitui/plugins`](/docs/api/packages) does.
+
+Every entry point comes pre-wired with the kit's config and component list baked
+in, so you never reference a Tamagui package yourself.
+
+## Babel — `@knitui/plugins/babel-plugin`
+
+```js title="babel.config.js"
+module.exports = {
+  presets: ["babel-preset-expo"],
+  plugins: [require("@knitui/plugins/babel-plugin")],
+};
+```
+
+Runs the Tamagui compiler on native. Extraction is off in development (so fast
+refresh stays fast) and on in production builds.
+
+## Metro — `@knitui/plugins/metro`
+
+```js title="metro.config.js"
+const { getDefaultConfig } = require("expo/metro-config");
+const { withKnitui } = require("@knitui/plugins/metro");
+
+module.exports = withKnitui(getDefaultConfig(__dirname));
+```
+
+Adds the source extensions and resolver rules the kit's packages need.
+
+## Next.js — `@knitui/plugins/next-plugin`
+
+```js title="next.config.mjs"
+import { withKnitui } from "@knitui/plugins/next-plugin";
+
+export default withKnitui({
+  transpilePackages: ["react-native-web", "react-native-reanimated", "@knitui/components"],
+});
+```
+
+This one does the most work:
+
+- runs the Tamagui compiler, flattening `styled()` components to atomic CSS;
+- aliases `react-native` → `react-native-web`, and orders resolution so `.web.*`
+  files win;
+- aliases `react-native/Libraries/Image/AssetRegistry` to RNW's equivalent, which
+  Skia's web build reaches for directly;
+- stubs `fs`/`path` in the browser bundle for `canvaskit-wasm`;
+- defines `global` as `globalThis` in the client bundle — reanimated's web build
+  touches `global` at module scope, and the browser has none;
+- sets `optimizePackageImports` for the barrel-shaped packages.
+
+<Callout kind="warning">
+  Build with `--webpack`. The compiler is a webpack plugin; Next 16 defaults to
+  Turbopack, which will silently skip it.
+</Callout>
+
+## Vite — `@knitui/plugins/vite`
+
+```ts title="vite.config.ts"
+import { knitui } from "@knitui/plugins/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({ plugins: [react(), knitui()] });
+```
+
+## Webpack — `@knitui/plugins/webpack`
+
+For a non-Next webpack setup, the same resolution rules and compiler are
+available directly:
+
+```js title="webpack.config.js"
+const { withKnitui } = require("@knitui/plugins/webpack");
+
+module.exports = withKnitui({ /* your config */ });
+```
+
+## Extraction, and what it can and cannot flatten
+
+The Tamagui compiler flattens `styled()` components into atomic CSS at build
+time. In this kit most components are built with `.styleable()`, which implies
+`neverFlatten` — the component keeps its runtime wrapper so composition and slot
+styling keep working.
+
+The practical consequence: expect the web output to carry react-native-web's
+shape rather than fully static markup. It is a deliberate trade — composability
+over maximal flattening — and it is why the docs set a JS budget per route rather
+than assuming zero-runtime CSS.

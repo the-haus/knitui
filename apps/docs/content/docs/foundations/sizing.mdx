@@ -1,0 +1,79 @@
+export const meta = {
+  title: "Sizing",
+  description:
+    "controlMetrics is the single source of truth for how every control-shaped component scales from xxs to xxl.",
+};
+
+# Sizing
+
+Every control-shaped component in the kit — buttons, inputs, badges, avatars,
+chips, selects, switches, loaders — takes `size="xxs" … "xxl"` and derives its
+height, font size, padding, gap and radius from **one table**.
+
+```tsx
+<Group>
+  <Button size="lg">Save</Button>
+  <TextInput size="lg" placeholder="Email" />
+  <Badge size="lg">New</Badge>
+</Group>
+```
+
+Those three line up because they read the same row, not because someone matched
+the numbers by hand.
+
+## The table
+
+<SourceNote note="controlMetrics" />
+
+<ControlMetricsTable />
+
+Each cell is a **token key**, resolved per property (see
+[Tokens](/docs/foundations/tokens)); the grey number is what it resolves to.
+
+## Reading the design
+
+Two decisions in that table are deliberate and worth knowing:
+
+**Font size is clamped at the bottom.** `xxs` and `xs` borrow the 12px `$xxs`
+font instead of their own step, so tiny controls are not dominated by their
+label. From `sm` up, the text-to-height ratio holds flat at about 0.42–0.45.
+
+**Radius is capped at `$lg`.** Large controls stay rectangles rather than
+becoming accidental pills. The pill family (`Badge`, `Chip`, `Pill`) opts into a
+different look through `paddingHorizontalPill` — the standard padding bumped one
+space step — which is the one sanctioned divergence.
+
+## The default is `md`
+
+Every sized component defaults to `md`. If a design calls for something else
+globally, change it in your theme rather than passing `size` everywhere.
+
+## Nested controls step down
+
+A control inside another control should not be the same size as its host. The kit
+resolves that with `toEmbeddedControlSize`, which steps one key down — so the
+close button in a `size="md"` `Alert` comes out at `sm`, automatically.
+
+## Using the table yourself
+
+If you build a control that should size like the kit's, read the same table
+rather than copying numbers. It is public API:
+
+```tsx
+import { controlMetrics, DEFAULT_SIZE, type SizeKey } from "@knitui/components/control-system";
+
+function MyControl({ size = DEFAULT_SIZE }: { size?: SizeKey }) {
+  const metrics = controlMetrics[size];
+  return <Box height={metrics.height} px={metrics.paddingHorizontal} br={metrics.borderRadius} />;
+}
+```
+
+That export exists precisely so sibling packages (`@knitui/media`'s player
+chrome, for instance) size against the kit instead of drifting from it.
+
+## What is not on this scale
+
+`Slider` deliberately uses local pixel geometry: a track and thumb sized off the
+control ladder came out either too chunky or too fiddly at the extremes.
+`Accordion`'s chevron has its own 10–22px glyph table for the same reason. When a
+component diverges, its page says so.

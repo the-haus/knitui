@@ -1,0 +1,93 @@
+export const meta = {
+  title: "Contributing",
+  description:
+    "Repo layout, the conventions a new component must follow, and how a change gets released.",
+};
+
+# Contributing
+
+## The repo
+
+```
+packages/
+  core          config · tokens · themes · Provider · styled · motion
+  components    the main kit
+  hooks         platform-aware hooks
+  icons emoji   generated glyph packages
+  dates carousel map media graphics sheet mediaquery
+  plugins       build integrations
+  demo          the cross-platform gallery (private)
+  story-runtime the shared CSF resolver (private)
+apps/
+  app           Expo example
+  web           Next.js example
+  storybook     aggregate Storybook (GitHub Pages)
+  docs          this site
+scripts/
+  docs/         the docs generators
+```
+
+```bash
+pnpm install
+pnpm --filter @knitui/components storybook   # work on components
+pnpm --filter @knitui/docs dev               # work on the docs (port 3001)
+pnpm test && pnpm lint && pnpm typecheck     # what CI runs
+```
+
+## Adding a component
+
+A component is not done until all five exist:
+
+1. **`Component.tsx`** — a `styled(Box)` frame, sized from
+   [`controlMetrics`](/docs/foundations/sizing), coloured through the
+   [variant ladder](/docs/foundations/variants-and-colors), with a typed slot map if
+   it has parts.
+2. **`Component.stories.tsx`** — CSF3, starting with a `Playground` story, with
+   `argTypes` descriptions (they become the docs' controls panel *and* the prop
+   descriptions), and a `Styles` story showing per-slot styling.
+3. **`Component.test.tsx`** — jsdom, asserting real host elements
+   (`getByRole("button")`, not a `testID`) so a refactor that drops semantics fails.
+4. **`index.ts`** — the component plus its types, re-exported from the package barrel.
+5. **A docs page** — `pnpm docs:generate` scaffolds it from the story; you write the
+   prose, the accessibility notes and the platform notes.
+
+The [`Button`](/docs/components/inputs/button) folder is the reference for a simple
+control, [`Combobox`](/docs/components/inputs/combobox) for a compound one.
+
+## Conventions that are enforced
+
+- `pnpm check:naming` — file and export naming.
+- Every package lints with `eslint .` (not `eslint src`).
+- Prettier runs *through* ESLint, so `pnpm lint:fix` formats.
+- A focus ring may only be applied to something focusable — there is a guardrail
+  test for the pairing.
+- Story titles are the docs routes. `Inputs/Button` becomes
+  `/docs/components/inputs/button`, so a title is an API decision.
+
+## Documentation is generated
+
+Do not hand-write a prop table or copy an example into prose. The docs read:
+
+- **stories** for examples, captions (JSDoc) and controls (`argTypes`);
+- **TypeScript declarations** for props, defaults and slot keys;
+- **the config** for token, sizing and motion tables;
+- **`CHANGELOG.md`** for release history.
+
+`pnpm docs:generate` refreshes all of it. CI fails if the committed output is stale
+or if a component has stories but no page.
+
+## Releasing
+
+[Changesets](https://github.com/changesets/changesets):
+
+```bash
+pnpm changeset          # describe the change and pick the bump
+```
+
+Merging to `main` opens a version PR; merging **that** publishes to npm. Pushing to
+`main` alone does not publish.
+
+<Callout kind="warning">
+  Never commit or push without being asked to, and never let an agent run git
+  writes. The release path is gated on a human merging the version PR for a reason.
+</Callout>

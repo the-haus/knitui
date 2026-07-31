@@ -1,0 +1,56 @@
+export const meta = {
+  title: "Button",
+  description:
+    "Button is the kit's canonical control — Box + Text, coloured through the theme palette ramp and sized from controlMetrics.",
+};
+
+<ComponentHeader id="components/inputs/button" />
+
+## Playground
+
+<Playground id="components/inputs/button" />
+
+## Usage
+
+`Button` takes its label as children. Everything else — colour, size, elevation,
+gradient, loading state — is a prop off one of the kit's shared systems, so the
+same vocabulary works on `ActionIcon`, `Chip`, `Badge` and the rest.
+
+```tsx
+import { Button } from "@knitui/components";
+
+<Button variant="light" size="lg" onPress={submit}>
+  Continue
+</Button>;
+```
+
+Use `leftSection` / `rightSection` for icons or adornments; string children become
+a themed `Button.Text`, while element children are placed as-is.
+
+### When to use something else
+
+- An icon with no label → [`ActionIcon`](/docs/components/inputs/action-icon)
+- A link that looks like text → [`Anchor`](/docs/components/typography/anchor)
+- A pressable surface with no chrome at all → [`UnstyledButton`](/docs/components/inputs/unstyled-button)
+- A selectable, toggle-shaped control → [`Chip`](/docs/components/inputs/chip)
+
+<Examples id="components/inputs/button" />
+
+<PropsTable id="components/inputs/button" />
+
+## Accessibility
+
+- On the web, `Button` renders a real `<button>` (via the kit's `webButton()`
+  helper), so it is focusable, activates on <kbd>Enter</kbd> and <kbd>Space</kbd>,
+  and is announced as a button with no extra props.
+- `disabled` sets the native disabled state and blocks press handling — it does
+  not merely dim the control.
+- `loading` keeps the control mounted and blocks interaction while a `Loader`
+  replaces the icon slot, so focus is never lost mid-request.
+- Icon-only usage must carry an accessible name; prefer
+  [`ActionIcon`](/docs/components/inputs/action-icon), which is built for it.
+
+<Callout kind="platform">
+  The press-scale animation runs on the UI thread through Reanimated on native and
+  as a CSS transform on the web. With `prefers-reduced-motion`, both are skipped.
+</Callout>

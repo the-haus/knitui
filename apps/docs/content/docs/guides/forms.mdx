@@ -1,0 +1,141 @@
+export const meta = {
+  title: "Forms",
+  description: "Field composition, validation state, keyboard handling and the input family.",
+};
+
+# Forms
+
+## The field contract
+
+Every input in the kit takes the same four presentation props, and wires them to
+the control with generated ids so the accessible name and description are correct:
+
+```tsx
+<TextInput
+  label="Email"
+  description="We only use this for receipts."
+  error={errors.email}
+  required
+/>
+```
+
+`error` is a node, not a boolean: pass the message and the field colours itself
+(`$red9` border, red message) and announces. Pass `undefined` when valid.
+
+## The family
+
+| Component | For |
+| --- | --- |
+| [`TextInput`](/docs/components/inputs/text-input) | single-line text |
+| [`Textarea`](/docs/components/inputs/textarea) | multi-line, with `minRows`/`maxRows` |
+| [`PasswordInput`](/docs/components/inputs/password-input) | text with a reveal toggle |
+| [`NumberInput`](/docs/components/inputs/number-input) | numeric, with steppers and clamping |
+| [`MaskInput`](/docs/components/inputs/mask-input) | formatted input (phone, card) |
+| [`PinInput`](/docs/components/inputs/pin-input) | one-time codes |
+| [`Select`](/docs/components/inputs/select) · [`MultiSelect`](/docs/components/inputs/multi-select) | choose from a list |
+| [`Autocomplete`](/docs/components/inputs/autocomplete) · [`Combobox`](/docs/components/inputs/combobox) | filter as you type |
+| [`TagsInput`](/docs/components/inputs/tags-input) | free-form chips |
+| [`Checkbox`](/docs/components/inputs/checkbox) · [`Radio`](/docs/components/inputs/radio) · [`Switch`](/docs/components/inputs/switch) | booleans and choices |
+| [`Slider`](/docs/components/inputs/slider) · [`Rating`](/docs/components/inputs/rating) | ranges |
+| [`FileInput`](/docs/components/inputs/file-input) · [`FileButton`](/docs/components/inputs/file-button) | files |
+| [`ColorInput`](/docs/components/inputs/color-input) · [`ColorPicker`](/docs/components/inputs/color-picker) | colours |
+| [`DateInput`](/docs/dates/date-input) · [`TimeInput`](/docs/dates/time-input) | dates and times |
+
+`InputBase` is the shared shell if you need to put a custom control inside a
+kit-shaped field.
+
+## Controlled and uncontrolled
+
+Every input supports both, through the same
+[`useUncontrolled`](/docs/hooks/use-uncontrolled) hook internally:
+
+```tsx
+<TextInput defaultValue="hello" />                       // uncontrolled
+<TextInput value={value} onChangeText={setValue} />      // controlled
+```
+
+Pass `value` **or** `defaultValue`, never both.
+
+## Layout
+
+```tsx
+<Stack gap="$md">
+  <TextInput label="Name" />
+  <Group grow>
+    <TextInput label="City" />
+    <TextInput label="Postcode" />
+  </Group>
+  <Fieldset legend="Delivery">
+    <Radio.Group value={speed} onChange={setSpeed}>
+      <Radio value="standard" label="Standard" />
+      <Radio value="express" label="Express" />
+    </Radio.Group>
+  </Fieldset>
+  <Group justify="flex-end">
+    <Button variant="subtle">Cancel</Button>
+    <Button loading={saving}>Save</Button>
+  </Group>
+</Stack>
+```
+
+`Fieldset` gives you a real `<fieldset>`/`<legend>` on the web, which screen readers
+use to group the controls.
+
+## Validation
+
+The kit does not ship a form library — use React Hook Form, TanStack Form, or your
+own state. What it gives you is the presentation contract above. With React Hook
+Form:
+
+```tsx
+<Controller
+  control={control}
+  name="email"
+  render={({ field, fieldState }) => (
+    <TextInput
+      label="Email"
+      value={field.value}
+      onChangeText={field.onChange}
+      onBlur={field.onBlur}
+      error={fieldState.error?.message}
+    />
+  )}
+/>
+```
+
+[`useValidatedState`](/docs/hooks/use-validated-state) covers the simple case
+without a library.
+
+## The keyboard on device
+
+Wrap a form in `KeyboardAvoidingView`, or use `KeyboardAwareScrollView` when it
+scrolls — both are in the kit and use the platform `Keyboard` API.
+
+<Callout kind="platform">
+  A dropdown inside a scroll container needs
+  `keyboardShouldPersistTaps="handled"`, or the first tap after the keyboard was
+  open is swallowed by the dismiss. The kit's own dropdowns set this; a hand-rolled
+  one must too.
+</Callout>
+
+Set the right keyboard and autofill hints — they cost nothing and improve every
+form:
+
+```tsx
+<TextInput
+  label="Email"
+  keyboardType="email-address"
+  autoCapitalize="none"
+  autoComplete="email"
+  textContentType="emailAddress"
+/>
+```
+
+## Submitting
+
+Keep the button mounted while it works — `loading` blocks interaction without
+unmounting, so focus is never lost mid-request:
+
+```tsx
+<Button loading={saving} onPress={submit}>Save</Button>
+```

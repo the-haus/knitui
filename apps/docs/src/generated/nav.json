@@ -1,0 +1,1236 @@
+{
+  "sections": [
+    {
+      "label": "Introduction",
+      "collapsed": false,
+      "items": [
+        {
+          "label": "What is Knit UI",
+          "href": "/docs"
+        },
+        {
+          "label": "Why Knit UI",
+          "href": "/docs/why"
+        },
+        {
+          "label": "Architecture",
+          "href": "/docs/architecture"
+        },
+        {
+          "label": "Packages",
+          "href": "/docs/api/packages"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Getting started",
+      "collapsed": false,
+      "items": [
+        {
+          "label": "Installation",
+          "href": "/docs/getting-started/installation"
+        },
+        {
+          "label": "Quickstart",
+          "href": "/docs/getting-started/quickstart"
+        },
+        {
+          "label": "Expo",
+          "href": "/docs/getting-started/expo"
+        },
+        {
+          "label": "Next.js",
+          "href": "/docs/getting-started/nextjs"
+        },
+        {
+          "label": "Vite",
+          "href": "/docs/getting-started/vite"
+        },
+        {
+          "label": "Bundler setup",
+          "href": "/docs/getting-started/bundler-setup"
+        },
+        {
+          "label": "Server rendering",
+          "href": "/docs/getting-started/ssr"
+        },
+        {
+          "label": "TypeScript",
+          "href": "/docs/getting-started/typescript"
+        },
+        {
+          "label": "Troubleshooting",
+          "href": "/docs/getting-started/troubleshooting"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Foundations",
+      "collapsed": false,
+      "items": [
+        {
+          "label": "Principles",
+          "href": "/docs/foundations/principles"
+        },
+        {
+          "label": "Tokens",
+          "href": "/docs/foundations/tokens"
+        },
+        {
+          "label": "Color & themes",
+          "href": "/docs/foundations/color-and-themes"
+        },
+        {
+          "label": "Theme builder",
+          "href": "/docs/foundations/theme-builder"
+        },
+        {
+          "label": "Typography",
+          "href": "/docs/foundations/typography"
+        },
+        {
+          "label": "Sizing",
+          "href": "/docs/foundations/sizing"
+        },
+        {
+          "label": "Variants & colors",
+          "href": "/docs/foundations/variants-and-colors"
+        },
+        {
+          "label": "Elevation",
+          "href": "/docs/foundations/elevation"
+        },
+        {
+          "label": "Motion",
+          "href": "/docs/foundations/motion"
+        },
+        {
+          "label": "Focus & a11y",
+          "href": "/docs/foundations/focus-and-a11y"
+        },
+        {
+          "label": "Layout",
+          "href": "/docs/foundations/layout"
+        },
+        {
+          "label": "Slots & styles",
+          "href": "/docs/foundations/slots-and-styles"
+        },
+        {
+          "label": "Gradients",
+          "href": "/docs/foundations/gradients"
+        },
+        {
+          "label": "Responsive",
+          "href": "/docs/foundations/responsive"
+        },
+        {
+          "label": "Dark mode",
+          "href": "/docs/foundations/dark-mode"
+        },
+        {
+          "label": "Icons",
+          "href": "/docs/foundations/icons"
+        },
+        {
+          "label": "styled()",
+          "href": "/docs/foundations/styled"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Components",
+      "collapsed": true,
+      "items": [],
+      "sections": [
+        {
+          "label": "Layout",
+          "items": [
+            {
+              "label": "Affix",
+              "href": "/docs/components/layout/affix"
+            },
+            {
+              "label": "AspectRatio",
+              "href": "/docs/components/layout/aspect-ratio"
+            },
+            {
+              "label": "Box",
+              "href": "/docs/components/layout/box"
+            },
+            {
+              "label": "Center",
+              "href": "/docs/components/layout/center"
+            },
+            {
+              "label": "Container",
+              "href": "/docs/components/layout/container"
+            },
+            {
+              "label": "Flex",
+              "href": "/docs/components/layout/flex"
+            },
+            {
+              "label": "Grid",
+              "href": "/docs/components/layout/grid"
+            },
+            {
+              "label": "Group",
+              "href": "/docs/components/layout/group"
+            },
+            {
+              "label": "KeyboardAvoidingView",
+              "href": "/docs/components/layout/keyboard-avoiding-view"
+            },
+            {
+              "label": "KeyboardAwareScrollView",
+              "href": "/docs/components/layout/keyboard-aware-scroll-view"
+            },
+            {
+              "label": "Paper",
+              "href": "/docs/components/layout/paper"
+            },
+            {
+              "label": "SimpleGrid",
+              "href": "/docs/components/layout/simple-grid"
+            },
+            {
+              "label": "Spacer",
+              "href": "/docs/components/layout/spacer"
+            },
+            {
+              "label": "Stack",
+              "href": "/docs/components/layout/stack"
+            }
+          ]
+        },
+        {
+          "label": "Typography",
+          "items": [
+            {
+              "label": "Anchor",
+              "href": "/docs/components/typography/anchor"
+            },
+            {
+              "label": "Blockquote",
+              "href": "/docs/components/typography/blockquote"
+            },
+            {
+              "label": "Code",
+              "href": "/docs/components/typography/code"
+            },
+            {
+              "label": "Highlight",
+              "href": "/docs/components/typography/highlight"
+            },
+            {
+              "label": "Kbd",
+              "href": "/docs/components/typography/kbd"
+            },
+            {
+              "label": "Mark",
+              "href": "/docs/components/typography/mark"
+            },
+            {
+              "label": "NumberFormatter",
+              "href": "/docs/components/typography/number-formatter"
+            },
+            {
+              "label": "Paragraph",
+              "href": "/docs/components/typography/paragraph"
+            },
+            {
+              "label": "Text",
+              "href": "/docs/components/typography/text"
+            },
+            {
+              "label": "Title",
+              "href": "/docs/components/typography/title"
+            },
+            {
+              "label": "Typography",
+              "href": "/docs/components/typography"
+            }
+          ]
+        },
+        {
+          "label": "Inputs",
+          "items": [
+            {
+              "label": "ActionIcon",
+              "href": "/docs/components/inputs/action-icon"
+            },
+            {
+              "label": "AngleSlider",
+              "href": "/docs/components/inputs/angle-slider"
+            },
+            {
+              "label": "Autocomplete",
+              "href": "/docs/components/inputs/autocomplete"
+            },
+            {
+              "label": "Button",
+              "href": "/docs/components/inputs/button"
+            },
+            {
+              "label": "Checkbox",
+              "href": "/docs/components/inputs/checkbox"
+            },
+            {
+              "label": "Chip",
+              "href": "/docs/components/inputs/chip"
+            },
+            {
+              "label": "CloseButton",
+              "href": "/docs/components/inputs/close-button"
+            },
+            {
+              "label": "ColorInput",
+              "href": "/docs/components/inputs/color-input"
+            },
+            {
+              "label": "ColorPicker",
+              "href": "/docs/components/inputs/color-picker"
+            },
+            {
+              "label": "Combobox",
+              "href": "/docs/components/inputs/combobox"
+            },
+            {
+              "label": "CopyButton",
+              "href": "/docs/components/inputs/copy-button"
+            },
+            {
+              "label": "Fieldset",
+              "href": "/docs/components/inputs/fieldset"
+            },
+            {
+              "label": "FileButton",
+              "href": "/docs/components/inputs/file-button"
+            },
+            {
+              "label": "FileInput",
+              "href": "/docs/components/inputs/file-input"
+            },
+            {
+              "label": "Input",
+              "href": "/docs/components/inputs/input"
+            },
+            {
+              "label": "InputBase",
+              "href": "/docs/components/inputs/input-base"
+            },
+            {
+              "label": "MaskInput",
+              "href": "/docs/components/inputs/mask-input"
+            },
+            {
+              "label": "MultiSelect",
+              "href": "/docs/components/inputs/multi-select"
+            },
+            {
+              "label": "NativeSelect",
+              "href": "/docs/components/inputs/native-select"
+            },
+            {
+              "label": "NumberInput",
+              "href": "/docs/components/inputs/number-input"
+            },
+            {
+              "label": "PasswordInput",
+              "href": "/docs/components/inputs/password-input"
+            },
+            {
+              "label": "PillsInput",
+              "href": "/docs/components/inputs/pills-input"
+            },
+            {
+              "label": "PinInput",
+              "href": "/docs/components/inputs/pin-input"
+            },
+            {
+              "label": "Radio",
+              "href": "/docs/components/inputs/radio"
+            },
+            {
+              "label": "Rating",
+              "href": "/docs/components/inputs/rating"
+            },
+            {
+              "label": "SegmentedControl",
+              "href": "/docs/components/inputs/segmented-control"
+            },
+            {
+              "label": "Select",
+              "href": "/docs/components/inputs/select"
+            },
+            {
+              "label": "Slider",
+              "href": "/docs/components/inputs/slider"
+            },
+            {
+              "label": "Switch",
+              "href": "/docs/components/inputs/switch"
+            },
+            {
+              "label": "TagsInput",
+              "href": "/docs/components/inputs/tags-input"
+            },
+            {
+              "label": "Textarea",
+              "href": "/docs/components/inputs/textarea"
+            },
+            {
+              "label": "TextInput",
+              "href": "/docs/components/inputs/text-input"
+            },
+            {
+              "label": "UnstyledButton",
+              "href": "/docs/components/inputs/unstyled-button"
+            }
+          ]
+        },
+        {
+          "label": "Display",
+          "items": [
+            {
+              "label": "Avatar",
+              "href": "/docs/components/display/avatar"
+            },
+            {
+              "label": "BackgroundImage",
+              "href": "/docs/components/display/background-image"
+            },
+            {
+              "label": "Badge",
+              "href": "/docs/components/display/badge"
+            },
+            {
+              "label": "Card",
+              "href": "/docs/components/display/card"
+            },
+            {
+              "label": "ColorSwatch",
+              "href": "/docs/components/display/color-swatch"
+            },
+            {
+              "label": "Image",
+              "href": "/docs/components/display/image"
+            },
+            {
+              "label": "Indicator",
+              "href": "/docs/components/display/indicator"
+            },
+            {
+              "label": "Loader",
+              "href": "/docs/components/display/loader"
+            },
+            {
+              "label": "Overlay",
+              "href": "/docs/components/display/overlay"
+            },
+            {
+              "label": "Pill",
+              "href": "/docs/components/display/pill"
+            },
+            {
+              "label": "Progress",
+              "href": "/docs/components/display/progress"
+            },
+            {
+              "label": "RollingNumber",
+              "href": "/docs/components/display/rolling-number"
+            },
+            {
+              "label": "Separator",
+              "href": "/docs/components/display/separator"
+            },
+            {
+              "label": "Skeleton",
+              "href": "/docs/components/display/skeleton"
+            },
+            {
+              "label": "VisuallyHidden",
+              "href": "/docs/components/display/visually-hidden"
+            }
+          ]
+        },
+        {
+          "label": "Data Display",
+          "items": [
+            {
+              "label": "List",
+              "href": "/docs/components/data-display/list"
+            },
+            {
+              "label": "Marquee",
+              "href": "/docs/components/data-display/marquee"
+            },
+            {
+              "label": "Table",
+              "href": "/docs/components/data-display/table"
+            },
+            {
+              "label": "ThemeIcon",
+              "href": "/docs/components/data-display/theme-icon"
+            },
+            {
+              "label": "Tree",
+              "href": "/docs/components/data-display/tree"
+            },
+            {
+              "label": "TreeSelect",
+              "href": "/docs/components/data-display/tree-select"
+            },
+            {
+              "label": "VirtualList",
+              "href": "/docs/components/data-display/virtual-list"
+            }
+          ]
+        },
+        {
+          "label": "Feedback",
+          "items": [
+            {
+              "label": "Alert",
+              "href": "/docs/components/feedback/alert"
+            },
+            {
+              "label": "LoadingOverlay",
+              "href": "/docs/components/feedback/loading-overlay"
+            },
+            {
+              "label": "Notification",
+              "href": "/docs/components/feedback/notification"
+            },
+            {
+              "label": "Spoiler",
+              "href": "/docs/components/feedback/spoiler"
+            }
+          ]
+        },
+        {
+          "label": "Navigation",
+          "items": [
+            {
+              "label": "Accordion",
+              "href": "/docs/components/navigation/accordion"
+            },
+            {
+              "label": "Breadcrumbs",
+              "href": "/docs/components/navigation/breadcrumbs"
+            },
+            {
+              "label": "Burger",
+              "href": "/docs/components/navigation/burger"
+            },
+            {
+              "label": "NavLink",
+              "href": "/docs/components/navigation/nav-link"
+            },
+            {
+              "label": "Pagination",
+              "href": "/docs/components/navigation/pagination"
+            },
+            {
+              "label": "ScrollArea",
+              "href": "/docs/components/navigation/scroll-area"
+            },
+            {
+              "label": "Stepper",
+              "href": "/docs/components/navigation/stepper"
+            },
+            {
+              "label": "TableOfContents",
+              "href": "/docs/components/navigation/table-of-contents"
+            },
+            {
+              "label": "Tabs",
+              "href": "/docs/components/navigation/tabs"
+            }
+          ]
+        },
+        {
+          "label": "Overlays",
+          "items": [
+            {
+              "label": "Collapse",
+              "href": "/docs/components/overlays/collapse"
+            },
+            {
+              "label": "Dialog",
+              "href": "/docs/components/overlays/dialog"
+            },
+            {
+              "label": "Drawer",
+              "href": "/docs/components/overlays/drawer"
+            },
+            {
+              "label": "FocusTrap",
+              "href": "/docs/components/overlays/focus-trap"
+            },
+            {
+              "label": "HoverCard",
+              "href": "/docs/components/overlays/hover-card"
+            },
+            {
+              "label": "Menu",
+              "href": "/docs/components/overlays/menu"
+            },
+            {
+              "label": "Modal",
+              "href": "/docs/components/overlays/modal"
+            },
+            {
+              "label": "Motion",
+              "href": "/docs/components/overlays/motion"
+            },
+            {
+              "label": "Popover",
+              "href": "/docs/components/overlays/popover"
+            },
+            {
+              "label": "Portal",
+              "href": "/docs/components/overlays/portal"
+            },
+            {
+              "label": "Tooltip",
+              "href": "/docs/components/overlays/tooltip"
+            },
+            {
+              "label": "Transition",
+              "href": "/docs/components/overlays/transition"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Dates",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Overview",
+          "href": "/docs/dates"
+        },
+        {
+          "label": "AmPmInput",
+          "href": "/docs/dates/am-pm-input"
+        },
+        {
+          "label": "Calendar",
+          "href": "/docs/dates/calendar"
+        },
+        {
+          "label": "CalendarHeader",
+          "href": "/docs/dates/calendar-header"
+        },
+        {
+          "label": "DateInput",
+          "href": "/docs/dates/date-input"
+        },
+        {
+          "label": "DatePicker",
+          "href": "/docs/dates/date-picker"
+        },
+        {
+          "label": "DatePickerInput",
+          "href": "/docs/dates/date-picker-input"
+        },
+        {
+          "label": "DateTimePicker",
+          "href": "/docs/dates/date-time-picker"
+        },
+        {
+          "label": "Day",
+          "href": "/docs/dates/day"
+        },
+        {
+          "label": "DecadeLevel",
+          "href": "/docs/dates/decade-level"
+        },
+        {
+          "label": "DecadeLevelGroup",
+          "href": "/docs/dates/decade-level-group"
+        },
+        {
+          "label": "LevelsGroup",
+          "href": "/docs/dates/levels-group"
+        },
+        {
+          "label": "MiniCalendar",
+          "href": "/docs/dates/mini-calendar"
+        },
+        {
+          "label": "Month",
+          "href": "/docs/dates/month"
+        },
+        {
+          "label": "MonthLevel",
+          "href": "/docs/dates/month-level"
+        },
+        {
+          "label": "MonthLevelGroup",
+          "href": "/docs/dates/month-level-group"
+        },
+        {
+          "label": "MonthPicker",
+          "href": "/docs/dates/month-picker"
+        },
+        {
+          "label": "MonthPickerInput",
+          "href": "/docs/dates/month-picker-input"
+        },
+        {
+          "label": "MonthsList",
+          "href": "/docs/dates/months-list"
+        },
+        {
+          "label": "PickerControl",
+          "href": "/docs/dates/picker-control"
+        },
+        {
+          "label": "PickerInputBase",
+          "href": "/docs/dates/picker-input-base"
+        },
+        {
+          "label": "SpinInput",
+          "href": "/docs/dates/spin-input"
+        },
+        {
+          "label": "TimeControlsList",
+          "href": "/docs/dates/time-controls-list"
+        },
+        {
+          "label": "TimeGrid",
+          "href": "/docs/dates/time-grid"
+        },
+        {
+          "label": "TimeInput",
+          "href": "/docs/dates/time-input"
+        },
+        {
+          "label": "TimePicker",
+          "href": "/docs/dates/time-picker"
+        },
+        {
+          "label": "TimePresets",
+          "href": "/docs/dates/time-presets"
+        },
+        {
+          "label": "TimeValue",
+          "href": "/docs/dates/time-value"
+        },
+        {
+          "label": "WeekdaysRow",
+          "href": "/docs/dates/weekdays-row"
+        },
+        {
+          "label": "YearLevel",
+          "href": "/docs/dates/year-level"
+        },
+        {
+          "label": "YearLevelGroup",
+          "href": "/docs/dates/year-level-group"
+        },
+        {
+          "label": "YearPicker",
+          "href": "/docs/dates/year-picker"
+        },
+        {
+          "label": "YearPickerInput",
+          "href": "/docs/dates/year-picker-input"
+        },
+        {
+          "label": "YearsList",
+          "href": "/docs/dates/years-list"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Carousel",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Carousel",
+          "href": "/docs/carousel"
+        },
+        {
+          "label": "SwipeDeck",
+          "href": "/docs/carousel/swipe-deck"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Map",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Overview",
+          "href": "/docs/map"
+        }
+      ],
+      "sections": [
+        {
+          "label": "Camera",
+          "items": [
+            {
+              "label": "Camera",
+              "href": "/docs/map/camera"
+            }
+          ]
+        },
+        {
+          "label": "Layers",
+          "items": [
+            {
+              "label": "Background Layer",
+              "href": "/docs/map/layers/background-layer"
+            },
+            {
+              "label": "Circle Layer",
+              "href": "/docs/map/layers/circle-layer"
+            },
+            {
+              "label": "Fill Extrusion Layer",
+              "href": "/docs/map/layers/fill-extrusion-layer"
+            },
+            {
+              "label": "Fill Layer",
+              "href": "/docs/map/layers/fill-layer"
+            },
+            {
+              "label": "Heatmap Layer",
+              "href": "/docs/map/layers/heatmap-layer"
+            },
+            {
+              "label": "Light",
+              "href": "/docs/map/layers/light"
+            },
+            {
+              "label": "Line Layer",
+              "href": "/docs/map/layers/line-layer"
+            },
+            {
+              "label": "Symbol Layer",
+              "href": "/docs/map/layers/symbol-layer"
+            }
+          ]
+        },
+        {
+          "label": "Map",
+          "items": [
+            {
+              "label": "Interactivity",
+              "href": "/docs/map/interactivity"
+            },
+            {
+              "label": "MapView",
+              "href": "/docs/map/map-view"
+            },
+            {
+              "label": "Styles",
+              "href": "/docs/map/styles"
+            }
+          ]
+        },
+        {
+          "label": "Markers & Annotations",
+          "items": [
+            {
+              "label": "Callout",
+              "href": "/docs/map/markers-and-annotations/callout"
+            },
+            {
+              "label": "Layer Annotation",
+              "href": "/docs/map/markers-and-annotations/layer-annotation"
+            },
+            {
+              "label": "Marker",
+              "href": "/docs/map/markers-and-annotations/marker"
+            },
+            {
+              "label": "View Annotation",
+              "href": "/docs/map/markers-and-annotations/view-annotation"
+            }
+          ]
+        },
+        {
+          "label": "Sources",
+          "items": [
+            {
+              "label": "GeoJSON Source",
+              "href": "/docs/map/sources/geo-json-source"
+            },
+            {
+              "label": "Image Source",
+              "href": "/docs/map/sources/image-source"
+            },
+            {
+              "label": "Raster Source",
+              "href": "/docs/map/sources/raster-source"
+            },
+            {
+              "label": "SVG Icon",
+              "href": "/docs/map/sources/svg-icon"
+            }
+          ]
+        },
+        {
+          "label": "User Location",
+          "items": [
+            {
+              "label": "Native User Location",
+              "href": "/docs/map/user-location/native-user-location"
+            },
+            {
+              "label": "User Location",
+              "href": "/docs/map/user-location"
+            },
+            {
+              "label": "User Location Puck",
+              "href": "/docs/map/user-location/user-location-puck"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Media",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Overview",
+          "href": "/docs/media"
+        },
+        {
+          "label": "Audio",
+          "href": "/docs/media/audio"
+        },
+        {
+          "label": "Audio Visualizer",
+          "href": "/docs/media/audio-visualizer"
+        },
+        {
+          "label": "AudioPlaylist",
+          "href": "/docs/media/audio-playlist"
+        },
+        {
+          "label": "AudioRecorder",
+          "href": "/docs/media/audio-recorder"
+        },
+        {
+          "label": "LiveAudioMeter",
+          "href": "/docs/media/live-audio-meter"
+        },
+        {
+          "label": "Video",
+          "href": "/docs/media/video"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Graphics",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Overview",
+          "href": "/docs/graphics"
+        }
+      ],
+      "sections": [
+        {
+          "label": "Core",
+          "items": [
+            {
+              "label": "GraphicsProvider",
+              "href": "/docs/graphics/core/graphics-provider"
+            }
+          ]
+        },
+        {
+          "label": "Effects",
+          "items": [
+            {
+              "label": "EffectView",
+              "href": "/docs/graphics/effects/effect-view"
+            },
+            {
+              "label": "ShadowView",
+              "href": "/docs/graphics/effects/shadow-view"
+            }
+          ]
+        },
+        {
+          "label": "Graphics",
+          "items": [
+            {
+              "label": "AudioMesh",
+              "href": "/docs/graphics/audio-mesh"
+            },
+            {
+              "label": "AudioVisualizer",
+              "href": "/docs/graphics/audio-visualizer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Sheet",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Sheet",
+          "href": "/docs/sheet"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Media Query",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Playground",
+          "href": "/docs/mediaquery/playground"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Icons & emoji",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Icons",
+          "href": "/docs/icons"
+        },
+        {
+          "label": "Emoji",
+          "href": "/docs/emoji"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Hooks",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "useAppState",
+          "href": "/docs/hooks/use-app-state"
+        },
+        {
+          "label": "useCallbackRef",
+          "href": "/docs/hooks/use-callback-ref"
+        },
+        {
+          "label": "useClipboard",
+          "href": "/docs/hooks/use-clipboard"
+        },
+        {
+          "label": "useCounter",
+          "href": "/docs/hooks/use-counter"
+        },
+        {
+          "label": "useDebouncedCallback",
+          "href": "/docs/hooks/use-debounced-callback"
+        },
+        {
+          "label": "useDebouncedValue",
+          "href": "/docs/hooks/use-debounced-value"
+        },
+        {
+          "label": "useDidUpdate",
+          "href": "/docs/hooks/use-did-update"
+        },
+        {
+          "label": "useDisclosure",
+          "href": "/docs/hooks/use-disclosure"
+        },
+        {
+          "label": "useDismissOnScroll",
+          "href": "/docs/hooks/use-dismiss-on-scroll"
+        },
+        {
+          "label": "useElementSize",
+          "href": "/docs/hooks/use-element-size"
+        },
+        {
+          "label": "useFocusTrap",
+          "href": "/docs/hooks/use-focus-trap"
+        },
+        {
+          "label": "useForceUpdate",
+          "href": "/docs/hooks/use-force-update"
+        },
+        {
+          "label": "useId",
+          "href": "/docs/hooks/use-id"
+        },
+        {
+          "label": "useInterval",
+          "href": "/docs/hooks/use-interval"
+        },
+        {
+          "label": "useIsFirstRender",
+          "href": "/docs/hooks/use-is-first-render"
+        },
+        {
+          "label": "useKeyboardActions",
+          "href": "/docs/hooks/use-keyboard-actions"
+        },
+        {
+          "label": "useKeyboardHeight",
+          "href": "/docs/hooks/use-keyboard-height"
+        },
+        {
+          "label": "useListState",
+          "href": "/docs/hooks/use-list-state"
+        },
+        {
+          "label": "useMergedRef",
+          "href": "/docs/hooks/use-merged-ref"
+        },
+        {
+          "label": "useMounted",
+          "href": "/docs/hooks/use-mounted"
+        },
+        {
+          "label": "useMove",
+          "href": "/docs/hooks/use-move"
+        },
+        {
+          "label": "useOs",
+          "href": "/docs/hooks/use-os"
+        },
+        {
+          "label": "usePagination",
+          "href": "/docs/hooks/use-pagination"
+        },
+        {
+          "label": "usePrevious",
+          "href": "/docs/hooks/use-previous"
+        },
+        {
+          "label": "useQueue",
+          "href": "/docs/hooks/use-queue"
+        },
+        {
+          "label": "useRadialMove",
+          "href": "/docs/hooks/use-radial-move"
+        },
+        {
+          "label": "useReducedMotion",
+          "href": "/docs/hooks/use-reduced-motion"
+        },
+        {
+          "label": "useSetState",
+          "href": "/docs/hooks/use-set-state"
+        },
+        {
+          "label": "useThrottledCallback",
+          "href": "/docs/hooks/use-throttled-callback"
+        },
+        {
+          "label": "useThrottledValue",
+          "href": "/docs/hooks/use-throttled-value"
+        },
+        {
+          "label": "useTimeout",
+          "href": "/docs/hooks/use-timeout"
+        },
+        {
+          "label": "useUncontrolled",
+          "href": "/docs/hooks/use-uncontrolled"
+        },
+        {
+          "label": "useValidatedState",
+          "href": "/docs/hooks/use-validated-state"
+        },
+        {
+          "label": "useViewportSize",
+          "href": "/docs/hooks/use-viewport-size"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Guides",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Cross-platform authoring",
+          "href": "/docs/guides/cross-platform-authoring"
+        },
+        {
+          "label": "Theming an app",
+          "href": "/docs/guides/theming-an-app"
+        },
+        {
+          "label": "Composing components",
+          "href": "/docs/guides/composing-components"
+        },
+        {
+          "label": "Forms",
+          "href": "/docs/guides/forms"
+        },
+        {
+          "label": "Performance",
+          "href": "/docs/guides/performance"
+        },
+        {
+          "label": "Animation",
+          "href": "/docs/guides/animation"
+        },
+        {
+          "label": "Testing",
+          "href": "/docs/guides/testing"
+        },
+        {
+          "label": "Platform differences",
+          "href": "/docs/guides/platform-differences"
+        },
+        {
+          "label": "Migrating from Mantine",
+          "href": "/docs/guides/migrating-from-mantine"
+        }
+      ],
+      "sections": []
+    },
+    {
+      "label": "Reference",
+      "collapsed": true,
+      "items": [
+        {
+          "label": "Packages",
+          "href": "/docs/api/packages"
+        },
+        {
+          "label": "Exports A–Z",
+          "href": "/docs/api/exports"
+        },
+        {
+          "label": "Compatibility",
+          "href": "/docs/api/compatibility"
+        },
+        {
+          "label": "Changelog",
+          "href": "/changelog"
+        },
+        {
+          "label": "Contributing",
+          "href": "/docs/contributing"
+        }
+      ],
+      "sections": []
+    }
+  ]
+}

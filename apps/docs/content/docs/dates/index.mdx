@@ -1,0 +1,79 @@
+export const meta = {
+  title: "Dates",
+  description:
+    "@knitui/dates — calendars, date and time pickers, and date inputs, built on @knitui/components and dayjs.",
+};
+
+# Dates
+
+`@knitui/dates` is the calendar and date/time kit: 34 components from the low-level
+`Day` cell up to a full `DateTimePicker`, all built on `@knitui/components` and
+sized, themed and slotted the same way.
+
+```bash
+npx expo install @knitui/dates dayjs
+```
+
+```tsx
+import { DatePickerInput } from "@knitui/dates";
+
+<DatePickerInput label="Ship date" value={date} onChange={setDate} />;
+```
+
+## Pick the right level
+
+<CardGrid>
+  <CardLink href="/docs/dates/date-picker-input" title="DatePickerInput">
+    A field that opens a calendar. The default choice for a form.
+  </CardLink>
+  <CardLink href="/docs/dates/date-input" title="DateInput">
+    A free-text field that parses what the user types.
+  </CardLink>
+  <CardLink href="/docs/dates/date-picker" title="DatePicker">
+    The calendar on its own, for inline use.
+  </CardLink>
+  <CardLink href="/docs/dates/date-time-picker" title="DateTimePicker">
+    Date and time together.
+  </CardLink>
+  <CardLink href="/docs/dates/time-picker" title="TimePicker">
+    Time only, with presets and a grid.
+  </CardLink>
+  <CardLink href="/docs/dates/calendar" title="Calendar">
+    The composable calendar surface — decade, year, month levels.
+  </CardLink>
+</CardGrid>
+
+## Ranges and multiple selection
+
+The pickers are generic over their selection mode:
+
+```tsx
+<DatePicker type="range" value={range} onChange={setRange} />
+<DatePicker type="multiple" value={dates} onChange={setDates} />
+```
+
+## Level components
+
+A calendar is built from levels you can use directly when you need something the
+pickers do not offer: `DecadeLevel`, `YearLevel`, `MonthLevel`, and their
+`…Group` variants for multi-month views, plus `MonthsList`, `YearsList`,
+`WeekdaysRow`, `Day` and `PickerControl`.
+
+That is how the pickers themselves are built, so a custom calendar is composition
+rather than a fork.
+
+## Time entry on device
+
+<Callout kind="platform">
+  The time inputs implement real keyboard behaviour on React Native:
+  select-on-focus replacement, a `Backspace` bridge through `onKeyDown`,
+  tap-to-toggle on AM/PM, and clamping when the group loses focus. That is why
+  `TimePicker` is composed from `SpinInput`/`AmPmInput` rather than a bare
+  `TextInput`.
+</Callout>
+
+## dayjs
+
+Date maths is dayjs, which is a peer dependency so you control the version and the
+plugins (locales, timezones). The kit does not wrap it — `value` is a `Date`, and
+formatting props take dayjs format strings.

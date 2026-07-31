@@ -1,0 +1,81 @@
+export const meta = {
+  title: "Dark mode",
+  description: "One Provider prop, a hook to read and set it, and how to avoid a flash of the wrong theme.",
+};
+
+# Dark mode
+
+Dark mode is not a second stylesheet. Components reference ramp positions
+(`$color3`, `$color11`) and semantic tokens (`$background`, `$borderColor`), and
+the ramp resolves differently per scheme — so a component written once is correct
+in both.
+
+## Choosing the scheme
+
+```tsx
+<Provider defaultColorScheme="system">  // follow the OS (recommended)
+<Provider defaultColorScheme="dark">    // start dark, user can change
+<Provider forceColorScheme="light">     // pin it; ignores the OS
+```
+
+## Reading and changing it
+
+```tsx
+import { useColorScheme } from "@knitui/core";
+
+function ThemeToggle() {
+  const { colorScheme, setColorScheme, toggleColorScheme } = useColorScheme();
+
+  return (
+    <ActionIcon aria-label="Toggle theme" onPress={toggleColorScheme}>
+      {colorScheme === "dark" ? <IconMoon /> : <IconSun />}
+    </ActionIcon>
+  );
+}
+```
+
+`setColorScheme` also accepts `"system"`, so a three-way control is
+light / dark / system rather than a boolean.
+
+## Persisting the choice
+
+The kit does not pick a storage mechanism for you — that is an app decision
+(`AsyncStorage`, `localStorage`, a user record). Store the preference and pass it
+as `defaultColorScheme`:
+
+```tsx
+const stored = await AsyncStorage.getItem("color-scheme");
+
+<Provider defaultColorScheme={stored ?? "system"}>
+```
+
+## Avoiding a flash on the web
+
+A static or server-rendered page ships one HTML file for everyone, so the first
+paint is whatever the server assumed. Two mitigations, both cheap:
+
+1. Default to `"system"` and let CSS `prefers-color-scheme` cover the first frame
+   for your own chrome, correcting to the stored preference on mount.
+2. Write the resolved scheme onto the root element so non-kit CSS can follow:
+
+```tsx
+useEffect(() => {
+  document.documentElement.dataset.theme = colorScheme;
+}, [colorScheme]);
+```
+
+This site does both — its prose and chrome are plain CSS keyed off
+`prefers-color-scheme` with a `[data-theme]` override, while the components read
+Tamagui's themes.
+
+## Testing both
+
+Stories in this repo carry a scheme toggle in the Storybook toolbar, and the docs
+have one in the header. Check dark **before** shipping a component, not after: the
+usual failure is a hard-coded hex or a shadow that vanishes.
+
+<Callout kind="platform">
+  On native, `defaultColorScheme="system"` tracks `Appearance` changes live — the
+  user switching their OS theme while your app is open re-themes it. Test that
+  path; a component that caches a colour in state will not follow.
+</Callout>

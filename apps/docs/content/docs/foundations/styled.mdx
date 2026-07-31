@@ -1,0 +1,89 @@
+export const meta = {
+  title: "styled()",
+  description:
+    "The escape hatch: extend any kit frame with your own variants, and what .styleable() means for extraction.",
+};
+
+# styled()
+
+When slots and props are not enough, extend the frame:
+
+```tsx
+import { styled } from "@knitui/core";
+import { Box } from "@knitui/components";
+
+export const Panel = styled(Box, {
+  name: "Panel",
+  padding: "$lg",
+  borderRadius: "$md",
+  backgroundColor: "$color2",
+  borderWidth: 1,
+  borderColor: "$borderColor",
+
+  variants: {
+    tone: {
+      quiet: { backgroundColor: "$color1" },
+      loud: { backgroundColor: "$color3", borderColor: "$color7" },
+    },
+    raised: {
+      true: { shadow: "md" },
+    },
+  } as const,
+});
+```
+
+```tsx
+<Panel tone="loud" raised p="$xl" />
+```
+
+`as const` on `variants` is load-bearing — it is what makes `tone` a union instead
+of `string` in the resulting props.
+
+## Import it from `@knitui/core`
+
+The kit's `styled` is Tamagui's factory with `.styleable()` output memoized. It is
+the only `styled` on the kit's surface — `@knitui/core` deliberately stops
+re-exporting Tamagui's raw one, so you cannot accidentally get a frame that skips
+the memoization.
+
+## What you can extend
+
+Any component whose frame is exported. Most components expose theirs
+(`Button.Frame`, `ActionIcon.Frame`, `UnstyledButton` exposes
+`UnstyledButtonFrame`), and every layout primitive is a plain `styled(Box)`. Start
+from the closest frame rather than from `Box` — you inherit the variant ladders.
+
+## Variants that read tokens
+
+```tsx
+variants: {
+  size: {
+    "...size": (token) => ({ height: token, paddingHorizontal: token }),
+  },
+} as const
+```
+
+The spread-variant form maps a whole token scale in one go. Note the kit's own
+components do **not** use it for `size` — they read
+[`controlMetrics`](/docs/foundations/sizing) instead, because height, font, padding
+and radius need to move independently rather than all following one token.
+
+## Extraction and `.styleable()`
+
+<Callout>
+  Most kit components are built with `.styleable()`, which implies `neverFlatten` —
+  the runtime wrapper survives so composition and slot styling keep working. The
+  Tamagui compiler therefore cannot flatten them into pure CSS, and the web output
+  keeps react-native-web's shape. That is a deliberate trade of maximal flattening
+  for composability; it is also why the docs measure a JS budget per route.
+</Callout>
+
+Your own `styled()` components made from plain `Box` **can** flatten, so a
+performance-critical leaf is a reasonable place to avoid `.styleable()`.
+
+## When not to reach for it
+
+- **Restyling one part of a component** → use [`styles`](/docs/foundations/slots-and-styles).
+- **A one-off tweak** → just pass props; they win over variants.
+- **A different colour** → `theme`, not a `styled` override, or you lose hover,
+  press and focus coherence.

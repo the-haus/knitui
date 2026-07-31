@@ -1,0 +1,82 @@
+export const meta = {
+  title: "TypeScript",
+  description:
+    "How the kit's token unions, shorthand props and theme names are typed — and the one import that keeps them working.",
+};
+
+# TypeScript
+
+The kit is written in TypeScript and types are part of the API: token props are
+unions, not `string`, so `p="$md"` autocompletes and `p="$medium"` is a compile
+error.
+
+## The augmentation
+
+Tamagui learns the kit's vocabulary through a `declare module` augmentation on
+`@tamagui/core`. It ships from `@knitui/core` as a **type-only** export:
+
+```ts
+import type { AppConfig } from "@knitui/core";
+```
+
+Nothing on the barrel imports that module at runtime — a value re-export would
+eagerly evaluate the Tamagui config at module load, which is a known SSR
+module-eval hazard. That is why it is `export type`.
+
+You do not normally write this import yourself; it is reachable from
+`@knitui/core`'s own declarations. If your editor stops offering `$md` and starts
+accepting any string, something has broken the resolution of `@knitui/core`'s
+types — check that your `paths`/`moduleResolution` let it resolve, and that you
+are not shadowing it with a stale build.
+
+## What is typed
+
+| Surface | Type |
+| --- | --- |
+| Space / size / radius / font props | `"$xxs" \| "$xs" \| … \| "$xxl"` plus numbers |
+| Colour props | theme tokens (`$color1`…`$color12`, `$background`, `$borderColor`, …) |
+| `theme` | the registered theme names |
+| `size` | `SizeKey` — `xxs` … `xxl` |
+| `variant` | the component's own variant union |
+| `styles` | `SlotStyles<XStyles>` — keys checked against that component's slots |
+
+## Shorthands
+
+The kit registers shorthand props (`p`, `px`, `mx`, `bg`, `c`, `br`, `maw`, …).
+They are typed exactly like their long forms:
+
+```tsx
+<Box p="$md" px="$lg" bg="$color2" br="$sm" maw={480} />
+```
+
+## Refs
+
+Prefer the kit's element type over a DOM type — the same component is a native
+view on device:
+
+```tsx
+import type { TamaguiElement } from "@knitui/core";
+
+const ref = useRef<TamaguiElement>(null);
+```
+
+Use a real DOM type only where the thing genuinely is a DOM node on the web
+(`FileButton`'s hidden `<input>`, web-only event handlers).
+
+## Generic components
+
+A few components are generic over their value. `Accordion` narrows on
+`multiple`:
+
+```tsx
+<Accordion value="one" onChange={(value: string | null) => {}} />
+<Accordion multiple value={["one"]} onChange={(value: string[]) => {}} />
+```
+
+`Select`, `MultiSelect`, `Combobox` and `TreeSelect` are generic over their item
+type, so `onChange` gives you your own objects back rather than `unknown`.
+
+## Strictness
+
+The kit is built with `strict: true` and expects consumers to be. If you are not,
+things still work — you just lose the narrowing that makes token props useful.

@@ -1,0 +1,86 @@
+export const meta = {
+  title: "Expo",
+  description: "Setting up Knit UI in an Expo app, including the native peers, Babel and Metro.",
+};
+
+# Expo
+
+Expo is the shortest path to running the kit on all three platforms.
+
+## Install
+
+```bash
+npx expo install @knitui/core @knitui/components \
+  react-native-gesture-handler react-native-reanimated \
+  react-native-svg react-native-teleport react-native-worklets
+```
+
+<Callout kind="warning">
+  Use `expo install`, not `npm install`, for the native peers. The Expo SDK pins
+  the native module versions it was built against; installing a newer
+  `react-native-reanimated` by hand is the most common cause of a red screen on
+  first launch. `npx expo install --check` audits an existing project.
+</Callout>
+
+## Babel
+
+```js title="babel.config.js"
+module.exports = (api) => {
+  api.cache(true);
+  return {
+    presets: ["babel-preset-expo"],
+    plugins: [require("@knitui/plugins/babel-plugin")],
+  };
+};
+```
+
+## Metro
+
+```js title="metro.config.js"
+const { getDefaultConfig } = require("expo/metro-config");
+const { withKnitui } = require("@knitui/plugins/metro");
+
+module.exports = withKnitui(getDefaultConfig(__dirname));
+```
+
+## Root component
+
+```tsx title="app/_layout.tsx"
+import { Provider } from "@knitui/core";
+import { Stack } from "expo-router";
+
+export default function RootLayout() {
+  return (
+    <Provider defaultColorScheme="system">
+      <Stack />
+    </Provider>
+  );
+}
+```
+
+`Provider` mounts `GestureHandlerRootView` for you, so you do not add one.
+
+## Satellite packages with native modules
+
+Some packages need a native module installed alongside them:
+
+| Package | Also install |
+| --- | --- |
+| `@knitui/map` | `@maplibre/maplibre-react-native` |
+| `@knitui/media` | `expo-audio`, `expo-video` |
+| `@knitui/graphics` | `@shopify/react-native-skia` |
+| `@knitui/components` (file inputs) | `expo-document-picker` |
+
+Always through `npx expo install`, for the same reason as above.
+
+## Expo Go vs a development build
+
+Everything in `@knitui/components` runs in Expo Go. The satellite packages that
+depend on native modules not bundled into Expo Go — MapLibre and Skia — need a
+[development build](https://docs.expo.dev/develop/development-builds/introduction/).
+
+## Web
+
+Expo's web target uses react-native-web, which the kit supports. For a
+content-heavy site, prefer [Next.js](/docs/getting-started/nextjs) — you get
+server rendering, and the Tamagui compiler flattens styles at build time.

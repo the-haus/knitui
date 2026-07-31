@@ -1,0 +1,21 @@
+export const meta = {
+  title: "AudioMesh",
+  description: "A flowing gradient-MESH audio visualizer: a full-bleed Skia `RuntimeEffect` (SkSL) whose soft colour blobs swell with the spectrum and drift on a slow orbit (so the field stays alive even at silence). It shares the data head with `AudioVisualizer` — push TARGET states via the ref handle (`ref.push(levels)`) or a `target` SharedValue and the easing transition lives inside, paced on the display clock. Each control point tracks one band of the spectrum (low bands → one blob, highs → another) and its colour is spread across the `colors` palette. Identical on native and web (web needs `<GraphicsProvider>` + CanvasKit). Reduced motion freezes the idle drift but keeps the audio pulse. The stories below drive it with a synthetic ticker.",
+};
+
+<ComponentHeader id="graphics/audio-mesh" />
+
+{/* scaffolded: replace this comment with real prose */}
+
+<Callout kind="platform">
+  Rendered through Skia. On the web each canvas holds a WebGL context and browsers
+  cap how many can be live at once, so examples on this page mount one at a time.
+</Callout>
+
+## Playground
+
+<Playground id="graphics/audio-mesh" />
+
+<Examples id="graphics/audio-mesh" />
+
+<PropsTable id="graphics/audio-mesh" />

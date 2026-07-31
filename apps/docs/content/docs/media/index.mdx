@@ -1,0 +1,99 @@
+export const meta = {
+  title: "Media",
+  description:
+    "@knitui/media — audio and video players, playlists, recording, live spectrum analysis, behind one MediaProvider.",
+};
+
+# Media
+
+`@knitui/media` wraps `expo-audio` and `expo-video` in one controller model, with
+themed chrome that matches the rest of the kit.
+
+```bash
+npx expo install @knitui/media expo-audio expo-video
+```
+
+```tsx
+import { MediaProvider, AudioPlayer } from "@knitui/media";
+
+<MediaProvider>
+  <AudioPlayer source={{ uri }} />
+</MediaProvider>;
+```
+
+<Callout kind="warning">
+  `MediaProvider` is **required** at your app root. It owns the single real
+  `<audio>` and `<video>` element (teleported into whichever player is active) and
+  the shared state store. Without it, players render but never play.
+</Callout>
+
+## What is in it
+
+<CardGrid>
+  <CardLink href="/docs/media/audio" title="Audio">
+    Player, controls, seek bar, time display.
+  </CardLink>
+  <CardLink href="/docs/media/video" title="Video">
+    Video surface with the same controller and chrome.
+  </CardLink>
+  <CardLink href="/docs/media/audio-playlist" title="Playlist">
+    Queue, next/previous, repeat, shuffle.
+  </CardLink>
+  <CardLink href="/docs/media/audio-recorder" title="Recorder">
+    Recording with level metering.
+  </CardLink>
+  <CardLink href="/docs/media/live-audio-meter" title="Live meter">
+    Real-time level display from the mic.
+  </CardLink>
+  <CardLink href="/docs/media/audio-visualizer" title="Visualizer">
+    Spectrum visualisation, drawn with Skia.
+  </CardLink>
+</CardGrid>
+
+## One engine, one player at a time
+
+There is exactly one real player element per medium. That is what makes lock-screen
+controls, background audio and seamless playlist transitions work — and it means
+**two visible players contend**: only the active one plays. If you need a list of
+tracks, drive one player from the list rather than mounting one per row.
+
+## State without re-render storms
+
+Playback state changes many times a second. The store is selector-based and
+per-field, so a component that reads `currentTime` re-renders on time updates while
+one that reads `isPlaying` does not:
+
+```tsx
+import { useMediaSelector } from "@knitui/media";
+
+const isPlaying = useMediaSelector((state) => state.isPlaying);
+```
+
+Granular events (`play`, `pause`, `ended`, `trackChange`, …) are derived centrally
+from state transitions rather than emitted by each adapter, so web and native fire
+the same events at the same moments.
+
+## DSP
+
+`@knitui/media/dsp` is a pure-TypeScript FFT and spectrum analyser — no native
+module, no worklet:
+
+```tsx
+import { useAudioSpectrum } from "@knitui/media";
+
+const { bands } = useAudioSpectrum({ bandCount: 32 });
+```
+
+One FFT per frame, fed from a ring buffer. Pair it with
+[`@knitui/graphics`](/docs/graphics)'s `AudioVisualizer` for the drawing.
+
+## Platform notes
+
+<Callout kind="platform">
+  React StrictMode used to dispose the shared engines on its second mount pass,
+  leaving players frozen at 0:00 in development; disposal is now deferred, but if you
+  see it, that is the shape of the bug.
+
+  On iOS, a remote MP3 served without `Accept-Ranges` reports an indefinite
+  duration; the kit synthesises one through an `AVAssetResourceLoaderDelegate`.
+</Callout>

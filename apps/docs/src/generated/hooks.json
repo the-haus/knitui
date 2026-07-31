@@ -1,0 +1,399 @@
+{
+  "generatedBy": "scripts/docs/build-hooks.mjs",
+  "hooks": [
+    {
+      "slug": "use-app-state",
+      "name": "useAppState",
+      "route": "/docs/hooks/use-app-state",
+      "signature": "export function useAppState(): AppVisibility",
+      "description": "Coarse foreground/background state (web) — maps the Page Visibility API onto the cross-platform `AppVisibility` union. `document.hidden` → `background`, otherwise `active`. SSR-safe. The `use-app-state.native` sibling uses React Native's `AppState`. Use it to pause intervals / animations when backgrounded.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-app-state.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-app-state.ts",
+      "nativePath": "packages/hooks/src/use-app-state.native.ts",
+      "sharedPath": "packages/hooks/src/use-app-state.shared.ts"
+    },
+    {
+      "slug": "use-callback-ref",
+      "name": "useCallbackRef",
+      "route": "/docs/hooks/use-callback-ref",
+      "signature": "export function useCallbackRef<Args extends unknown[], Return>( callback: ((...args: Args) => Return) | undefined, ): (...args: Args) => Return | undefined",
+      "description": "Wrap a callback so its identity stays stable across renders while always invoking the latest version — port of Mantine's `useCallbackRef`. Lets event handlers and timers avoid stale closures without re-subscribing. This is the \"always-latest\" pattern hand-rolled as `stateRef` inside `use-move` / `use-radial-move`; pure React, so identical on web and native.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-callback-ref.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-callback-ref.ts"
+    },
+    {
+      "slug": "use-clipboard",
+      "name": "useClipboard",
+      "route": "/docs/hooks/use-clipboard",
+      "signature": "export function useClipboard({ timeout = 2000, }: UseClipboardOptions = {}): UseClipboardReturnValue",
+      "description": "Copy-to-clipboard state — port of Mantine's `useClipboard`. Guarded for native/SSR: when `navigator.clipboard` is unavailable it records an `error` instead of assuming a global. `copied` flips `true` for `timeout` ms after a successful copy. Backs `CopyButton`.",
+      "types": [
+        "UseClipboardOptions",
+        "UseClipboardReturnValue"
+      ],
+      "sourcePath": "packages/hooks/src/use-clipboard.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-clipboard.ts"
+    },
+    {
+      "slug": "use-counter",
+      "name": "useCounter",
+      "route": "/docs/hooks/use-counter",
+      "signature": "export function useCounter( initialValue = 0, options: UseCounterOptions = {}, ): [number, UseCounterHandlers]",
+      "description": "Integer counter state with optional bounds — port of Mantine's `useCounter`. Returns `[count, handlers]`. Pure React state, so identical on web and native.",
+      "types": [
+        "UseCounterOptions",
+        "UseCounterHandlers"
+      ],
+      "sourcePath": "packages/hooks/src/use-counter.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-counter.ts"
+    },
+    {
+      "slug": "use-debounced-callback",
+      "name": "useDebouncedCallback",
+      "route": "/docs/hooks/use-debounced-callback",
+      "signature": "export function useDebouncedCallback<Args extends unknown[]>( callback: (...args: Args) => void, delay: number, ): DebouncedFunction<Args>",
+      "description": "Debounce a callback — port of Mantine's `useDebouncedCallback`. The returned function keeps a stable identity, always calls the latest `callback` (via `useCallbackRef`), and carries `cancel` / `flush`. The pending timer is cleared on unmount. Pure timers, so identical on web and native.",
+      "types": [
+        "DebouncedFunction"
+      ],
+      "sourcePath": "packages/hooks/src/use-debounced-callback.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-debounced-callback.ts"
+    },
+    {
+      "slug": "use-debounced-value",
+      "name": "useDebouncedValue",
+      "route": "/docs/hooks/use-debounced-value",
+      "signature": "export function useDebouncedValue<T>( value: T, wait: number, options: UseDebouncedValueOptions = {}, ): [T, () => void]",
+      "description": "Debounce a rapidly-changing value — port of Mantine's `useDebouncedValue`. Returns `[debounced, cancel]`; `debounced` updates `wait` ms after `value` stops changing. `leading` emits the first change immediately. Pure timers, so identical on web and native — handy for search inputs (`Autocomplete`, `Combobox`).",
+      "types": [
+        "UseDebouncedValueOptions"
+      ],
+      "sourcePath": "packages/hooks/src/use-debounced-value.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-debounced-value.ts"
+    },
+    {
+      "slug": "use-did-update",
+      "name": "useDidUpdate",
+      "route": "/docs/hooks/use-did-update",
+      "signature": "export function useDidUpdate(fn: EffectCallback, dependencies?: DependencyList): void",
+      "description": "Like `useEffect`, but skips the initial mount — port of Mantine's `useDidUpdate`. Runs `fn` only when `dependencies` change after the first render. Pure React, so identical on web and native.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-did-update.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-did-update.ts"
+    },
+    {
+      "slug": "use-disclosure",
+      "name": "useDisclosure",
+      "route": "/docs/hooks/use-disclosure",
+      "signature": "export function useDisclosure( initialState = false, callbacks?: { onOpen?: () => void; onClose?: () => void }, ): [boolean, UseDisclosureHandlers]",
+      "description": "Manage a boolean open/close state (port of Mantine's `useDisclosure`).",
+      "types": [
+        "UseDisclosureHandlers"
+      ],
+      "sourcePath": "packages/hooks/src/use-disclosure.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-disclosure.ts"
+    },
+    {
+      "slug": "use-dismiss-on-scroll",
+      "name": "useDismissOnScroll",
+      "route": "/docs/hooks/use-dismiss-on-scroll",
+      "signature": "export function useDismissOnScroll( _enabled: boolean, _referenceRef: React.RefObject<TamaguiElement | null>, _onDismiss: () => void, ): void",
+      "description": "Close an open overlay when the page scrolls (the idiomatic native behavior). Web variant: a **no-op**. On web a floating engine typically follows scroll cheaply via `scroll`/`resize` listeners, so the overlay tracks its target instead of closing. The `.native` sibling implements the close-on-scroll detection. Lives in `@knitui/hooks` so any overlay can reuse it.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-dismiss-on-scroll.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-dismiss-on-scroll.ts",
+      "nativePath": "packages/hooks/src/use-dismiss-on-scroll.native.ts",
+      "testPath": "packages/hooks/src/use-dismiss-on-scroll.test.ts"
+    },
+    {
+      "slug": "use-element-size",
+      "name": "useElementSize",
+      "route": "/docs/hooks/use-element-size",
+      "signature": "export function useElementSize(): UseElementSizeReturn",
+      "description": "Measure an element's content box, kept in sync via `ResizeObserver` (web). Returns a `ref` to attach, the measured `width`/`height`, and an empty `rootProps` (web drives measurement through the ref). The `use-element-size.native` sibling measures via `onLayout` instead. Mirrors the `ref` + `rootProps` shape of `use-move`. The returned `ref` is a CALLBACK ref, not an object ref — load-bearing. A one-shot `useEffect(() => …, [])` observer would capture `ref.current` at mount and never re-run, so it misses any element that mounts LATER (the measured node isn't in the DOM on first render). That is exactly a `keepMounted={false}` `Collapse` subtree (e.g. every collapsed `Tree` branch): its content mounts only on expand, so the observer never attached, the measured size stayed `0`, and the panel stayed clipped to `height: 0` — open in state, invisible on screen. A callback ref runs every time React attaches/detaches the node, so the observer follows the element across mounts.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-element-size.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-element-size.ts",
+      "nativePath": "packages/hooks/src/use-element-size.native.ts",
+      "sharedPath": "packages/hooks/src/use-element-size.shared.ts"
+    },
+    {
+      "slug": "use-focus-trap",
+      "name": "useFocusTrap",
+      "route": "/docs/hooks/use-focus-trap",
+      "signature": "export function useFocusTrap(active = true): (node: TamaguiElement | null) => void",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-focus-trap.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-focus-trap.ts",
+      "nativePath": "packages/hooks/src/use-focus-trap.native.ts"
+    },
+    {
+      "slug": "use-force-update",
+      "name": "useForceUpdate",
+      "route": "/docs/hooks/use-force-update",
+      "signature": "export function useForceUpdate(): () => void",
+      "description": "Force a re-render imperatively — port of Mantine's `useForceUpdate`. Returns a stable function that bumps an internal counter. Pure React, so identical on web and native.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-force-update.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-force-update.ts"
+    },
+    {
+      "slug": "use-id",
+      "name": "useId",
+      "route": "/docs/hooks/use-id",
+      "signature": "export function useId(staticId?: string): string",
+      "description": "Stable id, using a provided id when present (port of Mantine's `useId`).",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-id.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-id.ts"
+    },
+    {
+      "slug": "use-interval",
+      "name": "useInterval",
+      "route": "/docs/hooks/use-interval",
+      "signature": "export function useInterval( fn: () => void, interval: number, options: UseIntervalOptions = {}, ): UseIntervalReturn",
+      "description": "Declarative `setInterval` with start/stop/toggle and an `active` flag — port of Mantine's `useInterval`. The callback is read through a ref so changing it never tears down a running interval; the interval is cleared on unmount. Uses the global `setInterval` (no `window`), so it runs on web and native alike.",
+      "types": [
+        "UseIntervalOptions",
+        "UseIntervalReturn"
+      ],
+      "sourcePath": "packages/hooks/src/use-interval.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-interval.ts"
+    },
+    {
+      "slug": "use-is-first-render",
+      "name": "useIsFirstRender",
+      "route": "/docs/hooks/use-is-first-render",
+      "signature": "export function useIsFirstRender(): boolean",
+      "description": "`true` on the first render, `false` afterwards — port of Mantine's `useIsFirstRender`. Updates during render (no effect), so it's correct even before effects flush. Pure React, so identical on web and native.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-is-first-render.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-is-first-render.ts"
+    },
+    {
+      "slug": "use-keyboard-actions",
+      "name": "useKeyboardActions",
+      "route": "/docs/hooks/use-keyboard-actions",
+      "signature": "export function useKeyboardActions( actions: KeyboardActions, options: UseKeyboardActionsOptions = {}, ): KeyboardActionProps",
+      "description": "Keyboard/accessibility activation for an interactive host that is NOT a native `<button>` — web implementation. Returns `{ tabIndex, onKeyDown }` to spread onto the host so it is focusable and the configured {@link KeyboardActions} fire from the keyboard. The `use-keyboard-actions.native` sibling maps the same intents to React Native accessibility actions instead. The `onKeyDown` identity is stable across renders (it reads the latest actions through a ref), so spreading it does not churn the host. A key with no binding passes through to the browser, and a chord with Ctrl/Alt/Meta held is ignored so browser/OS shortcuts keep working. A matched key is `preventDefault()`ed so Space does not scroll and arrows do not pan the page.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-keyboard-actions.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-keyboard-actions.ts",
+      "nativePath": "packages/hooks/src/use-keyboard-actions.native.ts"
+    },
+    {
+      "slug": "use-keyboard-height",
+      "name": "useKeyboardHeight",
+      "route": "/docs/hooks/use-keyboard-height",
+      "signature": "export function useKeyboardHeight(): number",
+      "description": "Reactive keyboard height for components. Always `0` on web.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-keyboard-height.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-keyboard-height.ts",
+      "nativePath": "packages/hooks/src/use-keyboard-height.native.ts"
+    },
+    {
+      "slug": "use-list-state",
+      "name": "useListState",
+      "route": "/docs/hooks/use-list-state",
+      "signature": "export function useListState<T>(initialValue: T[] = []): UseListStateReturn<T>",
+      "description": "Manage array state with a rich set of immutable handlers — port of Mantine's `useListState`. Every handler returns a new array, so the state is safe to use as a dependency / memo input. Pure React, so identical on web and native.",
+      "types": [
+        "UseListStateHandlers",
+        "UseListStateReturn"
+      ],
+      "sourcePath": "packages/hooks/src/use-list-state.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-list-state.ts",
+      "testPath": "packages/hooks/src/use-list-state.test.ts"
+    },
+    {
+      "slug": "use-merged-ref",
+      "name": "useMergedRef",
+      "route": "/docs/hooks/use-merged-ref",
+      "signature": "export function useMergedRef<T>(...refs: PossibleRef<T>[]): (node: T | null) => void",
+      "description": "Merge multiple refs into a single callback ref.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-merged-ref.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-merged-ref.ts"
+    },
+    {
+      "slug": "use-mounted",
+      "name": "useMounted",
+      "route": "/docs/hooks/use-mounted",
+      "signature": "export function useMounted(): boolean",
+      "description": "`false` during the initial render, `true` after mount — port of Mantine's `useMounted`. Useful for deferring client-only / post-mount UI. Pure React, so identical on web and native.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-mounted.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-mounted.ts"
+    },
+    {
+      "slug": "use-move",
+      "name": "useMove",
+      "route": "/docs/hooks/use-move",
+      "signature": "export function useMove( onChange: (position: MovePosition) => void, handlers?: UseMoveHandlers, ): UseMoveReturn",
+      "description": "Track pointer dragging over an element and report the normalized `[0, 1]` position. Web implementation — mirrors Mantine's `useMove`. Wires `pointerdown` / `pointermove` / `pointerup` on `window` so the drag keeps following the cursor even when it leaves the element, measuring via `getBoundingClientRect`. The native counterpart lives in `use-move.native.ts`; this file never imports `react-native` at runtime, so the web bundle stays free of it.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-move.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-move.ts",
+      "nativePath": "packages/hooks/src/use-move.native.ts",
+      "sharedPath": "packages/hooks/src/use-move.shared.ts",
+      "testPath": "packages/hooks/src/use-move.test.ts"
+    },
+    {
+      "slug": "use-os",
+      "name": "useOs",
+      "route": "/docs/hooks/use-os",
+      "signature": "export function useOs(): OS",
+      "description": "Detect the operating system from the user agent (web) — port of Mantine's `useOs`. Resolves after mount to stay SSR-safe (`undetermined` first render). The `use-os.native` sibling reads React Native's `Platform.OS`.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-os.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-os.ts",
+      "nativePath": "packages/hooks/src/use-os.native.ts",
+      "sharedPath": "packages/hooks/src/use-os.shared.ts"
+    },
+    {
+      "slug": "use-pagination",
+      "name": "usePagination",
+      "route": "/docs/hooks/use-pagination",
+      "signature": "export function usePagination({ total, page, initialPage = 1, siblings = 1, boundaries = 1, onChange, }: UsePaginationOptions): UsePaginationReturn",
+      "description": "Pagination state + the classic truncated page range with `'dots'` — port of Mantine's `usePagination`. Controlled/uncontrolled via `useUncontrolled`. Pure computation, so identical on web and native.",
+      "types": [
+        "UsePaginationOptions",
+        "UsePaginationReturn"
+      ],
+      "sourcePath": "packages/hooks/src/use-pagination.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-pagination.ts"
+    },
+    {
+      "slug": "use-previous",
+      "name": "usePrevious",
+      "route": "/docs/hooks/use-previous",
+      "signature": "export function usePrevious<T>(value: T): T | undefined",
+      "description": "The value from the previous render (`undefined` on the first render) — port of Mantine's `usePrevious`. Pure React, so identical on web and native.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-previous.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-previous.ts"
+    },
+    {
+      "slug": "use-queue",
+      "name": "useQueue",
+      "route": "/docs/hooks/use-queue",
+      "signature": "export function useQueue<T>({ initialValues = [], limit }: UseQueueOptions<T>): UseQueueReturn<T>",
+      "description": "A bounded queue that keeps `limit` items visible and holds the overflow — port of Mantine's `useQueue`. Pure React state, so identical on web and native.",
+      "types": [
+        "UseQueueOptions",
+        "UseQueueReturn"
+      ],
+      "sourcePath": "packages/hooks/src/use-queue.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-queue.ts"
+    },
+    {
+      "slug": "use-radial-move",
+      "name": "useRadialMove",
+      "route": "/docs/hooks/use-radial-move",
+      "signature": "export function useRadialMove( onChange: (angle: number) => number, options?: UseRadialMoveOptions, ): UseRadialMoveReturn",
+      "description": "Track pointer dragging over a circular control and report the angle (0–359) under the pointer. Web implementation — mirrors Mantine's `useRadialMove`. Wires `pointerdown` / `pointermove` / `pointerup` on `window` so the drag keeps following the cursor even when it leaves the ring, measuring the centre via `getBoundingClientRect`. The native counterpart lives in `use-radial-move.native.ts`; this file never imports `react-native` at runtime, so the web bundle stays free of it. `onChange` returns the value actually applied (after the consumer snaps / restricts it), which is forwarded to `onChangeEnd` when the gesture ends.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-radial-move.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-radial-move.ts",
+      "nativePath": "packages/hooks/src/use-radial-move.native.ts",
+      "sharedPath": "packages/hooks/src/use-radial-move.shared.ts"
+    },
+    {
+      "slug": "use-reduced-motion",
+      "name": "useReducedMotion",
+      "route": "/docs/hooks/use-reduced-motion",
+      "signature": "export function useReducedMotion(initialValue = false): boolean",
+      "description": "Whether the user prefers reduced motion (web) — port of Mantine's `useReducedMotion`. Tracks the `prefers-reduced-motion` media query; SSR-safe (the server snapshot is `initialValue`). The `use-reduced-motion.native` sibling uses React Native's `AccessibilityInfo`. Use it to gate animations (`Skeleton`, `Spinner`, `Collapse`).",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-reduced-motion.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-reduced-motion.ts",
+      "nativePath": "packages/hooks/src/use-reduced-motion.native.ts"
+    },
+    {
+      "slug": "use-set-state",
+      "name": "useSetState",
+      "route": "/docs/hooks/use-set-state",
+      "signature": "export function useSetState<T extends Record<string, unknown>>( initialState: T, ): [T, (statePartial: Partial<T> | SetStateCallback<T>) => void]",
+      "description": "Object state with shallow partial merge — port of Mantine's `useSetState`. `setState({ a })` merges `a` into the current state (class-component `setState` semantics). Pure React, so identical on web and native.",
+      "types": [
+        "SetStateCallback"
+      ],
+      "sourcePath": "packages/hooks/src/use-set-state.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-set-state.ts"
+    },
+    {
+      "slug": "use-throttled-callback",
+      "name": "useThrottledCallback",
+      "route": "/docs/hooks/use-throttled-callback",
+      "signature": "export function useThrottledCallback<Args extends unknown[]>( callback: (...args: Args) => void, wait: number, ): (...args: Args) => void",
+      "description": "Throttle a callback — port of Mantine's `useThrottledCallback`. The returned function has a stable identity and always calls the latest `callback`. Pure timers, so identical on web and native — handy for high-frequency events (drag, scroll).",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-throttled-callback.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-throttled-callback.ts"
+    },
+    {
+      "slug": "use-throttled-value",
+      "name": "useThrottledValue",
+      "route": "/docs/hooks/use-throttled-value",
+      "signature": "export function useThrottledValue<T>(value: T, wait: number): T",
+      "description": "Throttle a rapidly-changing value — port of Mantine's `useThrottledValue`. The returned value updates at most once per `wait` ms (leading + trailing). Pure timers, so identical on web and native — handy for `ColorPicker` drag or scroll-driven state.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-throttled-value.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-throttled-value.ts"
+    },
+    {
+      "slug": "use-timeout",
+      "name": "useTimeout",
+      "route": "/docs/hooks/use-timeout",
+      "signature": "export function useTimeout( callback: (...args: unknown[]) => void, delay: number, options: UseTimeoutOptions = {}, ): UseTimeoutReturn",
+      "description": "Declarative `setTimeout` with automatic cleanup — port of Mantine's `useTimeout`. The callback is read through a ref so a re-render never restarts a pending timer, and any pending timer is cleared on unmount. Replaces the hand-rolled `blurTimer` ref + cleanup-effect pattern; pure timers, so identical on web and native.",
+      "types": [
+        "UseTimeoutOptions",
+        "UseTimeoutReturn"
+      ],
+      "sourcePath": "packages/hooks/src/use-timeout.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-timeout.ts"
+    },
+    {
+      "slug": "use-uncontrolled",
+      "name": "useUncontrolled",
+      "route": "/docs/hooks/use-uncontrolled",
+      "signature": "export function useUncontrolled<T>({ value, defaultValue, finalValue, onChange, }: UseUncontrolledOptions<T>): UseUncontrolledReturnValue<T>",
+      "description": "Controlled/uncontrolled state for an ARBITRARY value — port of Mantine's `useUncontrolled`. Generalizes the boolean-only `internal/use-toggle`: when `value` is provided the state is controlled (the setter just forwards to `onChange`); otherwise it is tracked internally, seeded from `defaultValue` then `finalValue`. Precisely generic — no `any`. The returned setter is REFERENTIALLY STABLE in both the controlled and the uncontrolled branch, and that stability is load-bearing rather than a nicety. ~48 files across `components`, `dates` and `sheet` call this hook and hand the setter straight to a child, a context value, or a `useMemo`/`useEffect` dep list. When the setter changed identity every render, the invalidation cascaded: in `Combobox` a fresh `setOpen` made the `use-combobox` store a new object, which made the `ComboboxContext` value a new object — and because context propagation walks *past* `React.memo`, every option row re-rendered on every keystroke no matter how carefully it was memoized. Callers almost always pass `onChange` as an inline arrow, so the latest version is read through a ref (`useCallbackRef`) instead of being closed over. That also means a consumer who memoized a handler with `[]` deps around the setter still invokes the current `onChange` rather than the one from its first render.",
+      "types": [
+        "UseUncontrolledOptions",
+        "UseUncontrolledReturnValue"
+      ],
+      "sourcePath": "packages/hooks/src/use-uncontrolled.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-uncontrolled.ts",
+      "testPath": "packages/hooks/src/use-uncontrolled.test.ts"
+    },
+    {
+      "slug": "use-validated-state",
+      "name": "useValidatedState",
+      "route": "/docs/hooks/use-validated-state",
+      "signature": "export function useValidatedState<T>( initialValue: T, validation: (value: T) => boolean, initialValidationState?: boolean, ): [ValidatedState<T>, (value: T) => void]",
+      "description": "Track a value alongside its validation result and the last valid value — port of Mantine's `useValidatedState`. Pure React, so identical on web and native.",
+      "types": [
+        "ValidatedState"
+      ],
+      "sourcePath": "packages/hooks/src/use-validated-state.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-validated-state.ts"
+    },
+    {
+      "slug": "use-viewport-size",
+      "name": "useViewportSize",
+      "route": "/docs/hooks/use-viewport-size",
+      "signature": "export function useViewportSize(): ViewportSize",
+      "description": "Current viewport size, kept in sync on resize/orientation change (web) — port of Mantine's `useViewportSize`. Reads `window.innerWidth/Height`; SSR-safe (returns `{ 0, 0 }` until mounted). The `use-viewport-size.native` sibling uses React Native's `Dimensions` API.",
+      "types": [],
+      "sourcePath": "packages/hooks/src/use-viewport-size.ts",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-viewport-size.ts",
+      "nativePath": "packages/hooks/src/use-viewport-size.native.ts",
+      "sharedPath": "packages/hooks/src/use-viewport-size.shared.ts"
+    }
+  ]
+}

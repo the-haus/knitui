@@ -1,0 +1,58 @@
+export const meta = {
+  title: "Compatibility",
+  description:
+    "Which React, React Native, Expo SDK and Reanimated versions each Knit UI release targets.",
+};
+
+# Compatibility
+
+The kit tracks the current Expo SDK. Native module versions are pinned by the SDK,
+not by us — which is why `expo install` matters more than the table below.
+
+## Current
+
+| Dependency | Version |
+| --- | --- |
+| React | 19.2.x |
+| React Native | 0.86.x |
+| Expo SDK | 57 |
+| Reanimated | 4.5.x |
+| Worklets | 0.10.x |
+| Tamagui | 2.4.x (internal — you never install it) |
+| react-native-web | 0.21.x |
+| Next.js (web) | 16.x, built with `--webpack` |
+| Node (tooling) | ≥ 20 |
+
+<PackageTable />
+
+## Rules of thumb
+
+- **One copy of everything.** `react`, `react-native`, `react-native-reanimated`
+  and `react-native-worklets` must resolve to a single version across your whole
+  tree. Two copies is the cause of the Hermes `"property is not writable"` crash
+  and of `"Another instance of Reanimated"`. Pin them in your package manager's
+  overrides.
+- **Let the SDK choose native versions.** `npx expo install` picks what the SDK was
+  built against; `npx expo install --check` audits a project you have drifted.
+  Dependabot does not know about this and will happily propose a version the SDK
+  cannot load.
+- **Next needs webpack.** The Tamagui compiler is a webpack plugin. `next dev
+  --webpack`, `next build --webpack`.
+
+## Upgrading an Expo SDK
+
+The order that works:
+
+1. Bump `expo` and run `npx expo install --fix`.
+2. Bump the kit packages.
+3. Re-check your overrides — the SDK's `react-native` version usually changes, and
+   a stale override pins the old one.
+4. Rebuild native (`expo prebuild --clean` if you use CNG).
+
+Every kit release states which SDK it targets in the [changelog](/changelog).
+
+## Older releases
+
+The kit is pre-1.0 and moves with the SDK; there is no long-term support branch.
+If you are pinned to an older Expo SDK, pin the kit to the release that shipped
+against it rather than mixing.

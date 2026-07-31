@@ -1,0 +1,88 @@
+export const meta = {
+  title: "Layout",
+  description: "Box, Flex, Stack, Group, Grid, SimpleGrid, Container, Center — and which to reach for.",
+};
+
+# Layout
+
+Everything in the kit is a `Box` underneath. The layout components are thin,
+named intentions on top of it — which is worth more than it sounds, because
+`<Group>` says "these sit side by side with a gap" and a bare `flexDirection`
+does not.
+
+## The decision tree
+
+| You want | Use |
+| --- | --- |
+| A generic styled container | [`Box`](/docs/components/layout/box) |
+| Explicit flex control | [`Flex`](/docs/components/layout/flex) |
+| Vertical rhythm | [`Stack`](/docs/components/layout/stack) |
+| Horizontal row with gap | [`Group`](/docs/components/layout/group) |
+| A real grid with spans | [`Grid`](/docs/components/layout/grid) |
+| Equal columns, responsive | [`SimpleGrid`](/docs/components/layout/simple-grid) |
+| Centred, max-width page body | [`Container`](/docs/components/layout/container) |
+| One thing dead centre | [`Center`](/docs/components/layout/center) |
+| Fixed aspect box | [`AspectRatio`](/docs/components/layout/aspect-ratio) |
+| A surface with padding and elevation | [`Paper`](/docs/components/layout/paper) |
+| Deliberate empty space | [`Spacer`](/docs/components/layout/spacer) |
+
+## Flex defaults differ from the web
+
+<Callout kind="platform">
+  React Native's flex defaults are not the browser's: `flexDirection` defaults to
+  `column`, `alignItems` to `stretch`, and `flexShrink` to `0`. The kit keeps
+  React Native's semantics on **all** platforms so one layout behaves identically
+  everywhere — which means a web developer's instinct for `display: flex` will be
+  off by one axis until it clicks.
+</Callout>
+
+```tsx
+<Box>            {/* column */}
+<Group>          {/* row, gap, wraps */}
+<Stack gap="$md">{/* column, gap */}
+```
+
+## Gap, not margins
+
+Prefer `gap` on the parent to margins on children. It composes, it collapses
+correctly when a child is conditional, and it is a token.
+
+```tsx
+<Stack gap="$md">
+  <TextInput label="Email" />
+  {showPassword ? <PasswordInput label="Password" /> : null}
+  <Button>Continue</Button>
+</Stack>
+```
+
+## Scrolling
+
+Use [`ScrollArea`](/docs/components/navigation/scroll-area), not a bare
+`ScrollView` — it carries the kit's scrollbar chrome, keyboard scrolling, and the
+reach callbacks (`onReachEnd`, `onReachTop`) that pagination hangs off.
+
+<Callout kind="platform">
+  For a vertical list use `scrollbars="y"`. With `"xy"` the native implementation
+  nests a horizontal `ScrollView`, which lets rows size to content — and they
+  collapse.
+</Callout>
+
+For long lists, [`VirtualList`](/docs/components/data-display/virtual-list) windows
+rows and keeps a mounted pool, which is what you want past a few hundred items.
+
+## Responsive layout
+
+Every style prop takes breakpoint objects, and `useMedia()` gives you the same
+information in JS:
+
+```tsx
+<SimpleGrid cols={{ xxs: 1, sm: 2, lg: 3 }} gap="$md" />
+```
+
+See [Responsive](/docs/foundations/responsive).
+
+## Safe areas and the keyboard
+
+`KeyboardAvoidingView` and `KeyboardAwareScrollView` are in the kit and handle the
+native keyboard through the platform `Keyboard` API — no third-party controller is
+needed or used.

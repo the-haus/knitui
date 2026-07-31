@@ -1,0 +1,84 @@
+export const meta = {
+  title: "Motion",
+  description:
+    "Motion tokens, presets and the press-scale hook — one definition of timing shared by web transitions and native worklets.",
+};
+
+# Motion
+
+Motion in the kit is tokenised like everything else: durations and easings have
+names, and components reference the names.
+
+<MotionTable />
+
+Read them from `@knitui/core`:
+
+```tsx
+import { DURATIONS, EASINGS } from "@knitui/core";
+```
+
+## Presets
+
+A preset pairs a duration with an easing and a property set, so "fade in" means
+the same thing everywhere:
+
+```tsx
+import { motionPresets, useMotionPreset } from "@knitui/core";
+
+const motion = useMotionPreset("fade");
+```
+
+Overlay components (`Popover`, `Tooltip`, `HoverCard`, `Modal`, `Drawer`) accept a
+preset by name through their `animation` prop, and they animate **out** before
+unmounting — which is why they share one transition engine rather than each
+running their own timer.
+
+<Example id="components/overlays/transition" story="Playground" />
+
+## Press feedback
+
+```tsx
+import { usePressScale } from "@knitui/core";
+```
+
+`usePressScale` is the shared press-down animation: a small scale on the UI thread
+via Reanimated on native, a CSS transform on the web. Every control in the kit uses
+it, so press feedback is consistent and never runs on the JS thread.
+
+## Two implementations, one contract
+
+| Platform | Mechanism |
+| --- | --- |
+| Native | Reanimated worklets on the UI thread |
+| Web | CSS transitions and `requestAnimationFrame` painters |
+
+That split is why animation code inside the kit is platform-split (`.native.tsx`
+/ `.web.tsx`) rather than branching at runtime — a worklet cannot be conditionally
+compiled.
+
+<Callout kind="platform">
+  A looping animation on native needs a Reanimated host element. Use the
+  `asLoopHost` prop the hook provides; spreading a loop's style onto a Tamagui
+  frame does nothing, because the frame is not an `Animated` component.
+</Callout>
+
+## Reduced motion
+
+`useReducedMotion()` reads the OS setting on both platforms, and the kit's own
+transitions already respect it: durations collapse to `instant` rather than being
+skipped, so nothing ends up mid-transition.
+
+```tsx
+import { useReducedMotion } from "@knitui/hooks";
+```
+
+## Height transitions
+
+Animating height is the hard case, because the natural height has to be measured
+first. `Collapse` and `Spoiler` share one implementation (`CollapseBox`) that
+measures with the content pinned absolute, then animates a clip — on native by
+hand with Reanimated, on the web through a real CSS transition.
+
+If you write your own and it never opens, the measurement came back as zero
+because the content was already clipped. See
+[Troubleshooting](/docs/getting-started/troubleshooting).

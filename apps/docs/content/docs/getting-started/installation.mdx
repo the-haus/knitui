@@ -1,0 +1,394 @@
+export const meta = {
+  title: "Installation",
+  description:
+    "Install Knit UI in four steps. Pick Expo, React Native CLI, Next.js or Vite once and every snippet on the page follows your choice — including your package manager.",
+};
+
+# Installation
+
+Knit UI is **two packages**: `@knitui/core` (tokens, themes, `Provider`) and
+`@knitui/components` (the components). Everything else is optional.
+
+Four steps, about five minutes. **Pick your framework in any tab below** — every
+tab on this page stays in sync, and so does your package manager, so you only
+choose once.
+
+<Callout>
+  You never install a `@tamagui/*` package yourself. The kit depends on them
+  internally and re-exports everything you need — `styled`, tokens, `useMedia`,
+  gesture and animation primitives — from `@knitui/core`.
+</Callout>
+
+## What you need first
+
+| Requirement | Version |
+| --- | --- |
+| Node | 20 or newer |
+| React | 19.2.x |
+| Native app | React Native 0.86.x — easiest via Expo SDK 57 |
+| Web app | Next.js 16 (built with `--webpack`) or Vite |
+
+Anything else is checked for you: if a peer dependency is missing, the kit throws
+a named error the first time a component renders instead of failing somewhere deep
+inside a gesture handler. Full matrix in
+[Compatibility](/docs/api/compatibility).
+
+## 1. Install the packages
+
+<Tabs group="framework" label="Framework">
+<Tab label="Expo">
+
+<InstallCommand
+  expo
+  packages="@knitui/core @knitui/components react-native-gesture-handler react-native-reanimated react-native-svg react-native-teleport react-native-worklets"
+/>
+
+Note the `expo install`: it picks the native module versions your Expo SDK was
+built against. Installing those peers by hand is the single most common cause of a
+red screen on first launch. (`npx expo install --check` audits a project later.)
+
+No app yet? `npx create-expo-app@latest my-app` first.
+
+</Tab>
+<Tab label="Next.js">
+
+<InstallCommand packages="@knitui/core @knitui/components @knitui/plugins react-native-web react-native-gesture-handler react-native-reanimated react-native-svg react-native-teleport react-native-worklets" />
+
+`react-native-web` maps the React Native primitives onto the DOM, and
+`@knitui/plugins` carries the build integration plus the SSR provider you'll wire
+in step 2.
+
+No app yet? `npx create-next-app@latest my-app` first.
+
+</Tab>
+<Tab label="Vite">
+
+<InstallCommand packages="@knitui/core @knitui/components @knitui/plugins react-native-web react-native-gesture-handler react-native-reanimated react-native-svg react-native-teleport react-native-worklets" />
+
+No app yet? `npm create vite@latest my-app -- --template react-ts` first.
+
+</Tab>
+<Tab label="React Native CLI">
+
+<InstallCommand packages="@knitui/core @knitui/components react-native-gesture-handler react-native-reanimated react-native-svg react-native-teleport react-native-worklets" />
+
+Then link the native side and rebuild — a Metro reload is not enough once native
+modules are added:
+
+```bash
+cd ios && pod install && cd ..
+npm run ios     # and: npm run android
+```
+
+</Tab>
+</Tabs>
+
+## 2. Point your bundler at the kit
+
+The kit **source-ships** — `main` points at `./src/index.ts`, so platform-split
+files stay resolvable and the Tamagui compiler can see real source. Your bundler
+needs to know that, which is the one job of `@knitui/plugins`.
+
+<Tabs group="framework" label="Framework">
+<Tab label="Expo">
+
+```js title="babel.config.js"
+module.exports = (api) => {
+  api.cache(true);
+  return {
+    presets: ["babel-preset-expo"],
+    plugins: [require("@knitui/plugins/babel-plugin")],
+  };
+};
+```
+
+```js title="metro.config.js"
+const { getDefaultConfig } = require("expo/metro-config");
+const { withKnitui } = require("@knitui/plugins/metro");
+
+module.exports = withKnitui(getDefaultConfig(__dirname));
+```
+
+Restart with a cleared cache the first time: `npx expo start --clear`.
+
+</Tab>
+<Tab label="Next.js">
+
+```js title="next.config.mjs"
+import { withKnitui } from "@knitui/plugins/next-plugin";
+
+export default withKnitui({
+  reactStrictMode: true,
+  transpilePackages: [
+    "react-native-web",
+    "react-native-reanimated",
+    "react-native-gesture-handler",
+    "@knitui/core",
+    "@knitui/components",
+    // …plus any satellite package you add later
+  ],
+});
+```
+
+```json title="package.json"
+{
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack"
+  }
+}
+```
+
+<Callout kind="warning">
+  The `--webpack` flag is not optional. The Tamagui compiler is a webpack plugin
+  and Next 16 defaults to Turbopack, which skips it silently — you would get
+  correct rendering but no build-time style extraction.
+</Callout>
+
+</Tab>
+<Tab label="Vite">
+
+```ts title="vite.config.ts"
+import { knitui } from "@knitui/plugins/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [react(), knitui()],
+});
+```
+
+`knitui()` sets the platform target, prefers `.web.*` files, aliases
+`react-native` → `react-native-web`, and pre-bundles the packages that ship
+untranspiled TypeScript.
+
+</Tab>
+<Tab label="React Native CLI">
+
+```js title="babel.config.js"
+module.exports = {
+  presets: ["module:@react-native/babel-preset"],
+  plugins: [require("@knitui/plugins/babel-plugin")],
+};
+```
+
+```js title="metro.config.js"
+const { getDefaultConfig } = require("@react-native/metro-config");
+const { withKnitui } = require("@knitui/plugins/metro");
+
+module.exports = withKnitui(getDefaultConfig(__dirname));
+```
+
+Restart Metro with `npm start -- --reset-cache` the first time.
+
+</Tab>
+</Tabs>
+
+Details on what each plugin does: [Bundler setup](/docs/getting-started/bundler-setup).
+
+## 3. Wrap your app in one Provider
+
+<Tabs group="framework" label="Framework">
+<Tab label="Expo">
+
+```tsx title="app/_layout.tsx"
+import { Provider } from "@knitui/core";
+import { Stack } from "expo-router";
+
+export default function RootLayout() {
+  return (
+    <Provider defaultColorScheme="system">
+      <Stack />
+    </Provider>
+  );
+}
+```
+
+</Tab>
+<Tab label="Next.js">
+
+Two providers, one job each: `NextTamaguiProvider` flushes the generated CSS into
+the server HTML, `Provider` is the runtime context — and it has to be a client
+component.
+
+```tsx title="app/layout.tsx"
+import { NextTamaguiProvider } from "@knitui/plugins/next";
+
+import { Providers } from "./providers";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <NextTamaguiProvider>
+          <Providers>{children}</Providers>
+        </NextTamaguiProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+```tsx title="app/providers.tsx"
+"use client";
+
+import { Provider } from "@knitui/core";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <Provider defaultColorScheme="system">{children}</Provider>;
+}
+```
+
+More on hydration and what stays client-only:
+[Server rendering](/docs/getting-started/ssr).
+
+</Tab>
+<Tab label="Vite">
+
+```tsx title="src/main.tsx"
+import { Provider } from "@knitui/core";
+import { createRoot } from "react-dom/client";
+
+import { App } from "./App";
+
+createRoot(document.getElementById("root")!).render(
+  <Provider defaultColorScheme="system">
+    <App />
+  </Provider>,
+);
+```
+
+</Tab>
+<Tab label="React Native CLI">
+
+```tsx title="App.tsx"
+import { Provider } from "@knitui/core";
+
+export default function App() {
+  return (
+    <Provider defaultColorScheme="system">
+      <RootNavigator />
+    </Provider>
+  );
+}
+```
+
+</Tab>
+</Tabs>
+
+`Provider` is more than a theme context. It mounts the token and theme config, the
+color-scheme controller (`"system"` follows the OS), `GestureHandlerRootView` —
+so you don't add one — and the portal host that `Modal`, `Drawer`, `Popover` and
+`Tooltip` teleport into.
+
+<Callout kind="warning">
+  Mount exactly **one** `Provider`, at the root. A second, nested one creates a
+  second portal host and overlays start rendering into the wrong layer.
+</Callout>
+
+Deeper per-framework detail — dev builds, static export, Storybook, the pitfalls
+specific to each: [Expo](/docs/getting-started/expo) ·
+[Next.js](/docs/getting-started/nextjs) · [Vite](/docs/getting-started/vite).
+
+## 4. Check it works
+
+Drop this anywhere inside the `Provider` and run the app:
+
+```tsx
+import { Button, Card, Group, Text, TextInput } from "@knitui/components";
+
+export function SignIn() {
+  return (
+    <Card padding="lg" gap="$md">
+      <Text fontWeight="600">Sign in</Text>
+      <TextInput label="Email" placeholder="you@example.com" />
+      <Group>
+        <Button variant="light">Cancel</Button>
+        <Button>Continue</Button>
+      </Group>
+    </Card>
+  );
+}
+```
+
+You should see a bordered card with a labelled input and two buttons, themed to
+your OS light/dark setting, on iOS, Android and the web from that one file. If it
+renders, you're installed — and the buttons below are the same components, running
+live in this page:
+
+<Example
+  id="components/inputs/button"
+  story="Variants"
+  caption="Rendered by the docs site with the setup you just did."
+/>
+
+## Add only what you need
+
+The core two packages cover 100+ components. Each satellite package is installed
+on its own, and only `@knitui/map`, `@knitui/media` and `@knitui/graphics` bring
+native modules with them.
+
+<CardGrid>
+  <CardLink href="/docs/dates/calendar" title="@knitui/dates">
+    Calendars, date and time pickers, date inputs.
+  </CardLink>
+  <CardLink href="/docs/carousel" title="@knitui/carousel">
+    Gesture-driven carousel with ten layout modes.
+  </CardLink>
+  <CardLink href="/docs/sheet" title="@knitui/sheet">
+    Bottom sheets with a pure-TS snap engine.
+  </CardLink>
+  <CardLink href="/docs/media" title="@knitui/media">
+    Audio and video players, playlists, recording, DSP.
+  </CardLink>
+  <CardLink href="/docs/map" title="@knitui/map">
+    MapLibre on native and web behind one API.
+  </CardLink>
+  <CardLink href="/docs/graphics/core/graphics-provider" title="@knitui/graphics">
+    Skia canvases, effects and visualizers.
+  </CardLink>
+  <CardLink href="/docs/icons" title="@knitui/icons">
+    ~6,100 Tabler icons, one path each.
+  </CardLink>
+  <CardLink href="/docs/emoji" title="@knitui/emoji">
+    The Noto emoji set as components.
+  </CardLink>
+</CardGrid>
+
+On Expo, install a satellite package's native module through `expo install` too:
+
+<InstallCommand expo packages="@knitui/media expo-audio expo-video" />
+
+Which package needs which peer, straight from each `package.json`:
+
+<PeerDependencyTable />
+
+## If something went wrong
+
+| What you see | Almost always |
+| --- | --- |
+| Red screen, `"property is not writable"` on Hermes | [Two copies of `react-native`](/docs/getting-started/troubleshooting#property-is-not-writable--cannot-read-property-default-of-undefined-on-hermes) |
+| `"Another instance of Reanimated was detected"` | [Two copies of reanimated](/docs/getting-started/troubleshooting#another-instance-of-reanimated-was-detected) |
+| Styles land a frame late on Next.js | [`NextTamaguiProvider` missing or too deep](/docs/getting-started/troubleshooting#nextjs-styles-arrive-a-frame-late) |
+| A modal or dropdown renders behind everything | [More than one `Provider`](/docs/getting-started/troubleshooting#an-overlay-renders-behind-everything-or-not-at-all) |
+| Warning: `Tamagui skipped loading N modules` | [Harmless — src-shipped packages](/docs/getting-started/troubleshooting#tamagui-skipped-loading-n-modules) |
+| Sliders or sheets don't respond to drags | Something is mounted above `Provider`, so there's no `GestureHandlerRootView` |
+
+Every symptom, with fixes: [Troubleshooting](/docs/getting-started/troubleshooting).
+
+## Next steps
+
+<CardGrid>
+  <CardLink href="/docs/getting-started/quickstart" title="Quickstart">
+    The three props that repeat across every component.
+  </CardLink>
+  <CardLink href="/docs/foundations/tokens" title="Tokens">
+    The scales every component resolves against.
+  </CardLink>
+  <CardLink href="/docs/foundations/color-and-themes" title="Color & themes">
+    Palette ramps, semantic tokens, the `theme` prop.
+  </CardLink>
+  <CardLink href="/docs/getting-started/typescript" title="TypeScript">
+    Typing style props, themes and your own `styled()` components.
+  </CardLink>
+</CardGrid>
