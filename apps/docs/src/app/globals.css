@@ -785,31 +785,34 @@ td code {
 /*
  * Shiki dual-theme output: each token carries both colors as custom properties,
  * so switching schemes is a CSS variable swap with no re-highlighting.
+ *
+ * Only `color` is swapped — the `--shiki-*-bg` pair is deliberately left unused.
+ * The surface belongs to `.code`; a token that paints its own background paints
+ * the THEME's surface (`github-dark`'s #24292e) on top of it. Shiki sets those
+ * variables on the `<pre>` only, but custom properties inherit, so a rule on
+ * `.shiki span` reached every token and every text line ended up a slightly
+ * different color from the block's own padding.
  */
 .shiki,
 .shiki span {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
 }
 
 @media (prefers-color-scheme: dark) {
   .shiki,
   .shiki span {
     color: var(--shiki-dark);
-    background-color: var(--shiki-dark-bg);
   }
 }
 
 :root[data-theme="dark"] .shiki,
 :root[data-theme="dark"] .shiki span {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
 }
 
 :root[data-theme="light"] .shiki,
 :root[data-theme="light"] .shiki span {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
 }
 
 /* ---------------------------------------------------------------- examples */
