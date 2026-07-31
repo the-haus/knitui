@@ -141,7 +141,7 @@ package `main`/`module`/`react-native` all point at `src/index.ts`. Expo/Metro
 consumes this out of the box. Next.js and other bundlers need the scope added to
 `transpilePackages`; the `withKnitui` wrapper from `@knitui/plugins/next-plugin`
 wires this up for you (see [`@knitui/plugins`](../plugins/README.md) and
-`docs/ci-cd-plan.md` §3).
+<https://knitui.dev/docs/architecture#src-shipping>).
 
 ## Storybook
 

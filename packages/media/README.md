@@ -64,7 +64,7 @@ Truly-shared, dependency-free primitives (`TypedEmitter`, `formatTime`) live in
 ## Src-ship & Next.js
 
 Like the rest of the kit, `@knitui/media` **ships its TypeScript source** (see
-[`docs/ci-cd-plan.md` §3](../../docs/ci-cd-plan.md)). Expo/Metro consumes it out
+[Architecture › src-shipping](https://knitui.dev/docs/architecture#src-shipping)). Expo/Metro consumes it out
 of the box; **Next.js** must transpile the `@knitui/*` scope — the `withKnitui`
 wrapper from `@knitui/plugins/next-plugin` does this for you.
 

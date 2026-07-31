@@ -96,6 +96,43 @@ only works in a production build.
 
 ## Deploy
 
-Static export → Cloudflare Pages (`knitui-docs`), via
+Static export → Cloudflare Pages (project `knitui-dev`), via
 [`.github/workflows/docs.yml`](../../.github/workflows/docs.yml). Storybook stays
 on GitHub Pages; the two cross-link.
+
+**knitui.dev only moves on a version update.** `release.yml` calls `docs.yml`
+with `environment: production` when `changesets/action` reports that it actually
+published, so the deployed site is built from the commit carrying the new
+versions. Everything else is a dry run:
+
+| Trigger                  | Result                                      |
+| ------------------------ | ------------------------------------------- |
+| Pull request (same repo) | Preview deploy on a branch alias            |
+| Push to `main`           | Build + guardrails only — nothing published |
+| Release published to npm | Production deploy to knitui.dev             |
+| `workflow_dispatch`      | Either, operator's choice                   |
+
+The site's canonical origin is `https://knitui.dev`, set in two places that must
+agree: `metadataBase` in [`src/app/layout.tsx`](./src/app/layout.tsx) and
+`SITE_URL` in [`scripts/postbuild.mjs`](./scripts/postbuild.mjs) (override with
+`DOCS_SITE_URL` to build for a different host).
+
+[`public/_headers`](./public/_headers) is Cloudflare's per-path header config;
+`next build` copies it to the root of `out/`, and the workflow asserts it arrived.
+
+To deploy by hand, from this directory — no directory argument, because
+`wrangler.toml` already sets `pages_build_output_dir`:
+
+```sh
+pnpm --filter @knitui/docs build
+wrangler pages deploy
+```
+
+### Why the root build skips this app
+
+Root `pnpm build` runs `turbo run build --filter='!@knitui/docs'`. This app's
+build is by far the heaviest in the repo (~13k emitted files, and it needs
+`--max-old-space-size=6144`), and `docs.yml` already builds and verifies it on
+every PR and push that touches it. Including it in the root task would mean CI
+and `pnpm release` paying for that build a second time, without the heap headroom.
+Build it directly with `pnpm docs:build`.

@@ -21,14 +21,16 @@ Installing also wires the git hooks via `core.hooksPath = .husky` (the root
 - `packages/*` — the published `@knitui/*` libraries + the internal `@knitui/demo` showcase.
 - `apps/app` — the Expo example (`@knitui/example`).
 - `apps/web` — the Next.js showcase (`@knitui/web`).
-- `docs/*` — architecture notes and plans, incl. [`ci-cd-plan.md`](docs/ci-cd-plan.md).
+- `apps/docs` — the documentation site, [knitui.dev](https://knitui.dev) (`@knitui/docs`).
+- `apps/storybook` — the aggregate Storybook composing every package's stories.
+- `docs/*` — architecture notes and plans.
 
 Tasks are orchestrated with Turborepo; run everything from the repo root.
 
 ## Everyday commands
 
 ```sh
-pnpm build            # build all packages (turbo run build)
+pnpm build            # build all packages (excludes the heavy docs app)
 pnpm typecheck        # tsc --noEmit per package
 pnpm lint             # ESLint across all packages
 pnpm lint:fix         # …with --fix
@@ -38,6 +40,8 @@ pnpm check:naming     # brand guardrail (see below)
 
 pnpm start            # Expo example (ios / android / web variants available)
 pnpm next             # Next.js showcase
+pnpm docs             # documentation site on :3001
+pnpm docs:build       # …and its full static export + search index
 ```
 
 Per-package Storybooks: `pnpm --filter @knitui/<pkg> storybook`.
@@ -74,7 +78,7 @@ Keep new code lint-clean; each package lints with `eslint .`.
 Packages ship their TypeScript **source** — `exports`/`main`/`types` resolve to
 `./src/*.ts`, not a compiled `lib/`. This is deliberate (Tamagui's generic
 component types don't round-trip through generated `.d.ts`; see
-[`docs/ci-cd-plan.md` §3](docs/ci-cd-plan.md)). When adding a package, follow the
+[Architecture › src-shipping](https://knitui.dev/docs/architecture#src-shipping)). When adding a package, follow the
 same `source`/`react-native` → `src` convention and add the scope to any Next.js
 `transpilePackages` list (the `@knitui/plugins/next-plugin` wrapper handles this
 for consumers).
@@ -105,11 +109,17 @@ for consumers).
 Releases are automated with [Changesets](https://github.com/changesets/changesets)
 via `.github/workflows/release.yml`:
 
-- Merged changesets open/update a **"Version Packages"** PR that bumps versions
-  and writes changelogs.
-- Merging that PR runs `pnpm release` (`turbo run build && changeset publish`) and
+- Merged changesets open/update a **"Version Packages"** PR that bumps versions,
+  writes changelogs, and refreshes `apps/docs/src/generated/**` (the docs site
+  reads the changelogs, so the version PR has to carry the regenerated data or
+  the docs guardrail fails on the merge commit).
+- Merging that PR runs `pnpm release` (`pnpm build && changeset publish`) and
   publishes the changed packages to npm with provenance.
+- A successful publish then deploys the docs site to
+  [knitui.dev](https://knitui.dev) — see
+  [`apps/docs/README.md`](apps/docs/README.md#deploy). Pushes to `main` that do
+  not publish only build and verify the site.
 
 Full details — required secrets, branch protection, and the roadmap — live in
-[`docs/ci-cd-plan.md`](docs/ci-cd-plan.md).
+[`.github/workflows/`](.github/workflows).
 </content>
