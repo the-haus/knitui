@@ -4,6 +4,11 @@ node_modules/
 # build output
 **/dist/
 **/lib/
+# ...but these two are source, not build output, and the rule above would silently
+# drop them: `apps/docs` resolves `@/lib/*` into src/lib, and the docs generators
+# import scripts/docs/lib/ts-eval.mjs.
+!apps/docs/src/lib/
+!scripts/docs/lib/
 **/.turbo/
 *.tsbuildinfo
 
