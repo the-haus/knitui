@@ -1,5 +1,16 @@
 # @knitui/sheet
 
+## 0.3.7
+
+### Patch Changes
+
+- Updated dependencies [8de27f7]
+- Updated dependencies [85594a1]
+  - @knitui/core@0.8.0
+  - @knitui/components@0.8.0
+  - @knitui/hooks@0.8.0
+  - @knitui/icons@0.8.0
+
 ## 0.3.6
 
 ### Patch Changes
