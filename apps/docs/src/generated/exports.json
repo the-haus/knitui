@@ -212,7 +212,7 @@
     {
       "name": "@knitui/map",
       "slug": "map",
-      "version": "0.4.3",
+      "version": "0.4.2",
       "description": "Cross-platform MapLibre map surface for Knit UI.",
       "private": false,
       "dependencies": [],
