@@ -90,6 +90,15 @@
       "slug": "components",
       "releases": [
         {
+          "version": "0.8.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "`Menu` is now operable from the keyboard: Arrow-key roving focus, focus moved into the dropdown on open, and focus returned to the trigger on close. `Menu` rendered `role=\"menu\"` with `role=\"menuitem\"` children but had no key handling at all, and `menuItemTabIndex` defaulted to `-1` — so every item was out of the tab order with nothing to put focus on them. An open menu could not be reached, navigated or activated with a keyboard, which for a `role=\"menu\"` is worse than shipping no role: assistive technology announces a menu whose items cannot be got to. The items also carried `focusRingStyle` while being unfocusable — a dead ring, the exact invariant `src/__tests__/focus-ring.test.tsx` exists to catch, and `Menu` was missing from its case list, which is how this survived. What changed: - **Roving focus.** <kbd>↓</kbd>/<kbd>↑</kbd> move between enabled items (wrapping, unless `loop={false}`), <kbd>Home</kbd>/<kbd>End</kbd> jump to the ends. Disabled items are skipped. Items are enumerated from the DOM (`[role=\"menuitem\"]`) rather than from cloned children, because a menu's children are arbitrary — items interleaved with labels, dividers and the consumer's own fragments. - **Opening from the trigger.** <kbd>↓</kbd> opens the menu focusing the first item, <kbd>↑</kbd> the last. This is also the only way to open a _hover_ menu from the keyboard without pressing it. - **Focus management.** `trapFocus` and `returnFocus` are now forwarded to the underlying `Popover`, which already implemented both. They default to `true` for `trigger=\"click\"` and `false` for hover triggers: a menu opened by pointing at something never held focus, so taking it on hover-in — and pushing it onto the trigger on hover-out — would move the caret out of whatever the user was actually doing. Both are overridable per menu. `menuItemTabIndex` keeps its `-1` default and its meaning; it is no longer the only way to reach an item, and the docs now say so. Behaviour for pointer users is unchanged. `Menu` joins the focus-ring guardrail, along with `ColorPicker`, `Stepper` and `TreeSelect` — three more ring-bearing components the contract test never covered. - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
+        },
+        {
           "version": "0.8.0",
           "changes": [
             {
@@ -293,6 +302,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.8.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.8.1"
+            }
+          ]
+        },
+        {
           "version": "0.8.0",
           "changes": [
             {
@@ -490,6 +508,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.8.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1"
+            }
+          ]
+        },
+        {
           "version": "0.8.0",
           "changes": [
             {
@@ -644,6 +671,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.8",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
+        },
         {
           "version": "0.3.7",
           "changes": [
@@ -912,6 +948,15 @@
       "slug": "media",
       "releases": [
         {
+          "version": "0.4.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
+        },
+        {
           "version": "0.4.1",
           "changes": [
             {
@@ -1095,6 +1140,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.8.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1"
+            }
+          ]
+        },
+        {
           "version": "0.8.0",
           "changes": [
             {
@@ -1245,6 +1299,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.3.8",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
+        },
         {
           "version": "0.3.7",
           "changes": [
@@ -1427,6 +1490,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.8.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.8.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.8.1"
+            }
+          ]
+        },
+        {
           "version": "0.8.0",
           "changes": [
             {
@@ -1560,6 +1636,15 @@
       "name": "@knitui/plugins",
       "slug": "plugins",
       "releases": [
+        {
+          "version": "0.1.12",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.8.1"
+            }
+          ]
+        },
         {
           "version": "0.1.11",
           "changes": [
@@ -1699,6 +1784,60 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.8.1",
+      "entries": [
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "`Menu` is now operable from the keyboard: Arrow-key roving focus, focus moved into the dropdown on open, and focus returned to the trigger on close. `Menu` rendered `role=\"menu\"` with `role=\"menuitem\"` children but had no key handling at all, and `menuItemTabIndex` defaulted to `-1` — so every item was out of the tab order with nothing to put focus on them. An open menu could not be reached, navigated or activated with a keyboard, which for a `role=\"menu\"` is worse than shipping no role: assistive technology announces a menu whose items cannot be got to. The items also carried `focusRingStyle` while being unfocusable — a dead ring, the exact invariant `src/__tests__/focus-ring.test.tsx` exists to catch, and `Menu` was missing from its case list, which is how this survived. What changed: - **Roving focus.** <kbd>↓</kbd>/<kbd>↑</kbd> move between enabled items (wrapping, unless `loop={false}`), <kbd>Home</kbd>/<kbd>End</kbd> jump to the ends. Disabled items are skipped. Items are enumerated from the DOM (`[role=\"menuitem\"]`) rather than from cloned children, because a menu's children are arbitrary — items interleaved with labels, dividers and the consumer's own fragments. - **Opening from the trigger.** <kbd>↓</kbd> opens the menu focusing the first item, <kbd>↑</kbd> the last. This is also the only way to open a _hover_ menu from the keyboard without pressing it. - **Focus management.** `trapFocus` and `returnFocus` are now forwarded to the underlying `Popover`, which already implemented both. They default to `true` for `trigger=\"click\"` and `false` for hover triggers: a menu opened by pointing at something never held focus, so taking it on hover-in — and pushing it onto the trigger on hover-out — would move the caret out of whatever the user was actually doing. Both are overridable per menu. `menuItemTabIndex` keeps its `-1` default and its meaning; it is no longer the only way to reach an item, and the docs now say so. Behaviour for pointer users is unchanged. `Menu` joins the focus-ring guardrail, along with `ColorPicker`, `Stepper` and `TreeSelect` — three more ring-bearing components the contract test never covered. - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.8.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.8.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.8.1"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.8.0",
       "entries": [
@@ -2376,6 +2515,15 @@
               "text": "Dependency refresh, all within the current majors and validated against Expo SDK 57 (`expo install --check` reports the workspace aligned): - `react-native` 0.86.0 → 0.86.2 (and `@react-native/metro-config` to match; both stay pinned as singletons in the root `pnpm.overrides`) - `react-native-reanimated` 4.5.0 → 4.5.1 and `react-native-worklets` 0.10.0 → 0.10.1 — the versions Expo SDK 57 expects - `expo` 57.0.7 → 57.0.9 and the SDK-managed modules along with it (`expo-router`, `expo-constants`, `expo-linking`, `expo-system-ui`, `expo-video`, `@expo/metro-runtime`, `expo-build-properties`) - `babel-preset-expo` 57.0.3 → 57.0.5, Storybook 10.5.3 → 10.5.5, `@vitejs/plugin-react` 6.0.3 → 6.0.4, `next` 16.2.10 → 16.2.12, `@react-navigation/*` patch bumps The vendored `expo-modules-core` patch was re-pointed from 57.0.6 to 57.0.8 and still applies cleanly. `expo-audio` deliberately stays on 57.0.2, where our native sampling patch is pinned. Peer requirements for consumers are unchanged."
             }
           ]
+        },
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
         }
       ]
     },
@@ -2505,6 +2653,29 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.8",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c25c51f] - @knitui/components@0.8.1 - @knitui/core@0.8.1 - @knitui/hooks@0.8.1 - @knitui/icons@0.8.1"
             }
           ]
         }
@@ -3152,6 +3323,20 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[737463e] - @knitui/core@0.2.0 - @knitui/hooks@0.2.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.1.12",
+      "entries": [
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.8.1"
             }
           ]
         }
