@@ -1,5 +1,12 @@
 # @knitui/mediaquery
 
+## 0.8.1
+
+### Patch Changes
+
+- @knitui/core@0.8.1
+- @knitui/hooks@0.8.1
+
 ## 0.8.0
 
 ### Patch Changes

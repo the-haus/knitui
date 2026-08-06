@@ -4,7 +4,7 @@
     {
       "name": "@knitui/core",
       "slug": "core",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Design tokens, theme and cross-platform primitives for Knit UI.",
       "private": false,
       "dependencies": [
@@ -40,7 +40,7 @@
     {
       "name": "@knitui/components",
       "slug": "components",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Cross-platform (React Native + Web) component kit for Knit UI.",
       "private": false,
       "dependencies": [
@@ -75,7 +75,7 @@
     {
       "name": "@knitui/hooks",
       "slug": "hooks",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Shared React hooks used across Knit UI.",
       "private": false,
       "dependencies": [
@@ -99,7 +99,7 @@
     {
       "name": "@knitui/icons",
       "slug": "icons",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Hybrid React + React Native icon kit generated from @tabler/icons SVG data.",
       "private": false,
       "dependencies": [],
@@ -126,7 +126,7 @@
     {
       "name": "@knitui/emoji",
       "slug": "emoji",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Hybrid React + React Native emoji kit generated from Google Noto Emoji SVG data.",
       "private": false,
       "dependencies": [],
@@ -151,7 +151,7 @@
     {
       "name": "@knitui/dates",
       "slug": "dates",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Date and time components for Knit UI.",
       "private": false,
       "dependencies": [
@@ -180,7 +180,7 @@
     {
       "name": "@knitui/carousel",
       "slug": "carousel",
-      "version": "0.3.7",
+      "version": "0.3.8",
       "description": "Cross-platform carousel for Knit UI (Embla-style engine).",
       "private": false,
       "dependencies": [
@@ -244,7 +244,7 @@
     {
       "name": "@knitui/media",
       "slug": "media",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "description": "Audio and video players, playlists and visualizers for Knit UI.",
       "private": false,
       "dependencies": [
@@ -277,7 +277,7 @@
     {
       "name": "@knitui/graphics",
       "slug": "graphics",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Skia-powered graphics primitives and effects for Knit UI.",
       "private": false,
       "dependencies": [
@@ -304,7 +304,7 @@
     {
       "name": "@knitui/sheet",
       "slug": "sheet",
-      "version": "0.3.7",
+      "version": "0.3.8",
       "description": "Cross-platform bottom sheet for Knit UI.",
       "private": false,
       "dependencies": [
@@ -336,7 +336,7 @@
     {
       "name": "@knitui/mediaquery",
       "slug": "mediaquery",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "description": "Cross-platform media queries and responsive breakpoints for Knit UI (React Native + web, SSR-safe).",
       "private": false,
       "dependencies": [
@@ -360,7 +360,7 @@
     {
       "name": "@knitui/plugins",
       "slug": "plugins",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "description": "Pre-configured Tamagui build-tool plugins for the knitui UI kit (babel, metro, next, vite, webpack) plus the Next.js SSR provider.",
       "private": false,
       "dependencies": [

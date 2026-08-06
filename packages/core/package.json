@@ -1,6 +1,6 @@
 {
   "name": "@knitui/core",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Design tokens, theme and cross-platform primitives for Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
