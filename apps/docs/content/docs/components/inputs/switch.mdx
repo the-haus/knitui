@@ -1,16 +1,67 @@
 export const meta = {
   title: "Switch",
-  description: "Switch is a toggle control built on a styled `Box` track and thumb. It supports controlled and uncontrolled modes, inline labels, on/off track labels, a thumb icon slot, and a `Switch.Group` for multi-select scenarios.",
+  description:
+    "Switch is an on/off control for settings that apply immediately, with optional on/off labels inside the track.",
 };
 
 <ComponentHeader id="components/inputs/switch" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+```tsx
+import { Switch } from "@knitui/components";
 
-<Playground id="components/inputs/switch" />
+<Switch label="Push notifications" onChange={setEnabled} />;
+```
+
+Uncontrolled by default; pass `checked` + `onChange` to control it. As with the
+other inputs, `description` and `error` are wired to the control for you.
+
+`onLabel` / `offLabel` render *inside* the track, and `thumbIcon` puts a glyph on
+the thumb itself — useful when colour alone shouldn't carry the state:
+
+```tsx
+<Switch label="Dark mode" onLabel="ON" offLabel="OFF" />
+```
+
+A switch implies its change takes effect **immediately**. If the value needs a
+Save button to matter, a checkbox is the more honest control.
+
+### When to use something else
+
+- A value that only applies once a form is submitted →
+  [`Checkbox`](/docs/components/inputs/checkbox)
+- One of several mutually exclusive options →
+  [`Radio`](/docs/components/inputs/radio) or
+  [`SegmentedControl`](/docs/components/inputs/segmented-control)
 
 <Examples id="components/inputs/switch" />
 
 <PropsTable id="components/inputs/switch" />
+
+## Accessibility
+
+On the web the control carries `role="switch"` with `aria-checked` — announced as
+"switch, on/off" rather than "checkbox, checked", which is the distinction users of
+screen readers rely on to know the change is immediate.
+
+Focus and key handling come from the shared
+[`useKeyboardActions`](/docs/hooks/use-keyboard-actions) hook, as the track is a
+styled `Box` rather than a native input.
+
+| Key | Action |
+| --- | --- |
+| <kbd>Tab</kbd> | Move focus to the switch |
+| <kbd>Space</kbd> / <kbd>Enter</kbd> | Toggle |
+
+- **Name it.** Use `label`, or `aria-label` / `aria-labelledby` when the label is
+  rendered elsewhere.
+- `description` and `error` are referenced via `aria-describedby`.
+- `disabled` sets `aria-disabled` and removes the switch from the tab order.
+- `onLabel` / `offLabel` are decoration inside the track — they are not a
+  substitute for a name, since they describe the *states*, not the setting.
+
+<Callout kind="platform">
+  The focus ring is a web-only `:focus-visible` outline; on native, activation flows
+  through `onPress` and the platform's accessibility focus.
+</Callout>

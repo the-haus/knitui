@@ -129,7 +129,78 @@ for (const [id, stories] of Object.entries(sources)) {
   }
 }
 
-/* ------------------------------------------------ 5. generated output is fresh */
+/* ------------------------------------- 5. the debt ratchet: prose and prop docs */
+
+/*
+ * Two kinds of documentation debt are real but too large to gate outright: 177 of
+ * 178 component pages are still scaffolds waiting on prose, and ~24% of own props
+ * carry no TSDoc. A hard threshold would fail the build today and get switched
+ * off; a ratchet fails only when a number gets WORSE, which is what actually
+ * stops backsliding while the debt is paid down.
+ *
+ * `--update-baseline` rewrites the file after an improvement. Both numbers are
+ * printed on every run, so the debt is a visible, shrinking figure rather than a
+ * thing nobody measures.
+ */
+const BASELINE_FILE = join(SCRIPT_DIR, "docs-debt.json");
+const SCAFFOLD_MARKER = "{/* scaffolded: replace this comment with real prose */}";
+
+const scaffolded = walk(CONTENT).filter((file) =>
+  readFileSync(file, "utf8").includes(SCAFFOLD_MARKER),
+).length;
+
+let ownProps = 0;
+let undocumentedOwnProps = 0;
+const undocumentedByComponent = {};
+for (const [id, data] of Object.entries(props.components)) {
+  const own = data.props.filter((prop) => prop.bucket === "own");
+  const undocumented = own.filter((prop) => !prop.description?.trim()).length;
+  ownProps += own.length;
+  undocumentedOwnProps += undocumented;
+  if (undocumented) undocumentedByComponent[id] = undocumented;
+}
+
+const current = { scaffolded, undocumentedOwnProps };
+
+if (process.argv.includes("--update-baseline")) {
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(
+    BASELINE_FILE,
+    `${JSON.stringify({ ...current, undocumentedByComponent }, null, 2)}\n`,
+    "utf8",
+  );
+  console.log(`[docs-coverage] baseline updated: ${JSON.stringify(current)}`);
+} else if (existsSync(BASELINE_FILE)) {
+  const baseline = JSON.parse(readFileSync(BASELINE_FILE, "utf8"));
+  for (const [key, label] of [
+    ["scaffolded", "component pages still carrying the scaffold marker"],
+    ["undocumentedOwnProps", "own props with no description"],
+  ]) {
+    const was = baseline[key];
+    const now = current[key];
+    if (typeof was !== "number") continue;
+    if (now > was) {
+      failures.push(
+        `${label} rose from ${was} to ${now} — document the new ones, or run ` +
+          `\`node scripts/docs/check-coverage.mjs --update-baseline\` if this is intentional`,
+      );
+    } else if (now < was) {
+      notes.push(
+        `${label}: ${was} → ${now}. Run with --update-baseline to lock in the improvement.`,
+      );
+    }
+  }
+}
+
+const documentedPct = ownProps
+  ? Math.round((100 * (ownProps - undocumentedOwnProps)) / ownProps)
+  : 0;
+console.log(
+  `[docs-coverage] prose debt: ${scaffolded} scaffolded pages · ` +
+    `prop docs: ${documentedPct}% of ${ownProps} own props described`,
+);
+
+/* ------------------------------------------------ 6. generated output is fresh */
 
 if (process.argv.includes("--check-generated")) {
   execFileSync(process.execPath, [join(SCRIPT_DIR, "generate.mjs")], {

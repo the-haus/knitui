@@ -164,6 +164,59 @@ kbd {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
+/*
+ * Focus, once, for the whole chrome.
+ *
+ * `:focus-visible` rather than `:focus` so a mouse click on a disclosure button
+ * does not leave a ring behind, while keyboard and screen-reader users always
+ * get one. Two channels on purpose: the outline carries the brand colour and the
+ * white/black inset ring keeps it legible where the focused control sits on a
+ * surface that is itself close to the accent — a plain outline disappears on the
+ * gradient CTA and on `--docs-accent`-filled buttons.
+ *
+ * The docs shell is plain HTML, so this is the counterpart to the kit's own
+ * focus-ring system rather than a duplicate of it: examples bring their own.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--docs-accent);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--docs-accent) 22%, transparent);
+}
+
+/* The UA default ring is removed only where ours has definitely replaced it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/*
+ * Skip link. Off-screen until focused, then pinned under the sticky header —
+ * the first Tab on any page reaches it, and every page has a long sidebar to
+ * skip past.
+ */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 200;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--docs-radius);
+  background: var(--docs-bg);
+  border: 1px solid var(--docs-border-strong);
+  box-shadow: var(--docs-shadow-lg);
+  color: var(--docs-fg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  /* Visually hidden, but still focusable and in the a11y tree. */
+  transform: translateY(-200%);
+  transition: transform 120ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  text-decoration: none;
+}
+
 /* ---------------------------------------------------------------- app shell */
 
 .shell {
@@ -273,6 +326,64 @@ kbd {
   }
 }
 
+/*
+ * The burger is the ONLY route to the IA below 900px — the top-level tabs and the
+ * sidebar are both hidden there — so it is shown at exactly the breakpoint that
+ * hides them and never above it.
+ */
+.header__burger {
+  display: none;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--docs-border);
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--docs-fg);
+  cursor: pointer;
+}
+
+.header__burger:hover {
+  background: var(--docs-surface-2);
+}
+
+.header__burger-bars,
+.header__burger-bars::before,
+.header__burger-bars::after {
+  display: block;
+  width: 1rem;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentcolor;
+}
+
+.header__burger-bars::before,
+.header__burger-bars::after {
+  content: "";
+  position: absolute;
+}
+
+.header__burger-bars {
+  position: relative;
+}
+
+.header__burger-bars::before {
+  transform: translateY(-4.5px);
+}
+
+.header__burger-bars::after {
+  transform: translateY(4.5px);
+}
+
+@media (max-width: 900px) {
+  .header__burger {
+    display: inline-flex;
+  }
+}
+
 .header__spacer {
   flex: 1;
 }
@@ -307,8 +418,107 @@ kbd {
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  .sidebar {
+  /*
+   * The sidebar leaves the grid but stays in the DOM — below 900px it is
+   * re-parented visually into the drawer (see `.nav-drawer`), so there is exactly
+   * one nav tree on the page and one set of open/closed section state.
+   */
+  .sidebar:not(.sidebar--drawer) {
     display: none;
+  }
+}
+
+/* -------------------------------------------------------------- mobile drawer */
+
+.nav-drawer__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgb(0 0 0 / 45%);
+  animation: nav-drawer-fade 140ms ease;
+}
+
+.nav-drawer {
+  position: fixed;
+  inset: var(--docs-header-height) auto 0 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  width: min(20rem, 86vw);
+  background: var(--docs-bg);
+  border-right: 1px solid var(--docs-border);
+  box-shadow: var(--docs-shadow-lg);
+  animation: nav-drawer-in 160ms ease;
+}
+
+.nav-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--docs-border);
+}
+
+.nav-drawer__label {
+  color: var(--docs-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/*
+ * The top-level tabs are hidden from the header below 900px, so the drawer has to
+ * carry them too — otherwise Changelog and the section landing pages become
+ * unreachable on a phone.
+ */
+.nav-drawer__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--docs-border);
+}
+
+.nav-drawer__tabs a {
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.4375rem;
+  background: var(--docs-surface);
+  color: var(--docs-muted);
+  font-size: 0.8125rem;
+  font-weight: 550;
+}
+
+.nav-drawer__tabs a[data-active="true"] {
+  background: var(--brand-gradient-soft);
+  color: var(--docs-fg);
+}
+
+.sidebar--drawer {
+  position: static;
+  max-height: none;
+  flex: 1;
+  min-height: 0;
+  padding: 0.75rem 0.75rem 2rem 1rem;
+}
+
+@keyframes nav-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes nav-drawer-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer,
+  .nav-drawer__scrim {
+    animation: none;
   }
 }
 
@@ -948,6 +1158,337 @@ td code {
   border-color: var(--docs-border);
   background: var(--docs-bg);
   color: var(--docs-fg);
+}
+
+/* ------------------------------------------------------- theme playground */
+
+.theme-play {
+  margin: 1.5rem 0 2.5rem;
+  border: 1px solid var(--docs-border);
+  border-radius: var(--docs-radius-lg);
+  overflow: hidden;
+  background: var(--docs-bg);
+}
+
+.theme-play__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.125rem;
+  border-bottom: 1px solid var(--docs-border);
+  background: var(--docs-surface);
+}
+
+.theme-play__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.theme-play__field > span {
+  color: var(--docs-muted);
+  font-weight: 600;
+}
+
+.theme-play__field select,
+.theme-play__field input[type="color"] {
+  border: 1px solid var(--docs-border-strong);
+  border-radius: 0.375rem;
+  background: var(--docs-bg);
+  color: var(--docs-fg);
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.375rem;
+}
+
+.theme-play__field input[type="color"] {
+  width: 2.25rem;
+  height: 1.75rem;
+  padding: 0.125rem;
+  cursor: pointer;
+}
+
+.theme-play__stage {
+  padding: 1.25rem;
+}
+
+.theme-play__cluster {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.theme-play__output-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem 0.375rem 1.125rem;
+  border-top: 1px solid var(--docs-border);
+  background: var(--docs-surface);
+  color: var(--docs-muted);
+  font-size: 0.75rem;
+}
+
+.theme-play__output pre {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  overflow-x: auto;
+  background: var(--docs-surface-2);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------ component gallery */
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 2.5rem;
+}
+
+.gallery__count {
+  color: var(--docs-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.gallery__tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gallery__frame {
+  display: grid;
+  place-items: center;
+  height: 7.5rem;
+  padding: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--docs-border);
+  border-radius: var(--docs-radius);
+  background: var(--docs-surface);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.gallery__tile:hover .gallery__frame {
+  border-color: var(--docs-border-strong);
+  box-shadow: var(--docs-shadow-md);
+}
+
+/*
+ * The tile is a preview, so the demo inside is inert: no pointer events, no tab
+ * stops. Stories are authored for a full docs column, so they are scaled down and
+ * clipped rather than re-laid-out — the same approach the landing showcase takes.
+ */
+.gallery__stage {
+  pointer-events: none;
+  transform: scale(0.82);
+  max-width: 100%;
+  /* The frame supplies the inset and the surface; the stage's own dot grid and
+     1.5rem padding are for a full-width example, not a 7.5rem tile. */
+  padding: 0;
+  min-height: 0;
+  background-image: none;
+}
+
+.gallery__name {
+  margin: 0.625rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 620;
+  line-height: 1.3;
+}
+
+.gallery__name a {
+  color: var(--docs-fg);
+}
+
+.gallery__name a:hover {
+  color: var(--docs-accent);
+  text-decoration: none;
+}
+
+.gallery__blurb {
+  margin: 0.1875rem 0 0;
+  color: var(--docs-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  /* Two lines keeps every row the same height without truncating mid-word. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Sits between the prose and the prev/next pager, quiet by design. */
+.edit-page {
+  margin: 2.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--docs-border);
+  font-size: 0.8125rem;
+}
+
+.edit-page a {
+  color: var(--docs-muted);
+}
+
+.edit-page a:hover {
+  color: var(--docs-accent);
+}
+
+/* A table cell with no value yet — present, but not competing for attention. */
+.cell-empty {
+  color: var(--docs-muted);
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------- search */
+
+.search__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: start center;
+  padding: 10vh 1rem 1rem;
+  background: rgb(0 0 0 / 45%);
+}
+
+.search__dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(36rem, 100%);
+  max-height: 76vh;
+  overflow: hidden;
+  border: 1px solid var(--docs-border-strong);
+  border-radius: var(--docs-radius-lg);
+  background: var(--docs-bg);
+  box-shadow: var(--docs-shadow-lg);
+}
+
+.search__input {
+  flex: none;
+  width: 100%;
+  padding: 0.9375rem 1.125rem;
+  border: 0;
+  border-bottom: 1px solid var(--docs-border);
+  background: transparent;
+  color: var(--docs-fg);
+  font: inherit;
+  font-size: 1rem;
+}
+
+/*
+ * The input keeps focus for the whole session — arrow keys move a highlight, not
+ * the caret — so a focus RING on the field would be permanent visual noise. The
+ * dialog border carries the focus affordance instead, and the field is the only
+ * place in the docs where suppressing the ring is correct.
+ */
+.search__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.search__results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.search__message {
+  margin: 0;
+  padding: 1.125rem;
+  color: var(--docs-muted);
+  font-size: 0.875rem;
+}
+
+.search__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search__hit {
+  display: block;
+  padding: 0.75rem 1.125rem;
+  border-left: 2px solid transparent;
+  color: inherit;
+}
+
+.search__hit:hover {
+  text-decoration: none;
+}
+
+/*
+ * The active row is driven by `data-active`, not `:hover` — the keyboard is the
+ * primary input here, and hover must not be able to disagree with what Enter
+ * will open.
+ */
+.search__hit[data-active="true"] {
+  border-left-color: var(--docs-accent);
+  background: var(--docs-surface);
+}
+
+.search__hit-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.search__hit-title {
+  color: var(--docs-fg);
+  font-weight: 600;
+}
+
+.search__hit-section {
+  flex: none;
+  color: var(--docs-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.search__hit-excerpt {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--docs-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.search__hit-excerpt mark {
+  background: color-mix(in srgb, var(--brand-2) 26%, transparent);
+  color: var(--docs-fg);
+  border-radius: 0.1875rem;
+}
+
+.search__footer {
+  flex: none;
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 1.125rem;
+  border-top: 1px solid var(--docs-border);
+  background: var(--docs-surface);
+  color: var(--docs-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .search__scrim {
+    padding: 4vh 0.75rem 0.75rem;
+  }
+  /* Three hint groups do not fit a phone; the keys still work. */
+  .search__footer {
+    display: none;
+  }
 }
 
 /* --------------------------------------------------- background swatch picker */

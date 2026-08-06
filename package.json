@@ -33,6 +33,7 @@
     "docs:build": "pnpm --filter @knitui/docs build",
     "docs:generate": "node scripts/docs/generate.mjs",
     "docs:check": "node scripts/docs/check-coverage.mjs",
+    "docs:check:highlight": "node scripts/docs/check-live-highlight.mjs",
     "docs:scaffold": "node scripts/docs/scaffold-pages.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}\"",

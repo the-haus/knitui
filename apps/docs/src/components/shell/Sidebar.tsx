@@ -28,13 +28,16 @@ const sections = (navData as { sections: NavSection[] }).sections;
  * and therefore client-side; the full registry stays on the server.
  *
  * A section is open when it is collapsed=false or contains the current route.
+ *
+ * `className` is how the mobile drawer reuses this tree (`sidebar--drawer`)
+ * instead of shipping a second copy of the IA.
  */
-export function Sidebar() {
+export function Sidebar({ className }: { className?: string } = {}) {
   const pathname = usePathname();
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 
   return (
-    <nav className="sidebar" aria-label="Documentation">
+    <nav className={["sidebar", className].filter(Boolean).join(" ")} aria-label="Documentation">
       {sections.map((section) => {
         const contains = sectionContains(section, pathname);
         const open = overrides[section.label] ?? (!section.collapsed || contains);

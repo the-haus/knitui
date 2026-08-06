@@ -72,7 +72,12 @@ export const nav = [
       ["styled()", "/docs/foundations/styled"],
     ],
   },
-  { fromRegistry: "components", label: "Components" },
+  {
+    fromRegistry: "components",
+    label: "Components",
+    // The gallery — the landing spot for "show me everything you have".
+    overview: ["All components", "/docs/components"],
+  },
   { fromRegistry: "dates", label: "Dates", overview: ["Overview", "/docs/dates"] },
   { fromRegistry: "carousel", label: "Carousel" },
   { fromRegistry: "map", label: "Map", overview: ["Overview", "/docs/map"] },

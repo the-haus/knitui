@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { componentProps, type PropRecord, propsData } from "@/lib/registry";
 
+import { InlineMarkdown } from "../mdx/InlineMarkdown";
+
 /**
  * The generated props reference.
  *
@@ -71,22 +73,33 @@ export function PropsTable({ id }: { id: string }) {
             Every part of {data.component} can be styled through the <code>styles</code> prop.
             Explicit props on the component always win over slot styles.
           </p>
+          {/*
+           * Slot, then what it targets — not the old "Usage" column, which
+           * repeated `styles={{ <key>: { … } }}` on every row and so carried no
+           * information the sentence above the table doesn't already give. Which
+           * PART a key styles is the thing a reader can't guess, and it comes
+           * free from the TSDoc on the component's slot interface.
+           */}
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
                   <th>Slot</th>
-                  <th>Usage</th>
+                  <th>Targets</th>
                 </tr>
               </thead>
               <tbody>
                 {data.slots.map((slot) => (
-                  <tr key={slot}>
+                  <tr key={slot.name}>
                     <td>
-                      <code>{slot}</code>
+                      <code>{slot.name}</code>
                     </td>
                     <td>
-                      <code>{`styles={{ ${slot}: { … } }}`}</code>
+                      {slot.description ? (
+                        <InlineMarkdown text={slot.description} />
+                      ) : (
+                        <span className="cell-empty">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -166,7 +179,13 @@ function PropRow({ prop }: { prop: PropRecord }) {
         ) : null}
       </td>
       <td>{prop.default !== undefined ? <code>{prop.default}</code> : "—"}</td>
-      <td>{prop.description ?? ""}</td>
+      {/*
+       * An em dash, not an empty cell. A blank Description reads as a broken
+       * table; a dash reads as "nothing to say here yet", which is the truth —
+       * descriptions come from TSDoc on the prop, so a gap here is a gap in the
+       * package (see `scripts/docs/check-coverage.mjs`, which gates on it).
+       */}
+      <td>{prop.description ? prop.description : <span className="cell-empty">—</span>}</td>
     </tr>
   );
 }

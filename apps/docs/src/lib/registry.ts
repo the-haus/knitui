@@ -77,10 +77,13 @@ export type PropRecord = {
   declaredIn?: string;
 };
 
+/** One `styles` key, with the TSDoc from the component's slot interface. */
+export type SlotRecord = { name: string; description?: string };
+
 export type ComponentProps = {
   component: string;
   sourcePath: string;
-  slots?: string[];
+  slots?: SlotRecord[];
   props: PropRecord[];
   counts: Partial<Record<PropBucket, number>>;
 };

@@ -1,16 +1,84 @@
 export const meta = {
   title: "Tabs",
-  description: "Tabs organises content into labelled panels. Compose `Tabs.List` + `Tabs.Tab` with matching `Tabs.Panel` elements. `variant` styles the indicator, `orientation` switches the axis, `inverted` places the list after the panels, and `placement` controls which side the list sits on when vertical.",
+  description:
+    "Tabs organises content into labelled panels, with full roving-tabindex keyboard navigation on the web.",
 };
 
 <ComponentHeader id="components/navigation/tabs" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+`Tabs` is a compound component: a `Tabs.List` of `Tabs.Tab`s, and a `Tabs.Panel`
+for each one. The `value` on a tab and its panel are what pair them — there is no
+index to keep in sync.
 
-<Playground id="components/navigation/tabs" />
+```tsx
+import { Tabs } from "@knitui/components";
+
+<Tabs defaultValue="general">
+  <Tabs.List>
+    <Tabs.Tab value="general">General</Tabs.Tab>
+    <Tabs.Tab value="billing">Billing</Tabs.Tab>
+  </Tabs.List>
+
+  <Tabs.Panel value="general">Account settings</Tabs.Panel>
+  <Tabs.Panel value="billing">Cards and invoices</Tabs.Panel>
+</Tabs>;
+```
+
+Leave `value` off for uncontrolled tabs, or pass `value` + `onChange` to drive it
+yourself. `orientation="vertical"` moves the list to the side (`placement` picks
+which side), and `inverted` puts it after the panels.
+
+By default inactive panels stay mounted and hidden (`keepMounted`), so state
+inside a panel survives switching away from it. Set `keepMounted={false}` when a
+panel is expensive — a map, a chart, a video — and should not exist until it's
+selected.
+
+### When to use something else
+
+- Panels that expand in place rather than replacing each other →
+  [`Accordion`](/docs/components/navigation/accordion)
+- A small set of mutually exclusive *values*, not views →
+  [`SegmentedControl`](/docs/components/inputs/segmented-control)
+- Navigating between routes → [`NavLink`](/docs/components/navigation/nav-link)
 
 <Examples id="components/navigation/tabs" />
 
 <PropsTable id="components/navigation/tabs" />
+
+## Accessibility
+
+On the web `Tabs` implements the ARIA tabs pattern: the list is a `tablist`, each
+tab a `tab` owning its panel via `aria-controls`, and each panel a `tabpanel`
+labelled by its tab. Ids are generated for you, or derived from the `id` prop.
+
+Focus is managed with a **roving tabindex** — only the active tab is in the tab
+order, so <kbd>Tab</kbd> moves past the whole list rather than through every tab
+in it, and the arrow keys move within it.
+
+| Key | Action |
+| --- | --- |
+| <kbd>Tab</kbd> | Move into the tab list, then out to the active panel |
+| <kbd>→</kbd> / <kbd>←</kbd> | Previous / next tab (horizontal orientation) |
+| <kbd>↓</kbd> / <kbd>↑</kbd> | Previous / next tab (vertical orientation) |
+| <kbd>Home</kbd> / <kbd>End</kbd> | First / last enabled tab |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | Activate the focused tab |
+
+Two behaviours are worth choosing deliberately:
+
+- **`activateTabWithKeyboard`** (default `true`) selects a tab as soon as an arrow
+  key focuses it — *automatic activation*, which ARIA recommends when switching is
+  instant. Set it to `false` for *manual activation* (focus moves, selection waits
+  for <kbd>Enter</kbd> or <kbd>Space</kbd>) when a panel is expensive to render, so
+  arrowing across the list doesn't mount four panels on the way past.
+- **`loop`** (default `true`) wraps focus at the ends of the list. Turn it off when
+  the list is long enough that wrapping is disorienting.
+
+Disabled tabs are skipped by arrow navigation and are never focused.
+
+<Callout kind="platform">
+  Arrow-key navigation is web-only: React Native views never fire `keydown`, so on
+  iOS and Android the tabs are pressable targets and the platform's own
+  screen-reader gestures move between them.
+</Callout>

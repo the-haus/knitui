@@ -5,21 +5,18 @@ import { usePathname } from "next/navigation";
 
 import { BrandMark } from "./BrandMark";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
+import { MobileNav } from "./MobileNav";
+import { isSectionActive, TOP_LEVEL } from "./nav-links";
 import { SearchTrigger } from "./SearchTrigger";
-
-const TOP_LEVEL = [
-  ["Docs", "/docs"],
-  ["Components", "/docs/components/inputs/button"],
-  ["Foundations", "/docs/foundations/tokens"],
-  ["Guides", "/docs/guides/cross-platform-authoring"],
-  ["Changelog", "/changelog"],
-];
 
 export function Header() {
   const pathname = usePathname();
 
   return (
     <header className="header">
+      {/* Before the brand, so the first Tab on a phone reaches navigation. */}
+      <MobileNav />
+
       <Link href="/" className="header__brand">
         <BrandMark className="header__mark" size={24} id="knit-mark-header" />
         Knit UI
@@ -49,10 +46,4 @@ export function Header() {
       </div>
     </header>
   );
-}
-
-/** A top-level tab is active when the current route sits under its section. */
-function isSectionActive(pathname: string, href: string) {
-  const section = href.split("/").slice(0, 3).join("/");
-  return pathname === href || pathname.startsWith(`${section}/`) || pathname === section;
 }

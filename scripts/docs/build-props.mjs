@@ -169,16 +169,22 @@ function optionsFor(entry, propName) {
  *
  * Every public component in the kit has a `styles` prop, so this replaces a
  * hand-authored slot table on 100+ pages.
+ *
+ * The TSDoc on each key comes along with it. The slot interfaces already document
+ * which part every key targets ("Props for the label text (`.Label` / `.Text`)"),
+ * and without it the docs could only print the key name back at the reader — which
+ * tells you nothing for a component whose slots are `track` / `thumb` / `mark`.
  */
-function slotKeysOf(checker, propsType) {
+function slotsOf(checker, propsType) {
   const styles = checker.getPropertyOfType(propsType, "styles");
   if (!styles) return undefined;
   const type = checker.getNonNullableType(checker.getTypeOfSymbol(styles));
-  const keys = checker
+  const slots = checker
     .getPropertiesOfType(type)
-    .map((s) => s.getName())
-    .filter((name) => !name.startsWith("__"));
-  return keys.length ? keys.sort() : undefined;
+    .filter((symbol) => !symbol.getName().startsWith("__"))
+    .map((symbol) => ({ name: symbol.getName(), description: docOf(checker, symbol) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return slots.length ? slots : undefined;
 }
 
 /**
@@ -366,7 +372,7 @@ for (const [pkg, entries] of targetsByPackage()) {
     out[entry.id] = {
       component: entry.componentName,
       sourcePath: entry.componentPath,
-      slots: slotKeysOf(checker, propsType),
+      slots: slotsOf(checker, propsType),
       props,
       counts: props.reduce((acc, p) => ({ ...acc, [p.bucket]: (acc[p.bucket] ?? 0) + 1 }), {
         style: styleCount,

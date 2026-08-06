@@ -10,6 +10,14 @@ at build time, so this table is never stale.
 
 <PackageTable />
 
+<Callout title="Bundle size">
+  There is no published byte count per package, and that is deliberate: the kit
+  src-ships, so your bundler compiles only the components you import and the number
+  depends on your app, not on ours. What that means in practice — and how to measure
+  it for your build — is in [Performance → Bundle
+  size](/docs/guides/performance#bundle-size).
+</Callout>
+
 ## What to install
 
 **Always:** `@knitui/core` + `@knitui/components`.

@@ -1,9 +1,8 @@
+import { blobUrl } from "@/lib/github";
 import { componentProps, requireEntry } from "@/lib/registry";
 
 import { CodeBlock } from "../example/CodeBlock";
 import { InlineMarkdown } from "../mdx/InlineMarkdown";
-
-const GITHUB_BLOB = "https://github.com/the-haus/knitui/blob/main";
 
 /**
  * The masthead of a component page: what it is, which package ships it, which
@@ -52,9 +51,9 @@ export async function ComponentHeader({ id }: { id: string }) {
 
       <div className="meta-links">
         <a href={entry.githubUrl}>Stories</a>
-        {entry.componentPath ? <a href={`${GITHUB_BLOB}/${entry.componentPath}`}>Source</a> : null}
-        {entry.testPath ? <a href={`${GITHUB_BLOB}/${entry.testPath}`}>Tests</a> : null}
-        {entry.nativePath ? <a href={`${GITHUB_BLOB}/${entry.nativePath}`}>Native source</a> : null}
+        {entry.componentPath ? <a href={blobUrl(entry.componentPath)}>Source</a> : null}
+        {entry.testPath ? <a href={blobUrl(entry.testPath)}>Tests</a> : null}
+        {entry.nativePath ? <a href={blobUrl(entry.nativePath)}>Native source</a> : null}
         <a href={entry.storybookUrl}>Open in Storybook</a>
       </div>
 

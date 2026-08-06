@@ -28,6 +28,20 @@ export function App({ children }) {
 
 One hex is enough: the light and dark 12-step ramps are derived for you.
 
+## Try it
+
+Turn the knobs — the components below are real, and the config underneath is the
+one that reproduces what you see. Copy it into your app to keep it.
+
+<ThemePreview />
+
+<Callout>
+  Accent, radius and spacing preview live. **Brand** feeds the emitted config
+  rather than the preview: its 12-step ramps are derived from the hex when the
+  config is built (see `rampFromHex`), which happens once at startup, not per
+  render. Pick a brand here, copy the config, and the ramp is generated in your app.
+</Callout>
+
 ## Brand and accents
 
 ```tsx

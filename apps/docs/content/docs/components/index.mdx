@@ -1,0 +1,39 @@
+export const meta = {
+  title: "Components",
+  description:
+    "Every component in @knitui/components — 105 of them, grouped by what they do, each one live on this page.",
+};
+
+# Components
+
+`@knitui/components` ships **105** components. Every tile below is the real
+component, mounted live — the same story file its own page, the kit's Storybook
+and the iOS/Android gallery render.
+
+One import, and each of them runs as a native view on iOS and Android and as real
+DOM on the web:
+
+```tsx
+import { Button, Card, Select, Table } from "@knitui/components";
+```
+
+<Callout>
+  Looking for maps, charts, audio, video, carousels, date pickers or bottom
+  sheets? Those live in the [satellite kits](/docs/api/packages) — separate
+  packages so an app that doesn't use MapLibre or Skia never pays for them.
+</Callout>
+
+<ComponentIndex />
+
+## What every component shares
+
+Three props repeat across the whole kit, which is what makes 105 components
+learnable as one system rather than 105 APIs:
+
+- **`size`** — `xxs` through `xxl`, resolved from [one metrics
+  table](/docs/foundations/sizing), so a `md` Button and a `md` Select line up.
+- **`variant`** — how the active [theme colour ramp](/docs/foundations/variants-and-colors)
+  is applied: `filled`, `light`, `outline`, `subtle`, `default`, `white`,
+  `transparent`, `gradient`.
+- **`styles`** — per-slot overrides for a component's internal parts. See
+  [Slots & styles](/docs/foundations/slots-and-styles).

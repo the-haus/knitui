@@ -144,7 +144,12 @@
     {
       "label": "Components",
       "collapsed": true,
-      "items": [],
+      "items": [
+        {
+          "label": "All components",
+          "href": "/docs/components"
+        }
+      ],
       "sections": [
         {
           "label": "Layout",

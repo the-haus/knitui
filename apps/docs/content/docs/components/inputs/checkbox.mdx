@@ -1,16 +1,84 @@
 export const meta = {
   title: "Checkbox",
-  description: "Checkbox is a cross-platform toggle control. `variant` sets how the active colour ramp is applied; `size` scales the box, icon and label together. Compose `Checkbox.Group` for multi-select lists, `Checkbox.Card` for card-style toggles, and `Checkbox.Indicator` for a read-only presentational box.",
+  description:
+    "Checkbox is a cross-platform toggle with label, description, error and indeterminate states.",
 };
 
 <ComponentHeader id="components/inputs/checkbox" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+Pass a `label` and let it manage its own state, or drive it with
+`checked` + `onChange`.
 
-<Playground id="components/inputs/checkbox" />
+```tsx
+import { Checkbox } from "@knitui/components";
+
+<Checkbox label="Accept terms and conditions" onChange={setAccepted} />;
+```
+
+`description` and `error` render under the label and are wired to the control for
+screen readers, so there is no separate helper-text component to place and label
+yourself:
+
+```tsx
+<Checkbox
+  label="Email me"
+  description="No more than once a week."
+  error="Pick at least one channel."
+/>
+```
+
+Three compositions cover the usual layouts:
+
+- **`Checkbox.Group`** for a set of related checkboxes with a shared value array.
+- **`Checkbox.Card`** for card-shaped, clickable options.
+- **`Checkbox.Indicator`** for a read-only box that shows state without being a
+  control — useful inside a list row that is itself pressable.
+
+`indeterminate` renders the mixed glyph, for a parent checkbox summarising
+partially-selected children. It is presentational only: it does not change what
+`checked` reports, so keep driving `checked` yourself.
+
+### When to use something else
+
+- One of several mutually exclusive options → [`Radio`](/docs/components/inputs/radio)
+- An immediate on/off setting → [`Switch`](/docs/components/inputs/switch)
+- A compact, toggle-shaped filter → [`Chip`](/docs/components/inputs/chip)
 
 <Examples id="components/inputs/checkbox" />
 
 <PropsTable id="components/inputs/checkbox" />
+
+## Accessibility
+
+On the web the box carries `role="checkbox"` and `aria-checked`, which reports
+`"mixed"` when `indeterminate` is set — the standard announcement for a partially
+selected group.
+
+Because the box is a styled `Box` rather than an `<input type="checkbox">`, it is
+made focusable and operable through the kit's shared
+[`useKeyboardActions`](/docs/hooks/use-keyboard-actions) hook: on the web that adds
+`tabIndex` and key handling; on native it maps to platform accessibility actions.
+
+| Key | Action |
+| --- | --- |
+| <kbd>Tab</kbd> | Move focus to the checkbox |
+| <kbd>Space</kbd> / <kbd>Enter</kbd> | Toggle |
+
+- **Always give it a name.** `label` is the simplest way; without one, pass
+  `aria-label` or point `aria-labelledby` at your own text.
+- `description` and `error` are referenced through `aria-describedby`, so they are
+  announced with the control rather than orphaned next to it.
+- `disabled` sets `aria-disabled` and takes the control out of the tab order
+  (`tabIndex="-1"`), so it is announced as disabled rather than silently inert.
+- `readOnly` is different on purpose: the value cannot change but the control
+  **stays focusable**, so a keyboard user can still read it.
+- `Checkbox.Group` renders with `role="group"` — give it a label so the set is
+  announced as one thing.
+
+<Callout kind="platform">
+  The focus ring is a web-only `:focus-visible` outline. On iOS and Android there is
+  no focus ring — activation flows through `onPress` and the platform's own
+  accessibility focus.
+</Callout>

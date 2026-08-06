@@ -1,16 +1,65 @@
 export const meta = {
   title: "Alert",
-  description: "Alert is a feedback panel composed from `Box` + `Text`. Accent comes from the `theme` prop + palette ramp (never a `color` prop). `variant` picks the fill, `size` sets token-driven spacing/type metrics, and `radius` the rounding. Optional `title`, `icon` and a `withCloseButton`/`onClose` affordance. It carries `role=\"alert\"` with `aria-labelledby`/`aria-describedby` wired to the title and body.",
+  description:
+    "Alert is an inline message block for state that belongs next to the content it concerns.",
 };
 
 <ComponentHeader id="components/feedback/alert" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+An `Alert` is inline and static: it sits in the layout next to whatever it is about
+and stays until the content changes.
 
-<Playground id="components/feedback/alert" />
+```tsx
+import { Alert } from "@knitui/components";
+
+<Alert title="Payment failed" theme="red">
+  Your card was declined. Try another payment method.
+</Alert>;
+```
+
+Severity is expressed through the [theme](/docs/foundations/color-and-themes), not a
+separate `severity` prop — `theme="red"` / `"yellow"` / `"green"` / `"blue"` recolour
+the whole block from the palette ramp, the same vocabulary every other component
+uses.
+
+Add `icon` for a leading glyph, and `withCloseButton` with an `onClose` when the
+message is dismissible. For full control over the layout, compose the parts
+directly (see the **Compound Parts** example below).
+
+### When to use something else
+
+- A transient message that appears over the UI and leaves on its own →
+  [`Notification`](/docs/components/feedback/notification)
+- Validation text belonging to one field → the `error` prop on the input itself
+  (e.g. [`TextInput`](/docs/components/inputs/text-input))
+- A blocking message that needs a decision →
+  [`Modal`](/docs/components/overlays/modal)
 
 <Examples id="components/feedback/alert" />
 
 <PropsTable id="components/feedback/alert" />
+
+## Accessibility
+
+The container renders with `role="alert"`, so assistive technology announces it as
+soon as it appears — without moving focus.
+
+Naming is wired automatically: when you pass `title` it gets a generated id and
+becomes the block's `aria-labelledby` target, and the body is referenced through
+`aria-describedby`. Title and message are announced together.
+
+- **`role="alert"` is an interruption.** It is correct for something that just
+  happened and the user must know about. For a message that is simply *present* on
+  the page — a persistent tip or a static notice — the announcement is noise; render
+  the content in a plain [`Paper`](/docs/components/layout/paper) or
+  [`Card`](/docs/components/display/card) instead.
+- Because it announces on appearance, mount an `Alert` **when the state changes**
+  rather than rendering it hidden and revealing it with styles — a hidden-then-shown
+  alert may never be announced.
+- The close button takes its accessible name from `closeButtonLabel` (default
+  `"Close"`); override it when the alert's subject makes a more specific label
+  clearer.
+- Don't rely on colour alone to carry severity: the `title` or `icon` should make
+  the meaning explicit for anyone who can't distinguish the theme.

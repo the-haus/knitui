@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+
+import { useRouter } from "next/navigation";
 
 type PagefindResult = {
   id: string;
@@ -16,7 +18,9 @@ type Pagefind = {
   init?: () => Promise<void>;
 };
 
-type Hit = { url: string; title: string; excerpt: string };
+type Hit = { url: string; title: string; excerpt: string; section: string };
+
+const MAX_HITS = 8;
 
 /**
  * Site search — Pagefind, loaded on demand.
@@ -29,14 +33,29 @@ type Hit = { url: string; title: string; excerpt: string };
  *
  * The bundler must not try to resolve `/pagefind/pagefind.js` — it doesn't exist
  * at compile time — hence the `webpackIgnore` comment on the dynamic import.
+ *
+ * Keyboard model is the one ⌘K users already have: type, ↑/↓ to move, Enter to
+ * open, Escape to dismiss. The input keeps focus the whole time and the active
+ * result is pointed at with `aria-activedescendant`, which is what lets a screen
+ * reader announce the highlighted row without moving the caret out of the field.
  */
 export function SearchTrigger() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
-  const [status, setStatus] = useState<"idle" | "loading" | "unavailable">("idle");
+  const [active, setActive] = useState(0);
+  const [status, setStatus] = useState<"idle" | "loading" | "searching" | "unavailable">("idle");
   const pagefindRef = useRef<Pagefind | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
+  const router = useRouter();
+
+  const close = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -44,7 +63,6 @@ export function SearchTrigger() {
         event.preventDefault();
         setOpen((current) => !current);
       }
-      if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -52,6 +70,16 @@ export function SearchTrigger() {
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
+  }, [open]);
+
+  // Nothing behind the dialog should scroll while it is up.
+  useEffect(() => {
+    if (!open) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
   }, [open]);
 
   const load = useCallback(async () => {
@@ -77,22 +105,32 @@ export function SearchTrigger() {
   useEffect(() => {
     if (!open || !query.trim()) {
       setHits([]);
-      return;
+      setActive(0);
+      return undefined;
     }
     let cancelled = false;
+    setStatus((current) => (current === "unavailable" ? current : "searching"));
+
     const timer = setTimeout(async () => {
       const pagefind = await load();
       if (!pagefind || cancelled) return;
       const search = await pagefind.search(query);
-      const top = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
+      const top = await Promise.all(search.results.slice(0, MAX_HITS).map((r) => r.data()));
       if (cancelled) return;
       setHits(
-        top.map((item) => ({
-          url: item.url.replace(/\.html$/, ""),
-          title: item.meta?.title ?? item.url,
-          excerpt: item.excerpt,
-        })),
+        top.map((item) => {
+          const url = item.url.replace(/\.html$/, "");
+          return {
+            url,
+            title: item.meta?.title ?? url,
+            excerpt: item.excerpt,
+            section: sectionOf(url),
+          };
+        }),
       );
+      // A fresh result set always starts at the top, so Enter is predictable.
+      setActive(0);
+      setStatus("idle");
     }, 140);
 
     return () => {
@@ -101,92 +139,180 @@ export function SearchTrigger() {
     };
   }, [open, query, load]);
 
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      return;
+    }
+    if (event.key === "Tab") {
+      // The dialog holds one input and a list of links; keep Tab inside it.
+      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+        "a[href], button:not([disabled]), input",
+      );
+      if (!focusables?.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+      return;
+    }
+    if (!hits.length) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActive((current) => (current + 1) % hits.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActive((current) => (current - 1 + hits.length) % hits.length);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setActive(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setActive(hits.length - 1);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const hit = hits[active];
+      if (hit) {
+        setOpen(false);
+        router.push(hit.url);
+      }
+    }
+  };
+
+  const message = useMemo(() => {
+    if (status === "unavailable") return null;
+    if (!query.trim()) return "Type to search the documentation.";
+    if (status === "searching" || status === "loading") return "Searching…";
+    if (!hits.length) return `No results for “${query.trim()}”.`;
+    return null;
+  }, [status, query, hits.length]);
+
   return (
     <>
-      <button type="button" className="button-quiet" onClick={() => setOpen(true)}>
+      <button ref={triggerRef} type="button" className="button-quiet" onClick={() => setOpen(true)}>
         Search <kbd>⌘K</kbd>
       </button>
 
       {open ? (
         <div
+          className="search__scrim"
           role="presentation"
           onClick={(event) => {
-            if (event.target === event.currentTarget) setOpen(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            display: "grid",
-            placeItems: "start center",
-            padding: "10vh 1rem",
-            background: "rgba(0,0,0,0.4)",
+            if (event.target === event.currentTarget) close();
           }}
         >
           <div
+            ref={dialogRef}
+            className="search__dialog"
             role="dialog"
             aria-modal="true"
             aria-label="Search documentation"
-            style={{
-              width: "min(36rem, 100%)",
-              border: "1px solid var(--docs-border)",
-              borderRadius: "var(--docs-radius)",
-              background: "var(--docs-bg)",
-              overflow: "hidden",
-            }}
+            onKeyDown={onKeyDown}
           >
             <input
               ref={inputRef}
+              className="search__input"
               type="text"
               value={query}
               placeholder="Search components, props, guides…"
               onChange={(event) => setQuery(event.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.875rem 1rem",
-                border: 0,
-                borderBottom: "1px solid var(--docs-border)",
-                background: "transparent",
-                color: "var(--docs-fg)",
-                font: "inherit",
-                fontSize: "1rem",
-                outline: "none",
-              }}
+              role="combobox"
+              aria-expanded={hits.length > 0}
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={hits.length ? `${listId}-${active}` : undefined}
+              autoComplete="off"
+              spellCheck={false}
             />
-            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+
+            <div className="search__results">
               {status === "unavailable" ? (
-                <p style={{ padding: "1rem", color: "var(--docs-muted)", fontSize: "0.875rem" }}>
+                <p className="search__message">
                   Search runs on the production build — the index is generated after
                   <code> next build</code>.
                 </p>
               ) : null}
-              {hits.map((hit) => (
-                <a
-                  key={hit.url}
-                  href={hit.url}
-                  onClick={() => setOpen(false)}
-                  style={{
-                    display: "block",
-                    padding: "0.75rem 1rem",
-                    borderBottom: "1px solid var(--docs-border)",
-                  }}
-                >
-                  <span style={{ color: "var(--docs-fg)", fontWeight: 600 }}>{hit.title}</span>
-                  <span
-                    style={{
-                      display: "block",
-                      color: "var(--docs-muted)",
-                      fontSize: "0.8125rem",
-                    }}
-                    // Pagefind marks the matched terms with <mark> in its excerpt.
-                    dangerouslySetInnerHTML={{ __html: hit.excerpt }}
-                  />
-                </a>
-              ))}
+
+              {message ? <p className="search__message">{message}</p> : null}
+
+              <ul className="search__list" id={listId} role="listbox" aria-label="Search results">
+                {hits.map((hit, index) => (
+                  <li key={hit.url} role="presentation">
+                    <a
+                      id={`${listId}-${index}`}
+                      role="option"
+                      aria-selected={index === active}
+                      data-active={index === active}
+                      className="search__hit"
+                      href={hit.url}
+                      onClick={() => setOpen(false)}
+                      onMouseEnter={() => setActive(index)}
+                    >
+                      <span className="search__hit-head">
+                        <span className="search__hit-title">{hit.title}</span>
+                        <span className="search__hit-section">{hit.section}</span>
+                      </span>
+                      <span
+                        className="search__hit-excerpt"
+                        // Pagefind marks the matched terms with <mark> in its excerpt.
+                        dangerouslySetInnerHTML={{ __html: hit.excerpt }}
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
+
+            <div className="search__footer">
+              <span>
+                <kbd>↑</kbd> <kbd>↓</kbd> to navigate
+              </span>
+              <span>
+                <kbd>↵</kbd> to open
+              </span>
+              <span>
+                <kbd>esc</kbd> to close
+              </span>
+            </div>
+
+            {/* Announced to screen readers; the visible count is the list itself. */}
+            <p aria-live="polite" className="visually-hidden">
+              {hits.length ? `${hits.length} result${hits.length === 1 ? "" : "s"}` : ""}
+            </p>
           </div>
         </div>
       ) : null}
     </>
   );
+}
+
+/**
+ * The breadcrumb chip on a result row.
+ *
+ * Pagefind returns a URL and a title; the section is what tells a reader whether
+ * "Motion" is the Foundations page or the overlays component, which is exactly
+ * the ambiguity that makes an un-grouped result list feel unreliable.
+ */
+function sectionOf(url: string): string {
+  const parts = url.split("/").filter(Boolean);
+  if (parts[0] === "changelog") return "Changelog";
+  // /docs/<group>/<subgroup>/<page>
+  const group = parts[1];
+  const subgroup = parts.length > 3 ? parts[2] : undefined;
+  const label = (value?: string) =>
+    value
+      ? value
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : undefined;
+
+  return [label(group), label(subgroup)].filter(Boolean).join(" · ") || "Docs";
 }

@@ -31,9 +31,12 @@ export default function ChangelogPage() {
 
   return (
     <div className="shell">
+      <a className="skip-link" href="#content">
+        Skip to content
+      </a>
       <Header />
       <div className="layout" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
-        <main className="content">
+        <main className="content" id="content" tabIndex={-1}>
           <article
             className="prose"
             style={{ maxWidth: "56rem", margin: "0 auto" }}

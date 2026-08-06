@@ -53,6 +53,7 @@ export const contentModules: Record<string, () => Promise<ContentModule>> = {
   "docs/components/feedback/loading-overlay": () => import("../../content/docs/components/feedback/loading-overlay.mdx"),
   "docs/components/feedback/notification": () => import("../../content/docs/components/feedback/notification.mdx"),
   "docs/components/feedback/spoiler": () => import("../../content/docs/components/feedback/spoiler.mdx"),
+  "docs/components": () => import("../../content/docs/components/index.mdx"), // Components
   "docs/components/inputs/action-icon": () => import("../../content/docs/components/inputs/action-icon.mdx"),
   "docs/components/inputs/angle-slider": () => import("../../content/docs/components/inputs/angle-slider.mdx"),
   "docs/components/inputs/autocomplete": () => import("../../content/docs/components/inputs/autocomplete.mdx"),

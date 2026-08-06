@@ -3,9 +3,9 @@ import { join } from "node:path";
 
 import Link from "next/link";
 
-import { CodeBlock } from "@/components/example/CodeBlock";
 import { Example } from "@/components/example/Example";
 import { Showcase } from "@/components/example/Showcase";
+import { InstallCommand } from "@/components/mdx/InstallCommand";
 import { Header } from "@/components/shell/Header";
 import { PlatformBand, PlatformStrip } from "@/components/shell/Platforms";
 import { entries } from "@/lib/registry";
@@ -20,7 +20,10 @@ function latestVersion(): string | undefined {
 
 export default function LandingPage() {
   const all = entries();
-  const componentCount = all.filter((e) => e.package === "components" && !e.internal).length;
+  /** Everything documented, satellite kits included — the number the hero quotes. */
+  const componentCount = all.filter((e) => !e.internal).length;
+  /** Just `@knitui/components`, for the card that links into that section. */
+  const coreComponentCount = all.filter((e) => e.package === "components" && !e.internal).length;
   const storyCount = all.reduce((total, entry) => total + entry.stories.length, 0);
   const packageCount = new Set(all.map((e) => e.package)).size;
   const version = latestVersion();
@@ -173,11 +176,15 @@ export default function LandingPage() {
       <main className="section">
         <div className="prose section__prose">
           <h2 id="install">Install</h2>
-          <CodeBlock
-            lang="bash"
-            code={`npx expo install @knitui/core @knitui/components \\
-  react-native-gesture-handler react-native-reanimated \\
-  react-native-svg react-native-teleport react-native-worklets`}
+          {/*
+           * The same `InstallCommand` the docs use, not a hardcoded npm line —
+           * this is the highest-traffic install command on the site, so it is the
+           * one that most needs to match the reader's package manager. The choice
+           * is shared, so picking pnpm here holds for every other block.
+           */}
+          <InstallCommand
+            expo
+            packages="@knitui/core @knitui/components react-native-gesture-handler react-native-reanimated react-native-svg react-native-teleport react-native-worklets"
           />
 
           <h2 id="live">Live, on this page</h2>
@@ -199,8 +206,8 @@ export default function LandingPage() {
             <Link className="card-link" href="/docs/components/inputs/button">
               <span className="card-link__title">Components</span>
               <p className="card-link__body">
-                {componentCount} components with live examples, generated prop tables and slot
-                references.
+                {coreComponentCount} components in the core kit, with live examples, generated prop
+                tables and slot references.
               </p>
             </Link>
             <Link className="card-link" href="/docs/dates">
@@ -224,6 +231,8 @@ export default function LandingPage() {
           <span>MIT licensed · © The Haus</span>
           <span>
             <a href="https://github.com/the-haus/knitui">GitHub</a>
+            {" · "}
+            <a href="https://github.com/the-haus/knitui/discussions">Discussions</a>
             {" · "}
             <a href="https://www.npmjs.com/org/knitui">npm</a>
             {" · "}

@@ -2638,9 +2638,18 @@
       "component": "SwipeDeck",
       "sourcePath": "packages/carousel/src/deck/SwipeDeck.tsx",
       "slots": [
-        "card",
-        "root",
-        "stamp"
+        {
+          "name": "card",
+          "description": "Every card's visual box (`DeckCardBox`)."
+        },
+        {
+          "name": "root",
+          "description": "The deck region (`DeckFrame`)."
+        },
+        {
+          "name": "stamp",
+          "description": "The built-in stamp chip (`DeckStamp`)."
+        }
       ],
       "props": [
         {
@@ -2985,10 +2994,22 @@
       "component": "Marquee",
       "sourcePath": "packages/components/src/Marquee/Marquee.tsx",
       "slots": [
-        "content",
-        "group",
-        "root",
-        "text"
+        {
+          "name": "content",
+          "description": "Props for the translated track (`Marquee.Content`)."
+        },
+        {
+          "name": "group",
+          "description": "Props for each repeated group (`Marquee.Group`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the clipping frame (`Marquee.Frame`)."
+        },
+        {
+          "name": "text",
+          "description": "Props for text children (`Marquee.Text`)."
+        }
       ],
       "props": [
         {
@@ -3116,14 +3137,38 @@
       "component": "Table",
       "sourcePath": "packages/components/src/Table/Table.tsx",
       "slots": [
-        "caption",
-        "table",
-        "tbody",
-        "td",
-        "tfoot",
-        "th",
-        "thead",
-        "tr"
+        {
+          "name": "caption",
+          "description": "Props for `Table.Caption`."
+        },
+        {
+          "name": "table",
+          "description": "Props for the root `Table` frame."
+        },
+        {
+          "name": "tbody",
+          "description": "Props for `Table.Tbody`."
+        },
+        {
+          "name": "td",
+          "description": "Props for every `Table.Td`."
+        },
+        {
+          "name": "tfoot",
+          "description": "Props for `Table.Tfoot`."
+        },
+        {
+          "name": "th",
+          "description": "Props for every `Table.Th`."
+        },
+        {
+          "name": "thead",
+          "description": "Props for `Table.Thead`."
+        },
+        {
+          "name": "tr",
+          "description": "Props for every `Table.Tr`."
+        }
       ],
       "props": [
         {
@@ -3420,12 +3465,30 @@
       "component": "Tree",
       "sourcePath": "packages/components/src/Tree/Tree.tsx",
       "slots": [
-        "chevron",
-        "label",
-        "node",
-        "root",
-        "row",
-        "subtree"
+        {
+          "name": "chevron",
+          "description": "Props for the per-node expand/collapse chevron (`Tree.Chevron`)."
+        },
+        {
+          "name": "label",
+          "description": "Props for the per-node label (`Tree.Label`)."
+        },
+        {
+          "name": "node",
+          "description": "Props for each node wrapper (`Tree.Node` → `<li>`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the tree root (`Tree.Root` → `<ul role=\"tree\">`)."
+        },
+        {
+          "name": "row",
+          "description": "Props for the interactive node row (`Tree.Row`)."
+        },
+        {
+          "name": "subtree",
+          "description": "Props for each subtree group (`Tree.Subtree` → `<ul role=\"group\">`)."
+        }
       ],
       "props": [
         {
@@ -3580,16 +3643,46 @@
       "component": "TreeSelect",
       "sourcePath": "packages/components/src/TreeSelect/TreeSelect.tsx",
       "slots": [
-        "chevron",
-        "clearButton",
-        "dropdown",
-        "empty",
-        "node",
-        "nodeChevron",
-        "nodeLabel",
-        "root",
-        "tree",
-        "trigger"
+        {
+          "name": "chevron",
+          "description": "Props for the field chevron (`TreeSelect.Chevron`)."
+        },
+        {
+          "name": "clearButton",
+          "description": "Props for the clear button (`TreeSelect.ClearButton`)."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the floating surface (`TreeSelect.Dropdown`)."
+        },
+        {
+          "name": "empty",
+          "description": "Props for the empty state (`TreeSelect.Empty`)."
+        },
+        {
+          "name": "node",
+          "description": "Props for each node row (`TreeSelect.Node`)."
+        },
+        {
+          "name": "nodeChevron",
+          "description": "Props for the per-node expand/collapse chevron (`TreeSelect.NodeChevron`)."
+        },
+        {
+          "name": "nodeLabel",
+          "description": "Props for the per-node label (`TreeSelect.NodeLabel`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the state-machine root (`TreeSelect.Root` → `<Combobox>`)."
+        },
+        {
+          "name": "tree",
+          "description": "Props for the `<Tree>` body (`TreeSelect.Tree`)."
+        },
+        {
+          "name": "trigger",
+          "description": "Props for the field trigger (`TreeSelect.Trigger` → `InputBase`)."
+        }
       ],
       "props": [
         {
@@ -5890,9 +5983,18 @@
       "component": "VirtualList",
       "sourcePath": "packages/components/src/VirtualList/VirtualList.tsx",
       "slots": [
-        "content",
-        "item",
-        "scrollArea"
+        {
+          "name": "content",
+          "description": "Props spread onto the total-size content spacer."
+        },
+        {
+          "name": "item",
+          "description": "Props spread onto each absolutely-positioned row wrapper."
+        },
+        {
+          "name": "scrollArea",
+          "description": "Props spread onto the underlying `ScrollArea` frame."
+        }
       ],
       "props": [
         {
@@ -6100,9 +6202,18 @@
       "component": "Avatar",
       "sourcePath": "packages/components/src/Avatar/Avatar.tsx",
       "slots": [
-        "image",
-        "root",
-        "text"
+        {
+          "name": "image",
+          "description": "Props spread onto the `<Image>` when `src` resolves (`.Image`)."
+        },
+        {
+          "name": "root",
+          "description": "Props spread onto the avatar frame (`.Frame`)."
+        },
+        {
+          "name": "text",
+          "description": "Props spread onto the initials/placeholder text (`.Text`)."
+        }
       ],
       "props": [
         {
@@ -6263,8 +6374,14 @@
       "component": "BackgroundImage",
       "sourcePath": "packages/components/src/BackgroundImage/BackgroundImage.tsx",
       "slots": [
-        "image",
-        "root"
+        {
+          "name": "image",
+          "description": "Props for the layered backing `<Image>` behind the content."
+        },
+        {
+          "name": "root",
+          "description": "Props for the frame the image and content layer inside (the `Box` root)."
+        }
       ],
       "props": [
         {
@@ -6397,9 +6514,18 @@
       "component": "Badge",
       "sourcePath": "packages/components/src/Badge/Badge.tsx",
       "slots": [
-        "dot",
-        "root",
-        "text"
+        {
+          "name": "dot",
+          "description": "Props spread onto the accent dot shown in the `dot` variant (`.Dot`)."
+        },
+        {
+          "name": "root",
+          "description": "Props spread onto the badge frame (`.Frame`)."
+        },
+        {
+          "name": "text",
+          "description": "Props spread onto the badge label text (`.Text`)."
+        }
       ],
       "props": [
         {
@@ -6548,9 +6674,18 @@
       "component": "Card",
       "sourcePath": "packages/components/src/Card/Card.tsx",
       "slots": [
-        "footer",
-        "header",
-        "section"
+        {
+          "name": "footer",
+          "description": "Props for `Card.Footer` children."
+        },
+        {
+          "name": "header",
+          "description": "Props for `Card.Header` children."
+        },
+        {
+          "name": "section",
+          "description": "Props for `Card.Section` children."
+        }
       ],
       "props": [
         {
@@ -6632,7 +6767,10 @@
       "component": "ColorSwatch",
       "sourcePath": "packages/components/src/ColorSwatch/ColorSwatch.tsx",
       "slots": [
-        "overlay"
+        {
+          "name": "overlay",
+          "description": "Props for the inset ring overlay (`ColorSwatch.Overlay`)."
+        }
       ],
       "props": [
         {
@@ -6753,11 +6891,26 @@
       "component": "Image",
       "sourcePath": "packages/components/src/Image/Image.tsx",
       "slots": [
-        "fallback",
-        "image",
-        "overlay",
-        "placeholder",
-        "root"
+        {
+          "name": "fallback",
+          "description": "Props for the error-state slot (`Image.Fallback`)."
+        },
+        {
+          "name": "image",
+          "description": "Props for the backing image element (`Image.Image`)."
+        },
+        {
+          "name": "overlay",
+          "description": "Props for the always-on content slot layered over the image (`Image.Overlay`)."
+        },
+        {
+          "name": "placeholder",
+          "description": "Props for the loading-state slot (`Image.Placeholder`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the relative-positioned `Image.Root` frame (parts layer over it)."
+        }
       ],
       "props": [
         {
@@ -6897,9 +7050,18 @@
       "component": "Indicator",
       "sourcePath": "packages/components/src/Indicator/Indicator.tsx",
       "slots": [
-        "dot",
-        "label",
-        "root"
+        {
+          "name": "dot",
+          "description": "Props spread onto the dot / pill badge (`.Dot`)."
+        },
+        {
+          "name": "label",
+          "description": "Props spread onto the label text inside the badge (`.Label`)."
+        },
+        {
+          "name": "root",
+          "description": "Props spread onto the container that wraps the children (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -7311,8 +7473,14 @@
       "component": "Pill",
       "sourcePath": "packages/components/src/Pill/Pill.tsx",
       "slots": [
-        "label",
-        "removeButton"
+        {
+          "name": "label",
+          "description": "Props for the label text (`Pill.Label`)."
+        },
+        {
+          "name": "removeButton",
+          "description": "Props for the trailing remove button (`Pill.RemoveButton`)."
+        }
       ],
       "props": [
         {
@@ -7462,9 +7630,18 @@
       "component": "Progress",
       "sourcePath": "packages/components/src/Progress/Progress.tsx",
       "slots": [
-        "label",
-        "root",
-        "section"
+        {
+          "name": "label",
+          "description": "Props spread onto the section's label (`.Label`)."
+        },
+        {
+          "name": "root",
+          "description": "Props spread onto the track root (`.Root`)."
+        },
+        {
+          "name": "section",
+          "description": "Props spread onto the single filled section (`.Section`)."
+        }
       ],
       "props": [
         {
@@ -7609,9 +7786,18 @@
       "component": "RollingNumber",
       "sourcePath": "packages/components/src/RollingNumber/RollingNumber.tsx",
       "slots": [
-        "digitStrip",
-        "digitText",
-        "digitViewport"
+        {
+          "name": "digitStrip",
+          "description": "Props for each digit's 0–9 strip (`RollingNumber.DigitStrip`)."
+        },
+        {
+          "name": "digitText",
+          "description": "Props for each digit glyph (`RollingNumber.DigitText`)."
+        },
+        {
+          "name": "digitViewport",
+          "description": "Props for each digit's clipping viewport (`RollingNumber.DigitViewport`)."
+        }
       ],
       "props": [
         {
@@ -7775,8 +7961,14 @@
       "component": "Separator",
       "sourcePath": "packages/components/src/Separator/Separator.tsx",
       "slots": [
-        "label",
-        "line"
+        {
+          "name": "label",
+          "description": "Props for the label text (`.Label`)."
+        },
+        {
+          "name": "line",
+          "description": "Props for the divider line(s) (`.Line`) — applied to both lines in labeled mode."
+        }
       ],
       "props": [
         {
@@ -8040,12 +8232,30 @@
       "component": "Alert",
       "sourcePath": "packages/components/src/Alert/Alert.tsx",
       "slots": [
-        "body",
-        "closeButton",
-        "content",
-        "icon",
-        "message",
-        "title"
+        {
+          "name": "body",
+          "description": "Props for the body column that holds title + message (`.Body`)."
+        },
+        {
+          "name": "closeButton",
+          "description": "Props spread onto the close button (under `closeButtonLabel`)."
+        },
+        {
+          "name": "content",
+          "description": "Props for the content column (rich, non-text children) (`.Content`)."
+        },
+        {
+          "name": "icon",
+          "description": "Props for the icon column wrapper (`.Icon`)."
+        },
+        {
+          "name": "message",
+          "description": "Props for the message text (text-only children) (`.Message`)."
+        },
+        {
+          "name": "title",
+          "description": "Props for the title text (`.Title`)."
+        }
       ],
       "props": [
         {
@@ -8212,8 +8422,14 @@
       "component": "LoadingOverlay",
       "sourcePath": "packages/components/src/LoadingOverlay/LoadingOverlay.tsx",
       "slots": [
-        "loader",
-        "overlay"
+        {
+          "name": "loader",
+          "description": "Props spread onto the centered `Loader` (under the deprecated `loaderProps`)."
+        },
+        {
+          "name": "overlay",
+          "description": "Props spread onto the `Overlay` scrim (under the deprecated `overlayProps`)."
+        }
       ],
       "props": [
         {
@@ -8345,13 +8561,34 @@
       "component": "Notification",
       "sourcePath": "packages/components/src/Notification/Notification.tsx",
       "slots": [
-        "body",
-        "closeButton",
-        "content",
-        "icon",
-        "loader",
-        "message",
-        "title"
+        {
+          "name": "body",
+          "description": "Props spread onto the body column that holds title + message (`.Body`)."
+        },
+        {
+          "name": "closeButton",
+          "description": "Props spread onto the close button (under `closeButtonProps`). Targets a sub-component (`CloseButton`), so it has no matching `Notification.X` static — this slot deliberately reaches into the rendered close button."
+        },
+        {
+          "name": "content",
+          "description": "Props spread onto the content column (rich, non-text children) (`.Content`)."
+        },
+        {
+          "name": "icon",
+          "description": "Props spread onto the circular icon badge (`.Icon`)."
+        },
+        {
+          "name": "loader",
+          "description": "Props spread onto the `Loader` shown while `loading` (under `loaderProps`). Targets a sub-component (`Loader`), so it has no matching `Notification.X` static — this slot deliberately reaches into the rendered loader."
+        },
+        {
+          "name": "message",
+          "description": "Props spread onto the message text (text-only children) (`.Message`)."
+        },
+        {
+          "name": "title",
+          "description": "Props spread onto the title (`.Title`)."
+        }
       ],
       "props": [
         {
@@ -8502,10 +8739,22 @@
       "component": "Spoiler",
       "sourcePath": "packages/components/src/Spoiler/Spoiler.tsx",
       "slots": [
-        "control",
-        "fade",
-        "region",
-        "root"
+        {
+          "name": "control",
+          "description": "Props for the reveal/hide toggle (`.Control`)."
+        },
+        {
+          "name": "fade",
+          "description": "Props for the bottom fade overlay shown while collapsed."
+        },
+        {
+          "name": "region",
+          "description": "Props for the clipping region (`.Region`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the `Spoiler.Root` column (`.Root`)."
+        }
       ],
       "props": [
         {
@@ -8657,8 +8906,14 @@
       "component": "ActionIcon",
       "sourcePath": "packages/components/src/ActionIcon/ActionIcon.tsx",
       "slots": [
-        "icon",
-        "loader"
+        {
+          "name": "icon",
+          "description": "Props for the glyph text wrapper around string children (`.Text`)."
+        },
+        {
+          "name": "loader",
+          "description": "Props for the `Loader` rendered while `loading` (`.Loader`)."
+        }
       ],
       "props": [
         {
@@ -8791,14 +9046,38 @@
       "component": "AngleSlider",
       "sourcePath": "packages/components/src/AngleSlider/AngleSlider.tsx",
       "slots": [
-        "frame",
-        "label",
-        "mark",
-        "markLabel",
-        "markTick",
-        "marks",
-        "thumb",
-        "thumbKnob"
+        {
+          "name": "frame",
+          "description": "Props for the ring root (`AngleSlider.Frame`)."
+        },
+        {
+          "name": "label",
+          "description": "Props for the centre value label (`AngleSlider.Label`)."
+        },
+        {
+          "name": "mark",
+          "description": "Props for each rotated mark wrapper (`AngleSlider.Mark`)."
+        },
+        {
+          "name": "markLabel",
+          "description": "Props for each mark label (`AngleSlider.MarkLabel`)."
+        },
+        {
+          "name": "marks",
+          "description": "Props for the marks container (`AngleSlider.Marks`)."
+        },
+        {
+          "name": "markTick",
+          "description": "Props for each mark tick (`AngleSlider.MarkTick`)."
+        },
+        {
+          "name": "thumb",
+          "description": "Props for the rotated thumb bar (`AngleSlider.Thumb`)."
+        },
+        {
+          "name": "thumbKnob",
+          "description": "Props for the visible thumb knob (`AngleSlider.ThumbKnob`)."
+        }
       ],
       "props": [
         {
@@ -9002,14 +9281,38 @@
       "component": "Autocomplete",
       "sourcePath": "packages/components/src/Autocomplete/Autocomplete.tsx",
       "slots": [
-        "clearButton",
-        "dropdown",
-        "empty",
-        "group",
-        "option",
-        "options",
-        "root",
-        "trigger"
+        {
+          "name": "clearButton",
+          "description": "Props for the clear button (`Autocomplete.ClearButton`)."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the floating surface (`Autocomplete.Dropdown`)."
+        },
+        {
+          "name": "empty",
+          "description": "Props for the empty state (`Autocomplete.Empty`)."
+        },
+        {
+          "name": "group",
+          "description": "Props for a suggestion group (`Autocomplete.Group`)."
+        },
+        {
+          "name": "option",
+          "description": "Props for each suggestion row (`Autocomplete.Option`)."
+        },
+        {
+          "name": "options",
+          "description": "Props for the listbox body (`Autocomplete.Options`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the state-machine root (`Autocomplete.Root` → `<Combobox>`)."
+        },
+        {
+          "name": "trigger",
+          "description": "Props for the field trigger (`Autocomplete.Trigger` → `InputBase`)."
+        }
       ],
       "props": [
         {
@@ -11275,10 +11578,22 @@
       "component": "Button",
       "sourcePath": "packages/components/src/Button/Button.tsx",
       "slots": [
-        "label",
-        "left",
-        "loader",
-        "right"
+        {
+          "name": "label",
+          "description": "Props for the label text (`.Label` / `.Text`)."
+        },
+        {
+          "name": "left",
+          "description": "Props for the leading section wrapper (`.Left`)."
+        },
+        {
+          "name": "loader",
+          "description": "Props for the `Loader` rendered while `loading` (`.Loader`)."
+        },
+        {
+          "name": "right",
+          "description": "Props for the trailing section wrapper (`.Right`)."
+        }
       ],
       "props": [
         {
@@ -11441,12 +11756,30 @@
       "component": "Checkbox",
       "sourcePath": "packages/components/src/Checkbox/Checkbox.tsx",
       "slots": [
-        "box",
-        "description",
-        "error",
-        "icon",
-        "label",
-        "root"
+        {
+          "name": "box",
+          "description": "Props for the square `CheckboxBox`."
+        },
+        {
+          "name": "description",
+          "description": "The description `Text` rendered below the label."
+        },
+        {
+          "name": "error",
+          "description": "The error `Text` rendered below the description."
+        },
+        {
+          "name": "icon",
+          "description": "Props for the check / indeterminate glyph (`Checkbox.icon`)."
+        },
+        {
+          "name": "label",
+          "description": "The label `Text`."
+        },
+        {
+          "name": "root",
+          "description": "The outer `InlineControlRoot` row."
+        }
       ],
       "props": [
         {
@@ -11698,9 +12031,18 @@
       "component": "Chip",
       "sourcePath": "packages/components/src/Chip/Chip.tsx",
       "slots": [
-        "icon",
-        "label",
-        "root"
+        {
+          "name": "icon",
+          "description": "The leading check glyph `ChipIcon` (the default ✓; no-op when `icon` is custom). `color` is routed to the `@knitui/icons` `IconCheck` (the wrapper is a `Box`), so `styles={{ icon: { color } }}` still recolors the check."
+        },
+        {
+          "name": "label",
+          "description": "The chip's text `ChipLabel`."
+        },
+        {
+          "name": "root",
+          "description": "The outer `ChipFrame`."
+        }
       ],
       "props": [
         {
@@ -11854,7 +12196,10 @@
       "component": "CloseButton",
       "sourcePath": "packages/components/src/CloseButton/CloseButton.tsx",
       "slots": [
-        "icon"
+        {
+          "name": "icon",
+          "description": "Props for the close-glyph wrapper (`.Icon`). `color` is routed to the `@knitui/icons` `IconX` (the wrapper is a `Box`), so `styles={{ icon: { color } }}` still recolors the glyph."
+        }
       ],
       "props": [
         {
@@ -11995,19 +12340,58 @@
       "component": "ColorInput",
       "sourcePath": "packages/components/src/ColorInput/ColorInput.tsx",
       "slots": [
-        "description",
-        "dropdown",
-        "error",
-        "eyedropper",
-        "label",
-        "leftSection",
-        "picker",
-        "preview",
-        "required",
-        "rightSection",
-        "root",
-        "swatch",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the floating dropdown surface (`Popover.Dropdown`)."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "eyedropper",
+          "description": "Props for the eyedropper affordance. The browser `EyeDropper` API has no cross-platform equivalent, so the eyedropper is a documented no-op and this slot is reserved for API parity / forward-compat only — it currently targets nothing rendered."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "picker",
+          "description": "Props forwarded to the dropdown `ColorPicker`."
+        },
+        {
+          "name": "preview",
+          "description": "Props for the left-section preview swatch (`withPreview`)."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "swatch",
+          "description": "Per-slot styles reaching each predefined swatch in the dropdown picker."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -14220,14 +14604,38 @@
       "component": "ColorPicker",
       "sourcePath": "packages/components/src/ColorPicker/ColorPicker.tsx",
       "slots": [
-        "alphaSlider",
-        "hueSlider",
-        "preview",
-        "root",
-        "saturation",
-        "swatch",
-        "swatches",
-        "thumb"
+        {
+          "name": "alphaSlider",
+          "description": "Props for the alpha slider track (`ColorPicker.AlphaSlider`)."
+        },
+        {
+          "name": "hueSlider",
+          "description": "Props for the hue slider track (`ColorPicker.HueSlider`)."
+        },
+        {
+          "name": "preview",
+          "description": "Props for the alpha preview swatch (`ColorPicker.Preview`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the outer wrapper (`ColorPicker.Frame` → `PickerWrapper`)."
+        },
+        {
+          "name": "saturation",
+          "description": "Props for the saturation area frame (`ColorPicker.Saturation`)."
+        },
+        {
+          "name": "swatch",
+          "description": "Props for each predefined swatch (`ColorPicker.Swatch`)."
+        },
+        {
+          "name": "swatches",
+          "description": "Props for the swatch grid container (`ColorPicker.Swatches`)."
+        },
+        {
+          "name": "thumb",
+          "description": "Props for every drag handle (the saturation + slider thumbs)."
+        }
       ],
       "props": [
         {
@@ -14660,8 +15068,14 @@
       "component": "Fieldset",
       "sourcePath": "packages/components/src/Fieldset/Fieldset.tsx",
       "slots": [
-        "legend",
-        "root"
+        {
+          "name": "legend",
+          "description": "Props for the legend text (`Fieldset.Legend`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the fieldset frame (`Fieldset.Frame`)."
+        }
       ],
       "props": [
         {
@@ -14779,10 +15193,22 @@
       "component": "FileButton",
       "sourcePath": "packages/components/src/FileButton/FileButton.tsx",
       "slots": [
-        "label",
-        "left",
-        "loader",
-        "right"
+        {
+          "name": "label",
+          "description": "Props for the label text (`.Label` / `.Text`)."
+        },
+        {
+          "name": "left",
+          "description": "Props for the leading section wrapper (`.Left`)."
+        },
+        {
+          "name": "loader",
+          "description": "Props for the `Loader` rendered while `loading` (`.Loader`)."
+        },
+        {
+          "name": "right",
+          "description": "Props for the trailing section wrapper (`.Right`)."
+        }
       ],
       "props": [
         {
@@ -14982,17 +15408,50 @@
       "component": "FileInput",
       "sourcePath": "packages/components/src/FileInput/FileInput.tsx",
       "slots": [
-        "clearButton",
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "placeholder",
-        "required",
-        "rightSection",
-        "root",
-        "value",
-        "wrapper"
+        {
+          "name": "clearButton",
+          "description": "Props for the embedded clear button (`CloseButton`)."
+        },
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "placeholder",
+          "description": "Props for the placeholder (`Input.Placeholder`)."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "value",
+          "description": "Props for the default value display `Text`."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -17125,14 +17584,38 @@
       "component": "Input",
       "sourcePath": "packages/components/src/Input/Input.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -19686,14 +20169,38 @@
       "component": "InputBase",
       "sourcePath": "packages/components/src/InputBase/InputBase.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -21829,14 +22336,38 @@
       "component": "MaskInput",
       "sourcePath": "packages/components/src/MaskInput/MaskInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -24060,17 +24591,50 @@
       "component": "MultiSelect",
       "sourcePath": "packages/components/src/MultiSelect/MultiSelect.tsx",
       "slots": [
-        "chevron",
-        "clearButton",
-        "dropdown",
-        "empty",
-        "group",
-        "option",
-        "options",
-        "pill",
-        "pills",
-        "root",
-        "trigger"
+        {
+          "name": "chevron",
+          "description": "Props for the chevron (`MultiSelect.Chevron`)."
+        },
+        {
+          "name": "clearButton",
+          "description": "Props for the clear button (`MultiSelect.ClearButton`)."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the floating surface (`MultiSelect.Dropdown`)."
+        },
+        {
+          "name": "empty",
+          "description": "Props for the empty state (`MultiSelect.Empty`)."
+        },
+        {
+          "name": "group",
+          "description": "Props for an option group (`MultiSelect.Group`)."
+        },
+        {
+          "name": "option",
+          "description": "Props for each option row (`MultiSelect.Option`)."
+        },
+        {
+          "name": "options",
+          "description": "Props for the listbox body (`MultiSelect.Options`)."
+        },
+        {
+          "name": "pill",
+          "description": "Props for each selected-value chip (`MultiSelect.Pill` → `Pill`)."
+        },
+        {
+          "name": "pills",
+          "description": "Props for the pill row wrapper (`MultiSelect.Pills` → `Pill.Group`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the state-machine root (`MultiSelect.Root` → `<Combobox>`)."
+        },
+        {
+          "name": "trigger",
+          "description": "Props for the field trigger (`MultiSelect.Trigger` → `PillsInput`)."
+        }
       ],
       "props": [
         {
@@ -24700,14 +25264,38 @@
       "component": "NativeSelect",
       "sourcePath": "packages/components/src/NativeSelect/NativeSelect.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -26815,17 +27403,50 @@
       "component": "NumberInput",
       "sourcePath": "packages/components/src/NumberInput/NumberInput.tsx",
       "slots": [
-        "controls",
-        "decrement",
-        "description",
-        "error",
-        "increment",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "controls",
+          "description": "Props for the stepper column (`NumberInput.Controls`)."
+        },
+        {
+          "name": "decrement",
+          "description": "Props for the decrement (down) control (`NumberInput.Decrement`)."
+        },
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "increment",
+          "description": "Props for the increment (up) control (`NumberInput.Increment`)."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -29107,15 +29728,42 @@
       "component": "PasswordInput",
       "sourcePath": "packages/components/src/PasswordInput/PasswordInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "visibilityToggle",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "visibilityToggle",
+          "description": "Props for the show/hide button (`PasswordInput.VisibilityToggle`)."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -31294,14 +31942,38 @@
       "component": "PillsInput",
       "sourcePath": "packages/components/src/PillsInput/PillsInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -31612,7 +32284,10 @@
       "component": "PinInput",
       "sourcePath": "packages/components/src/PinInput/PinInput.tsx",
       "slots": [
-        "field"
+        {
+          "name": "field",
+          "description": "Props spread onto each per-character `Input`."
+        }
       ],
       "props": [
         {
@@ -31866,13 +32541,34 @@
       "component": "Radio",
       "sourcePath": "packages/components/src/Radio/Radio.tsx",
       "slots": [
-        "circle",
-        "description",
-        "dot",
-        "error",
-        "icon",
-        "label",
-        "root"
+        {
+          "name": "circle",
+          "description": "Props for the round `RadioCircle` box."
+        },
+        {
+          "name": "description",
+          "description": "The description `Text` rendered below the label."
+        },
+        {
+          "name": "dot",
+          "description": "Props for the inner glyph / dot (`Radio.icon`)."
+        },
+        {
+          "name": "error",
+          "description": "The error `Text` rendered below the description."
+        },
+        {
+          "name": "icon",
+          "description": "Alias of `dot` — props for the inner glyph (`Radio.icon`)."
+        },
+        {
+          "name": "label",
+          "description": "The label `Text`."
+        },
+        {
+          "name": "root",
+          "description": "The outer `InlineControlRoot` row."
+        }
       ],
       "props": [
         {
@@ -32098,9 +32794,18 @@
       "component": "Rating",
       "sourcePath": "packages/components/src/Rating/Rating.tsx",
       "slots": [
-        "root",
-        "segment",
-        "symbol"
+        {
+          "name": "root",
+          "description": "Props for the row container (`Rating.Root`)."
+        },
+        {
+          "name": "segment",
+          "description": "Props for each interactive sub-segment overlay (`Rating.Segment`)."
+        },
+        {
+          "name": "symbol",
+          "description": "Props for each symbol frame (`Rating.Symbol`)."
+        }
       ],
       "props": [
         {
@@ -32304,9 +33009,18 @@
       "component": "SegmentedControl",
       "sourcePath": "packages/components/src/SegmentedControl/SegmentedControl.tsx",
       "slots": [
-        "control",
-        "label",
-        "root"
+        {
+          "name": "control",
+          "description": "Each pressable `SegmentedControlControl` segment."
+        },
+        {
+          "name": "label",
+          "description": "The `SegmentedControlLabel` text inside each segment."
+        },
+        {
+          "name": "root",
+          "description": "The outer `SegmentedControlRoot` track."
+        }
       ],
       "props": [
         {
@@ -32515,15 +33229,42 @@
       "component": "Select",
       "sourcePath": "packages/components/src/Select/Select.tsx",
       "slots": [
-        "chevron",
-        "clearButton",
-        "dropdown",
-        "empty",
-        "group",
-        "option",
-        "options",
-        "root",
-        "trigger"
+        {
+          "name": "chevron",
+          "description": "Props for the chevron (`Select.Chevron`)."
+        },
+        {
+          "name": "clearButton",
+          "description": "Props for the clear button (`Select.ClearButton`)."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the floating surface (`Select.Dropdown`)."
+        },
+        {
+          "name": "empty",
+          "description": "Props for the empty state (`Select.Empty`)."
+        },
+        {
+          "name": "group",
+          "description": "Props for an option group (`Select.Group`)."
+        },
+        {
+          "name": "option",
+          "description": "Props for each option row (`Select.Option`)."
+        },
+        {
+          "name": "options",
+          "description": "Props for the listbox body (`Select.Options`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the state-machine root (`Select.Root` → `<Combobox>`)."
+        },
+        {
+          "name": "trigger",
+          "description": "Props for the field trigger (`Select.Trigger` → `InputBase`)."
+        }
       ],
       "props": [
         {
@@ -34890,15 +35631,42 @@
       "component": "Slider",
       "sourcePath": "packages/components/src/Slider/Slider.tsx",
       "slots": [
-        "bar",
-        "label",
-        "labelAnchor",
-        "mark",
-        "markLabel",
-        "root",
-        "thumb",
-        "track",
-        "trackContainer"
+        {
+          "name": "bar",
+          "description": "Props for the filled portion of the track (`Slider.Bar`)."
+        },
+        {
+          "name": "label",
+          "description": "Props for the value-bubble text (`Slider.Label`)."
+        },
+        {
+          "name": "labelAnchor",
+          "description": "Props for the value-bubble centring anchor (`Slider.LabelAnchor`)."
+        },
+        {
+          "name": "mark",
+          "description": "Props for each mark dot (`Slider.Mark`)."
+        },
+        {
+          "name": "markLabel",
+          "description": "Props for each mark label (`Slider.MarkLabel`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the outer relative root (`Slider.Root`)."
+        },
+        {
+          "name": "thumb",
+          "description": "Props for the draggable thumb(s) (`Slider.Thumb`)."
+        },
+        {
+          "name": "track",
+          "description": "Props for the thin bar background (`Slider.Track`)."
+        },
+        {
+          "name": "trackContainer",
+          "description": "Props for the pointer hit-area carrying the move ref (`Slider.TrackContainer`)."
+        }
       ],
       "props": [
         {
@@ -35202,14 +35970,38 @@
       "component": "Switch",
       "sourcePath": "packages/components/src/Switch/Switch.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "root",
-        "thumb",
-        "thumbIndicator",
-        "track",
-        "trackLabel"
+        {
+          "name": "description",
+          "description": "The description `Text` rendered below the label."
+        },
+        {
+          "name": "error",
+          "description": "The error `Text` rendered below the description."
+        },
+        {
+          "name": "label",
+          "description": "The label `Text`."
+        },
+        {
+          "name": "root",
+          "description": "The outer `InlineControlRoot` row."
+        },
+        {
+          "name": "thumb",
+          "description": "Props for the sliding `SwitchThumb`."
+        },
+        {
+          "name": "thumbIndicator",
+          "description": "Props for the dot inside the thumb (`SwitchThumbIndicator`)."
+        },
+        {
+          "name": "track",
+          "description": "Props for the pill `SwitchTrack`."
+        },
+        {
+          "name": "trackLabel",
+          "description": "Props for the on/off label rendered in the track (`SwitchTrackLabel`)."
+        }
       ],
       "props": [
         {
@@ -35445,16 +36237,46 @@
       "component": "TagsInput",
       "sourcePath": "packages/components/src/TagsInput/TagsInput.tsx",
       "slots": [
-        "clearButton",
-        "dropdown",
-        "empty",
-        "group",
-        "option",
-        "options",
-        "pill",
-        "pills",
-        "root",
-        "trigger"
+        {
+          "name": "clearButton",
+          "description": "Props for the clear button (`TagsInput.ClearButton`)."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the floating surface (`TagsInput.Dropdown`)."
+        },
+        {
+          "name": "empty",
+          "description": "Props for the empty state (`TagsInput.Empty`)."
+        },
+        {
+          "name": "group",
+          "description": "Props for an option group (`TagsInput.Group`)."
+        },
+        {
+          "name": "option",
+          "description": "Props for each option row (`TagsInput.Option`)."
+        },
+        {
+          "name": "options",
+          "description": "Props for the listbox body (`TagsInput.Options`)."
+        },
+        {
+          "name": "pill",
+          "description": "Props for each tag chip (`TagsInput.Pill` → `Pill`)."
+        },
+        {
+          "name": "pills",
+          "description": "Props for the pill row wrapper (`TagsInput.Pills` → `Pill.Group`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the state-machine root (`TagsInput.Root` → `<Combobox>`)."
+        },
+        {
+          "name": "trigger",
+          "description": "Props for the field trigger (`TagsInput.Trigger` → `PillsInput`)."
+        }
       ],
       "props": [
         {
@@ -36099,14 +36921,38 @@
       "component": "TextInput",
       "sourcePath": "packages/components/src/TextInput/TextInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -38250,14 +39096,38 @@
       "component": "Textarea",
       "sourcePath": "packages/components/src/Textarea/Textarea.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -41255,7 +42125,10 @@
       "component": "SimpleGrid",
       "sourcePath": "packages/components/src/SimpleGrid/SimpleGrid.tsx",
       "slots": [
-        "cell"
+        {
+          "name": "cell",
+          "description": "Props for the per-child cell wrapper `Box`."
+        }
       ],
       "props": [
         {
@@ -41570,12 +42443,30 @@
       "component": "Accordion",
       "sourcePath": "packages/components/src/Accordion/Accordion.tsx",
       "slots": [
-        "chevron",
-        "control",
-        "item",
-        "label",
-        "panel",
-        "root"
+        {
+          "name": "chevron",
+          "description": "Props for the chevron container wrapping the glyph (`.Chevron`)."
+        },
+        {
+          "name": "control",
+          "description": "Props for each `Accordion.Control` header (`.Control`)."
+        },
+        {
+          "name": "item",
+          "description": "Props for each `Accordion.Item` (`.Item`) — its stylable frame surface. `variant` is context-driven; `value`/`children` are the part's own (identity + content), so the sugar targets the frame like the sibling slots do."
+        },
+        {
+          "name": "label",
+          "description": "Props for the label text inside each control (`.Label`)."
+        },
+        {
+          "name": "panel",
+          "description": "Props for each `Accordion.Panel` (`.Panel`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the `Accordion` root (`.Root`)."
+        }
       ],
       "props": [
         {
@@ -41775,9 +42666,18 @@
       "component": "Breadcrumbs",
       "sourcePath": "packages/components/src/Breadcrumbs/Breadcrumbs.tsx",
       "slots": [
-        "label",
-        "root",
-        "separator"
+        {
+          "name": "label",
+          "description": "Props for each string/number crumb wrapper (`.Label`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the navigation landmark frame (`.Frame`)."
+        },
+        {
+          "name": "separator",
+          "description": "Props for each interleaved separator (`.Separator`)."
+        }
       ],
       "props": [
         {
@@ -41871,10 +42771,22 @@
       "component": "Burger",
       "sourcePath": "packages/components/src/Burger/Burger.tsx",
       "slots": [
-        "icon",
-        "line",
-        "root",
-        "text"
+        {
+          "name": "icon",
+          "description": "Props for the icon square (`Burger.Icon`)."
+        },
+        {
+          "name": "line",
+          "description": "Props for each of the three bars (`Burger.Line`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the focusable button wrapper (`Burger.Root`)."
+        },
+        {
+          "name": "text",
+          "description": "Props for text children (`Burger.Text`)."
+        }
       ],
       "props": [
         {
@@ -42020,15 +42932,42 @@
       "component": "NavLink",
       "sourcePath": "packages/components/src/NavLink/NavLink.tsx",
       "slots": [
-        "body",
-        "chevron",
-        "children",
-        "description",
-        "label",
-        "leftSection",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "body",
+          "description": "Props for the label/description column (`.Body`)."
+        },
+        {
+          "name": "chevron",
+          "description": "Props for the auto-chevron (`.Chevron`) shown when children exist."
+        },
+        {
+          "name": "children",
+          "description": "Props for the nested-children container (`.Children`)."
+        },
+        {
+          "name": "description",
+          "description": "Props for the description text (`.Description`)."
+        },
+        {
+          "name": "label",
+          "description": "Props for the label text (`.Label`)."
+        },
+        {
+          "name": "leftSection",
+          "description": "Props for the left section wrapper (`.Section`)."
+        },
+        {
+          "name": "rightSection",
+          "description": "Props for the right section wrapper (`.Section`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the interactive row (`.Root`)."
+        },
+        {
+          "name": "wrapper",
+          "description": "Props for the outer wrapper that holds the row + nested children."
+        }
       ],
       "props": [
         {
@@ -42214,10 +43153,22 @@
       "component": "Pagination",
       "sourcePath": "packages/components/src/Pagination/Pagination.tsx",
       "slots": [
-        "control",
-        "dots",
-        "item",
-        "root"
+        {
+          "name": "control",
+          "description": "Props for each edge/step control (`.First`/`.Previous`/`.Next`/`.Last`)."
+        },
+        {
+          "name": "dots",
+          "description": "Props for the truncation dots (`.Dots`)."
+        },
+        {
+          "name": "item",
+          "description": "Props for each numbered page control (`.Control`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the navigation frame (`.Root`)."
+        }
       ],
       "props": [
         {
@@ -42492,10 +43443,22 @@
       "component": "ScrollArea",
       "sourcePath": "packages/components/src/ScrollArea/ScrollArea.tsx",
       "slots": [
-        "corner",
-        "scrollbar",
-        "thumb",
-        "viewport"
+        {
+          "name": "corner",
+          "description": "Props spread onto the corner where the scrollbars meet (`.Corner`)."
+        },
+        {
+          "name": "scrollbar",
+          "description": "Props spread onto each scrollbar rail (`.Scrollbar`)."
+        },
+        {
+          "name": "thumb",
+          "description": "Props spread onto each scrollbar thumb (`.Thumb`)."
+        },
+        {
+          "name": "viewport",
+          "description": "Props spread onto the scrollable viewport (`.Viewport`)."
+        }
       ],
       "props": [
         {
@@ -42830,14 +43793,38 @@
       "component": "Stepper",
       "sourcePath": "packages/components/src/Stepper/Stepper.tsx",
       "slots": [
-        "bubble",
-        "bubbleText",
-        "connector",
-        "content",
-        "description",
-        "label",
-        "step",
-        "steps"
+        {
+          "name": "bubble",
+          "description": "Props for each step's icon bubble (`Step.Bubble`)."
+        },
+        {
+          "name": "bubbleText",
+          "description": "Props for the index/check text inside the bubble (`Step.BubbleText`)."
+        },
+        {
+          "name": "connector",
+          "description": "Props for the connector line between steps (`.Connector`)."
+        },
+        {
+          "name": "content",
+          "description": "Props for each step's inline content text in the `\"timeline\"` variant (`Step.Content`)."
+        },
+        {
+          "name": "description",
+          "description": "Props for each step's description text (`Step.Description`)."
+        },
+        {
+          "name": "label",
+          "description": "Props for each step's label text (`Step.Label`)."
+        },
+        {
+          "name": "step",
+          "description": "Props for each step row (`.Step`)."
+        },
+        {
+          "name": "steps",
+          "description": "Props for the steps row (`.Steps`)."
+        }
       ],
       "props": [
         {
@@ -43073,9 +44060,18 @@
       "component": "TableOfContents",
       "sourcePath": "packages/components/src/TableOfContents/TableOfContents.tsx",
       "slots": [
-        "control",
-        "root",
-        "text"
+        {
+          "name": "control",
+          "description": "Props for each heading control (`.Control`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the navigation frame (`.Frame`)."
+        },
+        {
+          "name": "text",
+          "description": "Props for each heading label (`.Text`)."
+        }
       ],
       "props": [
         {
@@ -43258,11 +44254,26 @@
       "component": "Tabs",
       "sourcePath": "packages/components/src/Tabs/Tabs.tsx",
       "slots": [
-        "label",
-        "list",
-        "panel",
-        "section",
-        "tab"
+        {
+          "name": "label",
+          "description": "Props for the label text inside each tab (`.Tab` label)."
+        },
+        {
+          "name": "list",
+          "description": "Props for the `Tabs.List` row (`.List`)."
+        },
+        {
+          "name": "panel",
+          "description": "Props for each `Tabs.Panel` (`.Panel`) — its stylable frame surface; `value`/`children` are the part's own (identity + content)."
+        },
+        {
+          "name": "section",
+          "description": "Props for the left/right section wrapper inside each tab (`.Section`)."
+        },
+        {
+          "name": "tab",
+          "description": "Props for each `Tabs.Tab` trigger (`.Tab`) — its stylable frame surface. `active`/`disabled`/`size`/`variant` are state/context-driven and `value`/ `children` are the part's own, so the sugar targets the frame like siblings."
+        }
       ],
       "props": [
         {
@@ -43471,8 +44482,14 @@
       "component": "Collapse",
       "sourcePath": "packages/components/src/Collapse/Collapse.tsx",
       "slots": [
-        "content",
-        "root"
+        {
+          "name": "content",
+          "description": "Props for the inner measured content wrapper (`.Content`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the outer animated clip box (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -43636,8 +44653,14 @@
       "component": "Dialog",
       "sourcePath": "packages/components/src/Dialog/Dialog.tsx",
       "slots": [
-        "closeButton",
-        "content"
+        {
+          "name": "closeButton",
+          "description": "Props spread onto the close button (`Dialog.CloseButton`), under `closeButtonProps`."
+        },
+        {
+          "name": "content",
+          "description": "Props spread onto the content frame (`Dialog.Content`)."
+        }
       ],
       "props": [
         {
@@ -43833,12 +44856,30 @@
       "component": "Drawer",
       "sourcePath": "packages/components/src/Drawer/Drawer.tsx",
       "slots": [
-        "body",
-        "closeButton",
-        "content",
-        "header",
-        "overlay",
-        "title"
+        {
+          "name": "body",
+          "description": "Props spread onto the body (`.Body`)."
+        },
+        {
+          "name": "closeButton",
+          "description": "Props spread onto the close button (under `closeButtonProps`)."
+        },
+        {
+          "name": "content",
+          "description": "Props spread onto the content frame (`.Content`)."
+        },
+        {
+          "name": "header",
+          "description": "Props spread onto the header (`.Header`)."
+        },
+        {
+          "name": "overlay",
+          "description": "Props spread onto the `Overlay` scrim (under `overlayProps`)."
+        },
+        {
+          "name": "title",
+          "description": "Props spread onto the title (`.Title`)."
+        }
       ],
       "props": [
         {
@@ -44210,10 +45251,22 @@
       "component": "HoverCard",
       "sourcePath": "packages/components/src/HoverCard/HoverCard.tsx",
       "slots": [
-        "arrow",
-        "dropdown",
-        "overlay",
-        "target"
+        {
+          "name": "arrow",
+          "description": "Appearance props for the arrow; positioning stays internal."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props spread onto the dropdown frame (`HoverCard.Dropdown`)."
+        },
+        {
+          "name": "overlay",
+          "description": "Props spread onto the `Overlay` scrim (under `overlayProps`)."
+        },
+        {
+          "name": "target",
+          "description": "Props cloned onto the target child (`HoverCard.Target`'s element)."
+        }
       ],
       "props": [
         {
@@ -44473,12 +45526,30 @@
       "component": "Menu",
       "sourcePath": "packages/components/src/Menu/Menu.tsx",
       "slots": [
-        "divider",
-        "dropdown",
-        "item",
-        "itemLabel",
-        "itemSection",
-        "label"
+        {
+          "name": "divider",
+          "description": "Props spread onto every divider (`Menu.Divider`)."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props spread onto the dropdown frame (`Menu.Dropdown`)."
+        },
+        {
+          "name": "item",
+          "description": "Props spread onto every item frame (`Menu.Item`)."
+        },
+        {
+          "name": "itemLabel",
+          "description": "Props spread onto every item's label text node."
+        },
+        {
+          "name": "itemSection",
+          "description": "Props spread onto every item's left/right section wrappers."
+        },
+        {
+          "name": "label",
+          "description": "Props spread onto every label (`Menu.Label`)."
+        }
       ],
       "props": [
         {
@@ -44589,11 +45660,20 @@
           "declaredIn": "packages/components/src/Menu/Menu.tsx"
         },
         {
+          "name": "loop",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Wrap Arrow-key focus at the ends of the item list (web).",
+          "default": "true",
+          "declaredIn": "packages/components/src/Menu/Menu.tsx"
+        },
+        {
           "name": "menuItemTabIndex",
           "bucket": "own",
           "type": "0 | -1 | undefined",
           "required": false,
-          "description": "`tabIndex` set on every item; `0` enables Tab navigation.",
+          "description": "`tabIndex` set on every item. Leave at `-1`: items are reached with the Arrow keys (roving focus), which is the ARIA menu pattern, and `-1` keeps them programmatically focusable without putting every item in the page's tab order. `0` additionally makes each item a Tab stop — occasionally wanted for a menu used as a plain link list.",
           "default": "-1",
           "declaredIn": "packages/components/src/Menu/Menu.tsx"
         },
@@ -44679,6 +45759,14 @@
           "declaredIn": "packages/components/src/Menu/Menu.tsx"
         },
         {
+          "name": "returnFocus",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Return focus to the trigger when the menu closes (web). Defaults to `true` for click triggers and `false` for hover triggers: a menu opened by pointing at something never took focus in the first place, so \"returning\" it would move focus somewhere the user never put it.",
+          "declaredIn": "packages/components/src/Menu/Menu.tsx"
+        },
+        {
           "name": "shadow",
           "bucket": "system",
           "type": "\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"xxs\" | \"xxl\" | undefined",
@@ -44708,6 +45796,14 @@
           "type": "ThemeName | null | undefined",
           "required": false,
           "description": "Accent theme applied to the menu subtree (trigger + dropdown).",
+          "declaredIn": "packages/components/src/Menu/Menu.tsx"
+        },
+        {
+          "name": "trapFocus",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Trap Tab within the open dropdown (web). Defaults to `true` for click triggers, `false` for hover triggers — see `returnFocus`.",
           "declaredIn": "packages/components/src/Menu/Menu.tsx"
         },
         {
@@ -44763,7 +45859,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 24,
+        "own": 27,
         "system": 5
       }
     },
@@ -44771,12 +45867,30 @@
       "component": "Modal",
       "sourcePath": "packages/components/src/Modal/Modal.tsx",
       "slots": [
-        "body",
-        "closeButton",
-        "content",
-        "header",
-        "overlay",
-        "title"
+        {
+          "name": "body",
+          "description": "Props spread onto the body (`.Body`)."
+        },
+        {
+          "name": "closeButton",
+          "description": "Props spread onto the close button (under `closeButtonProps`)."
+        },
+        {
+          "name": "content",
+          "description": "Props spread onto the content frame (`.Content`)."
+        },
+        {
+          "name": "header",
+          "description": "Props spread onto the header (`.Header`)."
+        },
+        {
+          "name": "overlay",
+          "description": "Props spread onto the `Overlay` scrim (under `overlayProps`)."
+        },
+        {
+          "name": "title",
+          "description": "Props spread onto the title (`.Title`)."
+        }
       ],
       "props": [
         {
@@ -45146,9 +46260,18 @@
       "component": "Popover",
       "sourcePath": "packages/components/src/Popover/Popover.tsx",
       "slots": [
-        "arrow",
-        "dropdown",
-        "overlay"
+        {
+          "name": "arrow",
+          "description": "Appearance props for the arrow; positioning stays internal."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props spread onto the dropdown frame (`Popover.Dropdown`)."
+        },
+        {
+          "name": "overlay",
+          "description": "Props spread onto the `Overlay` scrim (under the deprecated `overlayProps`)."
+        }
       ],
       "props": [
         {
@@ -45498,10 +46621,22 @@
       "component": "Tooltip",
       "sourcePath": "packages/components/src/Tooltip/Tooltip.tsx",
       "slots": [
-        "arrow",
-        "dropdown",
-        "label",
-        "text"
+        {
+          "name": "arrow",
+          "description": "Appearance props for the arrow (`Tooltip.Arrow`); positioning stays internal."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props spread onto the floating label frame (`Tooltip.Label`/`.Dropdown`)."
+        },
+        {
+          "name": "label",
+          "description": "Props spread onto the inner text node (`Tooltip.Text`)."
+        },
+        {
+          "name": "text",
+          "description": "Props spread onto the inner text node (`Tooltip.Text`); layers over `label`."
+        }
       ],
       "props": [
         {
@@ -46083,9 +47218,18 @@
       "component": "Blockquote",
       "sourcePath": "packages/components/src/Blockquote/Blockquote.tsx",
       "slots": [
-        "cite",
-        "icon",
-        "text"
+        {
+          "name": "cite",
+          "description": "Props for the attribution line (`.Cite`)."
+        },
+        {
+          "name": "icon",
+          "description": "Props for the icon badge (`.Icon`)."
+        },
+        {
+          "name": "text",
+          "description": "Props for the body text wrapper (`.Text`)."
+        }
       ],
       "props": [
         {
@@ -46290,7 +47434,10 @@
       "component": "Highlight",
       "sourcePath": "packages/components/src/Highlight/Highlight.tsx",
       "slots": [
-        "mark"
+        {
+          "name": "mark",
+          "description": "Props spread onto every highlighted `Mark`."
+        }
       ],
       "props": [
         {
@@ -46855,14 +48002,38 @@
       "component": "AmPmInput",
       "sourcePath": "packages/dates/src/AmPmInput/AmPmInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -49524,11 +50695,26 @@
       "component": "CalendarHeader",
       "sourcePath": "packages/dates/src/CalendarHeader/CalendarHeader.tsx",
       "slots": [
-        "control",
-        "icon",
-        "level",
-        "levelLabel",
-        "root"
+        {
+          "name": "control",
+          "description": "Props for each prev/next control button (`.Control`)."
+        },
+        {
+          "name": "icon",
+          "description": "Props for the default chevron glyphs (`.Icon`)."
+        },
+        {
+          "name": "level",
+          "description": "Props for the level (label) control (`.Level`)."
+        },
+        {
+          "name": "levelLabel",
+          "description": "Props for the level label text (`.LevelLabel`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the header bar (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -49744,10 +50930,22 @@
       "component": "DateInput",
       "sourcePath": "packages/dates/src/DateInput/DateInput.tsx",
       "slots": [
-        "calendar",
-        "dropdown",
-        "input",
-        "wrapper"
+        {
+          "name": "calendar",
+          "description": "Props for the inline `Calendar` inside the dropdown."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the `Popover.Dropdown` that holds the calendar."
+        },
+        {
+          "name": "input",
+          "description": "Props for the editable trigger `Input`."
+        },
+        {
+          "name": "wrapper",
+          "description": "Props for the `Input.Wrapper` (label/description/error surface)."
+        }
       ],
       "props": [
         {
@@ -52600,13 +53798,34 @@
       "component": "DecadeLevel",
       "sourcePath": "packages/dates/src/DecadeLevel/DecadeLevel.tsx",
       "slots": [
-        "header",
-        "headerControl",
-        "headerIcon",
-        "headerLevel",
-        "headerLevelLabel",
-        "list",
-        "root"
+        {
+          "name": "header",
+          "description": "Props for the header bar (`CalendarHeader` `root` slot)."
+        },
+        {
+          "name": "headerControl",
+          "description": "Props for each header prev/next control (`CalendarHeader` `control` slot)."
+        },
+        {
+          "name": "headerIcon",
+          "description": "Props for the header chevron glyphs (`CalendarHeader` `icon` slot)."
+        },
+        {
+          "name": "headerLevel",
+          "description": "Props for the header level (label) control (`CalendarHeader` `level` slot)."
+        },
+        {
+          "name": "headerLevelLabel",
+          "description": "Props for the header level label text (`CalendarHeader` `levelLabel` slot)."
+        },
+        {
+          "name": "list",
+          "description": "Props for the `YearsList` grid root (`.List`) — style props only; `decade` is owned."
+        },
+        {
+          "name": "root",
+          "description": "Props for the level root column (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -53155,12 +54374,30 @@
       "component": "MiniCalendar",
       "sourcePath": "packages/dates/src/MiniCalendar/MiniCalendar.tsx",
       "slots": [
-        "control",
-        "day",
-        "dayMonth",
-        "dayNumber",
-        "days",
-        "root"
+        {
+          "name": "control",
+          "description": "Props for each prev/next control button (`.Control`)."
+        },
+        {
+          "name": "day",
+          "description": "Props for each day button (`.Day`)."
+        },
+        {
+          "name": "dayMonth",
+          "description": "Props for each day's month label (`.DayMonth`)."
+        },
+        {
+          "name": "dayNumber",
+          "description": "Props for each day's number (`.DayNumber`)."
+        },
+        {
+          "name": "days",
+          "description": "Props for the day strip wrapper (`.Days`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the root row (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -53358,12 +54595,30 @@
       "component": "Month",
       "sourcePath": "packages/dates/src/Month/Month.tsx",
       "slots": [
-        "cell",
-        "day",
-        "root",
-        "row",
-        "weekNumber",
-        "weekNumberLabel"
+        {
+          "name": "cell",
+          "description": "Props for each day-cell wrapper (`.Cell`)."
+        },
+        {
+          "name": "day",
+          "description": "Props for each day inside a cell (`.Day` — the `Day` leaf)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the grid container (`.Frame`)."
+        },
+        {
+          "name": "row",
+          "description": "Props for each week row (`.Row`)."
+        },
+        {
+          "name": "weekNumber",
+          "description": "Props for each week-number cell (`.WeekNumber`)."
+        },
+        {
+          "name": "weekNumberLabel",
+          "description": "Props for each week-number label (`.WeekNumberLabel`)."
+        }
       ],
       "props": [
         {
@@ -53595,13 +54850,34 @@
       "component": "MonthLevel",
       "sourcePath": "packages/dates/src/MonthLevel/MonthLevel.tsx",
       "slots": [
-        "header",
-        "headerControl",
-        "headerIcon",
-        "headerLevel",
-        "headerLevelLabel",
-        "month",
-        "root"
+        {
+          "name": "header",
+          "description": "Props for the header bar (`CalendarHeader` `root` slot)."
+        },
+        {
+          "name": "headerControl",
+          "description": "Props for each header prev/next control (`CalendarHeader` `control` slot)."
+        },
+        {
+          "name": "headerIcon",
+          "description": "Props for the header chevron glyphs (`CalendarHeader` `icon` slot)."
+        },
+        {
+          "name": "headerLevel",
+          "description": "Props for the header level (label) control (`CalendarHeader` `level` slot)."
+        },
+        {
+          "name": "headerLevelLabel",
+          "description": "Props for the header level label text (`CalendarHeader` `levelLabel` slot)."
+        },
+        {
+          "name": "month",
+          "description": "Props for the `Month` grid root (`.Month`) — style props only; `month` is owned."
+        },
+        {
+          "name": "root",
+          "description": "Props for the level root column (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -55153,10 +56429,22 @@
       "component": "MonthsList",
       "sourcePath": "packages/dates/src/MonthsList/MonthsList.tsx",
       "slots": [
-        "cell",
-        "control",
-        "root",
-        "row"
+        {
+          "name": "cell",
+          "description": "Props for each month-cell wrapper (`.Cell`)."
+        },
+        {
+          "name": "control",
+          "description": "Props for each control inside a cell (`.Control` — the `PickerControl` leaf)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the grid container (`.Frame`)."
+        },
+        {
+          "name": "row",
+          "description": "Props for each month row (`.Row`)."
+        }
       ],
       "props": [
         {
@@ -55423,9 +56711,18 @@
       "component": "PickerInputBase",
       "sourcePath": "packages/dates/src/PickerInputBase/PickerInputBase.tsx",
       "slots": [
-        "dropdown",
-        "input",
-        "wrapper"
+        {
+          "name": "dropdown",
+          "description": "Props for the `Popover.Dropdown` that holds the inline picker (ignored for `dropdownType='modal'`)."
+        },
+        {
+          "name": "input",
+          "description": "Props for the trigger `Input` chrome (the `InputBase` frame + adornment props)."
+        },
+        {
+          "name": "wrapper",
+          "description": "Props for the trigger's outer field column (`Input.Wrapper` frame)."
+        }
       ],
       "props": [
         {
@@ -55691,14 +56988,38 @@
       "component": "SpinInput",
       "sourcePath": "packages/dates/src/SpinInput/SpinInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -57888,9 +59209,18 @@
       "component": "TimeControlsList",
       "sourcePath": "packages/dates/src/TimeControlsList/TimeControlsList.tsx",
       "slots": [
-        "column",
-        "control",
-        "root"
+        {
+          "name": "column",
+          "description": "Props for the inner column (`.Column`)."
+        },
+        {
+          "name": "control",
+          "description": "Props for each control inside the column (`.Control` — the `TimeControl` leaf)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the scroll viewport (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -58007,10 +59337,22 @@
       "component": "TimeGrid",
       "sourcePath": "packages/dates/src/TimeGrid/TimeGrid.tsx",
       "slots": [
-        "control",
-        "grid",
-        "label",
-        "root"
+        {
+          "name": "control",
+          "description": "Props for each control button (`.Control`)."
+        },
+        {
+          "name": "grid",
+          "description": "Props for the underlying `SimpleGrid` (`.Grid`) — wins over `simpleGridProps`."
+        },
+        {
+          "name": "label",
+          "description": "Props for each control's text label (`.ControlLabel`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the host frame (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -58200,14 +59542,38 @@
       "component": "TimeInput",
       "sourcePath": "packages/dates/src/TimeInput/TimeInput.tsx",
       "slots": [
-        "description",
-        "error",
-        "label",
-        "leftSection",
-        "required",
-        "rightSection",
-        "root",
-        "wrapper"
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "leftSection",
+          "description": "The left adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `leftSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "rightSection",
+          "description": "The right adornment section (`InputSectionFrame`). Applied by `InputChrome`. The deprecated `rightSectionProps` alias merges OVER this."
+        },
+        {
+          "name": "root",
+          "description": "The input frame/container (`InputRootFrame`) that `InputChrome` lays the control and its left/right sections out in. Applied by `Input`/`InputChrome`, not by `Input.Wrapper`. The deprecated `wrapperProps` alias merges OVER this."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -59910,15 +61276,42 @@
       "component": "TimePicker",
       "sourcePath": "packages/dates/src/TimePicker/TimePicker.tsx",
       "slots": [
-        "colon",
-        "description",
-        "dropdown",
-        "error",
-        "field",
-        "label",
-        "required",
-        "segment",
-        "wrapper"
+        {
+          "name": "colon",
+          "description": "Props for the `:` separators between segments."
+        },
+        {
+          "name": "description",
+          "description": "The `Input.Description`."
+        },
+        {
+          "name": "dropdown",
+          "description": "Props for the dropdown content container (the controls/presets `Box`)."
+        },
+        {
+          "name": "error",
+          "description": "The `Input.Error`."
+        },
+        {
+          "name": "field",
+          "description": "Props for the bordered field row that holds the segments (`.Field`)."
+        },
+        {
+          "name": "label",
+          "description": "The `Input.Label`."
+        },
+        {
+          "name": "required",
+          "description": "The required asterisk `Text` inside the label."
+        },
+        {
+          "name": "segment",
+          "description": "Props spread onto EVERY editable time segment (`SpinInput`); `xxxInputProps` win."
+        },
+        {
+          "name": "wrapper",
+          "description": "The outer `InputWrapperFrame` column."
+        }
       ],
       "props": [
         {
@@ -60424,10 +61817,22 @@
       "component": "TimePresets",
       "sourcePath": "packages/dates/src/TimePresets/TimePresets.tsx",
       "slots": [
-        "control",
-        "grid",
-        "groups",
-        "root"
+        {
+          "name": "control",
+          "description": "Props for each preset cell (`.Control` — the `TimePresetControl` leaf)."
+        },
+        {
+          "name": "grid",
+          "description": "Props for the flat grid (`.Grid`)."
+        },
+        {
+          "name": "groups",
+          "description": "Props for the grouped stack (`.Groups`)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the scroll viewport (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -60636,8 +62041,14 @@
       "component": "WeekdaysRow",
       "sourcePath": "packages/dates/src/WeekdaysRow/WeekdaysRow.tsx",
       "slots": [
-        "weekday",
-        "weekdaysRow"
+        {
+          "name": "weekday",
+          "description": "Props for each weekday label cell (`.Weekday`)."
+        },
+        {
+          "name": "weekdaysRow",
+          "description": "Props for the header row (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -60768,13 +62179,34 @@
       "component": "YearLevel",
       "sourcePath": "packages/dates/src/YearLevel/YearLevel.tsx",
       "slots": [
-        "header",
-        "headerControl",
-        "headerIcon",
-        "headerLevel",
-        "headerLevelLabel",
-        "months",
-        "root"
+        {
+          "name": "header",
+          "description": "Props for the header bar (`CalendarHeader` `root` slot)."
+        },
+        {
+          "name": "headerControl",
+          "description": "Props for each header prev/next control (`CalendarHeader` `control` slot)."
+        },
+        {
+          "name": "headerIcon",
+          "description": "Props for the header chevron glyphs (`CalendarHeader` `icon` slot)."
+        },
+        {
+          "name": "headerLevel",
+          "description": "Props for the header level (label) control (`CalendarHeader` `level` slot)."
+        },
+        {
+          "name": "headerLevelLabel",
+          "description": "Props for the header level label text (`CalendarHeader` `levelLabel` slot)."
+        },
+        {
+          "name": "months",
+          "description": "Props for the `MonthsList` grid root (`.List`) — style props only; `year` is owned."
+        },
+        {
+          "name": "root",
+          "description": "Props for the level root column (`.Frame`)."
+        }
       ],
       "props": [
         {
@@ -62002,10 +63434,22 @@
       "component": "YearsList",
       "sourcePath": "packages/dates/src/YearsList/YearsList.tsx",
       "slots": [
-        "cell",
-        "control",
-        "root",
-        "row"
+        {
+          "name": "cell",
+          "description": "Props for each year-cell wrapper (`.Cell`)."
+        },
+        {
+          "name": "control",
+          "description": "Props for each control inside a cell (`.Control` — the `PickerControl` leaf)."
+        },
+        {
+          "name": "root",
+          "description": "Props for the grid container (`.Frame`)."
+        },
+        {
+          "name": "row",
+          "description": "Props for each year row (`.Row`)."
+        }
       ],
       "props": [
         {
@@ -65012,13 +66456,27 @@
       "component": "Audio",
       "sourcePath": "packages/media/src/audio/Audio.tsx",
       "slots": [
-        "artist",
-        "artwork",
-        "controlBar",
-        "header",
-        "root",
-        "time",
-        "title"
+        {
+          "name": "artist"
+        },
+        {
+          "name": "artwork"
+        },
+        {
+          "name": "controlBar"
+        },
+        {
+          "name": "header"
+        },
+        {
+          "name": "root"
+        },
+        {
+          "name": "time"
+        },
+        {
+          "name": "title"
+        }
       ],
       "props": [
         {
@@ -65280,11 +66738,21 @@
       "component": "AudioPlaylist",
       "sourcePath": "packages/media/src/audio/playlist/AudioPlaylist.tsx",
       "slots": [
-        "root",
-        "time",
-        "trackLabel",
-        "trackList",
-        "trackRow"
+        {
+          "name": "root"
+        },
+        {
+          "name": "time"
+        },
+        {
+          "name": "trackLabel"
+        },
+        {
+          "name": "trackList"
+        },
+        {
+          "name": "trackRow"
+        }
       ],
       "props": [
         {
@@ -65450,11 +66918,21 @@
       "component": "AudioRecorder",
       "sourcePath": "packages/media/src/audio/recorder/AudioRecorder.tsx",
       "slots": [
-        "controlBar",
-        "duration",
-        "meterFill",
-        "meterTrack",
-        "root"
+        {
+          "name": "controlBar"
+        },
+        {
+          "name": "duration"
+        },
+        {
+          "name": "meterFill"
+        },
+        {
+          "name": "meterTrack"
+        },
+        {
+          "name": "root"
+        }
       ],
       "props": [
         {
@@ -65636,14 +67114,32 @@
       "component": "Video",
       "sourcePath": "packages/media/src/video/Video.tsx",
       "slots": [
-        "bigPlay",
-        "buffering",
-        "captionText",
-        "captions",
-        "controlBar",
-        "root",
-        "scrim",
-        "surface"
+        {
+          "name": "bigPlay"
+        },
+        {
+          "name": "buffering"
+        },
+        {
+          "name": "captions",
+          "description": "The caption cue bubble (background, radius, padding, position offset)."
+        },
+        {
+          "name": "captionText",
+          "description": "The caption cue text (fontFamily, fontSize, color, fontWeight, …)."
+        },
+        {
+          "name": "controlBar"
+        },
+        {
+          "name": "root"
+        },
+        {
+          "name": "scrim"
+        },
+        {
+          "name": "surface"
+        }
       ],
       "props": [
         {
@@ -65975,11 +67471,26 @@
       "component": "Sheet",
       "sourcePath": "packages/sheet/src/Sheet.tsx",
       "slots": [
-        "footer",
-        "handle",
-        "header",
-        "overlay",
-        "root"
+        {
+          "name": "footer",
+          "description": "The fixed footer region (`Sheet.Footer`)."
+        },
+        {
+          "name": "handle",
+          "description": "The drag handle bar (`Sheet.Handle`)."
+        },
+        {
+          "name": "header",
+          "description": "The fixed header region (`Sheet.Header`)."
+        },
+        {
+          "name": "overlay",
+          "description": "The scrim (`Sheet.Overlay`)."
+        },
+        {
+          "name": "root",
+          "description": "The panel surface (`Sheet.Frame`)."
+        }
       ],
       "props": [
         {

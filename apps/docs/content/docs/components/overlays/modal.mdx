@@ -1,16 +1,88 @@
 export const meta = {
   title: "Modal",
-  description: "Modal is an overlay dialog composed of `Modal.Content`, `Modal.Header`, `Modal.Title`, `Modal.Body`, and `Modal.CloseButton`. Pass `opened` and `onClose` to control visibility. `size` sets the content width, `centered` vertically centres the panel, and `fullScreen` expands it to fill the viewport. `padding` tunes the inner spacing, `withHeaderDivider` separates a pinned header from a scrolling body, and `closeButtonProps` fully customises the close control. Behaviour knobs (`closeOnEscape`, `closeOnClickOutside`, `lockScroll`, `trapFocus`, `returnFocus`, `keepMounted`) mirror Mantine. The body scrolls automatically when its content is taller than the viewport while the header stays pinned.",
+  description:
+    "Modal is a centred overlay dialog with focus trapping, scroll locking and a scrolling body under a pinned header.",
 };
 
 <ComponentHeader id="components/overlays/modal" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+`Modal` is always controlled: pass `opened` and an `onClose` that flips it back.
+Nothing opens a modal implicitly, so there is never a hidden source of truth for
+whether it is on screen.
 
-<Playground id="components/overlays/modal" />
+```tsx
+import { Button, Modal } from "@knitui/components";
+import { useDisclosure } from "@knitui/hooks";
+
+function DeleteAccount() {
+  const [opened, { open, close }] = useDisclosure(false);
+
+  return (
+    <>
+      <Button onPress={open}>Delete account</Button>
+
+      <Modal opened={opened} onClose={close} title="Delete account?">
+        This cannot be undone.
+      </Modal>
+    </>
+  );
+}
+```
+
+[`useDisclosure`](/docs/hooks/use-disclosure) is the usual companion — it is the
+`opened` / `open` / `close` / `toggle` tuple this pattern always needs.
+
+For more structure, compose the parts directly: `Modal.Header`, `Modal.Title`,
+`Modal.Body`, `Modal.CloseButton`. The body scrolls on its own when the content is
+taller than the viewport, so the header stays pinned; `withHeaderDivider` draws a
+rule between them once the body has scrolled.
+
+`size` sets the panel width, `centered` centres it vertically, and `fullScreen`
+expands it to fill the viewport — useful as a responsive escape hatch on phones.
+
+### When to use something else
+
+- A panel sliding in from an edge → [`Drawer`](/docs/components/overlays/drawer)
+- A sheet the user drags up from the bottom on native →
+  [`Sheet`](/docs/sheet)
+- A small transient layer anchored to a trigger →
+  [`Popover`](/docs/components/overlays/popover)
 
 <Examples id="components/overlays/modal" />
 
 <PropsTable id="components/overlays/modal" />
+
+## Accessibility
+
+The panel renders with `role="dialog"` and `aria-modal`, so assistive technology
+treats the rest of the page as inert while it is open.
+
+**Naming happens automatically when you pass `title`** — it renders into the header
+and becomes the dialog's `aria-labelledby` target. If you build a custom header
+instead, supply `aria-labelledby` (pointing at your own heading) or `aria-label`
+yourself; a dialog with no accessible name is announced only as "dialog".
+
+| Key | Action |
+| --- | --- |
+| <kbd>Esc</kbd> | Close, unless `closeOnEscape={false}` |
+| <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Cycle focusable elements inside the panel, never behind it |
+
+Three defaults do the work, and all three are on unless you turn them off:
+
+- **`trapFocus`** keeps <kbd>Tab</kbd> inside the panel, via the shared
+  [`useFocusTrap`](/docs/hooks/use-focus-trap) hook.
+- **`returnFocus`** moves focus back to whatever opened the modal when it closes, so
+  the keyboard user is not dropped at the top of the document.
+- **`lockScroll`** stops the page behind the scrim from scrolling.
+
+`closeOnClickOutside` is also on by default. Turn it off for a destructive
+confirmation, where an accidental click outside should not dismiss the question.
+
+<Callout kind="platform">
+  Focus trapping, scroll locking and <kbd>Esc</kbd> are web-only — React Native has
+  no DOM focus model or `keydown` stream, so `useFocusTrap` is a no-op there and the
+  platform's own modal semantics apply. `dragToDismiss` is the native affordance
+  that replaces clicking the scrim.
+</Callout>

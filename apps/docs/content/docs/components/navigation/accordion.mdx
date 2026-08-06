@@ -1,16 +1,82 @@
 export const meta = {
   title: "Accordion",
-  description: "Accordion shows collapsible content panels. Compose `Accordion.Item` → `Accordion.Control` + `Accordion.Panel`. Single-open by default; pass `multiple` for several open at once. `variant` styles the container, `chevronPosition`/`chevron` control the indicator, and `order` promotes each control to a real heading level.",
+  description:
+    "Accordion collapses sections behind labelled controls, one open at a time or many.",
 };
 
 <ComponentHeader id="components/navigation/accordion" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+Compose `Accordion.Item` with an `Accordion.Control` and an `Accordion.Panel`. The
+item's `value` is its identity — that is what `value` / `defaultValue` refer to.
 
-<Playground id="components/navigation/accordion" />
+```tsx
+import { Accordion } from "@knitui/components";
+
+<Accordion defaultValue="shipping">
+  <Accordion.Item value="shipping">
+    <Accordion.Control>Shipping</Accordion.Control>
+    <Accordion.Panel>Ships in 2–3 days.</Accordion.Panel>
+  </Accordion.Item>
+
+  <Accordion.Item value="returns">
+    <Accordion.Control>Returns</Accordion.Control>
+    <Accordion.Panel>30 days, no questions.</Accordion.Panel>
+  </Accordion.Item>
+</Accordion>;
+```
+
+`multiple` lets several sections be open at once — and changes the shape of
+`value` from a string to an array, which TypeScript enforces for you.
+
+`chevronPosition="left"` moves the indicator, `chevron` replaces it, and
+`disableChevronRotation` keeps it still if your own glyph shouldn't spin.
+
+Panels stay mounted by default (`keepMounted`), so form state inside a closed
+section survives. Set `keepMounted={false}` when a panel is expensive.
+
+### When to use something else
+
+- Views that replace each other rather than stacking →
+  [`Tabs`](/docs/components/navigation/tabs)
+- A single show-more/show-less region →
+  [`Collapse`](/docs/components/overlays/collapse) or
+  [`Spoiler`](/docs/components/feedback/spoiler)
 
 <Examples id="components/navigation/accordion" />
 
 <PropsTable id="components/navigation/accordion" />
+
+## Accessibility
+
+Each control is a `role="button"` with `aria-expanded` reflecting its state, and
+each panel is a `role="region"`, which is the ARIA disclosure pattern.
+
+Controls are made focusable and operable through the shared
+[`useKeyboardActions`](/docs/hooks/use-keyboard-actions) hook, since the control
+frame is a styled `Box` rather than a native `<button>`.
+
+| Key | Action |
+| --- | --- |
+| <kbd>Tab</kbd> | Move to the next accordion control |
+| <kbd>Space</kbd> / <kbd>Enter</kbd> | Toggle the focused section |
+
+**Set `order` when the accordion is part of the page's document outline.** It wraps
+each control in `role="heading"` with a matching `aria-level`, which is what lets
+screen-reader users jump between sections with heading navigation instead of tabbing
+through every control. Without it the controls are buttons with no heading
+semantics — fine for a compact widget, a real loss for an FAQ page. Pick the level
+that fits the surrounding headings:
+
+```tsx
+<Accordion order={3}>{/* controls become level-3 headings */}</Accordion>
+```
+
+Arrow keys deliberately do **not** move between controls: ARIA lists that as
+optional for accordions, and <kbd>Tab</kbd> already reaches every control in order.
+
+<Callout kind="platform">
+  Keyboard activation is web-only; on native `useKeyboardActions` maps to the
+  platform's accessibility actions and presses drive the toggle.
+</Callout>

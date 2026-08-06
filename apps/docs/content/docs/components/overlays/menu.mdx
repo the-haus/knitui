@@ -1,16 +1,95 @@
 export const meta = {
   title: "Menu",
-  description: "Menu is a compound component built on top of `Popover`. Compose `Menu.Target` (the trigger element), `Menu.Dropdown` (the panel), `Menu.Item` (an interactive row), `Menu.Label` (a section header), and `Menu.Divider` (a separator). State can be uncontrolled (`defaultOpened`) or fully controlled (`opened` + `onChange`).",
+  description:
+    "Menu is a dropdown of actions anchored to a trigger, with labels, dividers and sections.",
 };
 
 <ComponentHeader id="components/overlays/menu" />
 
-{/* scaffolded: replace this comment with real prose */}
+## Usage
 
-## Playground
+`Menu.Target` wraps the trigger, `Menu.Dropdown` holds the items. The target keeps
+its own props — the menu only adds the press handling.
 
-<Playground id="components/overlays/menu" />
+```tsx
+import { Button, Menu } from "@knitui/components";
+
+<Menu>
+  <Menu.Target>
+    <Button>Actions</Button>
+  </Menu.Target>
+
+  <Menu.Dropdown>
+    <Menu.Label>Document</Menu.Label>
+    <Menu.Item onPress={rename}>Rename</Menu.Item>
+    <Menu.Item onPress={duplicate}>Duplicate</Menu.Item>
+    <Menu.Divider />
+    <Menu.Item theme="red" onPress={remove}>
+      Delete
+    </Menu.Item>
+  </Menu.Dropdown>
+</Menu>;
+```
+
+Uncontrolled by default. Pass `opened` + `onChange` to control it, or use
+`defaultOpened` for the initial state only.
+
+Items take `leftSection` / `rightSection` for icons and shortcut hints. A menu is
+for **actions**; if the dropdown is for choosing a value, you want a select.
+
+Positioning goes through the kit's own [floating
+engine](/docs/components/overlays/popover): `position`, `offset` and the `arrow*`
+props behave the same as on `Popover`.
+
+### When to use something else
+
+- Choosing a value from a list → [`Select`](/docs/components/inputs/select) or
+  [`Combobox`](/docs/components/inputs/combobox)
+- Rich anchored content rather than a list of commands →
+  [`Popover`](/docs/components/overlays/popover)
+- A label that appears on hover → [`Tooltip`](/docs/components/overlays/tooltip)
 
 <Examples id="components/overlays/menu" />
 
 <PropsTable id="components/overlays/menu" />
+
+## Accessibility
+
+`Menu` implements the ARIA menu-button pattern. The dropdown is a `role="menu"`,
+each item a `role="menuitem"`, and focus is **managed**: opening moves focus to the
+first item, <kbd>Tab</kbd> is trapped inside the dropdown, and closing returns focus
+to the trigger.
+
+Items are reached with the arrow keys — *roving focus* — so they stay out of the
+page's tab order rather than adding one tab stop per menu entry.
+
+| Key | Action |
+| --- | --- |
+| <kbd>↓</kbd> / <kbd>↑</kbd> on the trigger | Open the menu, focusing the first / last item |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> on the trigger | Open the menu |
+| <kbd>↓</kbd> / <kbd>↑</kbd> in the menu | Next / previous item, wrapping (`loop`) |
+| <kbd>Home</kbd> / <kbd>End</kbd> | First / last item |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | Activate the focused item |
+| <kbd>Esc</kbd> | Close and return focus to the trigger |
+
+Disabled items are skipped by arrow navigation and are never focused.
+
+**Hover menus deliberately do not manage focus.** With `trigger="hover"` or
+`"click-hover"`, opening the menu does not take focus and closing it does not move
+focus to the trigger — a menu you opened by pointing at something never had focus, so
+"returning" it would move the caret somewhere you never put it. Keyboard users reach
+a hover menu the same way as any other: by pressing or arrowing on the trigger.
+Override with `trapFocus` / `returnFocus` if your case differs.
+
+- `loop={false}` stops arrow focus wrapping at the ends.
+- `menuItemTabIndex={0}` additionally makes every item a <kbd>Tab</kbd> stop. Rarely
+  wanted — the arrow keys are the menu pattern — but useful if you are using `Menu`
+  as a plain list of links.
+- Give an icon-only trigger an accessible name (`aria-label` on the target, or use
+  [`ActionIcon`](/docs/components/inputs/action-icon), which is built for it).
+
+<Callout kind="platform">
+  Arrow navigation, focus trapping and focus restoration are web-only: React Native
+  views never fire `keydown` and have no DOM focus model, so on iOS and Android items
+  are pressable targets reached through the platform's own screen-reader gestures.
+</Callout>

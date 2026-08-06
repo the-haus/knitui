@@ -119,6 +119,11 @@ jobs:
       - name: Docs guardrails
         run: node scripts/docs/check-coverage.mjs --check-generated
 
+      # The playground highlights its live snippet in the browser instead of
+      # through Shiki; this checks the two still colour the same code the same way.
+      - name: Live highlighter matches Shiki
+        run: node scripts/docs/check-live-highlight.mjs
+
       - name: Lint
         run: pnpm --filter @knitui/docs lint
 

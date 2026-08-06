@@ -1,9 +1,11 @@
 import type { MDXComponents } from "mdx/types";
 
 import { ComponentHeader } from "@/components/docs/ComponentHeader";
+import { ComponentIndex } from "@/components/docs/ComponentIndex";
 import { HookIndex, HookReference } from "@/components/docs/HookReference";
 import { ExportIndex, PackageTable, PeerDependencyTable } from "@/components/docs/PackageTables";
 import { PropsTable, StylePropsTable } from "@/components/docs/PropsTable";
+import { ThemePreview } from "@/components/docs/ThemePreview";
 import {
   AllTokenScales,
   BreakpointTable,
@@ -58,6 +60,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 
     // Generated component sections.
     ComponentHeader,
+    ComponentIndex,
+    ThemePreview,
     Example,
     Examples,
     Playground,
