@@ -7,6 +7,8 @@ import { AngleSlider } from "../AngleSlider";
 import { Button } from "../Button";
 import { Checkbox } from "../Checkbox";
 import { Chip } from "../Chip";
+import { ColorPicker } from "../ColorPicker";
+import { Menu } from "../Menu";
 import { NavLink } from "../NavLink";
 import { NumberInput } from "../NumberInput";
 import { Pagination } from "../Pagination";
@@ -14,10 +16,12 @@ import { Radio } from "../Radio";
 import { Rating } from "../Rating";
 import { SegmentedControl } from "../SegmentedControl";
 import { Slider } from "../Slider";
+import { Stepper } from "../Stepper";
 import { Switch } from "../Switch";
 import { Tabs } from "../Tabs";
 import { render } from "../test-utils";
 import { Tree } from "../Tree";
+import { TreeSelect } from "../TreeSelect";
 import { UnstyledButton } from "../UnstyledButton";
 
 /**
@@ -75,6 +79,26 @@ const CASES: Array<{ name: string; element: React.ReactElement; expectRing: bool
   { name: "Radio", element: <Radio value="a" label="Radio" />, expectRing: true },
   { name: "Switch", element: <Switch aria-label="sw" />, expectRing: true },
   { name: "Checkbox", element: <Checkbox aria-label="cb" />, expectRing: true },
+  /*
+   * Menu's items carry the ring and are reached with the Arrow keys (roving focus),
+   * so `tabIndex={-1}` is correct here rather than a dead ring — but the ring is only
+   * meaningful because that navigation exists. Menu was missing from this list while
+   * it had no key handling at all, which is exactly how the gap survived.
+   */
+  {
+    name: "Menu",
+    element: (
+      <Menu defaultOpened>
+        <Menu.Target>
+          <Button>Open</Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item>One</Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    ),
+    expectRing: true,
+  },
   { name: "Rating", element: <Rating defaultValue={2} />, expectRing: true },
   { name: "Slider", element: <Slider defaultValue={50} />, expectRing: true },
   { name: "AngleSlider", element: <AngleSlider />, expectRing: true },
@@ -119,6 +143,29 @@ const CASES: Array<{ name: string; element: React.ReactElement; expectRing: bool
         ]}
       />
     ),
+    expectRing: true,
+  },
+  /*
+   * These three also spread the ring but were never covered here — the same blind
+   * spot that let Menu ship a ring its items could not reach.
+   */
+  { name: "ColorPicker", element: <ColorPicker />, expectRing: true },
+  {
+    // Stepper's ring rides its `clickable` variant, which only applies when
+    // `onStepClick` makes the steps selectable — so the case must supply one, or
+    // there is no ring to check.
+    name: "Stepper",
+    element: (
+      <Stepper active={1} onStepClick={() => {}}>
+        <Stepper.Step label="One" />
+        <Stepper.Step label="Two" />
+      </Stepper>
+    ),
+    expectRing: true,
+  },
+  {
+    name: "TreeSelect",
+    element: <TreeSelect data={[{ value: "a", label: "A" }]} />,
     expectRing: true,
   },
 ];

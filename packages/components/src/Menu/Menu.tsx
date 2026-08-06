@@ -2,12 +2,14 @@ import * as React from "react";
 
 import {
   type GetProps,
+  isWeb,
   type RadiusTokens,
   styled,
+  type TamaguiElement,
   Theme,
   withStaticProperties,
 } from "@knitui/core";
-import { useUncontrolled } from "@knitui/hooks";
+import { useMergedRef, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
@@ -25,6 +27,63 @@ import {
 import { Text } from "../Text";
 
 export type MenuTrigger = "click" | "hover" | "click-hover";
+
+/* -------------------------------------------------------------------------- */
+/* Keyboard navigation                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The enabled items of an open menu, in DOM order.
+ *
+ * Read off the DOM rather than from cloned children, because a menu's children are
+ * arbitrary — items interleaved with `Menu.Label` and `Menu.Divider`, often wrapped
+ * in a consumer's own fragments or `.map()`. Querying `[role="menuitem"]` is the
+ * only enumeration that cannot fall out of step with what is rendered.
+ *
+ * Web-only: native Views never fire `keydown`, so nothing here is reached off-web.
+ */
+function menuItemsOf(container: HTMLElement | null): HTMLElement[] {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll<HTMLElement>('[role="menuitem"]')).filter(
+    (item) => item.getAttribute("aria-disabled") !== "true",
+  );
+}
+
+/** Focus an item without scrolling the page underneath the floating dropdown. */
+function focusItem(item: HTMLElement | undefined) {
+  item?.focus({ preventScroll: true });
+}
+
+/**
+ * Move roving focus within an open menu.
+ *
+ * Returns `true` when the key was consumed, so the caller knows whether to
+ * `preventDefault` — Arrow keys would otherwise scroll the page behind the menu.
+ */
+function moveMenuFocus(container: HTMLElement | null, key: string, loop: boolean): boolean {
+  const items = menuItemsOf(container);
+  if (!items.length) return false;
+
+  const current = items.indexOf(document.activeElement as HTMLElement);
+  const last = items.length - 1;
+  let next: number;
+
+  if (key === "Home") next = 0;
+  else if (key === "End") next = last;
+  else if (key === "ArrowDown") {
+    next = current < 0 ? 0 : loop ? (current + 1) % items.length : Math.min(current + 1, last);
+  } else if (key === "ArrowUp") {
+    next =
+      current < 0
+        ? last
+        : loop
+          ? (current - 1 + items.length) % items.length
+          : Math.max(current - 1, 0);
+  } else return false;
+
+  focusItem(items[next]);
+  return true;
+}
 
 /** Arrow alignment along the dropdown edge (forwarded to the inner `Popover`). */
 export type MenuArrowPosition = PopoverArrowPosition;
@@ -46,6 +105,24 @@ interface MenuContextValue {
   closeOnItemClick: boolean;
   trigger: MenuTrigger;
   itemTabIndex: -1 | 0;
+  /** Wrap roving focus at the ends of the item list. */
+  loop: boolean;
+  /**
+   * Whether this menu moves focus into the dropdown on open (and back to the
+   * trigger on close) — the ARIA menu-button pattern. False for hover-opened
+   * menus, where stealing focus on pointer-over would be hostile.
+   */
+  manageFocus: boolean;
+  /**
+   * Which end of the item list to focus on the next open, set by the trigger's
+   * Arrow key and consumed once by the dropdown.
+   *
+   * A ref, not state: it is a one-shot instruction between two components in the
+   * same commit, and putting it in state would render the whole menu twice per open.
+   * `null` means "no keyboard intent" — the dropdown then applies its default
+   * (first item, when `manageFocus`).
+   */
+  pendingFocus: React.MutableRefObject<"first" | "last" | null>;
   /** Resolved per-slot style sugar, distributed onto the parts that read it. */
   slots: {
     dropdown?: GetProps<typeof MenuDropdownFrame>;
@@ -129,8 +206,31 @@ export interface MenuProps {
   openDelay?: number;
   /** Close delay in ms for hover triggers. @default 100 */
   closeDelay?: number;
-  /** `tabIndex` set on every item; `0` enables Tab navigation. @default -1 */
+  /**
+   * `tabIndex` set on every item.
+   *
+   * Leave at `-1`: items are reached with the Arrow keys (roving focus), which is
+   * the ARIA menu pattern, and `-1` keeps them programmatically focusable without
+   * putting every item in the page's tab order. `0` additionally makes each item a
+   * Tab stop — occasionally wanted for a menu used as a plain link list.
+   * @default -1
+   */
   menuItemTabIndex?: -1 | 0;
+  /** Wrap Arrow-key focus at the ends of the item list (web). @default true */
+  loop?: boolean;
+  /**
+   * Trap Tab within the open dropdown (web). Defaults to `true` for click
+   * triggers, `false` for hover triggers — see `returnFocus`.
+   */
+  trapFocus?: boolean;
+  /**
+   * Return focus to the trigger when the menu closes (web).
+   *
+   * Defaults to `true` for click triggers and `false` for hover triggers: a menu
+   * opened by pointing at something never took focus in the first place, so
+   * "returning" it would move focus somewhere the user never put it.
+   */
+  returnFocus?: boolean;
   /** Dropdown placement. @default 'bottom-start' */
   position?: PopoverPosition;
   /** Gap between target and dropdown in px. @default 8 */
@@ -180,6 +280,9 @@ function MenuRoot(props: MenuProps) {
     openDelay = 0,
     closeDelay = 100,
     menuItemTabIndex = -1,
+    loop = true,
+    trapFocus,
+    returnFocus,
     position = "bottom-start",
     offset = 8,
     width = "max-content",
@@ -227,6 +330,24 @@ function MenuRoot(props: MenuProps) {
   const open = React.useCallback(() => setOpen(true), [setOpen]);
   const close = React.useCallback(() => setOpen(false), [setOpen]);
 
+  /*
+   * Focus policy.
+   *
+   * A click-triggered menu is the ARIA menu-button pattern: opening moves focus into
+   * the dropdown, Tab is trapped there, and closing returns focus to the trigger. A
+   * hover-triggered menu is not — the pointer never gave it focus, so taking focus on
+   * hover-in (and shoving it onto the trigger on hover-out) would yank the caret out
+   * of whatever the user was actually doing.
+   *
+   * Hence: focus is managed for `click`, and left alone for `hover` / `click-hover`.
+   * Both can still be overridden per menu. Keyboard users reach a hover menu the same
+   * way they always could — pressing the trigger, which routes through `click`.
+   */
+  const manageFocus = trigger === "click";
+  const resolvedTrapFocus = trapFocus ?? manageFocus;
+  const resolvedReturnFocus = returnFocus ?? manageFocus;
+  const pendingFocus = React.useRef<"first" | "last" | null>(null);
+
   // Delayed open/close for hover triggers. A single timer is enough since open
   // and close are mutually exclusive intents.
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,6 +388,9 @@ function MenuRoot(props: MenuProps) {
       closeOnItemClick,
       trigger,
       itemTabIndex: menuItemTabIndex,
+      loop,
+      manageFocus,
+      pendingFocus,
       slots: {
         dropdown: dropdownSlot,
         item: itemSlot,
@@ -286,6 +410,8 @@ function MenuRoot(props: MenuProps) {
       closeOnItemClick,
       trigger,
       menuItemTabIndex,
+      loop,
+      manageFocus,
       dropdownSlot,
       itemSlot,
       itemLabelSlot,
@@ -310,6 +436,11 @@ function MenuRoot(props: MenuProps) {
       disabled={disabled}
       closeOnEscape={closeOnEscape}
       closeOnClickOutside={closeOnClickOutside}
+      // `Popover` already implements both (web-only, via `useFocusTrap` and a
+      // focus-on-close effect); Menu simply never forwarded them, which is why an
+      // open menu used to leak Tab into the page behind it.
+      trapFocus={resolvedTrapFocus}
+      returnFocus={resolvedReturnFocus}
       withArrow={withArrow}
       arrowSize={arrowSize}
       arrowOffset={arrowOffset}
@@ -339,6 +470,7 @@ export interface MenuTargetProps {
 }
 
 type HoverHandlers = { onHoverIn?: () => void; onHoverOut?: () => void };
+type KeyHandlers = { onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void };
 
 function MenuTarget({ children, refProp = "ref" }: MenuTargetProps) {
   const ctx = useMenuContext();
@@ -349,7 +481,7 @@ function MenuTarget({ children, refProp = "ref" }: MenuTargetProps) {
   // toggles via Popover.Target, which keeps the menu keyboard/touch accessible.
   // Compose with the child's own hover handlers (mirrors Tooltip's
   // `buildTargetHandlers`) so a consumer's `onHoverIn`/`onHoverOut` isn't dropped.
-  const childProps = children.props as HoverHandlers;
+  const childProps = children.props as HoverHandlers & KeyHandlers;
   const withHover = hover
     ? React.cloneElement(
         children,
@@ -366,7 +498,28 @@ function MenuTarget({ children, refProp = "ref" }: MenuTargetProps) {
       )
     : children;
 
-  return <Popover.Target refProp={refProp}>{withHover}</Popover.Target>;
+  /*
+   * ArrowDown / ArrowUp on the trigger opens the menu — the other half of the ARIA
+   * menu-button pattern, and the only way to open a HOVER menu from the keyboard
+   * without pressing it. `Enter`/`Space` already work: the trigger is a real button,
+   * and `Popover.Target` toggles on press.
+   *
+   * Which end gets focus is the useful part: Down lands on the first item, Up on the
+   * last, so "open and pick the bottom entry" is one keystroke.
+   */
+  const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    childProps.onKeyDown?.(event);
+    if (event.defaultPrevented) return;
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    ctx.pendingFocus.current = event.key === "ArrowDown" ? "first" : "last";
+    ctx.clearTimer();
+    ctx.open();
+  };
+
+  const withKeys = React.cloneElement(withHover, { onKeyDown } as KeyHandlers & React.Attributes);
+
+  return <Popover.Target refProp={refProp}>{withKeys}</Popover.Target>;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -395,6 +548,47 @@ const MenuDropdown = MenuDropdownFrame.styleable<MenuDropdownProps>(
       ? hoverProps({ onHoverIn: ctx.open, onHoverOut: ctx.closeWithDelay })
       : undefined;
 
+    /*
+     * Own handle on the dropdown element, merged with the caller's ref — the DOM node
+     * is what `menuItemsOf` enumerates, and the caller's ref must still be honoured.
+     */
+    const frameRef = React.useRef<TamaguiElement | null>(null);
+    const mergedRef = useMergedRef(ref, frameRef);
+    const domNode = () => (isWeb ? (frameRef.current as HTMLElement | null) : null);
+
+    /*
+     * Move focus into the menu when it opens.
+     *
+     * The Arrow key that opened it (if any) decides which end; otherwise a
+     * focus-managed menu starts at the first item. Deferred by a frame because the
+     * dropdown is portalled and positioned by floating-ui after mount — focusing
+     * before that lands can scroll the page to a stale position, which
+     * `preventScroll` alone does not cover on every engine.
+     */
+    React.useEffect(() => {
+      if (!isWeb || !ctx.opened) return undefined;
+      const intent = ctx.pendingFocus.current;
+      ctx.pendingFocus.current = null;
+      if (!intent && !ctx.manageFocus) return undefined;
+
+      const frame = requestAnimationFrame(() => {
+        const items = menuItemsOf(domNode());
+        focusItem(intent === "last" ? items[items.length - 1] : items[0]);
+      });
+      return () => cancelAnimationFrame(frame);
+      // `pendingFocus` is a stable ref; re-running on every `ctx` identity change
+      // would re-steal focus on unrelated menu re-renders.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ctx.opened, ctx.manageFocus]);
+
+    /*
+     * Roving focus. `Escape` is already handled by `Popover`'s document listener, and
+     * `Enter`/`Space` activate the focused item through its own press handling.
+     */
+    const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+      if (moveMenuFocus(domNode(), event.key, ctx.loop)) event.preventDefault();
+    };
+
     return (
       // The floating frame contributes no padding of its own (`padding={0}`); the
       // visible padding lives on the inner `MenuDropdownFrame`, which carries the
@@ -404,11 +598,12 @@ const MenuDropdown = MenuDropdownFrame.styleable<MenuDropdownProps>(
       <Popover.Dropdown padding={0}>
         {/* `dropdown` slot sugar layers UNDER the explicit inline `...rest` props. */}
         <MenuDropdownFrame
-          ref={ref}
+          ref={mergedRef}
           {...hoverHandlers}
           {...ctx.slots.dropdown}
           {...rest}
           role="menu"
+          onKeyDown={onKeyDown}
         >
           {children}
         </MenuDropdownFrame>
