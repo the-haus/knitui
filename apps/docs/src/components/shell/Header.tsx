@@ -17,9 +17,15 @@ export function Header() {
       {/* Before the brand, so the first Tab on a phone reaches navigation. */}
       <MobileNav />
 
+      {/*
+       * The wordmark is hidden on a phone — see `.header__wordmark`. The mark
+       * alone carries the brand in the cramped state, and the header stops
+       * competing for room with the burger and the actions. The drawer covers the
+       * header outright when it opens, and names the brand itself while it is up.
+       */}
       <Link href="/" className="header__brand">
         <BrandMark className="header__mark" size={24} id="knit-mark-header" />
-        Knit UI
+        <span className="header__wordmark">Knit UI</span>
       </Link>
 
       <nav className="header__nav" aria-label="Main">
@@ -36,7 +42,7 @@ export function Header() {
         <SearchTrigger />
         <ColorSchemeToggle />
         <a
-          className="button-quiet"
+          className="button-quiet header__github"
           href="https://github.com/the-haus/knitui"
           target="_blank"
           rel="noreferrer"

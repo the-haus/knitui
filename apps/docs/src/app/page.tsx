@@ -146,6 +146,8 @@ export default function LandingPage() {
           <Showcase
             id="carousel/swipe-deck"
             scale={0.65}
+            /* The deck is 460px tall before any zoom — twice a phone tile. */
+            narrowScale={0.5}
             story="FanEffect"
             tag="@knitui/carousel"
             span={3}
@@ -164,6 +166,8 @@ export default function LandingPage() {
           <Showcase
             id="graphics/effects/effect-view"
             scale={1.4}
+            /* 220x130 authored: it still fits a phone tile at full zoom. */
+            narrowScale={1.4}
             story="SweepBorder"
             tag="@knitui/graphics"
             span={3}

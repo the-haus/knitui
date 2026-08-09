@@ -4,6 +4,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 
 import { useRouter } from "next/navigation";
 
+import { ChromePortal } from "./ChromePortal";
+
 type PagefindResult = {
   id: string;
   data: () => Promise<{
@@ -201,93 +203,95 @@ export function SearchTrigger() {
       </button>
 
       {open ? (
-        <div
-          className="search__scrim"
-          role="presentation"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) close();
-          }}
-        >
+        <ChromePortal>
           <div
-            ref={dialogRef}
-            className="search__dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Search documentation"
-            onKeyDown={onKeyDown}
+            className="search__scrim"
+            role="presentation"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) close();
+            }}
           >
-            <input
-              ref={inputRef}
-              className="search__input"
-              type="text"
-              value={query}
-              placeholder="Search components, props, guides…"
-              onChange={(event) => setQuery(event.target.value)}
-              role="combobox"
-              aria-expanded={hits.length > 0}
-              aria-controls={listId}
-              aria-autocomplete="list"
-              aria-activedescendant={hits.length ? `${listId}-${active}` : undefined}
-              autoComplete="off"
-              spellCheck={false}
-            />
+            <div
+              ref={dialogRef}
+              className="search__dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search documentation"
+              onKeyDown={onKeyDown}
+            >
+              <input
+                ref={inputRef}
+                className="search__input"
+                type="text"
+                value={query}
+                placeholder="Search components, props, guides…"
+                onChange={(event) => setQuery(event.target.value)}
+                role="combobox"
+                aria-expanded={hits.length > 0}
+                aria-controls={listId}
+                aria-autocomplete="list"
+                aria-activedescendant={hits.length ? `${listId}-${active}` : undefined}
+                autoComplete="off"
+                spellCheck={false}
+              />
 
-            <div className="search__results">
-              {status === "unavailable" ? (
-                <p className="search__message">
-                  Search runs on the production build — the index is generated after
-                  <code> next build</code>.
-                </p>
-              ) : null}
+              <div className="search__results">
+                {status === "unavailable" ? (
+                  <p className="search__message">
+                    Search runs on the production build — the index is generated after
+                    <code> next build</code>.
+                  </p>
+                ) : null}
 
-              {message ? <p className="search__message">{message}</p> : null}
+                {message ? <p className="search__message">{message}</p> : null}
 
-              <ul className="search__list" id={listId} role="listbox" aria-label="Search results">
-                {hits.map((hit, index) => (
-                  <li key={hit.url} role="presentation">
-                    <a
-                      id={`${listId}-${index}`}
-                      role="option"
-                      aria-selected={index === active}
-                      data-active={index === active}
-                      className="search__hit"
-                      href={hit.url}
-                      onClick={() => setOpen(false)}
-                      onMouseEnter={() => setActive(index)}
-                    >
-                      <span className="search__hit-head">
-                        <span className="search__hit-title">{hit.title}</span>
-                        <span className="search__hit-section">{hit.section}</span>
-                      </span>
-                      <span
-                        className="search__hit-excerpt"
-                        // Pagefind marks the matched terms with <mark> in its excerpt.
-                        dangerouslySetInnerHTML={{ __html: hit.excerpt }}
-                      />
-                    </a>
-                  </li>
-                ))}
-              </ul>
+                <ul className="search__list" id={listId} role="listbox" aria-label="Search results">
+                  {hits.map((hit, index) => (
+                    <li key={hit.url} role="presentation">
+                      <a
+                        id={`${listId}-${index}`}
+                        role="option"
+                        aria-selected={index === active}
+                        data-active={index === active}
+                        className="search__hit"
+                        href={hit.url}
+                        onClick={() => setOpen(false)}
+                        onMouseEnter={() => setActive(index)}
+                      >
+                        <span className="search__hit-head">
+                          <span className="search__hit-title">{hit.title}</span>
+                          <span className="search__hit-section">{hit.section}</span>
+                        </span>
+                        <span
+                          className="search__hit-excerpt"
+                          // Pagefind marks the matched terms with <mark> in its excerpt.
+                          dangerouslySetInnerHTML={{ __html: hit.excerpt }}
+                        />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="search__footer">
+                <span>
+                  <kbd>↑</kbd> <kbd>↓</kbd> to navigate
+                </span>
+                <span>
+                  <kbd>↵</kbd> to open
+                </span>
+                <span>
+                  <kbd>esc</kbd> to close
+                </span>
+              </div>
+
+              {/* Announced to screen readers; the visible count is the list itself. */}
+              <p aria-live="polite" className="visually-hidden">
+                {hits.length ? `${hits.length} result${hits.length === 1 ? "" : "s"}` : ""}
+              </p>
             </div>
-
-            <div className="search__footer">
-              <span>
-                <kbd>↑</kbd> <kbd>↓</kbd> to navigate
-              </span>
-              <span>
-                <kbd>↵</kbd> to open
-              </span>
-              <span>
-                <kbd>esc</kbd> to close
-              </span>
-            </div>
-
-            {/* Announced to screen readers; the visible count is the list itself. */}
-            <p aria-live="polite" className="visually-hidden">
-              {hits.length ? `${hits.length} result${hits.length === 1 ? "" : "s"}` : ""}
-            </p>
           </div>
-        </div>
+        </ChromePortal>
       ) : null}
     </>
   );

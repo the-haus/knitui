@@ -27,6 +27,7 @@ export function Showcase({
   tag,
   span = 2,
   scale,
+  narrowScale,
 }: {
   id: string;
   story: string;
@@ -51,8 +52,21 @@ export function Showcase({
    * void. A transform is the right tool because it does not re-lay-out the
    * story: the demo keeps rendering at its authored size (and, for the Skia
    * tiles, its authored canvas resolution) and is only mapped onto the tile.
+   *
+   * Authored against the DESKTOP tile, ~600x320 — see `narrowScale`.
    */
   scale?: number;
+  /**
+   * The same, for a tile that is no longer desktop-sized (below 1080px the grid
+   * goes two-up, below 720px one-up, where a tile is ~320x240).
+   *
+   * Defaults to "never zoom in", which is right for the demos that lay
+   * themselves out to the tile: `scale` exists to fill a wide tile with a story
+   * authored for a narrow docs column, and a narrow tile does not need it. Pass
+   * a number only where that default is wrong — a story with a fixed intrinsic
+   * size that must shrink further, or a small one that still has room to grow.
+   */
+  narrowScale?: number;
 }) {
   const entry = requireEntry(id);
 
@@ -75,7 +89,14 @@ export function Showcase({
        * collapse them to zero height. The CSS keys off this.
        */
       data-mode={entry.render}
-      style={scale ? ({ "--showcase-scale": scale } as React.CSSProperties) : undefined}
+      style={
+        scale || narrowScale
+          ? ({
+              "--showcase-scale": scale,
+              "--showcase-scale-narrow": narrowScale,
+            } as React.CSSProperties)
+          : undefined
+      }
     >
       <div className="showcase__frame" data-pagefind-ignore>
         <span className="showcase__tag">{tag}</span>

@@ -74,7 +74,8 @@ export function ComponentIndex() {
                    * `pointer-events: none` (in CSS) and `aria-hidden` they would be
                    * focusable, tabbable duplicates of the real thing, and nesting
                    * them inside the tile's link would be invalid HTML. The link is
-                   * the component's name; the demo is decoration.
+                   * the component's name, stretched over the whole card in CSS; the
+                   * demo is decoration.
                    */}
                   <div className="gallery__frame" aria-hidden="true" data-pagefind-ignore>
                     {story ? (
@@ -86,10 +87,12 @@ export function ComponentIndex() {
                       />
                     ) : null}
                   </div>
-                  <h3 className="gallery__name">
-                    <Link href={entry.route}>{entry.name}</Link>
-                  </h3>
-                  <p className="gallery__blurb">{summary(entry)}</p>
+                  <div className="gallery__body">
+                    <h3 className="gallery__name">
+                      <Link href={entry.route}>{entry.name}</Link>
+                    </h3>
+                    <p className="gallery__blurb">{summary(entry)}</p>
+                  </div>
                 </article>
               );
             })}
