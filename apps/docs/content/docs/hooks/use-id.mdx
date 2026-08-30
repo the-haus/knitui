@@ -4,3 +4,31 @@ export const meta = {
 };
 
 <HookReference slug="use-id" />
+
+Any component that wires accessibility relationships — a label to its input, an
+error message to the field it describes, a trigger to the panel it controls —
+needs an id. It also has to let the caller supply their own. `useId` collapses
+both cases into one line: pass the caller's `id` through and get it back
+unchanged, pass nothing and get React's generated id instead.
+
+The reason this is a hook rather than `props.id ?? useReactId()` is that `??`
+short-circuits. Written inline, React's `useId` is only called when no id was
+passed, so a component that is sometimes given an `id` and sometimes not changes
+its hook order between renders. `useId` always calls React's hook and picks the
+result afterwards, so the order is fixed.
+
+## When to use it
+
+- Generating the id a `label` points at, when the component accepts an optional `id` prop.
+- Wiring `aria-describedby` from a control to its own error or help text.
+- Linking a disclosure trigger to the region it expands via `aria-controls`.
+
+## Notes
+
+- The generated id is stable for the lifetime of the component, so it is safe in
+  attribute wiring that must not change between renders.
+- There is no platform split — it is React's `useId` with a fallback, and behaves
+  the same on web and native.
+- Passing `staticId` does not skip the generated id; it is still created, just
+  unused. Two instances given the same `staticId` will collide, which is the
+  caller's call to make.

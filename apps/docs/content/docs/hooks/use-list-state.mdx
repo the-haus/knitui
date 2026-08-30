@@ -4,3 +4,33 @@ export const meta = {
 };
 
 <HookReference slug="use-list-state" />
+
+Array state in React is where mutation bugs live. `useListState` returns
+`[list, handlers]`, where the handlers cover the operations you would otherwise
+open-code — `append`, `prepend`, `insert`, `remove`, `reorder`, `swap`,
+`setItem`, `setItemProp`, `apply`, `applyWhere`, `filter`, `pop`, `shift` — and
+every one of them produces a new array. Nothing is spliced in place, so the state
+is a safe dependency for `useMemo`, `useEffect` and `React.memo`.
+
+The index-taking handlers are guarded against out-of-range input, which is not a
+theoretical concern: these are the handlers a drag-and-drop list wires straight to
+gesture output, and a list can shrink between the drag starting and the drop
+landing. `reorder`, `swap` and `setItemProp` all no-op on a miss rather than
+inserting `undefined`, overwriting a real row, or replacing an item with a bare
+`{ [prop]: value }` object.
+
+## When to use it
+
+- Editable collections: todo rows, form field arrays, tag lists.
+- Drag-and-drop reordering, via `reorder` or `swap`.
+- Toggling one property on one row without rebuilding the array (`setItemProp`).
+- Bulk edits across all rows (`apply`) or a matching subset (`applyWhere`).
+
+## Notes
+
+- Each handler is referentially stable, but the handlers **object** is a fresh
+  literal every render. Depend on `handlers.append`, not on `handlers`.
+- `initialValue` seeds the first render only; later changes to it are ignored, as
+  with any `useState` initial value.
+- `setItemProp` spreads the existing row, so it expects object items.
+- Pure React, no platform split — the same behaviour on web and native.

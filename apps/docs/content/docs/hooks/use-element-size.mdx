@@ -4,3 +4,42 @@ export const meta = {
 };
 
 <HookReference slug="use-element-size" />
+
+Measuring one element is where cross-platform code usually forks: the web has
+`ResizeObserver`, React Native has `onLayout`, and the two are wired up
+differently — one through a ref, one through a prop. `useElementSize` hides that
+behind a single return shape: `{ ref, rootProps, width, height }`. Attach `ref`
+and spread `rootProps` onto the element you want to measure, and the same
+component compiles on both platforms.
+
+On web, `rootProps` is empty and the measurement comes from a `ResizeObserver`
+watching the node's `contentRect`. On native, `ref` exists only for parity and
+`rootProps` carries the `onLayout` handler that reports the laid-out box.
+
+Both implementations bail out when the measured box is unchanged and return the
+previous state object, so a re-measure to the same value costs no render. That
+matters because the consumers re-render whole subtrees off this size:
+[`Collapse`](/docs/components/overlays/collapse),
+[`Spoiler`](/docs/components/feedback/spoiler) and
+[`Marquee`](/docs/components/data-display/marquee) all animate against it.
+
+## When to use it
+
+- Animating a height or width you cannot know statically (expanding panels,
+  clamped text).
+- Laying out content against its own measured size rather than the viewport's.
+- Any measurement that must survive the element re-mounting.
+
+## Notes
+
+- Always attach **both** `ref` and `rootProps`. Dropping either silently breaks
+  measurement on one platform while working on the other.
+- The web `ref` is a **callback ref**, not an object ref, and that is
+  load-bearing. A one-shot mount effect would capture `ref.current` once and
+  miss any element that mounts later — a `keepMounted={false}` `Collapse`
+  subtree, for example, whose content only mounts on expand. The measured size
+  would stay `0` and the panel would stay clipped to `height: 0`. A callback ref
+  re-attaches the observer every time React attaches the node.
+- Never read `.current` off the returned `ref`; only spread it.
+- For window-level dimensions, use
+  [`useViewportSize`](/docs/hooks/use-viewport-size) instead.

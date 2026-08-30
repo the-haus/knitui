@@ -4,3 +4,32 @@ export const meta = {
 };
 
 <HookReference slug="use-merged-ref" />
+
+An element can only take one `ref`, and components routinely have more than one
+claim on it: the ref forwarded by the consumer, an internal ref the component
+measures or focuses with, and often a ref handed over by a hook such as
+[`useMove`](/docs/hooks/use-move). `useMergedRef` combines them into a single
+callback ref that assigns the node to all of them.
+
+It handles the three shapes a ref can take. Callback refs are invoked, object refs
+have their `current` written, and `null` or `undefined` entries are skipped — so
+you can pass an optional forwarded ref straight through without a guard. The same
+logic is exported as `assignRef` for the cases where you need to write one ref
+imperatively rather than merge several.
+
+## When to use it
+
+- Forwarding a ref while still keeping your own handle on the node.
+- Attaching a hook's ref to an element that the caller also refs.
+- Combining a measurement ref with a focus or scroll ref on the same host.
+
+## Notes
+
+- The returned callback's identity depends on the refs you pass. Pass stable refs
+  (a `useRef` object, a forwarded ref) rather than inline arrow refs, or React
+  detaches and reattaches the node — calling every ref with `null`, then the node —
+  on each render.
+- The number of refs must stay constant across renders; it is the dependency array
+  of the underlying `useCallback`.
+- Works with both DOM elements and React Native hosts. Type it as `TamaguiElement`
+  rather than an `HTMLElement` so it compiles on native too.

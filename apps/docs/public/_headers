@@ -28,6 +28,12 @@
   Cache-Control: public, max-age=3600
 
 /*
+  # Pages are extensionless (`/docs/foo`, not `/docs/foo.html`), so this cannot
+  # be scoped to *.html. Revalidate every time: the URLs are not content-hashed,
+  # so without this a deploy leaves stale HTML — and stale HTML means a crawler
+  # re-reads copy that has already changed. The hashed-asset rule above is more
+  # specific and still wins for /_next/static/*.
+  Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   # SAMEORIGIN rather than DENY: the docs embed their own routes and the

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { DocsJsonLd } from "@/components/seo/JsonLd";
 import { contentMetadata, docsRouteSegments, loadContent } from "@/lib/content";
 
 type Params = { slug: string[] };
@@ -25,6 +26,12 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 }
 
 export default async function DocsPage({ params }: { params: Promise<Params> }) {
-  const { default: Content } = await loadContent(await routeOf(params));
-  return <Content />;
+  const route = await routeOf(params);
+  const { default: Content, meta } = await loadContent(route);
+  return (
+    <>
+      <DocsJsonLd route={route} title={meta?.title} description={meta?.description} />
+      <Content />
+    </>
+  );
 }

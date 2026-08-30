@@ -1,6 +1,6 @@
 export const meta = {
   title: "Audio Visualizer",
-  description: "Audio Visualizer — part of @knitui/media. 5 live examples.",
+  description: "A Skia-rendered audio visualizer driven by the `@knitui/media/dsp` FFT, attached to a real `<Audio>` player. `useAudioSpectrum` taps the player's off-thread sampler (`sampleUpdate`), runs the FFT once per frame, and pushes frequency bands to `<AudioVisualizer>` — no per-frame React renders. Press play. (`@knitui/graphics`/Skia is a dev-only dependency; the shipped kit is Skia-free.)",
 };
 
 <ComponentHeader id="media/audio-visualizer" />

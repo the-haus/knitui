@@ -4,3 +4,34 @@ export const meta = {
 };
 
 <HookReference slug="use-validated-state" />
+
+`useValidatedState` stores three things that normally drift apart: the current
+`value`, whether it is `valid`, and `lastValidValue` — the most recent value that
+passed. The setter runs the `validation` function on every change; a passing
+value updates all three, a failing one updates `value` and `valid` but leaves
+`lastValidValue` where it was.
+
+That last part is the point. A field passes through invalid intermediate states
+as it is typed — `#ff` on the way to `#ff0088`, `12/` on the way to a date — and
+a component that commits every keystroke will flash a broken colour or throw on
+an unparseable date. `lastValidValue` lets the input show exactly what was typed
+while the preview or parent form keeps rendering the last good value, and gives a
+blur handler something to revert to.
+
+## When to use it
+
+- Parsed or masked text inputs: colour, date, time, number, duration.
+- Commit-on-valid fields, where the consumer of the value must never see a
+  half-typed one.
+- Revert-on-blur behaviour, which needs a known-good value to revert to.
+
+## Notes
+
+- The third argument, `initialValidationState`, overrides the computed initial
+  `valid` flag — pass `true` so an empty field does not start out marked invalid.
+  It does not affect `lastValidValue`, which is always derived by running
+  `validation` on `initialValue` and is `undefined` when that fails.
+- The setter's identity depends on `validation`. An inline arrow makes it change
+  every render, so hoist the validator or wrap it in `useCallback` before putting
+  the setter in a dependency array.
+- Pure React state, so behaviour is identical on web and native.

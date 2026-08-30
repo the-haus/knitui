@@ -1,6 +1,44 @@
 export const meta = {
   title: "useFocusTrap",
-  description: "useFocusTrap — a hook from @knitui/hooks.",
+  description:
+    "useFocusTrap keeps keyboard focus inside a container while it is active: focus moves in on mount and Tab cycles between the first and last focusable descendants. Web-only; a no-op on native.",
 };
 
 <HookReference slug="use-focus-trap" />
+
+A modal that renders over the page but leaves focus behind it is broken for
+keyboard and screen-reader users: Tab walks straight out of the dialog and into
+the content it is supposed to be blocking, and there is no visual cue that it
+happened. `useFocusTrap` fixes that. It returns a ref callback to attach to the
+container; while `active`, focus is moved inside on activation and a `keydown`
+handler keeps Tab and Shift+Tab cycling between the first and last focusable
+descendants.
+
+The initial target is chosen in order: an element marked `[data-autofocus]`,
+otherwise the first focusable descendant, otherwise the container itself (which
+gets `tabindex="-1"` added so it can receive focus). Focus is moved with
+`preventScroll`, so activating the trap never jumps the page.
+
+The focusable list is recomputed on every Tab press rather than cached, so
+content that appears while the trap is open still participates in the cycle.
+Elements that are `disabled`, `aria-hidden="true"` or `tabindex="-1"` are
+excluded.
+
+## When to use it
+
+- Custom overlays, dialogs and command palettes you build yourself.
+- Rarely directly — [`FocusTrap`](/docs/components/overlays/focus-trap) wraps
+  it as a component, and [`Modal`](/docs/components/overlays/modal) and
+  [`Drawer`](/docs/components/overlays/drawer) already trap focus via their
+  `trapFocus` prop.
+
+## Notes
+
+- The `.native` variant is a **no-op**: React Native has no DOM focus model, so
+  there is nothing to trap. The returned ref callback ignores the node. This is
+  a documented parity gap, not an oversight — do not rely on the trap for native
+  accessibility.
+- Even on web the hook stores the node only if it supports `querySelectorAll`,
+  so a React Native `View` instance is simply never captured.
+- The trap wires up when `active` flips. If the container mounts after that,
+  toggle `active` to re-arm it.

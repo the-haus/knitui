@@ -4,3 +4,38 @@ export const meta = {
 };
 
 <HookReference slug="use-move" />
+
+Drag tracking over an area, reported as a normalized position: `onChange` receives
+`{ x, y }` where each axis is the fraction of the area's width or height under the
+pointer, clamped to `[0, 1]`. It fires on press (so a tap sets a value), on every
+move, and on release, with optional `onScrubStart` / `onScrubEnd` handlers around
+the gesture. `Slider` and `ColorPicker` are built on it.
+
+The two platforms need genuinely different machinery, so this is a real split.
+**Web** listens for `pointerdown` on the element, then moves `pointermove` and
+`pointerup` onto `window` for the duration of the drag — that is what keeps the
+value tracking when the cursor leaves the element. **Native** returns
+`rootProps` for the gesture-responder system, claims the responder in the capture
+phase and refuses termination requests, so a thumb drag inside a `ScrollView` is
+never stolen mid-gesture by the scroll.
+
+## When to use it
+
+- Building a custom slider, scrubber or progress rail.
+- A two-dimensional picker: saturation/value squares, XY pads.
+- Any press-and-drag surface where you want a fraction, not pixels.
+
+## Notes
+
+- Spread **both** returns: attach `ref` to the move area and spread `rootProps` on
+  it. `rootProps` is an empty object on web, so the same JSX works on all platforms.
+- Web measures the element's rect **once per gesture** and invalidates it on any
+  document scroll or window resize. Measuring inside `pointermove` would force a
+  layout flush at pointer rate while `onChange` is writing layout.
+- Native derives position from the touch's window-absolute `pageX`/`pageY` against
+  the area's `measureInWindow` origin — deliberately **not** `locationX`/`locationY`,
+  which React Native reports relative to whichever child is under the finger. Using
+  those makes the value jump as the finger crosses the thumb or a mark.
+- Web attaches its `pointerdown` listener once, on mount, from the current
+  `ref.current`. The move area must be mounted on the first render; if it only
+  appears later, no listener is ever wired.

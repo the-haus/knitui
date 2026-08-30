@@ -207,6 +207,17 @@ jobs:
             echo "branch=${{ github.head_ref || github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
+      # A preview deploy is a byte-for-byte copy of the site on a public
+      # *.pages.dev hostname. The per-page canonical tags point at knitui.dev, so
+      # Google should consolidate — but `X-Robots-Tag` removes the ambiguity
+      # rather than relying on it. Written here, not in `public/_headers`,
+      # because one build artifact feeds both the preview and production deploys.
+      - name: Mark preview deploys non-indexable
+        if: inputs.environment != 'production'
+        run: |
+          printf '\n/*\n  X-Robots-Tag: noindex, nofollow\n' >> out/_headers
+          printf 'User-agent: *\nDisallow: /\n' > out/robots.txt
+
       # Skipped (rather than failed) until the Pages project and its secrets exist,
       # so the build half of this workflow is useful from day one.
       - name: Deploy

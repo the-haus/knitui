@@ -4,3 +4,42 @@ export const meta = {
 };
 
 <HookReference slug="use-radial-move" />
+
+`useRadialMove` turns a drag over a round element into an angle. It measures the
+element's centre, converts the pointer or finger position into degrees clockwise
+from twelve o'clock, normalises the result into `[0, 360)`, and calls your
+`onChange` with it on press, on every move, and once more on release. It returns
+a `ref` to put on the ring and a `rootProps` object to spread on it; `AngleSlider`
+is built on it.
+
+Your `onChange` returns a number — the value you actually applied after snapping
+to marks or otherwise restricting the raw angle. That return value is what gets
+forwarded to `onChangeEnd`, so the final value a form commits is the constrained
+one rather than wherever the pointer happened to be lifted.
+
+## When to use it
+
+- Angle and rotation controls: dials, knobs, gradient-angle pickers.
+- Hue rings and other circular colour controls.
+- Any radial scrubber where the position is meaningful but the distance from the
+  centre is not.
+
+## Notes
+
+- On the web only `pointerdown` is bound to the element; `pointermove` and
+  `pointerup` go on `window`, so the drag keeps tracking after the cursor leaves
+  the ring. The bounding rect is measured once per gesture and invalidated on
+  document scroll or window resize, because re-reading it inside `pointermove`
+  forces a layout flush on every event.
+- On native, `rootProps` carries React Native's gesture-responder handlers and
+  must be spread onto the ring — the `ref` alone does nothing there. It is an
+  empty object on the web, so spread it unconditionally. The responder is claimed
+  in the capture phase, before an ancestor `ScrollView` can start scrolling, and
+  termination requests are refused so the drag stays with the ring.
+- The native angle comes from window-absolute `pageX`/`pageY` against the ring's
+  measured origin, never `locationX`/`locationY`: those are relative to whichever
+  child the touch is over, so the angle would jump as the finger crossed the
+  handle.
+- Pointer and touch only — `AngleSlider` adds its own arrow-key handling on top.
+  `disabled` skips all handling, and `onScrubStart` / `onScrubEnd` bracket the
+  gesture (`onScrubEnd` also fires if the native responder is terminated).

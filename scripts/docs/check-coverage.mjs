@@ -66,12 +66,47 @@ function walk(dir) {
 
 const componentIds = new Set(registry.entries.filter((e) => !e.internal).map((e) => e.id));
 
+/** `meta.title` -> the file that claimed it, for the duplicate-title check. */
+const titles = new Map();
+
+/** Read a single-line string field out of an `export const meta` block. */
+function matchString(source, key) {
+  const pattern = new RegExp(
+    `${key}:\\s*\\n?\\s*(?:"((?:[^"\\\\]|\\\\.)*)"|'((?:[^'\\\\]|\\\\.)*)')`,
+  );
+  const match = pattern.exec(source);
+  return match ? (match[1] ?? match[2]) : undefined;
+}
+
 for (const file of walk(CONTENT)) {
   const source = readFileSync(file, "utf8");
   const rel = relative(REPO_ROOT, file).split(sep).join("/");
 
   if (!/export const meta = \{/.test(source)) {
     failures.push(`${rel} has no \`export const meta\` — the page will have no <title>`);
+  }
+
+  // The description IS the search result. Asserting only that `meta` exists let
+  // 20 pages ship the scaffold's placeholder ("X — part of @knitui/y. N live
+  // examples.") as their Google snippet, and every duplicate <title> below went
+  // unnoticed. Both are checked here so they cannot silently come back.
+  // Both quote styles: a description containing `variant="gradient"` is written
+  // with single quotes, and matching only `"` would report it as missing.
+  const description = matchString(source, "description");
+  if (!description) {
+    failures.push(`${rel} has no \`description\` in meta — its search snippet is Google's guess`);
+  } else if (/part of @knitui\/|— a hook from @knitui\//.test(description)) {
+    failures.push(`${rel} still has the scaffolded placeholder description — write real copy`);
+  } else if (description.length < 50) {
+    notes.push(`${rel}: description is only ${description.length} chars — thin for a snippet`);
+  }
+
+  const title = matchString(source, "title");
+  if (title) {
+    const clash = titles.get(title);
+    if (clash)
+      failures.push(`${rel} duplicates the <title> of ${clash} — they compete for one query`);
+    else titles.set(title, rel);
   }
 
   // A component page (one that renders <ComponentHeader />) must also carry a

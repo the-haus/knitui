@@ -4,3 +4,37 @@ export const meta = {
 };
 
 <HookReference slug="use-throttled-callback" />
+
+`useThrottledCallback` caps how often a function runs: the first call fires
+immediately, further calls inside the `wait` window are coalesced, and the last
+of them is flushed when the window elapses. Leading plus trailing, so a burst
+produces a response at its start and a correct final value at its end — nothing
+is dropped silently at the tail.
+
+The returned function keeps a stable identity for the life of the component while
+always invoking the newest `callback`, which it reads through
+[`useCallbackRef`](/docs/hooks/use-callback-ref). That is what makes it safe to
+hand to a memoized child, an event listener or a dependency array: a throttle
+recreated per render either re-subscribes the listener every time or, memoized
+with empty deps, calls a stale closure.
+
+## When to use it
+
+- Pointer- or touch-move handlers that set React state; pointer events fire well
+  above frame rate.
+- Scroll and resize listeners, which are unthrottled by the platform.
+- Any handler where the work per call is real — measuring, parsing, network — and
+  a fixed rate is better than running per event.
+
+## Notes
+
+- `wait` is kept in a ref and applies to the next window, so changing it does not
+  disturb the one currently running.
+- `useThrottledCallbackWithClearTimeout` is exported alongside it and returns
+  `[throttled, clear]`. `clear` cancels the pending trailing call without
+  re-arming the window, which is what you want on teardown — the throttled
+  function does not resume firing afterwards.
+- For a throttled *value* rather than a callback, use
+  [`useThrottledValue`](/docs/hooks/use-throttled-value), which is built on this
+  hook.
+- Plain timers with no platform API, so behaviour is identical on web and native.

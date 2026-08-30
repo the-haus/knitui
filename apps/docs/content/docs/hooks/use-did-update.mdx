@@ -4,3 +4,37 @@ export const meta = {
 };
 
 <HookReference slug="use-did-update" />
+
+`useEffect` runs after the first render as well as after every dependency
+change, and a surprising amount of effect code does not want that first run.
+Firing `onOpen` because the component mounted already open, re-syncing a
+controlled value against itself, animating from a state the user never saw,
+sending an analytics event for the initial value — all of these are the mount
+run leaking into behaviour that should only describe *changes*.
+
+`useDidUpdate` is `useEffect` with the mount run suppressed. It tracks mount in
+a ref and only invokes `fn` on subsequent dependency changes; the cleanup
+function you return is honoured exactly as `useEffect` would.
+
+The kit leans on it for lifecycle callbacks and controlled-value syncing:
+[`Collapse`](/docs/components/overlays/collapse) uses it so its transition
+callbacks do not fire for a panel that mounted open, and `Transition`,
+`ColorPicker`, `ColorInput` and the dates pickers use it to react to a changed
+`value` without re-running on mount.
+
+## When to use it
+
+- Firing `onChange`-style side effects that should describe a change, not a
+  mount.
+- Syncing internal state to a controlled prop after the initial value is taken.
+- Starting an animation or transition only on a real state change.
+
+## Notes
+
+- The mount flag resets on unmount, so a remount — React Strict Mode's double
+  mount in development, or Fast Refresh — skips its first run again. That is
+  intended, but it means you cannot rely on the effect running once per
+  component instance in development.
+- The dependency array is passed straight through to `useEffect`; omitting it
+  makes `fn` run after every render except the first.
+- Pure React, no platform code — identical on web and native.

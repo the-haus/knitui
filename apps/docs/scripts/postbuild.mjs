@@ -47,28 +47,90 @@ function routes(dir = OUT_DIR) {
     }
     if (!item.name.endsWith(".html")) continue;
     const rel = relative(OUT_DIR, full).split(sep).join("/");
-    if (rel === "404.html") continue;
+    // Both of Next's error pages. `_not-found.html` is byte-identical to
+    // `404.html` but sits at a real URL that Pages serves 200 with a `noindex`
+    // meta — listing it in the sitemap is the exact contradiction Search Console
+    // reports as "Submitted URL marked 'noindex'".
+    if (rel === "404.html" || rel === "_not-found.html") continue;
     found.push(rel === "index.html" ? "/" : `/${rel.replace(/\.html$/, "")}`);
   }
   return found;
 }
 
+/**
+ * Last commit date for the content behind a route, as YYYY-MM-DD.
+ *
+ * A build-stamped `lastmod` claims all 264 pages changed on every deploy, which
+ * is uniform enough that Google discounts the field wholesale. Reading it from
+ * git makes the signal real: only pages whose source actually moved carry a
+ * recent date. Falls back to the build date when git is unavailable (a shallow
+ * CI clone, or a file that has never been committed).
+ */
+const BUILD_DATE = new Date().toISOString().slice(0, 10);
+
+function gitDate(file) {
+  try {
+    const out = execFileSync("git", ["log", "-1", "--format=%cs", "--", file], {
+      cwd: APP_DIR,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return out || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The MDX file a route renders, so `lastmod` tracks the prose, not the build. */
+function sourceFor(route) {
+  if (route === "/") return join(APP_DIR, "src/app/page.tsx");
+  if (route === "/changelog") return join(APP_DIR, "src/app/changelog/page.tsx");
+  const slug = route.replace(/^\/+/, "");
+  for (const candidate of [`${slug}.mdx`, `${slug}/index.mdx`]) {
+    const path = join(CONTENT_DIR, candidate);
+    if (existsSync(path)) return path;
+  }
+  return undefined;
+}
+
+const lastmodFor = (route) => {
+  const source = sourceFor(route);
+  return (source && gitDate(source)) || BUILD_DATE;
+};
+
 const allRoutes = routes().sort();
 
 /* --------------------------------------------------------------- robots.txt */
 
+/**
+ * A build pointed at any other origin (`DOCS_SITE_URL`) is a staging copy, and a
+ * public duplicate of the site is worth more to a crawler than it is to us — so
+ * it gets a blanket disallow instead of the real policy.
+ *
+ * CI's PR previews do NOT come through here: one build artifact feeds both the
+ * preview and the production deploy, so the preview's `noindex` is applied at
+ * deploy time in `.github/workflows/docs.yml`.
+ */
+const IS_PRODUCTION = SITE_URL === "https://knitui.dev";
+
 writeFileSync(
   join(OUT_DIR, "robots.txt"),
-  [
-    "User-agent: *",
-    "Allow: /",
-    // Thin, auto-generated or JS-only routes: excluded from the sitemap AND
-    // disallowed, because crawlers follow internal links too.
-    "Disallow: /search",
-    "",
-    `Sitemap: ${SITE_URL}/sitemap.xml`,
-    "",
-  ].join("\n"),
+  (IS_PRODUCTION
+    ? [
+        "User-agent: *",
+        "Allow: /",
+        // Next emits an RSC flight payload next to every route (45 MB across
+        // 2,100 files) containing that page's full prose. Nothing links to them,
+        // but an indexed one is a near-duplicate of the page it belongs to.
+        "Disallow: /*__next.",
+        // The search index shards — data, not pages.
+        "Disallow: /pagefind/",
+        "",
+        `Sitemap: ${SITE_URL}/sitemap.xml`,
+        "",
+      ]
+    : ["# Preview deploy — not the canonical site.", "User-agent: *", "Disallow: /", ""]
+  ).join("\n"),
   "utf8",
 );
 
@@ -96,23 +158,20 @@ function tierFor(route) {
   return { priority: "0.6", changefreq: "monthly" };
 }
 
-const lastmod = new Date().toISOString().slice(0, 10);
 const sitemap = [
   '<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-  ...allRoutes
-    .filter((route) => route !== "/search")
-    .map((route) => {
-      const { priority, changefreq } = tierFor(route);
-      return [
-        "  <url>",
-        `    <loc>${SITE_URL}${route}</loc>`,
-        `    <lastmod>${lastmod}</lastmod>`,
-        `    <changefreq>${changefreq}</changefreq>`,
-        `    <priority>${priority}</priority>`,
-        "  </url>",
-      ].join("\n");
-    }),
+  ...allRoutes.map((route) => {
+    const { priority, changefreq } = tierFor(route);
+    return [
+      "  <url>",
+      `    <loc>${SITE_URL}${route}</loc>`,
+      `    <lastmod>${lastmodFor(route)}</lastmod>`,
+      `    <changefreq>${changefreq}</changefreq>`,
+      `    <priority>${priority}</priority>`,
+      "  </url>",
+    ].join("\n");
+  }),
   "</urlset>",
   "",
 ].join("\n");
@@ -239,6 +298,16 @@ const LLMS_SECTIONS = [
   },
 ];
 
+/**
+ * The page's own `meta.title`, so an llms.txt entry is `[Installation](url): note`
+ * rather than the note repeated as its own link text. Both quote styles, because
+ * a title containing an apostrophe is written with double quotes and vice versa.
+ */
+function metaTitle(source) {
+  const match = /title:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')/.exec(source);
+  return match ? (match[1] ?? match[2]) : undefined;
+}
+
 /** Strip the `export const meta = {…}` block and MDX component tags from prose. */
 function toMarkdown(source) {
   return source
@@ -268,14 +337,10 @@ for (const section of LLMS_SECTIONS) {
       console.warn(`[postbuild] llms.txt: missing ${file}`);
       continue;
     }
-    index.push(`- [${note}](${SITE_URL}${route}): ${note}`);
-    full.push(
-      `### ${note}`,
-      `Source: ${SITE_URL}${route}`,
-      "",
-      toMarkdown(readFileSync(path, "utf8")),
-      "",
-    );
+    const source = readFileSync(path, "utf8");
+    const name = metaTitle(source) ?? note;
+    index.push(`- [${name}](${SITE_URL}${route}): ${note}`);
+    full.push(`### ${name}`, `Source: ${SITE_URL}${route}`, "", toMarkdown(source), "");
   }
   index.push("");
 }

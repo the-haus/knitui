@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Example } from "@/components/example/Example";
 import { Showcase } from "@/components/example/Showcase";
 import { InstallCommand } from "@/components/mdx/InstallCommand";
+import { SiteJsonLd } from "@/components/seo/JsonLd";
 import { Header } from "@/components/shell/Header";
 import { PlatformBand, PlatformStrip } from "@/components/shell/Platforms";
 import { entries } from "@/lib/registry";
@@ -30,6 +31,7 @@ export default function LandingPage() {
 
   return (
     <div className="shell">
+      <SiteJsonLd version={version} componentCount={componentCount} />
       <Header />
 
       <section className="hero">
@@ -234,6 +236,8 @@ export default function LandingPage() {
         <div className="footer__inner">
           <span>MIT licensed · © The Haus</span>
           <span>
+            <Link href="/docs/all">All pages</Link>
+            {" · "}
             <a href="https://github.com/the-haus/knitui">GitHub</a>
             {" · "}
             <a href="https://github.com/the-haus/knitui/discussions">Discussions</a>

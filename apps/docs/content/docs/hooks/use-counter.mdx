@@ -4,3 +4,29 @@ export const meta = {
 };
 
 <HookReference slug="use-counter" />
+
+A bounded counter written by hand is where off-by-one bugs live: the increment
+that runs past `max` because the clamp was applied to the render value rather
+than inside the updater, the decrement that goes negative under two taps in the
+same frame, the reset that snaps back to an initial value the bounds do not
+allow. `useCounter` keeps one clamp function and routes every mutation through
+it inside the state updater, so concurrent updates compose correctly.
+
+It returns `[count, { increment, decrement, set, reset }]`. `min` and `max` are
+both optional and both inclusive; omit either for an open end. The initial value
+is clamped too, so `useCounter(0, { min: 1 })` starts at `1` rather than
+starting out of range and correcting on the first interaction.
+
+## When to use it
+
+- Quantity steppers, pagination controls, rating inputs.
+- Any "add one / remove one" state where the bounds are fixed and clamping is
+  the whole logic.
+- Wizard or carousel step indices with a known first and last step.
+
+## Notes
+
+- The handlers are memoised on `min`/`max` (and `reset` also on
+  `initialValue`), so they are stable across renders as long as the bounds are.
+- `reset` returns to the *clamped* initial value, not the raw argument.
+- Pure React state, no platform code — identical on web and native.

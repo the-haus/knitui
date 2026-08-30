@@ -5,12 +5,14 @@ import type { Metadata } from "next";
 
 import { InlineMarkdown } from "@/components/mdx/InlineMarkdown";
 import { Header } from "@/components/shell/Header";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Changelog",
   description:
     "Every Knit UI release, grouped by version, generated from the packages' changelogs.",
-};
+  path: "/changelog",
+});
 
 type Change = { kind: "major" | "minor" | "patch"; text: string };
 type Entry = { package: string; changes: Change[] };

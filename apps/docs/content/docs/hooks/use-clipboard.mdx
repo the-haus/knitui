@@ -4,3 +4,36 @@ export const meta = {
 };
 
 <HookReference slug="use-clipboard" />
+
+Copying a string is one line; the interaction around it is not. Users need
+confirmation that the copy happened, that confirmation has to time out, and the
+underlying `navigator.clipboard.writeText` returns a promise that can reject —
+denied permission, a non-secure origin, no clipboard API at all.
+`useClipboard` wraps all of that into `{ copy, reset, copied, error }`.
+
+`copied` flips to `true` after a successful write and back to `false` after
+`timeout` ms (2000 by default), which is exactly the lifetime of a "Copied!"
+label. Calling `copy` again restarts the timer rather than stacking timers, and
+the pending timer is cleared on unmount so a copy just before navigation cannot
+set state on a gone component.
+
+`copy` never throws. A rejected write lands in `error` and leaves `copied`
+false, so the UI can show a failure state instead of lying about success.
+`reset` clears both.
+
+## When to use it
+
+- A copy button for a token, share link, code snippet or colour value.
+- Any "copy" affordance that needs a transient confirmation state.
+- When you want the failure path visible rather than swallowed.
+
+## Notes
+
+- There is no `.native` variant. The hook checks for `navigator.clipboard` and,
+  when it is missing — React Native, and server rendering — sets `error` to
+  `useClipboard: navigator.clipboard is not supported` instead of assuming the
+  global exists. It degrades rather than crashing, but it does not copy on
+  native.
+- [`CopyButton`](/docs/components/inputs/copy-button) is built on this hook and hands
+  `{ copied, copy }` to its render prop, so reach for the component first and
+  the hook only when you need the state somewhere else.

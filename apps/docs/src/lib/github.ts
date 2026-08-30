@@ -26,5 +26,12 @@ export function contentPathForRoute(pathname: string): string | null {
   if (!pathname.startsWith("/docs")) return null;
   const slug = pathname.replace(/^\/docs\/?/, "").replace(/\/$/, "");
   if (!slug) return "apps/docs/content/docs/index.mdx";
+  // Routes under /docs that are TSX pages, not MDX content — an edit link for
+  // these would point GitHub at a file that does not exist. Checking the real
+  // route map instead would pull `content-map.ts` (and its 261 dynamic imports)
+  // into the client bundle, since `EditPage` is a client component.
+  if (GENERATED_ROUTES.has(slug)) return null;
   return `apps/docs/content/docs/${slug}.mdx`;
 }
+
+const GENERATED_ROUTES = new Set(["all"]);

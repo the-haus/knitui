@@ -4,3 +4,34 @@ export const meta = {
 };
 
 <HookReference slug="use-throttled-value" />
+
+`useThrottledValue` mirrors a value but limits how often the mirror moves: it
+updates immediately on the first change, then at most once per `wait`
+milliseconds, and always emits the final value once the burst ends. It is the
+value-shaped form of
+[`useThrottledCallback`](/docs/hooks/use-throttled-callback) and is built on the
+same timer.
+
+Reach for it when the source changes faster than anything downstream can consume.
+A drag emits pointer events well above frame rate, so expensive work keyed off
+that value — a re-parse, a canvas redraw, a list re-filter — runs several times
+per frame for output nobody sees. Keep rendering the live value in the control
+itself and pass the throttled one to the costly subtree.
+
+## When to use it
+
+- Drag-driven state: colour pickers, sliders, resize handles.
+- Scroll offsets or measured sizes that feed layout math.
+- A search field where you want a guaranteed update rate rather than waiting for
+  typing to stop — that second behaviour is
+  [`useDebouncedValue`](/docs/hooks/use-debounced-value).
+
+## Notes
+
+- Changes are detected with `Object.is`. A value that is identical schedules
+  nothing; an object rebuilt each render always counts as a change, so memoize
+  the input if it is not a primitive.
+- Unlike debouncing, it emits *during* a burst as well as at the end, so the UI
+  keeps moving while the interaction is in progress.
+- The pending trailing update is cleared on unmount.
+- Plain timers with no platform API, so behaviour is identical on web and native.

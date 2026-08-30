@@ -4,3 +4,30 @@ export const meta = {
 };
 
 <HookReference slug="use-interval" />
+
+A raw `setInterval` inside a component is a resource you have to manage by hand:
+clear it on unmount, avoid starting a second one, and keep it from being torn
+down and rebuilt every time the callback identity changes. `useInterval` owns
+that timer and hands back `start`, `stop`, `toggle` and an `active` flag you can
+render from.
+
+The callback is held in a ref that is refreshed on every render, so the running
+interval always calls the latest closure without being recreated. That matters
+because callers pass inline arrows: with a naive effect, every render would clear
+and restart the timer, and a 1000 ms tick would never actually fire on a
+component that re-renders faster than that. `start()` is a no-op while an
+interval is already running, and the timer is cleared on unmount.
+
+## When to use it
+
+- Polling a status endpoint while a screen is open.
+- Driving a countdown, stopwatch or auto-advancing carousel with a pause control.
+- Any repeating job the user can start and stop, where `active` drives the button label.
+
+## Notes
+
+- `autoInvoke` is read once, on mount. Changing it later does not start or stop anything.
+- The `interval` argument is captured when `start()` runs. Changing it while the
+  timer is active has no effect until the next `stop()` / `start()` cycle.
+- It calls the global `setInterval` rather than `window.setInterval`, so the same
+  code runs on web and native.

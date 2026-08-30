@@ -4,3 +4,37 @@ export const meta = {
 };
 
 <HookReference slug="use-keyboard-height" />
+
+On native the software keyboard covers part of the window without changing your
+layout, so anything that has to stay visible above it — a scroll view's bottom
+padding, a dropdown deciding whether to flip — needs to know how tall it is.
+`useKeyboardHeight` reports that height in window points, `0` when the keyboard
+is hidden.
+
+The native implementation is a module-level singleton fed by React Native's
+built-in `Keyboard` events, wired lazily the first time anything reads or
+subscribes. That design exists so the value can be read **synchronously from
+plain JS**, not only from a component: the floating layer's viewport calculation
+and `useDismissOnScroll` both need it outside of React. The hook itself is a thin
+`useSyncExternalStore` over the same tracker. On web the module is a stub — every
+export is a zero or a no-op — which is what lets callers use it unguarded on any
+platform instead of branching on `Platform.OS`.
+
+## When to use it
+
+- Padding or insetting content so an input is not hidden behind the keyboard.
+- Excluding the keyboard from the usable viewport when positioning an overlay.
+- Reacting to the keyboard opening or closing at all, rather than to its exact height.
+
+## Notes
+
+- Web always returns `0` and never calls a subscriber. That is not a gap: the web
+  has no keyboard that overlaps layout the way native does.
+- The tracker follows both the `will*` and `did*` keyboard events, so it settles on
+  the final resting height. It is not a per-frame signal.
+- `getKeyboardHeight()` prefers a synchronous read via `Keyboard.isVisible()` /
+  `Keyboard.metrics()`, so a consumer that mounts while the keyboard is *already*
+  up gets the right value instead of waiting for the next event.
+- The native `subscribeKeyboardHeight` listener is called with no arguments — read
+  the value with `getKeyboardHeight()`. Nothing needs mounting at the app root;
+  React Native's `Keyboard` API works without setup.

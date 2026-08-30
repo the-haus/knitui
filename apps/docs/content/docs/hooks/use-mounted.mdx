@@ -4,3 +4,30 @@ export const meta = {
 };
 
 <HookReference slug="use-mounted" />
+
+Returns `false` while the component is rendering for the first time and `true`
+once it has mounted. The flag is state set from a mount effect, so the flip
+happens after commit and triggers one extra render.
+
+That extra render is the feature. Under server rendering, the server has no
+window, no measured layout and no OS colour scheme — so anything that reads them
+produces different markup on the server than on the client, and React reports a
+hydration mismatch. Gating on `useMounted` makes the first client render identical
+to the server's (both see `false`), then renders the real thing on the pass
+afterwards. It is the same trick for anything that simply cannot exist before a
+node does, such as a portal target or a measured position.
+
+## When to use it
+
+- Deferring client-only UI so server and client agree on the first render.
+- Waiting for a DOM/native node to exist before rendering something that targets it.
+- Holding back an entrance animation until after the first commit.
+
+## Notes
+
+- It costs a render. If you only need to know whether this is the first render —
+  and can answer during render — use
+  [`useIsFirstRender`](/docs/hooks/use-is-first-render), which uses a ref and
+  schedules no update.
+- The value never returns to `false`; it is mount state, not visibility.
+- Pure React, no platform split — the same behaviour on web and native.

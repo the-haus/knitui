@@ -4,3 +4,34 @@ export const meta = {
 };
 
 <HookReference slug="use-force-update" />
+
+Occasionally the thing a component renders from is not React state: a ref, a
+mutable instance held by a third-party library, a measurement taken in an
+imperative callback. React has no reason to re-render when that changes, so the
+screen goes stale. `useForceUpdate` returns a function that schedules a
+re-render on demand.
+
+It is implemented as a `useReducer` that increments a counter, which is the
+correct primitive here rather than `useState({})`: the dispatch function React
+returns is stable for the lifetime of the component, so you can pass it to an
+effect, a subscription or a timer without it being a changing dependency, and
+each call is guaranteed to produce a new state value so the re-render is never
+bailed out of.
+
+Reach for it sparingly. If the value driving the render can live in state, put
+it in state — a forced re-render tells React *that* something changed but not
+*what*, so nothing downstream can memoise around it.
+
+## When to use it
+
+- Re-rendering off a mutable ref or an external mutable object.
+- Bridging an imperative library whose changes React cannot observe.
+- Re-reading a measurement after an imperative DOM or layout operation.
+
+## Notes
+
+- The returned function is referentially stable across renders — safe in an
+  empty dependency array.
+- It takes no arguments; it is a `useReducer` dispatch narrowed to `() => void`,
+  so passing anything to it is a type error.
+- Pure React, no platform code — identical on web and native.

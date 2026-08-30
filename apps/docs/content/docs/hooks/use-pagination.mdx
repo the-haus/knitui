@@ -4,3 +4,32 @@ export const meta = {
 };
 
 <HookReference slug="use-pagination" />
+
+Two things go into a pager, and this hook supplies both. The first is the active
+page and the moves you can make on it: `setPage`, `next`, `previous`, `first`,
+`last` — all clamped to `[1, total]`, so a `next()` on the last page is a no-op
+rather than an out-of-range index. The second is `range`: the list of items to
+render, with the `DOTS` sentinel wherever a run of page numbers collapses.
+
+The range is the fiddly part. `boundaries` pages stay pinned at each end,
+`siblings` pages sit either side of the active page, and dots appear only where
+there is actually something to hide — a gap of one page renders as that page, not
+as an ellipsis. Below the threshold where truncation would help, you get every
+page. State runs through `useUncontrolled`, so the same call site supports a
+controlled `page` + `onChange` and an uncontrolled `initialPage`.
+
+## When to use it
+
+- Building a pager with your own markup instead of the `Pagination` component.
+- Any list, table or gallery navigated by page number rather than by scrolling.
+- Reusing the truncation logic somewhere that is not a row of buttons.
+
+## Notes
+
+- `range` mixes numbers with the exported `DOTS` constant (`"dots"`). Compare
+  against `DOTS` when rendering, and remember it can appear twice in one range, so
+  key list items by index rather than by value.
+- `total` is truncated to an integer and floored at `0`, so a fractional or
+  negative total cannot produce a negative range.
+- Pure computation on top of state — no platform split, and no DOM. It behaves the
+  same on web and native.

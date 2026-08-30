@@ -4,3 +4,38 @@ export const meta = {
 };
 
 <HookReference slug="use-reduced-motion" />
+
+`useReducedMotion` reports whether the user has asked the system to reduce
+motion, and re-renders when that preference changes. Gate any animation you
+author on it: the kit already does, in `Transition`, `Popover`, `Tooltip`,
+`Collapse`, `Spoiler`, `Skeleton`, `Loader`, `Progress`, `Indicator`,
+`ScrollArea`, `RollingNumber`, `Marquee` and the `Carousel`.
+
+Because so much of the library calls it, it is deliberately not a per-component
+subscription. One media-query listener on the web, and one `AccessibilityInfo`
+subscription on native, are shared by every caller and fanned out through
+`useSyncExternalStore`. The version this replaced seeded `false` and wrote the
+real answer from an effect, costing an extra render pass per animated component
+on mount — and on native, one bridge round-trip each.
+
+## When to use it
+
+- Before starting a looping or decorative animation: skip it, or jump to the end
+  state, when the preference is set.
+- Choosing between an animated transition and an instant show/hide.
+- Reducing parallax, auto-scrolling or motion-heavy affordances in your own
+  components.
+
+## Notes
+
+- On the web it tracks `(prefers-reduced-motion: reduce)` through a single
+  `MediaQueryList`. The listener is created once and stays attached after the
+  last subscriber unmounts, since re-attaching per instance is exactly what the
+  shared subscription exists to avoid.
+- On native it seeds from `AccessibilityInfo.isReduceMotionEnabled()` — one
+  asynchronous read per app lifetime — and then follows the
+  `reduceMotionChanged` event. The value is `false` until that first read
+  resolves.
+- The `initialValue` argument is the *server* snapshot only. It is what
+  server-rendered markup and hydration see; after mount the live value takes
+  over.

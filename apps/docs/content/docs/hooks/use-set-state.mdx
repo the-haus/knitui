@@ -4,3 +4,31 @@ export const meta = {
 };
 
 <HookReference slug="use-set-state" />
+
+`useSetState` holds an object and merges partials into it: `setState({ open: true })`
+keeps every other key untouched, the way a class component's `setState` did. It
+also accepts an updater, `setState((current) => ({ count: current.count + 1 }))`,
+when the next partial depends on the current value.
+
+The merge happens inside the `useState` updater, against the state React is about
+to apply. That is the difference from the hand-written `setState({ ...state, open: true })`
+spread, which closes over the `state` variable from the render that created the
+handler — two updates dispatched in the same tick both build on the same stale
+snapshot, and the first one is silently lost.
+
+## When to use it
+
+- A component with several related fields that change together — an editor's
+  draft, a filter panel, a request's `loading` / `error` / `data` triple.
+- Handlers that update one key while several other updates may land in the same
+  tick.
+- Porting class-component `setState` code with its merge semantics intact.
+
+## Notes
+
+- The merge is one level deep. A nested object in the partial replaces the old
+  one, it is not merged into it.
+- The setter has a stable identity (`useCallback` with empty deps), so it is safe
+  in dependency arrays and as a prop to a memoized child.
+- There is no equality bail-out: every call produces a new object and re-renders,
+  even when the merged values are unchanged.

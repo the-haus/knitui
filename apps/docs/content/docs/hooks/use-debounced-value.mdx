@@ -4,3 +4,36 @@ export const meta = {
 };
 
 <HookReference slug="use-debounced-value" />
+
+The value counterpart to
+[`useDebouncedCallback`](/docs/hooks/use-debounced-callback). Instead of
+wrapping a handler, you keep your state immediate — the input stays fully
+controlled and responsive to every keystroke — and derive a lagging copy that
+only settles once the value has stopped changing for `wait` ms. Effects that
+fetch, filter or recompute depend on the lagging copy, so they run once per
+pause rather than once per character.
+
+This split matters because the alternative — debouncing the state itself —
+makes the input feel laggy, and debouncing the effect leaves the effect's
+dependency array lying about when it should run.
+
+`leading: true` emits the first change immediately and debounces the rest,
+which suits a filter you want to feel instant on the first character. The
+returned `cancel` drops a pending update; the debounced value simply stays at
+whatever it last emitted.
+
+## When to use it
+
+- Search fields driving a network request or an expensive client-side filter.
+- Live-preview panes that re-render off a text or colour value.
+- Any derived computation whose cost is not worth paying per keystroke.
+
+## Notes
+
+- The initial value is emitted synchronously, not after `wait` — the hook skips
+  its first effect run, so there is no empty first frame.
+- The pending timer is cleared on unmount, so a queued update cannot land on an
+  unmounted component.
+- `cancel` is recreated each render; treat it as something you call, not
+  something you put in a dependency array.
+- Plain `setTimeout`, no platform code — identical on web and native.

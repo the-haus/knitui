@@ -4,3 +4,28 @@ export const meta = {
 };
 
 <HookReference slug="use-is-first-render" />
+
+Returns `true` the first time a component renders and `false` on every render
+after that. The flag lives in a ref that is flipped **during render**, not in an
+effect, so the answer is already correct in the same pass that reads it.
+
+That timing is the whole point. The usual alternative — a `useState` flag set in
+a mount effect — is still reporting "first render" during the initial render and
+only corrects itself after commit, which costs an extra render and gives you the
+wrong answer exactly where you wanted to branch. `useIsFirstRender` never
+schedules an update, so a component that renders once renders once.
+
+## When to use it
+
+- Skipping an entrance transition so content does not animate in on first paint.
+- Guarding change-driven work so it does not run for the initial value.
+- Choosing between "initialise" and "update" paths in a render-phase computation.
+
+## Notes
+
+- Pure React with no platform split; identical on web and native.
+- Reading it has a side effect: the first call flips the ref. Call it once per
+  render and reuse the value rather than calling it in two places.
+- For the post-commit question — "has this component mounted yet?" — use
+  [`useMounted`](/docs/hooks/use-mounted). For running an effect on every update
+  except the first, use [`useDidUpdate`](/docs/hooks/use-did-update).

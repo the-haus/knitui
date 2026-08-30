@@ -4,3 +4,36 @@ export const meta = {
 };
 
 <HookReference slug="use-keyboard-actions" />
+
+Most controls in the kit are styled `Box` elements with a role, not native
+`<button>` elements — which means none of the keyboard behaviour a browser gives
+a button comes for free. `useKeyboardActions` puts it back. You describe intent
+(`onActivate`, `onIncrement`, `onDecrement`, `onEscape`) and the hook returns
+props to spread onto the host, mapping each intent to the right mechanism for the
+platform.
+
+On web that mapping is a key handler: Space and Enter activate, ArrowUp/ArrowRight
+increment, ArrowDown/ArrowLeft decrement, Escape dismisses. On native there is no
+DOM key event, so the same intents are exposed as React Native accessibility
+actions (`increment`, `decrement`, `escape`) that a screen reader can trigger.
+Callers write one set of handlers and get correct behaviour on both. `Switch`,
+`Checkbox`, `Rating` and `Tree` are all built on it.
+
+## When to use it
+
+- Making a custom control keyboard-operable when it is not a real `<button>`.
+- Adding arrow-key stepping to something with `role="slider"` or `role="spinbutton"`.
+- Giving a non-modal overlay an Escape route without a global key listener.
+
+## Notes
+
+- Web only: a keypress with Ctrl, Alt or Meta held is ignored, so browser and OS
+  shortcuts keep working. A matched key is `preventDefault()`ed, which is what
+  stops Space from scrolling the page and arrows from panning it.
+- `onActivate` deliberately produces **no** native accessibility action. Native
+  activation already flows through the host's `onPress`, so emitting an `activate`
+  action too would fire the handler twice.
+- The `keys` option (extra `KeyboardEvent.key` bindings such as `Home` / `End`) and
+  the `tabIndex` option are web-only, and are ignored on native.
+- `disabled` removes the host from the tab order on web (`tabIndex: -1`) and
+  returns no props at all on native.

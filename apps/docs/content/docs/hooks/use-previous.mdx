@@ -4,3 +4,31 @@ export const meta = {
 };
 
 <HookReference slug="use-previous" />
+
+React gives you the current value of a prop or a piece of state, never the one
+before it — but plenty of UI depends on the difference. Which direction did the
+step index move? Did this list grow or shrink? What number do we animate *from*?
+`usePrevious` keeps the last committed value in a ref and returns it, so you can
+compare against the current one during render.
+
+The ref is updated in an effect keyed on the value, which means the previous value
+is the value at the last commit *where it changed*. On the first render there is
+nothing to report, so you get `undefined` — handle that case rather than assuming
+a previous value always exists.
+
+## When to use it
+
+- Deriving direction of travel: which way a carousel, stepper or tab set moved.
+- Animating a transition from an old value to a new one.
+- Logging or debugging what a value changed from, without adding another state.
+
+## Notes
+
+- Comparison uses the effect's dependency check, so it is identity-based. A new
+  object or array literal on every render counts as a change every time.
+- After the value settles, a re-render caused by *something else* returns the
+  current value, not the value from before the last change. The hook reports the
+  last commit, not a history.
+- For running an effect on every update except the first, reach for
+  [`useDidUpdate`](/docs/hooks/use-did-update) instead of comparing by hand.
+- Pure React, no platform split — the same behaviour on web and native.

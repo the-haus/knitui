@@ -4,3 +4,37 @@ export const meta = {
 };
 
 <HookReference slug="use-callback-ref" />
+
+`useCallbackRef` solves the tension between the two things you normally have to
+trade off. `useCallback` with a dependency list gives you a stable identity but
+goes stale the moment you forget a dependency; a plain inline function is always
+current but changes identity every render, so anything that subscribes to it
+(an effect, an event listener, a timer, a memoised child) re-subscribes every
+render. `useCallbackRef` gives you both: the returned function's identity never
+changes, and it always forwards to the most recently rendered `callback`.
+
+It works by writing `callback` into a ref on every render and returning a
+`useCallback` with an empty dependency list. That means dependency arrays on
+effects that use the returned function can genuinely be empty — the closure is
+not captured.
+
+This is the pattern the kit uses to keep event handlers stale-free without
+re-wiring listeners: `TreeSelect`, `Autocomplete`, `PinInput`, `MaskInput` and
+the carousel `Pagination` all build their handlers this way.
+
+## When to use it
+
+- A handler passed to an effect that subscribes once and must not re-subscribe.
+- Callbacks handed to timers, gesture handlers or imperative subscriptions.
+- Props on a memoised child that would otherwise re-render on every parent
+  render.
+
+## Notes
+
+- The wrapped `callback` may be `undefined`; the returned function then returns
+  `undefined` rather than throwing, which is why the return type is
+  `Return | undefined`.
+- The ref is assigned in a `useEffect`, not during render. A call made during
+  render or from a `useLayoutEffect` in the same commit therefore still runs the
+  *previous* callback.
+- Pure React, no platform code — identical on web and native.

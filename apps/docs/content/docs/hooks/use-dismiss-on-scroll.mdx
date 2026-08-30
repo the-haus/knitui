@@ -4,3 +4,41 @@ export const meta = {
 };
 
 <HookReference slug="use-dismiss-on-scroll" />
+
+An open dropdown anchored to an input has to answer one question when the page
+scrolls: follow the anchor, or close. On the web it follows — the floating
+engine re-positions off cheap `scroll` and `resize` listeners. On React Native
+there is no global scroll event, and the overlay is teleported out of the
+`ScrollView` it was anchored inside, so it cannot follow; the idiomatic
+behaviour is to close.
+
+`useDismissOnScroll(enabled, referenceRef, onDismiss)` implements that close.
+On native it polls the reference's window rect every 100ms while `enabled` and
+calls `onDismiss` once the reference has genuinely scrolled.
+
+The hard part is telling a scroll from a layout shift, because both move the
+anchor and only one should close the dropdown. Three filters do it: a 350ms
+quiet window after opening and after every keyboard show/hide, so the keyboard
+animating the field under a `KeyboardAvoidingView` is ignored; a requirement of
+two consecutive moved polls, so a late one-shot `KeyboardAvoidingView`
+re-layout never qualifies while a continuous drag does; and a size check, so a
+reference that *resizes* (a `MultiSelect` growing as pills are added) is
+re-baselined as a reflow rather than counted as movement.
+
+## When to use it
+
+- Building a custom native overlay anchored to an in-page element that should
+  close when the user scrolls it away.
+- Almost never directly — [`Popover`](/docs/components/overlays/popover) and
+  everything built on it already wire this up.
+
+## Notes
+
+- The web implementation is an intentional **no-op**. Calling it on web costs
+  nothing and does nothing; the platform split lives entirely in
+  `use-dismiss-on-scroll.native`.
+- The poll only runs while `enabled` is true and stops as soon as it dismisses,
+  so a closed overlay costs nothing.
+- Known trade-off: a scroll fast enough to finish inside a single 100ms poll
+  will not dismiss. That is deliberate — closing a dropdown mid-interaction is
+  the worse failure, and pressing outside still dismisses.

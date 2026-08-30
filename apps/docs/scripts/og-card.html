@@ -1,0 +1,127 @@
+<!doctype html>
+<!--
+  Source for public/og.png — the social share card (og:image / twitter:image).
+
+  It is a static PNG rather than a generated-per-page image because the only
+  runtime that could render one here is Next's `next/og`, which pulls in satori
+  plus a bundled font and only resolves inside the bundler. A single card is the
+  whole win anyway: og:image is a click-through signal on Slack/X/LinkedIn, not
+  a Google ranking factor.
+
+  To regenerate after editing (the viewport size IS the output size):
+
+    npx serve apps/docs/scripts -p 8899
+    npx playwright screenshot --viewport-size=1200,630 \
+      http://localhost:8899/og-card.html apps/docs/public/og.png
+
+  Keep it 1200x630 — the aspect every platform crops to.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1200px; height: 630px; }
+      body {
+        background: #0b0a16;
+        position: relative;
+        overflow: hidden;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: #fff;
+      }
+      .glow {
+        position: absolute;
+        width: 900px; height: 900px;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.42;
+      }
+      .glow--a { background: #6366f1; top: -420px; left: -220px; }
+      .glow--b { background: #a855f7; top: 180px; right: -300px; opacity: 0.34; }
+      .glow--c { background: #ec4899; bottom: -420px; left: 320px; opacity: 0.26; }
+      .grid {
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: radial-gradient(circle at 30% 40%, #000 0%, transparent 78%);
+      }
+      .inner {
+        position: relative;
+        height: 100%;
+        padding: 76px 84px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .brand { display: flex; align-items: center; gap: 22px; }
+      .brand svg { width: 76px; height: 76px; }
+      .brand span { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
+      h1 {
+        font-size: 84px;
+        line-height: 1.04;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        max-width: 940px;
+      }
+      .accent {
+        background: linear-gradient(96deg, #818cf8 0%, #c084fc 48%, #f472b6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      p { font-size: 31px; color: #b6b3cc; margin-top: 26px; letter-spacing: -0.01em; }
+      .foot { display: flex; align-items: center; gap: 16px; }
+      .pill {
+        font-size: 25px;
+        color: #cfcbe6;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255,255,255,0.05);
+        border-radius: 999px;
+        padding: 12px 26px;
+      }
+      .url { margin-left: auto; font-size: 27px; color: #8f8ba8; }
+    </style>
+  </head>
+  <body>
+    <div class="glow glow--a"></div>
+    <div class="glow glow--b"></div>
+    <div class="glow glow--c"></div>
+    <div class="grid"></div>
+
+    <div class="inner">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0" stop-color="#6366f1" />
+              <stop offset="0.55" stop-color="#a855f7" />
+              <stop offset="1" stop-color="#ec4899" />
+            </linearGradient>
+            <clipPath id="c"><rect x="13.5" y="6" width="5" height="10" /></clipPath>
+          </defs>
+          <rect width="32" height="32" rx="8.5" fill="url(#g)" />
+          <rect x="4.5" y="10.5" width="13" height="11" rx="5.5" stroke="#fff" stroke-width="2.6" />
+          <rect x="14.5" y="10.5" width="13" height="11" rx="5.5" stroke="url(#g)" stroke-width="5.8" />
+          <rect x="14.5" y="10.5" width="13" height="11" rx="5.5" stroke="#fff" stroke-width="2.6" />
+          <g clip-path="url(#c)">
+            <rect x="4.5" y="10.5" width="13" height="11" rx="5.5" stroke="url(#g)" stroke-width="5.8" />
+            <rect x="4.5" y="10.5" width="13" height="11" rx="5.5" stroke="#fff" stroke-width="2.6" />
+          </g>
+        </svg>
+        <span>Knit UI</span>
+      </div>
+
+      <div>
+        <h1>One component kit.<br /><span class="accent">iOS, Android and web.</span></h1>
+        <p>100+ React&nbsp;Native + web components sharing one design system.</p>
+      </div>
+
+      <div class="foot">
+        <div class="pill">Built on Tamagui</div>
+        <div class="pill">MIT licensed</div>
+        <div class="url">knitui.dev</div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -4,3 +4,31 @@ export const meta = {
 };
 
 <HookReference slug="use-app-state" />
+
+Web and React Native disagree about how an app tells you it has gone away. The
+browser has `document.visibilityState` and a `visibilitychange` event; React
+Native has `AppState` and a `"change"` event with a third, transitional status.
+`useAppState` normalises both onto one union — `AppVisibility`, which is
+`"active" | "background" | "inactive"` — so a component can react to the app
+leaving the foreground without branching on platform.
+
+The failure mode it prevents is work that keeps running when nobody can see it:
+polling intervals, animation loops, audio spectrum analysis, WebSocket
+reconnection. Read the value, and stop the work when it is not `"active"`.
+
+## When to use it
+
+- Pausing an interval, timer or animation loop while the app is backgrounded.
+- Refetching or re-syncing data when the app returns to `"active"`.
+- Releasing an expensive resource (a decoder, a camera, a canvas) on
+  `"background"`.
+
+## Notes
+
+- The web implementation only ever returns `"active"` or `"background"` —
+  `"inactive"` is a native-only status (the iOS app switcher, an incoming call).
+  Treat it as "not fully foreground", not as a distinct web state.
+- Web is SSR-safe: it returns `"active"` on the first render and reads
+  `document` inside an effect, so there is no hydration mismatch. Native seeds
+  synchronously from `AppState.currentState`, so it is correct on the first
+  render.

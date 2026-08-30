@@ -4,3 +4,35 @@ export const meta = {
 };
 
 <HookReference slug="use-os" />
+
+Returns the operating system the app is running on: `macos`, `ios`, `windows`,
+`android`, `linux`, `web`, or `undetermined` when it cannot tell yet. The two
+platforms answer the question from completely different sources, which is why the
+hook is split.
+
+On **native** it is `Platform.OS`, which is known synchronously — no state, no
+effect, correct on the very first render. On **web** there is no such API, so it
+matches `navigator.userAgent` against a short list of patterns, and it does that
+in a mount effect rather than during render. That is deliberate: reading
+`navigator` while rendering on the server is either impossible or wrong, and
+returning a real value on the first client render would make the client's markup
+disagree with the server's. So the first web render is always `undetermined`, and
+the real value lands on the render after mount.
+
+## When to use it
+
+- Rendering the right shortcut hint: ⌘K on macOS, Ctrl+K elsewhere.
+- Offering the correct download or install instructions.
+- Copy or affordances that differ per platform, where a media query is the wrong tool.
+
+## Notes
+
+- Handle `undetermined` explicitly on web. It is the value on the first render and
+  under SSR, so branching without a fallback produces a visible flash of the wrong
+  variant.
+- Web detection is user-agent based and inherits that mechanism's limits: it sees
+  what the browser reports, so a device sending a desktop user agent is detected as
+  a desktop OS.
+- It answers *which OS*, not *how big the screen is* or *whether there is a mouse*.
+  For layout decisions use `useMedia()` or
+  [`@knitui/mediaquery`](/docs/mediaquery/playground) instead.

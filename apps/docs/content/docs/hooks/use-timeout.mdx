@@ -4,3 +4,33 @@ export const meta = {
 };
 
 <HookReference slug="use-timeout" />
+
+`useTimeout` wraps `setTimeout` in the lifecycle it always needed: it returns
+`start` and `clear`, keeps the handle in a ref, and clears any pending timer when
+the component unmounts. The callback is read through a ref that is refreshed on
+every render, so a re-render never restarts a pending timer and the timer never
+fires yesterday's closure.
+
+Both halves matter. The hand-rolled version leaks a timer that fires after
+unmount and sets state on a dead component, and the variant that closes over the
+callback fires with props from the render that scheduled it. This hook replaces
+the `blurTimer`-style ref plus cleanup-effect pattern that otherwise gets
+rewritten in every component needing a delay.
+
+## When to use it
+
+- Grace periods around focus: closing a menu shortly after blur so a click on it
+  still lands.
+- Transient UI that resets itself — a "Copied" label, a temporary highlight.
+- Deferred work after an interaction, or a one-shot on mount via
+  `autoInvoke: true`.
+
+## Notes
+
+- `start` is a no-op while a timeout is already pending. It does not restart the
+  clock, so this is not a debounce — call `clear()` first if you want to reset
+  the delay.
+- Arguments passed to `start` are forwarded to the callback when it fires.
+- Changing `delay` re-runs the internal effect, which clears any pending timeout
+  (and starts a fresh one when `autoInvoke` is set).
+- Plain timers with no platform API, so behaviour is identical on web and native.

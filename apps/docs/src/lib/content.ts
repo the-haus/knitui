@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { type ContentModule, contentModules, contentRoutes } from "@/generated/content-map";
+import { pageMetadata } from "@/lib/seo";
 
 /**
  * Shared resolution for the two content routes (`/docs` and `/docs/[...slug]`).
@@ -28,12 +29,19 @@ export async function loadContent(route: string): Promise<ContentModule> {
   return loader();
 }
 
-/** `<title>` / description / robots for a content route. */
+/**
+ * `<title>` / description / canonical / robots for a content route.
+ *
+ * The description is passed through `snippet()` rather than used verbatim: MDX
+ * `meta` and the component registry are prose sources, so their descriptions
+ * carry markdown and run past what a search result renders. See `lib/seo.ts`.
+ */
 export async function contentMetadata(route: string): Promise<Metadata> {
   const { meta } = await loadContent(route);
-  return {
+  return pageMetadata({
     title: meta?.title,
     description: meta?.description,
-    robots: meta?.noindex ? { index: false, follow: true } : undefined,
-  };
+    path: `/${route}`,
+    noindex: meta?.noindex,
+  });
 }

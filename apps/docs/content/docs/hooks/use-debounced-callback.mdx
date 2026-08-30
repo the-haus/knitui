@@ -4,3 +4,35 @@ export const meta = {
 };
 
 <HookReference slug="use-debounced-callback" />
+
+Debouncing in React is easy to get wrong in two specific ways. Create the
+debounced function inline and every render produces a new one with a new timer,
+so nothing is ever actually debounced. Memoise it with `useCallback` and it
+captures the props and state of the render that created it, so it fires with
+stale values.
+
+`useDebouncedCallback` avoids both. The returned function is memoised on
+`delay` alone, so its identity is stable across renders — safe to pass to a
+memoised child or to subscribe in an effect — while the callback itself is
+routed through [`useCallbackRef`](/docs/hooks/use-callback-ref), so the
+invocation always uses the latest render's closure.
+
+It also carries the two escape hatches a debounce needs:
+`cancel()` drops a pending call, and `flush()` invokes it immediately with the
+arguments it was last called with. Use `flush` on blur or submit, when the user
+has signalled they are done and waiting out the delay is pointless.
+
+## When to use it
+
+- Search-as-you-type, autosave, or any handler that fires per keystroke but
+  should only do work once the typing stops.
+- Expensive handlers attached to high-frequency events (resize, scroll, drag).
+- Anywhere you would reach for `lodash.debounce` inside a component.
+
+## Notes
+
+- The pending timer is cleared on unmount, so a queued call cannot fire against
+  an unmounted component. It is dropped, not flushed — call `flush()` yourself
+  if the last edit must survive teardown.
+- `flush()` is a no-op when nothing is pending; it never invents a call.
+- Plain `setTimeout`, no platform code — identical on web and native.

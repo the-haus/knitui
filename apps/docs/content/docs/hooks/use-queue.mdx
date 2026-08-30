@@ -4,3 +4,31 @@ export const meta = {
 };
 
 <HookReference slug="use-queue" />
+
+`useQueue` splits one list in two: `state` holds at most `limit` items, and
+everything past that lands in `queue`. `add(...items)` appends to the combined
+list and re-splits it, so a burst never loses items — they wait for a slot.
+`update(fn)` hands you the whole list, visible plus queued, and re-splits
+whatever you return, which is how an item leaves the visible window and the
+oldest queued one is promoted into it. `cleanQueue()` drops the overflow only.
+
+The failure mode it prevents is the one you get from `slice`-ing a plain array in
+state: items past the cap are thrown away, so five notifications against a cap of
+three lose two of them permanently.
+
+## When to use it
+
+- A notification or toast stack that shows a fixed number at a time and plays the
+  rest in order.
+- Rate-limited rendering of an incoming stream — messages, events, log lines.
+- Any "show N, hold the rest" UI where the held items must survive until a slot
+  frees up.
+
+## Notes
+
+- `limit` is read when `add` or `update` runs, not when it changes. Raising the
+  limit does not promote queued items until the next mutation.
+- There is no `shift` or `pop`; removal goes through `update`, which is also what
+  triggers promotion from `queue` into `state`.
+- Pure React state with no timers or platform APIs, so behaviour is identical on
+  web and native.

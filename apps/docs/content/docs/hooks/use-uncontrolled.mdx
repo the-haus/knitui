@@ -4,3 +4,44 @@ export const meta = {
 };
 
 <HookReference slug="use-uncontrolled" />
+
+`useUncontrolled` is the state bridge nearly every interactive component in the
+kit sits on. It returns `[value, setValue, controlled]` and decides the mode on
+one test, re-evaluated every render: if the `value` option is not `undefined` the
+state is **controlled** — `setValue` only forwards to `onChange`, and you always
+get back the value you passed, so the owner decides when it moves. Otherwise the
+state is **uncontrolled**: tracked internally, seeded once from `defaultValue` or
+from `finalValue` when `defaultValue` is absent, with `setValue` updating that
+internal state and calling `onChange`. An explicit `value={undefined}` therefore
+reads as uncontrolled, which is what lets `<Foo value={maybeUndefined} />` fall
+back to its own state instead of locking at `undefined`.
+
+The returned setter is referentially stable in **both** branches, and that is
+load-bearing. Around 48 call sites hand it straight to a child, a context value
+or a dependency array; a setter that changed identity each render cascaded — in
+`Combobox` a fresh `setOpen` produced a new store object, then a new context
+value, and context propagation walks past `React.memo`, so every option row
+re-rendered on each keystroke.
+
+## When to use it
+
+- Any component that should work both as `<Foo value onChange />` and as
+  `<Foo defaultValue />` without branching on which one the caller used.
+- Wrapping a kit component and forwarding its controlled props through your own.
+- Anywhere you need to know which mode you are in — the third tuple element is
+  that flag.
+
+## Notes
+
+- `onChange` fires in both modes and is read through
+  [`useCallbackRef`](/docs/hooks/use-callback-ref), so the inline arrow callers
+  almost always pass does not destabilise the setter, and a handler memoized with
+  empty deps still invokes the current `onChange` rather than the one from its
+  first render.
+- Internal state is not synced while controlled. A component that switches from
+  controlled to uncontrolled mid-life resumes from the last uncontrolled value,
+  not from the controlled one it was just showing — pick a mode per instance and
+  stay in it.
+- `defaultValue` wins over `finalValue` when both are passed. `finalValue` is
+  there so a component can supply its own fallback — an empty string, an empty
+  array — without stepping on the caller's `defaultValue`.

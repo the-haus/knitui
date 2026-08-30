@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import Link from "next/link";
+
 import { EditPage } from "@/components/shell/EditPage";
 import { Header } from "@/components/shell/Header";
 import { Pager } from "@/components/shell/Pager";
@@ -48,6 +50,13 @@ function SiteFooter() {
       <div className="footer__inner">
         <span>MIT licensed · © The Haus</span>
         <span>
+          {/*
+           * The sidebar only renders the section you are in, so most pages are
+           * unreachable from any single page's HTML. This puts the full index one
+           * click from everywhere.
+           */}
+          <Link href="/docs/all">All pages</Link>
+          {" · "}
           <a href="https://github.com/the-haus/knitui">GitHub</a>
           {" · "}
           {/* Where to ask — the footer listed three places to READ and none to ask. */}

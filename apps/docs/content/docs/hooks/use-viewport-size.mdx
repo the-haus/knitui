@@ -4,3 +4,36 @@ export const meta = {
 };
 
 <HookReference slug="use-viewport-size" />
+
+`useViewportSize` returns the current `width` and `height` of the window and
+updates them when it changes — a browser resize on the web, a rotation, fold or
+split-view change on native. It answers "how many pixels do I have", not "which
+breakpoint am I in".
+
+That distinction is the thing to get right. For a responsive branch,
+`useBreakpoint` from [`@knitui/mediaquery`](/docs/mediaquery/playground) is the
+cheaper answer: it keeps its own store and wakes subscribers only when the
+resolved band changes, so dragging a window edge within one band re-renders
+nothing. `useViewportSize` reports every genuine pixel change, which is what real
+measurements need — `Modal` uses it to work out how far a drag-to-dismiss must
+travel, since a centred panel has to clear the whole viewport rather than just
+its own height.
+
+## When to use it
+
+- Measuring against the screen: overlay travel distances, clamping a popup to the
+  visible area, `maxHeight` math.
+- Layout that depends on an actual pixel count rather than a named breakpoint.
+- Reacting to rotation or a fold on device.
+
+## Notes
+
+- On the web the value starts at `0 × 0` and is filled in by a mount effect, so
+  server render and hydration agree. Branch on `0` if a first-paint measurement
+  matters to you.
+- Also on the web, an update that would report the same dimensions is skipped.
+  `resize` is unthrottled (roughly 60 events a second while a window is dragged)
+  and `orientationchange` fires alongside it, so without that check every
+  consumer would re-render for numbers it already had.
+- On native the first render already has the real size — the state is seeded from
+  `Dimensions.get("window")` and then follows the `change` event.

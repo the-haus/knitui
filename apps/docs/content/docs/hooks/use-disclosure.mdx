@@ -4,3 +4,33 @@ export const meta = {
 };
 
 <HookReference slug="use-disclosure" />
+
+Every overlay in an app needs the same three lines of state: a boolean, a
+setter that opens, a setter that closes. Written out per component that becomes
+`const [opened, setOpened] = useState(false)` plus three inline arrows that are
+recreated on every render, and the shape drifts between files.
+`useDisclosure` returns `[opened, { open, close, toggle }]` with memoised
+handlers, which is exactly the shape a `Modal`, `Drawer`, `Popover`, `Menu` or
+`Collapse` wants for its `opened` / `onClose` pair.
+
+It also takes optional `onOpen` / `onClose` callbacks. These fire only on a real
+transition: calling `open()` on an already-open disclosure does not re-fire
+`onOpen`, and `close()` on a closed one does not re-fire `onClose`. That
+matters when the callback does something non-idempotent — focus management, an
+analytics event, a fetch.
+
+## When to use it
+
+- Driving any component with an `opened` prop and an `onClose` handler.
+- Toggling a details panel, a mobile navigation drawer, an expanded row.
+- Anywhere you would write a boolean `useState` and three one-line setters.
+
+## Notes
+
+- The handlers are memoised on the `callbacks` object. Passing an object
+  literal inline recreates them every render; hoist it or memoise it if you
+  depend on handler identity.
+- `onOpen` / `onClose` are invoked from inside the state updater, so keep them
+  cheap and free of side effects that must not run twice — React may invoke an
+  updater more than once in development Strict Mode.
+- Pure React state, no platform code — identical on web and native.
