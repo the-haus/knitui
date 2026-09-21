@@ -6,6 +6,15 @@
       "slug": "core",
       "releases": [
         {
+          "version": "0.9.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            }
+          ]
+        },
+        {
           "version": "0.8.0",
           "changes": [
             {
@@ -89,6 +98,19 @@
       "name": "@knitui/components",
       "slug": "components",
       "releases": [
+        {
+          "version": "0.9.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
+            }
+          ]
+        },
         {
           "version": "0.8.1",
           "changes": [
@@ -302,6 +324,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.9.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0"
+            }
+          ]
+        },
+        {
           "version": "0.8.1",
           "changes": [
             {
@@ -508,6 +539,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.9.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0"
+            }
+          ]
+        },
+        {
           "version": "0.8.1",
           "changes": [
             {
@@ -671,6 +711,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.9",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
+            }
+          ]
+        },
         {
           "version": "0.3.8",
           "changes": [
@@ -870,6 +919,15 @@
       "slug": "map",
       "releases": [
         {
+          "version": "0.5.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            }
+          ]
+        },
+        {
           "version": "0.4.3",
           "changes": [
             {
@@ -947,6 +1005,19 @@
       "name": "@knitui/media",
       "slug": "media",
       "releases": [
+        {
+          "version": "0.4.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
+            }
+          ]
+        },
         {
           "version": "0.4.2",
           "changes": [
@@ -1140,6 +1211,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.9.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0"
+            }
+          ]
+        },
+        {
           "version": "0.8.1",
           "changes": [
             {
@@ -1299,6 +1379,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.3.9",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
+            }
+          ]
+        },
         {
           "version": "0.3.8",
           "changes": [
@@ -1490,6 +1579,15 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.9.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/hooks@0.9.0"
+            }
+          ]
+        },
+        {
           "version": "0.8.1",
           "changes": [
             {
@@ -1636,6 +1734,19 @@
       "name": "@knitui/plugins",
       "slug": "plugins",
       "releases": [
+        {
+          "version": "0.2.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0"
+            }
+          ]
+        },
         {
           "version": "0.1.12",
           "changes": [
@@ -1784,6 +1895,69 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.9.0",
+      "entries": [
+        {
+          "package": "@knitui/core",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/hooks@0.9.0"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.8.1",
       "entries": [
@@ -2467,6 +2641,15 @@
           ]
         },
         {
+          "package": "@knitui/map",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            }
+          ]
+        },
+        {
           "package": "@knitui/graphics",
           "changes": [
             {
@@ -2499,6 +2682,19 @@
             {
               "kind": "patch",
               "text": "`SvgImage` no longer gives up on a raster whose surface has not painted yet. Exhausting the eager capture window ended the job without ever calling `onCapture`, and nothing re-requests a raster — so the store slot stayed unresolved forever, no MapLibre image was registered, and every `SymbolLayer` drawing that icon silently drew nothing for the rest of the session, with no log and no retry. The eager window assumed the surface was racing its first draw and would win within ~80 frames. A surface that is not being drawn at all breaks that assumption rather than losing the race: a map mounted offscreen to warm its GL context, a screen frozen by `freezeOnBlur`, an Android view pruned before it painted. All of those resolve later, at which point the next attempt would have succeeded — so ending the job turned a transient condition into a permanent one. The window is now only a change of pace. Past it a job hands its concurrency slot back and keeps polling at ~1s until it succeeds or its surface unmounts; returning the slot matters, because surfaces that are not painting would otherwise hold every slot forever and starve one that would succeed immediately. A dev-only `console.warn` (`typeof`-guarded, so a bundler that does not define `__DEV__` cannot turn a slow icon into a crash) now names the likely cause on the transition to the patient cadence."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
             }
           ]
         }
@@ -2653,6 +2849,29 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.9",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0 - @knitui/components@0.9.0 - @knitui/hooks@0.9.0 - @knitui/icons@0.9.0"
             }
           ]
         }
@@ -3323,6 +3542,19 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[737463e] - @knitui/core@0.2.0 - @knitui/hooks@0.2.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Refresh dependencies to the latest Expo SDK 57 releases. - **core / components / plugins:** Tamagui 2.4.6 → 2.7.7 (pinned exactly, so the babel plugin and runtime always match) and `react-native-teleport` 1.1.7 → 1.2.2. The teleport Android `prepareToRecycleView` fix is now upstream, so the local patch is gone. `expo-image` → ~57.0.5. - **map:** now targets `maplibre-gl` v6 on web (peer `^6`, was `^5`) and `@maplibre/maplibre-react-native` ^11.4.0 on native. Both use `@maplibre/maplibre-gl-style-spec` 26. maplibre v6 is ESM-only and has no default export; the map package now imports it as a namespace. If your web app imports `maplibre-gl` itself, update it to v6. The canvas-leave handlers now listen to `mouseout`: v6 only fires `mouseleave` for layer-scoped listeners, so the long-press/cursor reset on leaving the map never ran. - **media:** `expo-audio` → ~57.0.5, `expo-video` → ~57.0.4."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[bf9eeb1] - @knitui/core@0.9.0"
             }
           ]
         }

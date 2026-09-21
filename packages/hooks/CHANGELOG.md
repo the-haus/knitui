@@ -1,5 +1,12 @@
 # @knitui/hooks
 
+## 0.9.0
+
+### Patch Changes
+
+- Updated dependencies [bf9eeb1]
+  - @knitui/core@0.9.0
+
 ## 0.8.1
 
 ### Patch Changes
