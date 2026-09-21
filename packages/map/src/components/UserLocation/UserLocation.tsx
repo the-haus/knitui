@@ -3,7 +3,7 @@
 import React, { memo, useEffect, useRef } from "react";
 
 import type { Map as MLMap } from "maplibre-gl";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 
 import { useMapContext } from "../MapView/MapView.context";
 import type { UserLocationProps } from "./UserLocation.types";

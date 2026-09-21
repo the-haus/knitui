@@ -74,7 +74,12 @@ const base = [
     rules: {
       ...react.configs.recommended.rules,
       ...react.configs["jsx-runtime"].rules,
-      ...reactHooks.configs.recommended.rules,
+      // Only the classic hooks rules. v7's `recommended` also turns on the React
+      // Compiler rules (refs/immutability/set-state-in-effect/…); the kit doesn't
+      // build with the compiler, and reanimated `.value` writes + render-time ref
+      // reads are deliberate patterns those rules flag.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
 
       // This is a TS RN/React-Native-Web kit — these are intentionally relaxed.
       "@typescript-eslint/no-explicit-any": "off",

@@ -4,7 +4,7 @@ import { memo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import type { Map as MLMap } from "maplibre-gl";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 
 import { anchorToNative } from "../../types/primitives";
 import { useMapContext } from "../MapView/MapView.context";

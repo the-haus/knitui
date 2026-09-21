@@ -19,8 +19,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
-// 3. Follow pnpm symlinks and honor package "exports"/"react-native"/"source".
-config.resolver.unstable_enableSymlinks = true;
+// 3. Honor package "exports"/"react-native"/"source" (Metro follows pnpm
+//    symlinks by default).
 config.resolver.unstable_enablePackageExports = true;
 
 // 4. Run the Tamagui compiler (kit config + components baked in). Flattens the

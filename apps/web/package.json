@@ -17,17 +17,17 @@
     "@knitui/map": "workspace:*",
     "@knitui/plugins": "workspace:*",
     "@shopify/react-native-skia": "2.6.2",
-    "maplibre-gl": "^5.0.0",
-    "next": "^16.2.12",
+    "maplibre-gl": "^6.10.0",
+    "next": "^16.3.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native-reanimated": "4.5.1",
-    "react-native-teleport": "^1.1.7"
+    "react-native-teleport": "1.2.2"
   },
   "devDependencies": {
-    "@types/node": "^20.17.0",
-    "@types/react": "~19.2.0",
-    "@types/react-dom": "~19.2.0",
+    "@types/node": "^24.13.6",
+    "@types/react": "~19.2.18",
+    "@types/react-dom": "~19.2.5",
     "typescript": "~6.0.3"
   }
 }

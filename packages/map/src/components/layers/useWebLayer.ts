@@ -11,6 +11,13 @@ import type { BaseLayerProps } from "./BaseLayer.types";
 import { type PaintLayout, resolvePaintLayout } from "./resolvePaintLayout";
 import { styleValueEquals, useStableStyleValue } from "./styleIdentity";
 
+// maplibre v6 types these setters by spec key; our paint/layout maps are keyed by
+// plain strings (unknown keys are caught by the try/catch below).
+type PaintKey = Parameters<MLMap["setPaintProperty"]>[1];
+type PaintValue = Parameters<MLMap["setPaintProperty"]>[2];
+type LayoutKey = Parameters<MLMap["setLayoutProperty"]>[1];
+type LayoutValue = Parameters<MLMap["setLayoutProperty"]>[2];
+
 /** Props accepted by useWebLayer — style is typed as `object` to accept any layer style interface. */
 interface WebLayerProps extends Omit<BaseLayerProps, "style"> {
   style?: object;
@@ -223,7 +230,7 @@ export function useWebLayer(layerType: string, props: WebLayerProps) {
       for (const prevKey of Object.keys(appliedPaint)) {
         if (!resolvedPaint || !(prevKey in resolvedPaint)) {
           try {
-            map.setPaintProperty(id, prevKey, undefined);
+            map.setPaintProperty(id, prevKey as PaintKey, undefined);
           } catch {
             // Property not recognized for this layer type
           }
@@ -236,7 +243,7 @@ export function useWebLayer(layerType: string, props: WebLayerProps) {
           continue;
         }
         try {
-          map.setPaintProperty(id, prop, value);
+          map.setPaintProperty(id, prop as PaintKey, value as PaintValue);
         } catch {
           // Property not recognized for this layer type
         }
@@ -247,7 +254,7 @@ export function useWebLayer(layerType: string, props: WebLayerProps) {
       for (const prevKey of Object.keys(appliedLayout)) {
         if (!resolvedLayout || !(prevKey in resolvedLayout)) {
           try {
-            map.setLayoutProperty(id, prevKey, undefined);
+            map.setLayoutProperty(id, prevKey as LayoutKey, undefined);
           } catch {
             // Property not recognized for this layer type
           }
@@ -264,7 +271,7 @@ export function useWebLayer(layerType: string, props: WebLayerProps) {
           continue;
         }
         try {
-          map.setLayoutProperty(id, prop, value);
+          map.setLayoutProperty(id, prop as LayoutKey, value as LayoutValue);
         } catch {
           // Property not recognized for this layer type
         }

@@ -12,12 +12,13 @@ import React, {
   useState,
 } from "react";
 
-import maplibregl, {
-  type FilterSpecification,
-  type LayerSpecification,
-  type MapMouseEvent,
-  type Map as MLMap,
-  type StyleSpecification,
+import * as maplibregl from "maplibre-gl";
+import type {
+  FilterSpecification,
+  LayerSpecification,
+  MapMouseEvent,
+  Map as MLMap,
+  StyleSpecification,
 } from "maplibre-gl";
 
 import type {
@@ -518,13 +519,13 @@ export const MapView = memo(
       map.on("dblclick", handleDoubleClick);
       map.on("mousedown", handleMouseDown);
       map.on("mouseup", handleMouseUp);
-      map.on("mouseleave", handleMouseLeave);
+      map.on("mouseout", handleMouseLeave);
       map.on("drag", handleDrag);
       map.on("movestart", handleMoveStart);
       map.on("move", handleMove);
       map.on("moveend", handleMoveEnd);
       map.on("mousemove", handleMouseMoveForCursor);
-      map.on("mouseleave", handleMouseLeaveForCursor);
+      map.on("mouseout", handleMouseLeaveForCursor);
 
       return () => {
         cancelLongPress();
@@ -540,13 +541,13 @@ export const MapView = memo(
         map.off("dblclick", handleDoubleClick);
         map.off("mousedown", handleMouseDown);
         map.off("mouseup", handleMouseUp);
-        map.off("mouseleave", handleMouseLeave);
+        map.off("mouseout", handleMouseLeave);
         map.off("drag", handleDrag);
         map.off("movestart", handleMoveStart);
         map.off("move", handleMove);
         map.off("moveend", handleMoveEnd);
         map.off("mousemove", handleMouseMoveForCursor);
-        map.off("mouseleave", handleMouseLeaveForCursor);
+        map.off("mouseout", handleMouseLeaveForCursor);
 
         navigationControlRef.current = null;
         attributionControlRef.current = null;
