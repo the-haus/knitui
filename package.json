@@ -41,7 +41,7 @@
     "check:naming": "node scripts/check-naming.mjs --all",
     "test": "turbo run test --concurrency=1",
     "prepare": "git config core.hooksPath .husky || true",
-    "version-packages": "changeset version && pnpm install --lockfile-only && pnpm docs:generate",
+    "version-packages": "changeset version && pnpm install --lockfile-only && turbo run build --filter='./packages/*' && pnpm docs:generate",
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
