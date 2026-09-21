@@ -151,3 +151,7 @@ export type {
 // ── Base layer types ───────────────────────────────────────────────
 
 export type { Anchor, PressableSourceProps } from "./types/primitives";
+
+// ── Web worker ─────────────────────────────────────────────────────
+
+export { setWorkerUrl } from "./worker";

@@ -3,6 +3,12 @@
 import { type ReactNode, useEffect } from "react";
 
 import { Provider, useColorScheme } from "@knitui/core";
+import { setWorkerUrl } from "@knitui/map/worker";
+
+// Map demos load maplibre's worker from /public (copied in by next.config.mjs).
+// `@knitui/map/worker` only stores the URL, so this doesn't pull maplibre into
+// every page.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 /**
  * The client boundary for the whole site.

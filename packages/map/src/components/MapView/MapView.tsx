@@ -30,6 +30,7 @@ import type {
   ViewState,
   ViewStateChangeEvent,
 } from "../../types/primitives";
+import { getConfiguredWorkerUrl } from "../../worker";
 import { styleValueEquals } from "../layers/styleIdentity";
 import { createRasterStore } from "../SvgImage/rasterizer.shared";
 import { RasterizerHost } from "../SvgImage/RasterizerHost";
@@ -43,6 +44,36 @@ type SourceBoundLayer = LayerSpecification & {
   source?: string;
   "source-layer"?: string;
 };
+
+let warnedMissingWorker = false;
+
+/**
+ * Hand maplibre the worker URL from `setWorkerUrl` (see `src/worker.ts`) before a
+ * map is created. Without one, maplibre v6 falls back to deriving it from
+ * `import.meta.url`. Under webpack/Next that yields an empty string: no worker, no
+ * tiles, and no error. Warn about that case in dev.
+ */
+function applyWorkerUrl(): void {
+  const url = getConfiguredWorkerUrl();
+  if (url) {
+    if (maplibregl.getWorkerUrl() !== url) maplibregl.setWorkerUrl(url);
+    return;
+  }
+  // `typeof` guarded, not a bare `__DEV__`: see `SvgImage/rasterizer.shared.ts`.
+  if (
+    typeof __DEV__ !== "undefined" &&
+    __DEV__ &&
+    !warnedMissingWorker &&
+    !maplibregl.getWorkerUrl()
+  ) {
+    warnedMissingWorker = true;
+    console.warn(
+      "Map: maplibre-gl has no worker URL, so tiles will not load. Serve maplibre-gl-worker.mjs " +
+        'and maplibre-gl-shared.mjs, then call setWorkerUrl() from "@knitui/map/worker" once ' +
+        "at startup. See https://knitui.dev/docs/map#web-worker",
+    );
+  }
+}
 
 function toWebAttributionOptions(value: MapProps["attribution"]): AttributionControlOptions {
   if (typeof value === "object" && value !== null) {
@@ -204,6 +235,8 @@ export const MapView = memo(
       if (!containerRef.current) return;
 
       propsRef.current.onWillStartLoadingMap?.();
+
+      applyWorkerUrl();
 
       const map = new maplibregl.Map({
         container: containerRef.current,
@@ -855,3 +888,5 @@ export const MapView = memo(
     );
   }),
 );
+
+declare const __DEV__: boolean;

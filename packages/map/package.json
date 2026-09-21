@@ -34,6 +34,12 @@
       "types": "./lib/typescript/index.d.ts",
       "default": "./src/index.ts"
     },
+    "./worker": {
+      "source": "./src/worker.ts",
+      "react-native": "./src/worker.ts",
+      "types": "./lib/typescript/worker.d.ts",
+      "default": "./src/worker.ts"
+    },
     "./styles": {
       "source": "./src/styles/index.ts",
       "react-native": "./src/styles/index.ts",

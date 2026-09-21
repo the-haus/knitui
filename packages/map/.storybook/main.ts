@@ -1,4 +1,15 @@
+import { createRequire } from "node:module";
+import path from "node:path";
+
 import type { StorybookConfig } from "@storybook/react-vite";
+
+// maplibre-gl v6 needs its worker served as a static file (see src/worker.ts);
+// `preview.tsx` points the map at /maplibre. Served straight out of the
+// installed package, so it always matches the maplibre version in use.
+const MAPLIBRE_DIST = path.join(
+  path.dirname(createRequire(import.meta.url).resolve("maplibre-gl/package.json")),
+  "dist",
+);
 
 /**
  * Storybook for @knitui/map.
@@ -31,6 +42,7 @@ const RN_WEB_EXTENSIONS = [
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(ts|tsx)", "../src/**/*.mdx"],
   addons: ["@storybook/addon-docs"],
+  staticDirs: [{ from: MAPLIBRE_DIST, to: "/maplibre" }],
   framework: {
     name: "@storybook/react-vite",
     options: {},

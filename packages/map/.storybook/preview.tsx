@@ -5,6 +5,12 @@ import type { Decorator, Preview } from "@storybook/react-vite";
 import { Flex } from "@knitui/components";
 import { type ColorScheme, Provider } from "@knitui/core";
 
+import { setWorkerUrl } from "../src/worker";
+
+// Served by `staticDirs` in main.ts. Relative to the page, because the composed
+// Storybook hosts this one under a subpath.
+setWorkerUrl(new URL("maplibre/maplibre-gl-worker.mjs", document.baseURI).href);
+
 /**
  * Every story is wrapped in the design-system `Provider` (so `@knitui/components`
  * chrome themes correctly) and rendered FULL-BLEED: the frame fills the entire

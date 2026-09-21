@@ -103,3 +103,6 @@ zip-project.sh
 /.dates-improve-logs/
 
 .playwright-mcp/
+
+# maplibre-gl worker, copied in by next.config / metro.config (scripts/maplibre-worker.cjs)
+**/public/maplibre/

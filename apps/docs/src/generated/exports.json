@@ -235,10 +235,11 @@
       ],
       "exportPaths": [
         ".",
+        "./worker",
         "./styles",
         "./package.json"
       ],
-      "exportCount": 105,
+      "exportCount": 106,
       "hasStories": true
     },
     {
@@ -5677,6 +5678,12 @@
       "kind": "type",
       "package": "@knitui/hooks",
       "packageSlug": "hooks"
+    },
+    {
+      "name": "setWorkerUrl",
+      "kind": "function",
+      "package": "@knitui/map",
+      "packageSlug": "map"
     },
     {
       "name": "ShadowEffect",

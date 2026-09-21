@@ -26,6 +26,13 @@ import remarkGfm from "remark-gfm";
 
 import { withKnitui } from "@knitui/plugins/next-plugin";
 
+import maplibreWorker from "../../scripts/maplibre-worker.cjs";
+
+// maplibre-gl v6 needs its worker served as a static file; `providers.tsx` points
+// the map at it. Copied here rather than in a script because CI runs `next build`
+// directly (see scripts/maplibre-worker.cjs).
+maplibreWorker.copyMaplibreWorker(import.meta.dirname, `${import.meta.dirname}/public/maplibre`);
+
 /**
  * Carry a fence's meta string onto the `<code>` element as `data-meta`.
  *

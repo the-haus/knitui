@@ -29,6 +29,31 @@ import { Map, GeoJSONSource, CircleLayer } from "@knitui/map";
   explicit height (or `flex: 1`). A map in an auto-height box renders 0px tall.
 </Callout>
 
+## Web worker
+
+On web, `maplibre-gl` parses tiles in a web worker, and v6 can't locate that worker
+from inside a bundler. Skip this step and the map paints its background colour but
+never loads a tile, without logging an error. Serve two files from your static
+directory, `maplibre-gl-worker.mjs` and the `maplibre-gl-shared.mjs` it imports, and
+point the map at the worker once at startup:
+
+```bash
+mkdir -p public/maplibre
+cp node_modules/maplibre-gl/dist/maplibre-gl-{worker,shared}.mjs public/maplibre/
+```
+
+```tsx
+// app entry: _layout.tsx, providers.tsx, main.tsx, …
+import { setWorkerUrl } from "@knitui/map/worker";
+
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+```
+
+Copy the files as part of your build rather than committing them, so they always
+match the installed `maplibre-gl`. The `@knitui/map/worker` entry only stores the
+URL, so importing it from your app root doesn't pull the map engine into every page.
+Native maps don't use a web worker, and the call has no effect there.
+
 ## The API shape
 
 Sources hold data, layers draw it — the MapLibre style-spec model, expressed as

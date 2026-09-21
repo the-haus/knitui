@@ -5,6 +5,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { Provider, useTheme } from "@knitui/core";
 import { MediaProvider } from "@knitui/demo";
+import { setWorkerUrl } from "@knitui/map/worker";
+
+// Web only in effect: maps on web load maplibre's worker from public/maplibre
+// (copied in by metro.config.js). Native maps have no web worker.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 /** Renders the router's stack with header colors bound to the active theme. */
 function ThemedStack() {

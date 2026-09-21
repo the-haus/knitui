@@ -23,7 +23,14 @@ config.resolver.nodeModulesPaths = [
 //    symlinks by default).
 config.resolver.unstable_enablePackageExports = true;
 
-// 4. Run the Tamagui compiler (kit config + components baked in). Flattens the
+// 4. Serve maplibre-gl's worker from public/ for the web build; the root layout
+//    points the map at it (scripts/maplibre-worker.cjs explains why).
+require("../../scripts/maplibre-worker.cjs").copyMaplibreWorker(
+  projectRoot,
+  path.join(projectRoot, "public", "maplibre"),
+);
+
+// 5. Run the Tamagui compiler (kit config + components baked in). Flattens the
 //    kit's styled() components and extracts atomic CSS for the web output;
 //    a no-op style cost on native. Wraps last so it sees the resolver tweaks.
 module.exports = withKnitui(config);
