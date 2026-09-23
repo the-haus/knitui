@@ -15,17 +15,21 @@ import { getTokenValue } from "@knitui/core";
  * design rationale (balanced text-to-height ratio, capped radius curve).
  *
  *  key  height  font   ratio  padX   padX(pill)  gap    radius
- *  xxs   24     12     .50     6      10           6      2
- *  xs    28     12     .43    10      12          10      2
- *  sm    32     14     .44    12      16          12      4
- *  md    40     18     .45    16      20          16      4
- *  lg    48     20     .42    20      24          20      8
- *  xl    56     24     .43    24      24          24      8
- *  xxl   64     28     .44    32      32          32     16
+ *  xxs   18     12     .67     2       4           2      2
+ *  xs    24     12     .50     4       8           2      2
+ *  sm    32     14     .44     8      12           4      4
+ *  md    40     16     .40    12      16           4      4
+ *  lg    48     20     .42    16      24           8      8
+ *  xl    64     24     .38    24      24           8      8
+ *  xxl   96     28     .29    32      32          12     16
+ *
+ * (Resolved from `core/config/scales.ts`; this table had drifted from it.)
  *
  * `fontSize` is intentionally CLAMPED at the bottom two steps (xxs/xs borrow the
  * 12px `$xxs` font instead of their same-key font) so tiny controls aren't
- * dominated by text; `sm → xxl` hold a flat ~0.42–0.45 ratio. `borderRadius` is
+ * dominated by text. `md` takes `$sm` (16), not its same-key 18: 18px put the
+ * default 40px control's label at heading size — larger than the body text
+ * around it — and left no 16 step between `sm` (14) and `lg` (20). `borderRadius` is
  * CAPPED at `$lg` (16) so large controls stay rectangles, not accidental pills.
  * `paddingHorizontalPill` is the standard padding bumped one space step — the one
  * sanctioned divergence, used by the pill family (Badge/Chip/Pill).
@@ -57,7 +61,7 @@ export const controlMetrics = {
   },
   md: {
     height: "$md",
-    fontSize: "$md",
+    fontSize: "$sm",
     paddingHorizontal: "$md",
     paddingHorizontalPill: "$lg",
     gap: "$xs",

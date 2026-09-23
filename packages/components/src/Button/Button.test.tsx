@@ -292,4 +292,28 @@ describe("Button", () => {
       expect(svg).toHaveAttribute("stroke", "#abc");
     });
   });
+
+  it("renders a real link when given an href", () => {
+    render(<Button href="/festival/tomorrowland">Tickets</Button>);
+    const link = screen.getByRole("link", { name: "Tickets" });
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveAttribute("href", "/festival/tomorrowland");
+  });
+
+  it("drops the href while disabled (a disabled link is not a link)", () => {
+    render(
+      <Button href="/plan" disabled>
+        Open Plan
+      </Button>,
+    );
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Plan" }).tagName).toBe("BUTTON");
+  });
+
+  it("keeps the label in the layout while loading with no left section", () => {
+    render(<Button loading>Save</Button>);
+    // Still named by its label (width-stable overlay, not a prepended loader).
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(screen.getByText("Save")).toBeInTheDocument();
+  });
 });

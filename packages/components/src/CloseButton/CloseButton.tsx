@@ -9,7 +9,7 @@ import { ControlIconProvider } from "../internal/ControlIconProvider";
 import { type GradientValue, useGradient } from "../internal/gradient";
 import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
-import { fontSizePassthroughVariant } from "../internal/style-props";
+import { fontSizePassthroughVariant, WEB_BUTTON_PROPS } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 
 const CloseButtonFrame = styled(ActionIcon.Frame, {
@@ -123,6 +123,12 @@ const CloseButtonComponent = CloseButtonFrame.styleable<CloseButtonProps>(
         {...press}
         {...grad.frameProps}
         {...rest}
+        aria-disabled={rest.disabled || undefined}
+        // A real focusable `<button>` on web, like `ActionIcon` (whose frame this
+        // is). Without it CloseButton was a `<div role="button">`: never a tab
+        // stop, so the inherited focus ring could not fire and every dismiss ✕
+        // in a consumer app was mouse-only.
+        {...WEB_BUTTON_PROPS}
       >
         {grad.layer}
         {icon ?? (

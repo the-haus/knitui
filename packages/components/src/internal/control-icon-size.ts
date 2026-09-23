@@ -43,5 +43,9 @@ const isSizeKey = (value: unknown): value is SizeKey =>
  */
 export const controlIconSize = (size: SizeKey | number | string | undefined): number => {
   if (typeof size === "number") return size;
-  return isSizeKey(size) ? CONTROL_ICON_SIZE[size] : CONTROL_ICON_SIZE.md;
+  // A size TOKEN (`"$sm"`) names the same step as its bare key. Callers holding
+  // token-typed sizes (Pill's remove button passes `iconSize="$sm"`) used to fall
+  // through to the `md` 20px here, so every Pill's ✕ drew at 20px whatever its size.
+  const key = typeof size === "string" && size.startsWith("$") ? size.slice(1) : size;
+  return isSizeKey(key) ? CONTROL_ICON_SIZE[key] : CONTROL_ICON_SIZE.md;
 };

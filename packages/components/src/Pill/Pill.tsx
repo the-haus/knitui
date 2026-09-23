@@ -74,7 +74,7 @@ const PillFrame = styled(Box, {
     size: controlGapVariant,
     radius: radiusVariant,
     disabled: {
-      true: { opacity: 0.5, pointerEvents: "none" },
+      true: { opacity: 0.6, pointerEvents: "none" },
     },
   } as const,
 

@@ -5,12 +5,13 @@ import { useUncontrolled } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { HiddenInput } from "../internal/hidden-input";
-import { useReducedTransition } from "../internal/motion";
+import { usePressScale, useReducedTransition } from "../internal/motion";
 import {
   animateOnlyProps,
   controlFontVariant,
   controlVariant,
   focusRingStyle,
+  pressScaleStyle,
   radiusVariant,
   shadowVariant,
   type SizeKey,
@@ -101,6 +102,8 @@ const SegmentedControlControl = styled(Box, {
   backgroundColor: "transparent",
   zIndex: 1,
   ...focusRingStyle,
+  // The shared control press dip (see Tabs) — a segment had no press state at all.
+  ...pressScaleStyle,
 
   variants: {
     size: {
@@ -123,7 +126,7 @@ const SegmentedControlControl = styled(Box, {
       true: { flex: 1 },
     },
     itemDisabled: {
-      true: { opacity: 0.45, pointerEvents: "none", ...webCursor("default") },
+      true: { opacity: 0.6, pointerEvents: "none", ...webCursor("default") },
     },
   } as const,
 
@@ -250,6 +253,8 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
       ...rest
     } = props;
 
+    // Reduced-motion-aware easing for each segment's press dip.
+    const press = usePressScale();
     const indicatorTransition = useReducedTransition(
       timedTransition(transitionDuration, transitionTimingFunction),
     );
@@ -388,6 +393,7 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
                 />
               ) : null}
               <SegmentedControlControl
+                {...press}
                 size={size}
                 active={active}
                 grow={fullWidth}

@@ -64,4 +64,12 @@ describe("CloseButton", () => {
     render(<CloseButton.Icon data-testid="icon">x</CloseButton.Icon>);
     expect(screen.getByTestId("icon")).toBeInTheDocument();
   });
+
+  it("is a real, focusable <button> on web", () => {
+    render(<CloseButton aria-label="Dismiss notice" />);
+    const button = screen.getByRole("button", { name: "Dismiss notice" });
+    expect(button.tagName).toBe("BUTTON");
+    button.focus();
+    expect(button).toHaveFocus();
+  });
 });
