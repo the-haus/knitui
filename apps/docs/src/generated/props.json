@@ -6138,6 +6138,14 @@
           "declaredIn": "packages/components/src/VirtualList/VirtualList.shared.ts"
         },
         {
+          "name": "onRefresh",
+          "bucket": "own",
+          "type": "(() => void) | undefined",
+          "required": false,
+          "description": "Pull-to-refresh on the list's scroller — forwarded to the underlying `ScrollArea`'s `onRefresh`. Native only; ignored on web.",
+          "declaredIn": "packages/components/src/VirtualList/VirtualList.shared.ts"
+        },
+        {
           "name": "onRenderedRangeChange",
           "bucket": "own",
           "type": "((range: { start: number; end: number; }) => void) | undefined",
@@ -6170,6 +6178,24 @@
           "declaredIn": "packages/components/src/VirtualList/VirtualList.tsx"
         },
         {
+          "name": "refreshColor",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Spinner colour — a theme token or concrete colour.",
+          "default": "\"$color10\"",
+          "declaredIn": "packages/components/src/VirtualList/VirtualList.shared.ts"
+        },
+        {
+          "name": "refreshing",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Whether the refresh spinner is showing (controlled).",
+          "default": "false",
+          "declaredIn": "packages/components/src/VirtualList/VirtualList.shared.ts"
+        },
+        {
           "name": "shadow",
           "bucket": "system",
           "type": "\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"xxs\" | \"xxl\" | undefined",
@@ -6194,7 +6220,7 @@
       ],
       "counts": {
         "style": 497,
-        "own": 20,
+        "own": 23,
         "system": 4
       }
     },
@@ -43593,6 +43619,14 @@
           "declaredIn": "packages/components/src/ScrollArea/ScrollArea.shared.ts"
         },
         {
+          "name": "onRefresh",
+          "bucket": "own",
+          "type": "(() => void) | undefined",
+          "required": false,
+          "description": "Called when the reader pulls the viewport down past its top edge. Setting it mounts the platform refresh control on the native scroller. Native only, and only on a single-axis area (`scrollbars=\"y\"` / `\"x\"` or `ScrollArea.Autosize`): the two-axis Pan engine has no native scroller to attach it to. Ignored on web, where an inner scroller has no pull gesture.",
+          "declaredIn": "packages/components/src/ScrollArea/ScrollArea.shared.ts"
+        },
+        {
           "name": "onScrollEnd",
           "bucket": "own",
           "type": "((position: ScrollPosition) => void) | undefined",
@@ -43624,6 +43658,24 @@
           "required": false,
           "description": "Allows getting a ref to the component instance. Once the component unmounts, React will set `ref.current` to `null` (or call the ref with `null` if you passed a callback ref).",
           "declaredIn": "node_modules/@types/react/index.d.ts"
+        },
+        {
+          "name": "refreshColor",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Spinner colour — a theme token (`\"$color10\"`) or any concrete colour. iOS paints it as `tintColor`, Android as the spinner `colors`.",
+          "default": "\"$color10\"",
+          "declaredIn": "packages/components/src/ScrollArea/ScrollArea.shared.ts"
+        },
+        {
+          "name": "refreshing",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Whether the refresh spinner is showing. Controlled: set it `true` when {@link onRefresh} starts work and back to `false` once it settles.",
+          "default": "false",
+          "declaredIn": "packages/components/src/ScrollArea/ScrollArea.shared.ts"
         },
         {
           "name": "renderShadow",
@@ -43808,7 +43860,7 @@
       ],
       "counts": {
         "style": 497,
-        "own": 31,
+        "own": 34,
         "system": 4,
         "react": 2
       }
