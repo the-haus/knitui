@@ -35,6 +35,25 @@ export interface LayoutChangeEvent {
   nativeEvent: { layout: { x: number; y: number; width: number; height: number } };
 }
 
+/**
+ * Press event payload (`onPress` / `onPressIn` / `onPressOut`) — the coordinates
+ * consumers read. Structural for the same reason as {@link LayoutChangeEvent}:
+ * `nativeEvent` is React Native's touch on native and the DOM pointer/mouse event
+ * on web, and both carry these fields, so one type describes both without
+ * importing `react-native`.
+ */
+export interface PressEvent {
+  nativeEvent: {
+    /** Relative to the pressed element. */
+    locationX?: number;
+    locationY?: number;
+    /** Relative to the page / root view. */
+    pageX: number;
+    pageY: number;
+    timestamp?: number;
+  };
+}
+
 /** Accessibility role, as the kit's primitives type it. */
 export type AccessibilityRole = NonNullable<ViewProps["accessibilityRole"]>;
 

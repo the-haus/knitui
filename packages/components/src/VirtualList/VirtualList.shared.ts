@@ -213,6 +213,18 @@ export interface VirtualListOwnProps<T> {
    */
   onRenderedRangeChange?: (range: { start: number; end: number }) => void;
 
+  /* ---- pull to refresh --------------------------------------------------- */
+
+  /**
+   * Pull-to-refresh on the list's scroller — forwarded to the underlying
+   * `ScrollArea`'s `onRefresh`. Native only; ignored on web.
+   */
+  onRefresh?: () => void;
+  /** Whether the refresh spinner is showing (controlled). @default false */
+  refreshing?: boolean;
+  /** Spinner colour — a theme token or concrete colour. @default "$color10" */
+  refreshColor?: string;
+
   /* ---- chrome slots ------------------------------------------------------ */
 
   /** Rendered once above the first row (scrolls with content). */

@@ -275,6 +275,9 @@ function VirtualListInner<T>(
     onStartReachedThreshold = DEFAULT_START_REACHED_THRESHOLD,
     maintainVisibleContentPosition = false,
     onRenderedRangeChange,
+    onRefresh,
+    refreshing,
+    refreshColor,
     ListHeaderComponent,
     ListFooterComponent,
     ListEmptyComponent,
@@ -791,6 +794,9 @@ function VirtualListInner<T>(
         height="100%"
         width="100%"
         onScrollPositionChange={handleScroll}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
+        refreshColor={refreshColor}
         // `scrollArea` slot is a `Partial<BoxProps>`; spread through an index
         // signature so it doesn't collide with ScrollArea's narrowed `shadowColor`.
         {...(scrollAreaSlot as Record<string, unknown>)}

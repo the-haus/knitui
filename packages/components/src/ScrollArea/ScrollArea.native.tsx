@@ -1,5 +1,5 @@
 import * as React from "react";
-import { type LayoutChangeEvent, type ScrollView } from "react-native";
+import { type LayoutChangeEvent, RefreshControl, type ScrollView } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   cancelAnimation,
@@ -12,11 +12,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
 
-import { styled, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import { styled, type TamaguiElement, useTheme, withStaticProperties } from "@knitui/core";
 import { useDebouncedCallback, useMove, useReducedMotion } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { useReducedTransition } from "../internal/motion";
+import { resolveThemeColor } from "../internal/resolve-theme-color";
 import { animateOnlyProps } from "../internal/style-props";
 import { slotStyles } from "../internal/styles";
 import {
@@ -214,6 +215,22 @@ const ScrollAreaShadow = styled(Box, {
 export interface ScrollAreaProps
   extends Omit<BoxProps, "type" | "shadowColor">, ScrollAreaOwnProps {}
 
+/**
+ * RN `RefreshControl` tinted from the active theme. A component of its own so only
+ * an area that actually refreshes subscribes to the theme. Forwards every prop:
+ * Android's `ScrollView` clones its `refreshControl` with a `style` and the
+ * scroller itself as `children`.
+ */
+function ThemedRefreshControl({
+  color,
+  ...props
+}: React.ComponentProps<typeof RefreshControl> & { color: string }) {
+  const theme = useTheme();
+  const resolved = resolveThemeColor(theme, color);
+  // iOS paints `tintColor`; Android paints the spinner from `colors`.
+  return <RefreshControl {...props} tintColor={resolved} colors={[resolved]} />;
+}
+
 /** Internal: `ScrollArea.Autosize` forwards this so the component uses the native
  *  `ScrollView` path (content-driven sizing) instead of the Pan engine. */
 type InternalProps = ScrollAreaProps & { autosize?: boolean };
@@ -279,6 +296,9 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       // keyboardScrolling / keyStep are web-only; accepted and ignored here.
       keyboardScrolling: _keyboardScrolling,
       keyStep: _keyStep,
+      onRefresh,
+      refreshing = false,
+      refreshColor = "$color10",
       // Internal: Autosize uses the native ScrollView path.
       autosize = false,
       children,
@@ -879,6 +899,17 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       scrollEventThrottle: 16,
       nestedScrollEnabled: true,
       keyboardShouldPersistTaps,
+      ...(onRefresh
+        ? {
+            refreshControl: (
+              <ThemedRefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                color={refreshColor}
+              />
+            ),
+          }
+        : null),
       ...(mergedViewportProps as object),
     };
 

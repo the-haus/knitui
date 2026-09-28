@@ -3,6 +3,17 @@ import { useCallback, useEffect, useState } from "react";
 import type { ViewportSize } from "./use-viewport-size.shared";
 
 /**
+ * The viewport size right now (web), readable from plain JS — for a callback
+ * that needs it once (centering a scroll target, sizing a one-off animation)
+ * rather than a render that must follow resizes; use {@link useViewportSize}
+ * for that. `{ 0, 0 }` where there is no `window` (SSR).
+ */
+export function getViewportSize(): ViewportSize {
+  if (typeof window === "undefined") return { width: 0, height: 0 };
+  return { width: window.innerWidth, height: window.innerHeight };
+}
+
+/**
  * Current viewport size, kept in sync on resize/orientation change (web) — port
  * of Mantine's `useViewportSize`. Reads `window.innerWidth/Height`; SSR-safe
  * (returns `{ 0, 0 }` until mounted). The `use-viewport-size.native` sibling
