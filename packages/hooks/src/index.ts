@@ -1,6 +1,11 @@
 // The cross-platform floating (positioning) layer now lives in `@knitui/components`
 // (`src/floating`), colocated with its only consumers (Popover/Tooltip/HoverCard).
-export { useAppState } from "./use-app-state";
+export { announce } from "./announce";
+export type { AnnounceOptions } from "./announce.shared";
+export { canOpenURL, openAppSettings, openURL } from "./linking";
+export { share } from "./share";
+export type { ShareContent, ShareResult } from "./share.shared";
+export { getAppState, subscribeAppState, useAppState } from "./use-app-state";
 export type { AppVisibility } from "./use-app-state.shared";
 export { useCallbackRef } from "./use-callback-ref";
 export {
@@ -77,6 +82,6 @@ export {
   type UseUncontrolledReturnValue,
 } from "./use-uncontrolled";
 export { useValidatedState, type ValidatedState } from "./use-validated-state";
-export { useViewportSize } from "./use-viewport-size";
+export { getViewportSize, useViewportSize } from "./use-viewport-size";
 
 export type { ViewportSize } from "./use-viewport-size.shared";

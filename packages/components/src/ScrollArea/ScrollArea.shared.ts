@@ -184,6 +184,29 @@ export interface ScrollAreaOwnProps {
    */
   keyboardShouldPersistTaps?: boolean | "always" | "never" | "handled";
 
+  /**
+   * Called when the reader pulls the viewport down past its top edge. Setting it
+   * mounts the platform refresh control on the native scroller. Native only, and
+   * only on a single-axis area (`scrollbars="y"` / `"x"` or `ScrollArea.Autosize`):
+   * the two-axis Pan engine has no native scroller to attach it to. Ignored on web,
+   * where an inner scroller has no pull gesture.
+   */
+  onRefresh?: () => void;
+
+  /**
+   * Whether the refresh spinner is showing. Controlled: set it `true` when
+   * {@link onRefresh} starts work and back to `false` once it settles.
+   * @default false
+   */
+  refreshing?: boolean;
+
+  /**
+   * Spinner colour — a theme token (`"$color10"`) or any concrete colour. iOS
+   * paints it as `tintColor`, Android as the spinner `colors`.
+   * @default "$color10"
+   */
+  refreshColor?: string;
+
   /** Props spread onto each scrollbar track (style the rail). */
   scrollbarProps?: Partial<BoxProps>;
 

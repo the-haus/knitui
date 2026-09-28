@@ -26,6 +26,21 @@ describe("ScrollArea", () => {
     expect(screen.getByText("Scrollable content")).toBeInTheDocument();
   });
 
+  it("accepts pull-to-refresh props on web without leaking them onto the DOM", () => {
+    const onRefresh = jest.fn();
+    const { container } = render(
+      <ScrollArea scrollbars="y" onRefresh={onRefresh} refreshing refreshColor="$color10">
+        <span>Refreshable</span>
+      </ScrollArea>,
+    );
+    expect(screen.getByText("Refreshable")).toBeInTheDocument();
+    const html = container.innerHTML.toLowerCase();
+    expect(html).not.toContain("refreshing");
+    expect(html).not.toContain("onrefresh");
+    expect(html).not.toContain("refreshcolor");
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
   it("exposes an imperative handle on the forwarded ref", () => {
     const ref = React.createRef<ScrollAreaHandle>();
     render(

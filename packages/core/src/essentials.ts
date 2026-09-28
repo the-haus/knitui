@@ -27,7 +27,13 @@ export {
   getTokenValue,
   getVariable,
   getVariableValue,
-  // platform branch (true on web / react-native-web, false on native)
+  // platform branches. `isWeb` is true on web / react-native-web; `isIos` /
+  // `isAndroid` are true only in the NATIVE iOS / Android runtimes (a browser on
+  // an iPhone is `isWeb`, not `isIos`). All three are build-time constants, so a
+  // bundler can drop the dead arm — prefer them over `Platform.OS`, which would
+  // pull `react-native` into the consumer.
+  isAndroid,
+  isIos,
   isWeb,
   // the write half of `getConfig` — makes a config THE active one process-wide.
   // `<Provider>` already does this for the config it is handed (see

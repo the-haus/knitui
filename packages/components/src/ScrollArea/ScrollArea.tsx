@@ -252,6 +252,11 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       // Native-only (RN `ScrollView` tap handling); accepted and ignored here so
       // it isn't spread onto the DOM viewport via `...rest`.
       keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
+      // Pull-to-refresh is native only: an inner web scroller has no pull
+      // gesture. Accepted and ignored so they aren't spread onto the DOM.
+      onRefresh: _onRefresh,
+      refreshing: _refreshing,
+      refreshColor: _refreshColor,
       children,
       ...rest
     } = props;
