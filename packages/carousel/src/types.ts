@@ -249,6 +249,16 @@ export interface CarouselProps<T> {
   pagingEnabled?: boolean;
   snapEnabled?: boolean;
   overscrollEnabled?: boolean;
+  /**
+   * iOS, `scrollMode="native"` only: whether a tap on the status bar scrolls
+   * this carousel's `ScrollView` to its start. iOS honours that gesture only
+   * when exactly ONE on-screen scroll view has it enabled, and React Native
+   * enables it on every `ScrollView` — so a horizontal rail inside a scrolling
+   * page should pass `false` to leave the tap to the page. Ignored by the
+   * transform track (no scroll view), on Android and on web.
+   * @default true (React Native's own default)
+   */
+  scrollsToTop?: boolean;
   /** Max items mounted at once (virtualization). Default: all. */
   windowSize?: number;
   /**

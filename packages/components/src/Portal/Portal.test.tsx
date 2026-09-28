@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { render, screen } from "../test-utils";
-import { Portal, PortalHost } from "./index";
+import { OverlayHost, Portal, PortalHost, useOverlayHost, useTopmostOverlayHost } from "./index";
 
 describe("Portal", () => {
   it("teleports children into the root host by default", async () => {
@@ -47,5 +47,57 @@ describe("Portal", () => {
       </Portal>,
     );
     expect(await screen.findByText("In fallback location")).toBeInTheDocument();
+  });
+});
+
+describe("OverlayHost", () => {
+  function Probe({ id }: { id: string }) {
+    return <span data-testid={id}>{useOverlayHost()}</span>;
+  }
+  function TopProbe() {
+    return <span data-testid="top">{useTopmostOverlayHost()}</span>;
+  }
+
+  it("defaults overlays to the root host outside any scope", () => {
+    render(<Probe id="probe" />);
+    expect(screen.getByTestId("probe")).toHaveTextContent("root");
+  });
+
+  it("scopes the host name for its subtree and teleports into its own host", async () => {
+    render(
+      <div>
+        <OverlayHost name="modal-a">
+          <div data-testid="scope">
+            <Probe id="probe" />
+            <Portal hostName="modal-a">
+              <span>In scoped host</span>
+            </Portal>
+          </div>
+        </OverlayHost>
+        <Probe id="outside" />
+      </div>,
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent("modal-a");
+    expect(screen.getByTestId("outside")).toHaveTextContent("root");
+    // The content lands in the host (a sibling of the scoped subtree), not inline.
+    const found = await screen.findByText("In scoped host");
+    expect(screen.getByTestId("scope")).not.toContainElement(found);
+  });
+
+  it("reports the deepest mounted host as topmost, and root once it unmounts", () => {
+    const { rerender } = render(
+      <>
+        <TopProbe />
+        <OverlayHost name="outer">
+          <OverlayHost name="inner">
+            <span />
+          </OverlayHost>
+        </OverlayHost>
+      </>,
+    );
+    expect(screen.getByTestId("top")).toHaveTextContent("inner");
+
+    rerender(<TopProbe />);
+    expect(screen.getByTestId("top")).toHaveTextContent("root");
   });
 });

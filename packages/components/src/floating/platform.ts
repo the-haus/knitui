@@ -54,6 +54,9 @@ export function measure(
   // Web reads the floating size synchronously from the DOM, so the `onLayout`
   // size hint the native platform uses is accepted for signature parity only.
   _floatingSize?: Dimensions | null,
+  // A scoped `OverlayHost` frame (native only): web derives the container origin
+  // from the floating element's own `offsetParent`, wherever it was teleported.
+  _hostNode?: unknown,
 ): Promise<MeasureResult> {
   const reference = asHTMLElement(referenceNode);
   const floating = asHTMLElement(floatingNode);

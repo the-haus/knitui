@@ -45,6 +45,8 @@ export interface NativeTrackProps<T> {
   /** Rubber-band / bounce past the ends. */
   overscrollEnabled: boolean;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** iOS status-bar tap-to-top (native `ScrollView` only; the web track ignores it). */
+  scrollsToTop?: boolean;
   /** Fires when the user starts dragging (pauses autoplay, fires `onScrollStart`). */
   onInteractionStart: () => void;
   /** Fires when a user scroll settles (resumes autoplay, fires `onScrollEnd`). */

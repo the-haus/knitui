@@ -38,7 +38,7 @@ import { useOverlayChrome } from "../internal/overlay-chrome";
 import { shadowVariant } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
 import { type OverlayProps } from "../Overlay";
-import { Portal } from "../Portal";
+import { Portal, useOverlayHost } from "../Portal";
 import {
   type OverlayTransitionConfig,
   useOverlayTransition,
@@ -712,6 +712,8 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
     // variables ($background/$color/…) would otherwise resolve to the root theme.
     // (Mirrors `@tamagui/portal` wrapping its portal in `<TamaguiRoot theme={…}>`.)
     const themeName = useThemeName();
+    // The nearest scoped `OverlayHost` (a native modal screen), else "root".
+    const overlayHost = useOverlayHost();
     // Enter/exit animation via the shared `Transition` engine. It owns the lazy
     // mount/unmount (so the dropdown now animates OUT before unmounting, not just
     // in) and honours reduced motion (duration collapses to 0). Positioning,
@@ -739,7 +741,7 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
     const transitionStyle = waitingForPosition ? { ...t.style, opacity: 0 } : t.style;
 
     return (
-      <Portal hostName={ctx.withinPortal ? "root" : undefined}>
+      <Portal hostName={ctx.withinPortal ? overlayHost : undefined}>
         <Theme name={themeName}>
           {/* Keep the scrim and the dropdown frame as direct siblings (rather
               than hoisting the scrim above `<Theme>`) so their z-indices compare

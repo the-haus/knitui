@@ -393,13 +393,18 @@ export {
   type PopoverWidth,
 } from "./Popover";
 export {
+  OverlayHost,
+  type OverlayHostProps,
   Portal,
   PortalHost,
   type PortalHostProps,
   type PortalProps,
   PortalProvider,
   type PortalProviderProps,
+  ROOT_OVERLAY_HOST,
+  useOverlayHost,
   usePortal,
+  useTopmostOverlayHost,
 } from "./Portal";
 export {
   Progress,

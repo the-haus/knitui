@@ -8,7 +8,7 @@ import type { CloseButtonProps } from "../CloseButton";
 import { type MotionPreset, type MotionPresetName, useMotionPreset } from "../internal/motion";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Overlay, type OverlayProps } from "../Overlay";
-import { Portal } from "../Portal";
+import { Portal, useOverlayHost } from "../Portal";
 import { ModalBaseInner } from "./modal-base-inner";
 
 /**
@@ -195,6 +195,8 @@ export function ModalBase(props: ModalBaseProps) {
   // the active theme across the portal boundary (on web the content's DOM moves
   // into the root host, losing any nested `<Theme>` ancestor's class).
   const themeName = useThemeName();
+  // The nearest scoped `OverlayHost` (a native modal screen), else "root".
+  const overlayHost = useOverlayHost();
 
   // Trap keyboard focus within the content while opened; the returned ref
   // attaches to the positioning layer. `useFocusTrap` is itself a no-op on
@@ -298,7 +300,7 @@ export function ModalBase(props: ModalBaseProps) {
   // `keepMounted` stays in the tree and toggles `display` — entrance animates but
   // there is no exit (the node never leaves), mirroring `Dialog`/`Popover`.
   if (keepMounted) {
-    return <Portal hostName={withinPortal ? "root" : undefined}>{layer}</Portal>;
+    return <Portal hostName={withinPortal ? overlayHost : undefined}>{layer}</Portal>;
   }
 
   // Default: `AnimatePresence` holds the whole layer (scrim + content) in the tree
@@ -310,7 +312,7 @@ export function ModalBase(props: ModalBaseProps) {
   return (
     <AnimatePresence>
       {opened ? (
-        <Portal key="modal-layer" hostName={withinPortal ? "root" : undefined}>
+        <Portal key="modal-layer" hostName={withinPortal ? overlayHost : undefined}>
           {layer}
         </Portal>
       ) : null}

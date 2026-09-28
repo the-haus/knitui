@@ -45,6 +45,7 @@ function NativeTrackInner<T>({
   pagingEnabled,
   overscrollEnabled,
   contentContainerStyle,
+  scrollsToTop,
   onInteractionStart,
   onInteractionEnd,
   registerSeek,
@@ -197,6 +198,7 @@ function NativeTrackInner<T>({
       snapToInterval={snapEnabled ? pageSize : undefined}
       snapToAlignment="start"
       disableIntervalMomentum={pagingEnabled}
+      scrollsToTop={scrollsToTop}
       contentOffset={contentOffset}
       scrollEventThrottle={16}
       onScroll={scrollHandler}

@@ -4,7 +4,7 @@ import { type GetProps, isWeb, styled } from "@knitui/core";
 
 import { Box } from "../Box";
 import { shadowVariant } from "../internal/style-props";
-import { Portal } from "../Portal";
+import { Portal, useOverlayHost } from "../Portal";
 
 /** Default screen `z-index` for the Affix layer (mirrors Mantine's `modal`). */
 const DEFAULT_Z_INDEX = 200;
@@ -68,6 +68,8 @@ export const Affix = AffixFrame.styleable<AffixProps>(function Affix(props, ref)
     position = { bottom: 0, right: 0 },
     ...rest
   } = props;
+  // The nearest scoped `OverlayHost` (a native modal screen), else "root".
+  const overlayHost = useOverlayHost();
 
   const frame = (
     <AffixFrame
@@ -86,5 +88,5 @@ export const Affix = AffixFrame.styleable<AffixProps>(function Affix(props, ref)
     />
   );
 
-  return withinPortal ? <Portal hostName="root">{frame}</Portal> : frame;
+  return withinPortal ? <Portal hostName={overlayHost}>{frame}</Portal> : frame;
 });

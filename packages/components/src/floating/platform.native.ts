@@ -142,23 +142,32 @@ export function getViewport(): Rect {
  * consumer reports it from `onLayout` — reliable and timely); otherwise it's
  * measured as a fallback. The container origin accounts for the Android status
  * bar so the window-space placement lands correctly in the full-screen host.
+ *
+ * `hostNode` is a scoped `OverlayHost`'s frame, when the floating element
+ * teleports into one instead of the root host. That host is NOT at the window
+ * origin (an iOS `formSheet` starts below the status bar), so its origin is
+ * measured in the same window space as the reference — which also makes the
+ * Android status-bar correction unnecessary for it.
  */
 export async function measure(
   referenceNode: TamaguiElement | null,
   floatingNode: TamaguiElement | null,
   _strategy: Strategy,
   floatingSize?: Dimensions | null,
+  hostNode?: unknown,
 ): Promise<MeasureResult> {
   const hasSize =
     !!floatingSize && isFiniteNumber(floatingSize.width) && isFiniteNumber(floatingSize.height);
 
-  const [reference, floating] = await Promise.all([
+  const [reference, floating, host] = await Promise.all([
     measureWindowRect(referenceNode),
     hasSize ? Promise.resolve(null) : measureWindowRect(floatingNode),
+    hostNode ? measureWindowRect(hostNode as TamaguiElement) : Promise.resolve(null),
   ]);
+  const containerOrigin = host ? { x: host.x, y: host.y } : getHostOrigin();
 
   if (!reference) {
-    return { reference: null, floating: null, containerOrigin: getHostOrigin() };
+    return { reference: null, floating: null, containerOrigin };
   }
 
   const size: Dimensions | null = hasSize
@@ -168,10 +177,10 @@ export async function measure(
       : null;
 
   if (!size) {
-    return { reference: null, floating: null, containerOrigin: getHostOrigin() };
+    return { reference: null, floating: null, containerOrigin };
   }
 
-  return { reference, floating: size, containerOrigin: getHostOrigin() };
+  return { reference, floating: size, containerOrigin };
 }
 
 /**

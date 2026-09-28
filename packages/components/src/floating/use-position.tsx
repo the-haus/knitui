@@ -11,6 +11,7 @@ import * as React from "react";
 
 import type { TamaguiElement } from "@knitui/core";
 
+import { useOverlayHostFrame } from "../Portal/OverlayHost";
 import {
   computePosition,
   type Dimensions,
@@ -135,10 +136,13 @@ export function usePosition(props: UsePositionProps): UsePositionReturn {
   // final layout's measurement is never dropped).
   const measuringRef = React.useRef(false);
   const pendingRef = React.useRef(false);
+  // A scoped `OverlayHost`'s frame when this overlay renders inside one (native
+  // measures its window origin); `null` under the root host.
+  const hostFrameRef = useOverlayHostFrame();
 
   // Latest config, read by the stable `update` callback so it never goes stale.
-  const latest = React.useRef({ placement, strategy, middleware });
-  latest.current = { placement, strategy, middleware };
+  const latest = React.useRef({ placement, strategy, middleware, hostFrameRef });
+  latest.current = { placement, strategy, middleware, hostFrameRef };
 
   const [data, setData] = React.useState<PositionData>({
     x: null,
@@ -178,7 +182,13 @@ export function usePosition(props: UsePositionProps): UsePositionReturn {
     pendingRef.current = false;
 
     const cfg = latest.current;
-    void measure(reference, floating, cfg.strategy, floatingSizeRef.current)
+    void measure(
+      reference,
+      floating,
+      cfg.strategy,
+      floatingSizeRef.current,
+      cfg.hostFrameRef?.current ?? null,
+    )
       .then((m) => {
         if (!mountedRef.current || !m.reference || !m.floating) return;
         // Wait for real layout: a 0×0 box means the element hasn't laid out yet,
