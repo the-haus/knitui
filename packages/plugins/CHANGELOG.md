@@ -1,5 +1,11 @@
 # @knitui/plugins
 
+## 0.2.1
+
+### Patch Changes
+
+- @knitui/core@0.10.0
+
 ## 0.2.0
 
 ### Minor Changes

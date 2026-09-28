@@ -8932,6 +8932,14 @@
           "declaredIn": "packages/components/src/ActionIcon/ActionIcon.tsx"
         },
         {
+          "name": "href",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Destination — renders a real `<a href>` (`role=\"link\"`) on web; ignored on native and while disabled/loading. See `Button`'s `href`.",
+          "declaredIn": "packages/components/src/ActionIcon/ActionIcon.tsx"
+        },
+        {
           "name": "key",
           "bucket": "react",
           "type": "Key | null | undefined",
@@ -9038,8 +9046,8 @@
       "counts": {
         "style": 498,
         "system": 8,
-        "react": 2,
-        "own": 2
+        "own": 3,
+        "react": 2
       }
     },
     "components/inputs/angle-slider": {
@@ -11620,6 +11628,14 @@
           "declaredIn": "packages/components/src/Button/Button.tsx"
         },
         {
+          "name": "href",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Destination — renders the button as a real `<a href>` (`role=\"link\"`) on web, so middle-click and ⌘-click open a new tab. Ignored on native (navigate in `onPress`) and while `disabled`/`loading` (a disabled link is not a link).",
+          "declaredIn": "packages/components/src/Button/Button.tsx"
+        },
+        {
           "name": "key",
           "bucket": "react",
           "type": "Key | null | undefined",
@@ -11748,8 +11764,8 @@
       "counts": {
         "style": 499,
         "system": 9,
-        "react": 2,
-        "own": 4
+        "own": 5,
+        "react": 2
       }
     },
     "components/inputs/checkbox": {
@@ -15281,6 +15297,14 @@
           "declaredIn": "packages/components/src/Button/Button.tsx"
         },
         {
+          "name": "href",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Destination — renders the button as a real `<a href>` (`role=\"link\"`) on web, so middle-click and ⌘-click open a new tab. Ignored on native (navigate in `onPress`) and while `disabled`/`loading` (a disabled link is not a link).",
+          "declaredIn": "packages/components/src/Button/Button.tsx"
+        },
+        {
           "name": "inputProps",
           "bucket": "own",
           "type": "FileButtonInputProps | undefined",
@@ -15400,7 +15424,7 @@
       ],
       "counts": {
         "style": 496,
-        "own": 15,
+        "own": 16,
         "system": 9
       }
     },

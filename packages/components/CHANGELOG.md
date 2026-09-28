@@ -1,5 +1,33 @@
 # @knitui/components
 
+## 0.10.0
+
+### Minor Changes
+
+- 26d50da: Button consistency pass (from a consumer-app button audit):
+
+  - `Button` and `ActionIcon` take `href`: on web they render a real `<a href>` with `role="link"` (middle-click / ⌘-click / URL preview work); ignored on native and while disabled/loading.
+  - `CloseButton` is now a real, keyboard-focusable `<button>` on web (it was a `<div role="button">`, so its focus ring never fired) and sets `aria-disabled`.
+  - Control label at `md` is 16px (was 18px), closing the 14 → 18 gap; the `controlMetrics` docblock table is regenerated from `scales.ts`.
+  - `ActionIcon` / `ThemeIcon` corners from `sm` to `xl` are `$md` (8), matching `Button` (were 4 at sm/md).
+  - Disabled opacity is 0.6 everywhere (Tabs were 0.4, Pill 0.5, SegmentedControl items 0.45).
+  - `Tabs.Tab` and `SegmentedControl` segments get the shared press dip.
+  - A loading `Button` with no left section keeps its width: the loader overlays the (invisible, still-announced) label instead of being prepended.
+  - `controlIconSize` resolves size tokens (`"$sm"`) like bare keys — Pill's remove ✕ now scales with the pill instead of always drawing at 20px.
+
+- 26d50da: Scoped overlay hosts + a carousel `scrollsToTop` pass-through (for native modal screens and the iOS status-bar tap):
+
+  - New `OverlayHost` (`name`, `children`): mounts a scoped `PortalHost` over its subtree, and every kit overlay inside it — `Popover` (and so `Menu`/`Combobox`/date-picker dropdowns), `Tooltip`, `Modal`/`Drawer`, `Affix`, and a modal `@knitui/sheet` `Sheet` — teleports there instead of `"root"`. Wrap an iOS `formSheet` / `fullScreenModal` screen in it so its overlays stop drawing behind the modal. Outside an `OverlayHost` nothing changes.
+  - `useOverlayHost()` returns the host overlays should use at that point in the tree (`"root"` by default); `useTopmostOverlayHost()` returns the top-most mounted scoped host app-wide, for global layers (toasts) that live outside every scope. `ROOT_OVERLAY_HOST` names the default.
+  - Native floating positioning measures a scoped host's window origin, so a dropdown inside a `formSheet` lands on its trigger.
+  - `Carousel` takes `scrollsToTop` (iOS, `scrollMode="native"`): pass `false` on a rail so the page's own scroller keeps the status-bar tap.
+
+### Patch Changes
+
+- @knitui/core@0.10.0
+- @knitui/hooks@0.10.0
+- @knitui/icons@0.10.0
+
 ## 0.9.0
 
 ### Minor Changes
