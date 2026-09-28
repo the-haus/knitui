@@ -27,7 +27,7 @@ import {
   pressScaleStyle,
   radiusVariant,
   type SizeKey,
-  WEB_BUTTON_PROPS,
+  webButtonOrLink,
   webCursor,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
@@ -189,6 +189,12 @@ const BUTTON_SLOT_KEYS = [
 type ButtonFrameProps = Omit<GetProps<typeof ButtonFrame>, "disabled">;
 
 export interface ButtonProps extends ButtonFrameProps {
+  /**
+   * Destination — renders the button as a real `<a href>` (`role="link"`) on web,
+   * so middle-click and ⌘-click open a new tab. Ignored on native (navigate in
+   * `onPress`) and while `disabled`/`loading` (a disabled link is not a link).
+   */
+  href?: string;
   disabled?: boolean;
   loading?: boolean;
   /**
@@ -219,6 +225,7 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
     styles,
     nativeID,
     gradient,
+    href,
     size = "md",
     variant = "filled",
     ...rest
@@ -254,20 +261,27 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
   // Loader replaces that icon, so it takes the SAME canonical in-control icon px
   // (`controlIconSize`) — reading with the icon's weight, not the full control
   // height. `loaderProps.size` still overrides this.
-  const left = loading ? (
-    <Loader
-      size={controlIconSize(size)}
-      type="oval"
-      theme="gray"
-      {...s.merge("loader", loaderProps)}
-    />
-  ) : leftContent != null ? (
-    <ButtonSection {...s.merge("left", slots.Left?.props)}>
-      <ControlIconProvider size={size} variant={variant}>
-        {leftContent}
-      </ControlIconProvider>
-    </ButtonSection>
-  ) : null;
+  // With NO left visual there is no slot for the loader to take over, and
+  // prepending one grew the button by icon + gap mid-press (a Save that jumps
+  // wider as you tap it). So it overlays instead: the label and right section
+  // stay in the layout at `opacity: 0` — keeping the exact width — and the loader
+  // sits centred on top. With a left visual the swap keeps the width already.
+  const overlayLoader = !!loading && leftContent == null;
+  const left =
+    loading && !overlayLoader ? (
+      <Loader
+        size={controlIconSize(size)}
+        type="oval"
+        theme="gray"
+        {...s.merge("loader", loaderProps)}
+      />
+    ) : leftContent != null ? (
+      <ButtonSection {...s.merge("left", slots.Left?.props)}>
+        <ControlIconProvider size={size} variant={variant}>
+          {leftContent}
+        </ControlIconProvider>
+      </ButtonSection>
+    ) : null;
   const right =
     rightContent != null ? (
       <ButtonSection {...s.merge("right", slots.Right?.props)}>
@@ -292,13 +306,49 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
       {...rest}
       aria-disabled={isDisabled || undefined}
       {...nativeIdProps}
-      // Real focusable `<button>` on web so the `:focus-visible` outline fires.
-      {...WEB_BUTTON_PROPS}
+      // Real focusable `<button>` on web so the `:focus-visible` outline fires —
+      // or a real `<a href>` when the button navigates (`href`).
+      {...webButtonOrLink(isDisabled ? undefined : href)}
     >
       {grad.layer}
       {left}
-      {renderTextChild(label, LabelText)}
-      {right}
+      {overlayLoader ? (
+        <>
+          <Box
+            flexDirection="row"
+            alignItems="center"
+            gap="$sm"
+            // Invisible, NOT aria-hidden: the label is still the button's name
+            // while it loads.
+            opacity={0}
+          >
+            {renderTextChild(label, LabelText)}
+            {right}
+          </Box>
+          <Box
+            position="absolute"
+            top={0}
+            right={0}
+            bottom={0}
+            left={0}
+            alignItems="center"
+            justifyContent="center"
+            pointerEvents="none"
+          >
+            <Loader
+              size={controlIconSize(size)}
+              type="oval"
+              theme="gray"
+              {...s.merge("loader", loaderProps)}
+            />
+          </Box>
+        </>
+      ) : (
+        <>
+          {renderTextChild(label, LabelText)}
+          {right}
+        </>
+      )}
     </ButtonFrame>
   );
 });

@@ -5,11 +5,13 @@ import { useId, useUncontrolled } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { controlMetrics as M } from "../internal/control-metrics";
+import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
 import {
   controlFontVariant,
   controlVariant,
   focusRingStyle,
+  pressScaleStyle,
   radiusVariant,
   type SizeKey,
   webCursor,
@@ -246,6 +248,10 @@ const TabTabFrame = styled(Box, {
   ...webCursor("pointer"),
   userSelect: "none",
   position: "relative",
+  // The press dip every other kit control has (Button, ActionIcon, Chip). A tab
+  // swapped its colour and nothing else, so it was the one control whose press
+  // didn't feel like a press. Eased by `usePressScale()` at render.
+  ...pressScaleStyle,
 
   variants: {
     variant: {
@@ -292,7 +298,7 @@ const TabTabFrame = styled(Box, {
       xxl: { ...controlVariant.xxl, gap: M.xxl.gap },
     },
     disabled: {
-      true: { opacity: 0.4, pointerEvents: "none" },
+      true: { opacity: 0.6, pointerEvents: "none" },
     },
   } as const,
 
@@ -382,6 +388,7 @@ export interface TabsTabProps extends Omit<
 }
 
 const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref) {
+  const press = usePressScale();
   const { value, children, leftSection, rightSection, disabled, ...rest } = props;
   const ctx = React.useContext(TabsContext);
   const s = useTabsSlots();
@@ -453,6 +460,7 @@ const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref)
   return (
     <TabTabFrame
       ref={ref}
+      {...press}
       variant={ctx.variant}
       size={ctx.size}
       active={isActive}

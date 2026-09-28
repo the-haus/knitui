@@ -1,4 +1,10 @@
-export type { PortalHostProps, PortalProps, PortalProviderProps } from "./types";
+export {
+  OverlayHost,
+  ROOT_OVERLAY_HOST,
+  useOverlayHost,
+  useTopmostOverlayHost,
+} from "./OverlayHost";
+export type { OverlayHostProps, PortalHostProps, PortalProps, PortalProviderProps } from "./types";
 /**
  * Portal system — a thin re-export of `react-native-teleport`.
  *
@@ -14,6 +20,10 @@ export type { PortalHostProps, PortalProps, PortalProviderProps } from "./types"
  *   to render inline in place (the no-teleport fallback).
  * - Add extra mount points with `<PortalHost name="…" />` and target them by name.
  * - `usePortal(hostName)` exposes `{ isHostAvailable, removePortal }`.
+ * - Wrap a natively presented modal screen in `<OverlayHost name="…">` so the
+ *   kit's overlays inside it teleport into THAT host rather than `"root"` (which
+ *   lives in the window underneath the modal). They read the host through
+ *   `useOverlayHost()`; `useTopmostOverlayHost()` serves app-global layers.
  *
  * @see https://kirillzyusko.github.io/react-native-teleport
  */

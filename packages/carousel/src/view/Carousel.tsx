@@ -277,6 +277,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
                 pagingEnabled={config.pagingEnabled}
                 overscrollEnabled={config.overscrollEnabled}
                 contentContainerStyle={props.contentContainerStyle}
+                scrollsToTop={props.scrollsToTop}
                 onInteractionStart={core.onInteractionStart}
                 onInteractionEnd={core.onInteractionEnd}
                 registerSeek={registerSeek}

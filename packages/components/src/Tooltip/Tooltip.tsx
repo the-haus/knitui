@@ -33,7 +33,7 @@ import { type MotionPresetName } from "../internal/motion";
 import { useOverlayChrome } from "../internal/overlay-chrome";
 import { radiusVariant, shadowVariant } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
-import { Portal } from "../Portal";
+import { Portal, useOverlayHost } from "../Portal";
 import { Text } from "../Text";
 import {
   type OverlayTransitionConfig,
@@ -478,6 +478,8 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
   );
 
   const themeName = useThemeName();
+  // The nearest scoped `OverlayHost` (a native modal screen), else "root".
+  const overlayHost = useOverlayHost();
   // Enter/exit animation via the shared `Transition` engine (honours reduced
   // motion; label now also animates OUT before unmounting).
   const t = useOverlayTransition({ mounted: open, keepMounted, animation, ...transitionProps });
@@ -574,7 +576,7 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
   const dropdownSlot = s.get("dropdown");
 
   const labelNode = !t.rendered ? null : (
-    <Portal hostName={withinPortal ? "root" : undefined}>
+    <Portal hostName={withinPortal ? overlayHost : undefined}>
       <Theme name={themeName}>
         <TooltipLabelFrame
           ref={floatingRef}

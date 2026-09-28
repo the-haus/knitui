@@ -165,6 +165,16 @@ export const squareSizeVariant = {
   xxl: { minWidth: M.xxl.height, width: M.xxl.height, height: M.xxl.height },
 } as const;
 
+/**
+ * The corner a square control (`ActionIcon`, `ThemeIcon`) takes from `sm` to `xl`
+ * — `$md` (8), the SAME corner `Button` uses at every size. They used to read
+ * `controlMetrics.borderRadius` (4 at sm/md), so an icon button beside a labelled
+ * one at the same height was visibly squarer than it. The tiny steps keep the
+ * table's 2px (an 8px corner on an 18–24px square reads as a circle); `xxl` keeps
+ * its 16.
+ */
+const SQUARE_CONTROL_RADIUS = "$md";
+
 export const squareSizeRoundedVariant = {
   xxs: {
     minWidth: M.xxs.height,
@@ -182,25 +192,25 @@ export const squareSizeRoundedVariant = {
     minWidth: M.sm.height,
     width: M.sm.height,
     height: M.sm.height,
-    borderRadius: M.sm.borderRadius,
+    borderRadius: SQUARE_CONTROL_RADIUS,
   },
   md: {
     minWidth: M.md.height,
     width: M.md.height,
     height: M.md.height,
-    borderRadius: M.md.borderRadius,
+    borderRadius: SQUARE_CONTROL_RADIUS,
   },
   lg: {
     minWidth: M.lg.height,
     width: M.lg.height,
     height: M.lg.height,
-    borderRadius: M.lg.borderRadius,
+    borderRadius: SQUARE_CONTROL_RADIUS,
   },
   xl: {
     minWidth: M.xl.height,
     width: M.xl.height,
     height: M.xl.height,
-    borderRadius: M.xl.borderRadius,
+    borderRadius: SQUARE_CONTROL_RADIUS,
   },
   xxl: {
     minWidth: M.xxl.height,
@@ -490,6 +500,24 @@ export const WEB_BUTTON_PROPS: { render?: "button"; type?: string } = Object.fre
 );
 
 export const webButton = (): { render?: "button"; type?: string } => WEB_BUTTON_PROPS;
+
+/**
+ * {@link WEB_BUTTON_PROPS}, or — when the control NAVIGATES — a real `<a href>`
+ * with `role="link"`. A control that goes somewhere must be a link on web, or
+ * middle-click / ⌘-click / "copy link" / the hover URL preview all silently fail;
+ * wrapping a `<button>` in an `<a>` instead nests interactive content (an axe
+ * `nested-interactive` failure). So the button-like frames take `href` and swap
+ * their host element here. Native has no link host: `href` is dropped there and
+ * the caller's `onPress` does the navigating.
+ *
+ * The anchor keeps the browser's default click behaviour; an app that routes
+ * in-app cancels it itself (e.g. `preventDefault` in a capture-phase click
+ * handler for plain clicks, letting modified clicks through).
+ */
+export const webButtonOrLink = (
+  href: string | undefined,
+): { render?: "button" | "a"; type?: string; href?: string; role?: "link" } =>
+  isWeb && href ? { render: "a", href, role: "link" } : WEB_BUTTON_PROPS;
 
 /**
  * Web-only reset for the native `<button>` user-agent `text-align: center`.

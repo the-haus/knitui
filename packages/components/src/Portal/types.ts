@@ -45,3 +45,14 @@ export type PortalHostProps = {
 export type PortalProviderProps = {
   children: React.ReactNode;
 };
+
+/**
+ * Props for {@link OverlayHost} — a scoped portal host that kit overlays inside
+ * it teleport into instead of the app-wide `"root"` host.
+ */
+export type OverlayHostProps = {
+  /** Unique host name (among mounted hosts). Overlays inside target it automatically. */
+  name: string;
+  /** The subtree whose overlays should draw into this host. */
+  children?: React.ReactNode;
+};

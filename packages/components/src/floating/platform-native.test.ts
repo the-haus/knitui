@@ -56,6 +56,23 @@ describe("native floating measurement", () => {
     expect(result.containerOrigin).toEqual({ x: 0, y: 0 });
   });
 
+  it("uses a scoped OverlayHost frame's window origin as the container origin", async () => {
+    const reference = windowNode({ x: 40, y: 200, width: 120, height: 48 });
+    // e.g. an iOS formSheet whose content starts 54px down the window.
+    const host = windowNode({ x: 0, y: 54, width: 390, height: 790 });
+
+    const result = await measure(
+      reference as never,
+      null,
+      "absolute",
+      { width: 200, height: 100 },
+      host,
+    );
+
+    expect(result.reference).toEqual({ x: 40, y: 200, width: 120, height: 48 });
+    expect(result.containerOrigin).toEqual({ x: 0, y: 54 });
+  });
+
   it("falls back to measure()'s pageX/pageY when measureInWindow is absent", async () => {
     const reference = legacyNode({ x: 40, y: 200, width: 120, height: 48 });
     const floating = legacyNode({ x: 0, y: 0, width: 200, height: 100 });

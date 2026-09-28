@@ -2,7 +2,7 @@ import * as React from "react";
 import { Gesture } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 
-import { KeyboardAvoidingView, Portal, UnstyledButton } from "@knitui/components";
+import { KeyboardAvoidingView, Portal, UnstyledButton, useOverlayHost } from "@knitui/components";
 import {
   type GetProps,
   isWeb,
@@ -351,6 +351,8 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
 
   const trapRef = useFocusTrap(mounted && trapFocus);
   const themeName = useThemeName();
+  // The nearest scoped `OverlayHost` (a native modal screen), else "root".
+  const overlayHost = useOverlayHost();
 
   /* ── Imperative handle ────────────────────────────────────────────────── */
 
@@ -465,7 +467,7 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     </Theme>
   );
 
-  return modal ? <Portal hostName="root">{layer}</Portal> : layer;
+  return modal ? <Portal hostName={overlayHost}>{layer}</Portal> : layer;
 }
 
 const SheetComponent = React.forwardRef(SheetInner);

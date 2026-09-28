@@ -17,7 +17,7 @@ import {
   radiusVariant,
   type SizeKey,
   squareSizeRoundedVariant,
-  webButton,
+  webButtonOrLink,
   webCursor,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
@@ -227,6 +227,11 @@ const ACTION_ICON_SLOT_KEYS = [
 ] as const satisfies readonly (keyof ActionIconStyles)[];
 
 export interface ActionIconProps extends GetProps<typeof ActionIconFrame> {
+  /**
+   * Destination — renders a real `<a href>` (`role="link"`) on web; ignored on
+   * native and while disabled/loading. See `Button`'s `href`.
+   */
+  href?: string;
   /** If set, a `Loader` is shown instead of the icon and interaction is blocked. */
   loading?: boolean;
   /**
@@ -253,6 +258,7 @@ const ActionIconComponent = ActionIconFrame.styleable<ActionIconProps>(
       loaderProps,
       styles,
       gradient,
+      href,
       variant = "filled",
       size = "md",
       ...rest
@@ -278,8 +284,9 @@ const ActionIconComponent = ActionIconFrame.styleable<ActionIconProps>(
         {...grad.frameProps}
         {...rest}
         aria-disabled={isDisabled || undefined}
-        // Real focusable `<button>` on web so the `:focus-visible` outline fires.
-        {...webButton()}
+        // Real focusable `<button>` on web so the `:focus-visible` outline fires —
+        // or a real `<a href>` when the control navigates (`href`).
+        {...webButtonOrLink(isDisabled ? undefined : href)}
       >
         {grad.layer}
         {loading ? (
