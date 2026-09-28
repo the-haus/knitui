@@ -4,7 +4,7 @@
     {
       "name": "@knitui/core",
       "slug": "core",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Design tokens, theme and cross-platform primitives for Knit UI.",
       "private": false,
       "dependencies": [
@@ -34,13 +34,13 @@
         "./config",
         "./package.json"
       ],
-      "exportCount": 123,
+      "exportCount": 126,
       "hasStories": false
     },
     {
       "name": "@knitui/components",
       "slug": "components",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Cross-platform (React Native + Web) component kit for Knit UI.",
       "private": false,
       "dependencies": [
@@ -75,7 +75,7 @@
     {
       "name": "@knitui/hooks",
       "slug": "hooks",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Shared React hooks used across Knit UI.",
       "private": false,
       "dependencies": [
@@ -93,13 +93,13 @@
         ".",
         "./package.json"
       ],
-      "exportCount": 77,
+      "exportCount": 88,
       "hasStories": false
     },
     {
       "name": "@knitui/icons",
       "slug": "icons",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Hybrid React + React Native icon kit generated from @tabler/icons SVG data.",
       "private": false,
       "dependencies": [],
@@ -126,7 +126,7 @@
     {
       "name": "@knitui/emoji",
       "slug": "emoji",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Hybrid React + React Native emoji kit generated from Google Noto Emoji SVG data.",
       "private": false,
       "dependencies": [],
@@ -151,7 +151,7 @@
     {
       "name": "@knitui/dates",
       "slug": "dates",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Date and time components for Knit UI.",
       "private": false,
       "dependencies": [
@@ -180,7 +180,7 @@
     {
       "name": "@knitui/carousel",
       "slug": "carousel",
-      "version": "0.3.10",
+      "version": "0.3.11",
       "description": "Cross-platform carousel for Knit UI (Embla-style engine).",
       "private": false,
       "dependencies": [
@@ -245,7 +245,7 @@
     {
       "name": "@knitui/media",
       "slug": "media",
-      "version": "0.4.4",
+      "version": "0.4.5",
       "description": "Audio and video players, playlists and visualizers for Knit UI.",
       "private": false,
       "dependencies": [
@@ -278,7 +278,7 @@
     {
       "name": "@knitui/graphics",
       "slug": "graphics",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Skia-powered graphics primitives and effects for Knit UI.",
       "private": false,
       "dependencies": [
@@ -305,7 +305,7 @@
     {
       "name": "@knitui/sheet",
       "slug": "sheet",
-      "version": "0.3.10",
+      "version": "0.3.11",
       "description": "Cross-platform bottom sheet for Knit UI.",
       "private": false,
       "dependencies": [
@@ -337,7 +337,7 @@
     {
       "name": "@knitui/mediaquery",
       "slug": "mediaquery",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "description": "Cross-platform media queries and responsive breakpoints for Knit UI (React Native + web, SSR-safe).",
       "private": false,
       "dependencies": [
@@ -361,7 +361,7 @@
     {
       "name": "@knitui/plugins",
       "slug": "plugins",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "description": "Pre-configured Tamagui build-tool plugins for the knitui UI kit (babel, metro, next, vite, webpack) plus the Next.js SSR provider.",
       "private": false,
       "dependencies": [
@@ -636,6 +636,18 @@
       "kind": "type",
       "package": "@knitui/carousel",
       "packageSlug": "carousel"
+    },
+    {
+      "name": "announce",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
+      "name": "AnnounceOptions",
+      "kind": "type",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
     },
     {
       "name": "AppConfig",
@@ -1216,6 +1228,12 @@
       "kind": "type",
       "package": "@knitui/map",
       "packageSlug": "map"
+    },
+    {
+      "name": "canOpenURL",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
     },
     {
       "name": "CanvasLength",
@@ -2841,6 +2859,12 @@
       "packageSlug": "components"
     },
     {
+      "name": "getAppState",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
       "name": "getChildrenNodesValues",
       "kind": "function",
       "package": "@knitui/components",
@@ -3019,6 +3043,12 @@
       "kind": "function",
       "package": "@knitui/core",
       "packageSlug": "core"
+    },
+    {
+      "name": "getViewportSize",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
     },
     {
       "name": "getWeekdayNames",
@@ -3499,6 +3529,12 @@
       "packageSlug": "dates"
     },
     {
+      "name": "isAndroid",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "isBeforeMaxDate",
       "kind": "function",
       "package": "@knitui/dates",
@@ -3524,6 +3560,12 @@
     },
     {
       "name": "isHex",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "isIos",
       "kind": "function",
       "package": "@knitui/core",
       "packageSlug": "core"
@@ -4531,6 +4573,18 @@
       "packageSlug": "carousel"
     },
     {
+      "name": "openAppSettings",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
+      "name": "openURL",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
       "name": "OptionsDropdownProps",
       "kind": "type",
       "package": "@knitui/components",
@@ -5082,6 +5136,12 @@
       "kind": "type",
       "package": "@knitui/map",
       "packageSlug": "map"
+    },
+    {
+      "name": "PressEvent",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "PressEvent",
@@ -5735,6 +5795,24 @@
       "packageSlug": "graphics"
     },
     {
+      "name": "share",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
+      "name": "ShareContent",
+      "kind": "type",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
+      "name": "ShareResult",
+      "kind": "type",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
       "name": "Sheet",
       "kind": "component",
       "package": "@knitui/sheet",
@@ -6240,6 +6318,12 @@
       "kind": "type",
       "package": "@knitui/core",
       "packageSlug": "core"
+    },
+    {
+      "name": "subscribeAppState",
+      "kind": "function",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
     },
     {
       "name": "subscribeKeyboardHeight",

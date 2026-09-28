@@ -6,7 +6,7 @@
       "name": "useAppState",
       "route": "/docs/hooks/use-app-state",
       "signature": "export function useAppState(): AppVisibility",
-      "description": "Coarse foreground/background state (web) — maps the Page Visibility API onto the cross-platform `AppVisibility` union. `document.hidden` → `background`, otherwise `active`. SSR-safe. The `use-app-state.native` sibling uses React Native's `AppState`. Use it to pause intervals / animations when backgrounded.",
+      "description": "Coarse foreground/background state (web) — {@link getAppState} as a hook, re-rendering on each {@link subscribeAppState} change. SSR-safe (`\"active\"` on the server and during hydration). Use it to pause intervals / animations when backgrounded.",
       "types": [],
       "sourcePath": "packages/hooks/src/use-app-state.ts",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-app-state.ts",
