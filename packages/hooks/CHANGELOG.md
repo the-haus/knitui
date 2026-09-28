@@ -1,5 +1,11 @@
 # @knitui/hooks
 
+## 0.10.0
+
+### Patch Changes
+
+- @knitui/core@0.10.0
+
 ## 0.9.0
 
 ### Patch Changes
