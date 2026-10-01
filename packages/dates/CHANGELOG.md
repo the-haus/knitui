@@ -1,5 +1,14 @@
 # @knitui/dates
 
+## 0.12.0
+
+### Patch Changes
+
+- Updated dependencies [8b4d429]
+  - @knitui/components@0.12.0
+  - @knitui/core@0.12.0
+  - @knitui/hooks@0.12.0
+
 ## 0.11.0
 
 ### Patch Changes

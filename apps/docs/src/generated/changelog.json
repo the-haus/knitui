@@ -108,6 +108,27 @@
       "slug": "components",
       "releases": [
         {
+          "version": "0.12.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Add `SkeletonGroup`: a loading silhouette animated as ONE. It holds invisible for `delayMs` (default 150ms) so a fast load never flashes, fades in, then pulses every grouped block in phase — one compositor animation (web) / one reanimated shared value (native) for the whole layout instead of one loop per `Skeleton`. Grouped `Skeleton`s schedule no loop of their own and are hidden from assistive tech; the group is the single `aria-busy` region (`role=\"progressbar\"`, `label`). Reduced motion keeps the hold and drops the fade and pulse."
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/icons@0.12.0"
+            }
+          ]
+        },
+        {
           "version": "0.11.0",
           "changes": [
             {
@@ -371,6 +392,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.12.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            }
+          ]
+        },
+        {
           "version": "0.11.0",
           "changes": [
             {
@@ -608,6 +638,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.12.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0"
+            }
+          ]
+        },
+        {
           "version": "0.11.0",
           "changes": [
             {
@@ -806,6 +845,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.12",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0 - @knitui/icons@0.12.0"
+            }
+          ]
+        },
         {
           "version": "0.3.11",
           "changes": [
@@ -1140,6 +1188,15 @@
       "slug": "media",
       "releases": [
         {
+          "version": "0.4.6",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0 - @knitui/icons@0.12.0"
+            }
+          ]
+        },
+        {
           "version": "0.4.5",
           "changes": [
             {
@@ -1371,6 +1428,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.12.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0"
+            }
+          ]
+        },
+        {
           "version": "0.11.0",
           "changes": [
             {
@@ -1565,6 +1631,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.3.12",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0 - @knitui/icons@0.12.0"
+            }
+          ]
+        },
         {
           "version": "0.3.11",
           "changes": [
@@ -1795,6 +1870,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.12.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.0"
+            }
+          ]
+        },
+        {
           "version": "0.11.0",
           "changes": [
             {
@@ -1972,6 +2060,15 @@
       "name": "@knitui/plugins",
       "slug": "plugins",
       "releases": [
+        {
+          "version": "0.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            }
+          ]
+        },
         {
           "version": "0.3.0",
           "changes": [
@@ -2155,6 +2252,72 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.12.0",
+      "entries": [
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Add `SkeletonGroup`: a loading silhouette animated as ONE. It holds invisible for `delayMs` (default 150ms) so a fast load never flashes, fades in, then pulses every grouped block in phase — one compositor animation (web) / one reanimated shared value (native) for the whole layout instead of one loop per `Skeleton`. Grouped `Skeleton`s schedule no loop of their own and are hidden from assistive tech; the group is the single `aria-busy` region (`role=\"progressbar\"`, `label`). Reduced motion keeps the hold and drops the fade and pulse."
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/icons@0.12.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.0"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.11.0",
       "entries": [
@@ -3101,6 +3264,20 @@
       ]
     },
     {
+      "version": "0.4.6",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0 - @knitui/icons@0.12.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.4.5",
       "entries": [
         {
@@ -3312,6 +3489,29 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.12",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0 - @knitui/icons@0.12.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8b4d429] - @knitui/components@0.12.0 - @knitui/core@0.12.0 - @knitui/hooks@0.12.0 - @knitui/icons@0.12.0"
             }
           ]
         }
@@ -3833,6 +4033,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[89f8c36] - @knitui/components@0.3.0 - @knitui/core@0.3.0 - @knitui/hooks@0.3.0 - @knitui/icons@0.3.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.0"
             }
           ]
         }
