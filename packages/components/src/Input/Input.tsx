@@ -189,6 +189,10 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     // Removes the host chrome so the input renders bare (composite inputs).
     unstyled,
 
+    // RN-style prop with no DOM equivalent: it feeds `--t_placeholderColor`
+    // below instead of leaking onto the `<input>` as an unknown attribute.
+    placeholderTextColor,
+
     ...rest
   } = props;
 
@@ -322,7 +326,10 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     style && typeof style === "object" && !Array.isArray(style) ? style : undefined;
   const inputStyle: InputStyle = {
     ...(incomingStyle as object),
-    "--t_placeholderColor": PLACEHOLDER_COLOR_VAR,
+    "--t_placeholderColor":
+      typeof placeholderTextColor === "string"
+        ? themeColorToCssVar(placeholderTextColor)
+        : PLACEHOLDER_COLOR_VAR,
     "--t_selectionColor": SELECTION_COLOR_VAR,
   };
 
