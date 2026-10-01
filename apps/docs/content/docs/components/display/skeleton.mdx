@@ -5,7 +5,30 @@ export const meta = {
 
 <ComponentHeader id="components/display/skeleton" />
 
-{/* scaffolded: replace this comment with real prose */}
+A `Skeleton` is one placeholder block. A loading SCREEN is many of them, so wrap
+the layout in a `SkeletonGroup`:
+
+```tsx
+<SkeletonGroup flex={1} gap="$md">
+  <Skeleton height={220} radius="none" />
+  <Skeleton width="60%" height={20} />
+  <Skeleton width="40%" height={14} />
+</SkeletonGroup>
+```
+
+The group runs ONE animation for the whole silhouette — on web a compositor CSS
+animation, on native a single reanimated shared value — and the blocks inside
+schedule none of their own. Its timeline:
+
+- **hold** invisible for `delayMs` (default `150`): a load that finishes inside
+  it swaps straight to the content, so a fast response never strobes grey;
+- **fade** in over `fadeMs` (default `200`);
+- **pulse** every block in phase (`durationMs` per half-cycle, down to
+  `minOpacity`; `pulse={false}` to stay solid).
+
+The group is the single `aria-busy` region (`role="progressbar"`, named by
+`label`, default "Loading"); grouped blocks are hidden from assistive tech.
+Reduced motion keeps the hold and drops the fade and pulse.
 
 ## Playground
 

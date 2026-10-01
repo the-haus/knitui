@@ -4364,6 +4364,13 @@
           "hasRender": true,
           "args": {},
           "storybookId": "display-skeleton--card-layout"
+        },
+        {
+          "name": "Group",
+          "description": "A whole loading silhouette animated as ONE: the group holds invisible for `delayMs` (so a fast load never flashes), fades in, then pulses every block in phase — one animation for the layout instead of one per block. Grouped `Skeleton`s schedule no loop of their own.",
+          "hasRender": true,
+          "args": {},
+          "storybookId": "display-skeleton--group"
         }
       ]
     },

@@ -69,7 +69,7 @@
         "./control-system",
         "./package.json"
       ],
-      "exportCount": 557,
+      "exportCount": 559,
       "hasStories": true
     },
     {
@@ -5970,6 +5970,18 @@
       "package": "@knitui/components",
       "packageSlug": "components",
       "route": "/docs/components/display/skeleton"
+    },
+    {
+      "name": "SkeletonGroup",
+      "kind": "component",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "SkeletonGroupProps",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
     },
     {
       "name": "SkeletonProps",
