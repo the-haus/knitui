@@ -18,6 +18,14 @@ describe("Input", () => {
     expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
   });
 
+  it("routes placeholderTextColor to the placeholder var, not a DOM attribute", () => {
+    render(<Input placeholder="Email" placeholderTextColor="$color10" />);
+    const input = screen.getByPlaceholderText("Email");
+    expect(input).not.toHaveAttribute("placeholderTextColor");
+    expect(input).not.toHaveAttribute("placeholdertextcolor");
+    expect(input.style.getPropertyValue("--t_placeholderColor")).toContain("color10");
+  });
+
   it("fires onChangeText with the next value", () => {
     const onChangeText = jest.fn();
     render(<Input onChangeText={onChangeText} />);
