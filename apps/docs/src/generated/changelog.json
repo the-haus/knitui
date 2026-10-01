@@ -108,6 +108,15 @@
       "slug": "components",
       "releases": [
         {
+          "version": "0.12.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Input (web): `placeholderTextColor` no longer leaks onto the DOM `<input>` as an unknown attribute (React \"does not recognize the `placeholderTextColor` prop\" warning). It now sets the placeholder color through `--t_placeholderColor`, matching native. - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        },
+        {
           "version": "0.12.0",
           "changes": [
             {
@@ -392,6 +401,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.12.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.1"
+            }
+          ]
+        },
+        {
           "version": "0.12.0",
           "changes": [
             {
@@ -638,6 +656,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.12.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1"
+            }
+          ]
+        },
+        {
           "version": "0.12.0",
           "changes": [
             {
@@ -845,6 +872,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.13",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        },
         {
           "version": "0.3.12",
           "changes": [
@@ -1188,6 +1224,15 @@
       "slug": "media",
       "releases": [
         {
+          "version": "0.4.7",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        },
+        {
           "version": "0.4.6",
           "changes": [
             {
@@ -1428,6 +1473,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.12.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1"
+            }
+          ]
+        },
+        {
           "version": "0.12.0",
           "changes": [
             {
@@ -1631,6 +1685,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.3.13",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        },
         {
           "version": "0.3.12",
           "changes": [
@@ -1870,6 +1933,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.12.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.1"
+            }
+          ]
+        },
+        {
           "version": "0.12.0",
           "changes": [
             {
@@ -2060,6 +2136,15 @@
       "name": "@knitui/plugins",
       "slug": "plugins",
       "releases": [
+        {
+          "version": "0.3.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.1"
+            }
+          ]
+        },
         {
           "version": "0.3.1",
           "changes": [
@@ -2252,6 +2337,60 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.12.1",
+      "entries": [
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Input (web): `placeholderTextColor` no longer leaks onto the DOM `<input>` as an unknown attribute (React \"does not recognize the `placeholderTextColor` prop\" warning). It now sets the placeholder color through `--t_placeholderColor`, matching native. - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.1"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.12.0",
       "entries": [
@@ -3264,6 +3403,20 @@
       ]
     },
     {
+      "version": "0.4.7",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.4.6",
       "entries": [
         {
@@ -3489,6 +3642,29 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.13",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c372c5d] - @knitui/components@0.12.1 - @knitui/core@0.12.1 - @knitui/hooks@0.12.1 - @knitui/icons@0.12.1"
             }
           ]
         }
@@ -3988,6 +4164,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[5b5a3e0] - @knitui/components@0.4.0 - @knitui/core@0.4.0 - @knitui/hooks@0.4.0 - @knitui/icons@0.4.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.1"
             }
           ]
         }

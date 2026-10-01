@@ -1,5 +1,13 @@
 # @knitui/graphics
 
+## 0.12.1
+
+### Patch Changes
+
+- Updated dependencies [c372c5d]
+  - @knitui/components@0.12.1
+  - @knitui/core@0.12.1
+
 ## 0.12.0
 
 ### Patch Changes
