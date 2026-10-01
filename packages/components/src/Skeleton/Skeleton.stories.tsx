@@ -5,7 +5,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { Box } from "../Box";
 import { Text } from "../Text";
-import { Skeleton } from "./Skeleton";
+import { Skeleton, SkeletonGroup } from "./Skeleton";
 
 const RADII = ["xs", "sm", "md", "lg", "xl", "none", "full"] as const;
 
@@ -197,6 +197,29 @@ export const CardLayout: Story = {
         <Skeleton {...args} height="$xxs" width="75%" />
       </Box>
     </Box>
+  ),
+  args: { width: undefined, height: undefined },
+};
+
+/**
+ * A whole loading silhouette animated as ONE: the group holds invisible for
+ * `delayMs` (so a fast load never flashes), fades in, then pulses every block in
+ * phase — one animation for the layout instead of one per block. Grouped
+ * `Skeleton`s schedule no loop of their own.
+ */
+export const Group: Story = {
+  render: (args) => (
+    <SkeletonGroup width={340} gap="$md" delayMs={150}>
+      <Skeleton {...args} width="100%" height={160} radius="md" />
+      <Box flexDirection="row" gap="$md" alignItems="center">
+        <Skeleton {...args} circle height="$xxl" />
+        <Box gap="$sm" flex={1}>
+          <Skeleton {...args} height="$xxs" width="60%" />
+          <Skeleton {...args} height="$xxs" width="90%" />
+        </Box>
+      </Box>
+      <Skeleton {...args} height="$xxs" width="75%" />
+    </SkeletonGroup>
   ),
   args: { width: undefined, height: undefined },
 };

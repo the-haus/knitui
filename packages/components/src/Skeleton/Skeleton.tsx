@@ -6,6 +6,7 @@ import { useReducedMotion } from "@knitui/hooks";
 import { Box } from "../Box";
 import { radiusVariant } from "../internal/style-props";
 import { asLoopHost, useLoopingAnimation } from "../internal/use-looping-animation";
+import { asRevealHost, type RevealPulseMotion, useRevealPulse } from "../internal/use-reveal-pulse";
 
 /**
  * Placeholder block shown while content loads — mirrors Mantine's `Skeleton`.
@@ -52,6 +53,13 @@ export interface SkeletonProps extends GetProps<typeof SkeletonFrame> {
   animate?: boolean;
 }
 
+/**
+ * Set by {@link SkeletonGroup}: the group owns the animation and the busy
+ * announcement, so a `Skeleton` inside one schedules no loop of its own and
+ * hides itself from assistive tech (the group is the one busy region).
+ */
+const SkeletonGroupContext = React.createContext(false);
+
 export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton(props, ref) {
   const {
     visible = true,
@@ -71,7 +79,8 @@ export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton
   // Reduced motion is handled inside the hook (it returns a static, animation-
   // free frame), so no separate `reduced` branch is needed here.
   const reduced = useReducedMotion();
-  const pulsing = animate && !reduced && visible;
+  const grouped = React.useContext(SkeletonGroupContext);
+  const pulsing = animate && !reduced && visible && !grouped;
   const loop = useLoopingAnimation({
     kind: "pulse",
     durationMs: DURATIONS.ambient,
@@ -108,7 +117,7 @@ export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton
       // style props). The frame is an `asLoopHost` reanimated view on native so
       // that animated `style` has a valid host.
       {...(pulsing ? loop : null)}
-      {...busyProps(true)}
+      {...(grouped ? hiddenProps() : busyProps(true))}
       {...rest}
     >
       {/* Children preserve intrinsic size but stay hidden behind the placeholder. */}
@@ -118,3 +127,65 @@ export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton
     </SkeletonLoopFrame>
   );
 });
+
+// ── SkeletonGroup ────────────────────────────────────────────────────────────
+
+const SkeletonGroupFrame = asRevealHost(Box);
+
+/** Precise web a11y props for the group's busy region; spread to dodge excess-property checks. */
+const groupA11y = (
+  label: string,
+): { "aria-busy"?: boolean; "aria-label"?: string; role?: "progressbar" } => ({
+  "aria-busy": true,
+  "aria-label": label,
+  role: "progressbar",
+});
+
+export interface SkeletonGroupProps extends GetProps<typeof Box>, RevealPulseMotion {
+  /** Accessible name of the busy region. @default "Loading" */
+  label?: string;
+}
+
+/**
+ * A loading SILHOUETTE: a layout of `Skeleton` blocks animated as ONE.
+ *
+ * Every `Skeleton` inside stops scheduling its own pulse (a screen of 20 blocks
+ * was 20 compositor animations on web and 20 `withRepeat` worklets on native),
+ * and the group runs a single reveal-then-pulse on itself instead:
+ *
+ *   • HOLD invisible for `delayMs` (default 150) — a load that finishes inside
+ *     it swaps straight to content, so a fast response never strobes grey;
+ *   • FADE in over `fadeMs`;
+ *   • PULSE the whole silhouette in phase.
+ *
+ * It is a plain `Box` otherwise (layout props pass through), and it is the one
+ * `aria-busy` region — grouped blocks are hidden from assistive tech. Reduced
+ * motion keeps the hold and drops the fade and pulse.
+ *
+ *   <SkeletonGroup flex={1} gap="$md">
+ *     <Skeleton height={220} radius={0} />
+ *     <Skeleton width="60%" height={20} />
+ *   </SkeletonGroup>
+ */
+export const SkeletonGroup = React.forwardRef<React.ComponentRef<typeof Box>, SkeletonGroupProps>(
+  function SkeletonGroup(props, ref) {
+    const {
+      delayMs,
+      fadeMs,
+      durationMs,
+      minOpacity,
+      pulse,
+      label = "Loading",
+      children,
+      ...rest
+    } = props;
+    const reveal = useRevealPulse({ delayMs, fadeMs, durationMs, minOpacity, pulse });
+    return (
+      <SkeletonGroupContext.Provider value>
+        <SkeletonGroupFrame ref={ref} {...groupA11y(label)} {...rest} {...reveal}>
+          {children}
+        </SkeletonGroupFrame>
+      </SkeletonGroupContext.Provider>
+    );
+  },
+);

@@ -469,7 +469,7 @@ export {
   type SimpleGridSpacing,
   type SimpleGridStyles,
 } from "./SimpleGrid";
-export { Skeleton, type SkeletonProps } from "./Skeleton";
+export { Skeleton, SkeletonGroup, type SkeletonGroupProps, type SkeletonProps } from "./Skeleton";
 export {
   RangeSlider,
   type RangeSliderProps,
