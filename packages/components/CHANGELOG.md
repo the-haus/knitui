@@ -1,5 +1,14 @@
 # @knitui/components
 
+## 0.12.1
+
+### Patch Changes
+
+- c372c5d: Input (web): `placeholderTextColor` no longer leaks onto the DOM `<input>` as an unknown attribute (React "does not recognize the `placeholderTextColor` prop" warning). It now sets the placeholder color through `--t_placeholderColor`, matching native.
+  - @knitui/core@0.12.1
+  - @knitui/hooks@0.12.1
+  - @knitui/icons@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes
