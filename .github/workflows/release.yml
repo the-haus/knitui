@@ -67,10 +67,12 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No NPM_TOKEN / NODE_AUTH_TOKEN: publishing authenticates through
-          # npm trusted publishing (OIDC). A token in the env WINS over OIDC,
-          # and npm now demands a one-time password for 2FA-bypassing tokens
-          # (EOTP) — the 0.12.0 release failed exactly that way.
+          # A granular access token with "bypass 2FA" on. A token in the env
+          # WINS over the OIDC trusted-publishing exchange, which stays the
+          # fallback when the secret is absent. npm ends direct publishing
+          # with such tokens around January 2027 — configure a trusted
+          # publisher per @knitui/* package before then and drop this line.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
 
   # knitui.dev is republished on every version update and only on a version
