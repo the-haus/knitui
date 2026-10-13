@@ -15,6 +15,14 @@ describe("NativeSelect", () => {
     expect(screen.getAllByRole("option")).toHaveLength(3);
   });
 
+  it("drops the host inset beside its sections (the chevron is always one)", () => {
+    const { rerender } = render(<NativeSelect data={["React", "Vue"]} />);
+    expect(screen.getByRole("combobox")).toHaveClass("_pl-t-space-md", "_pr-0px");
+
+    rerender(<NativeSelect data={["React", "Vue"]} leftSection={<span>L</span>} />);
+    expect(screen.getByRole("combobox")).toHaveClass("_pl-0px", "_pr-0px");
+  });
+
   it("renders option labels", () => {
     render(<NativeSelect data={data} />);
     expect(screen.getByRole("option", { name: "Green" })).toBeInTheDocument();

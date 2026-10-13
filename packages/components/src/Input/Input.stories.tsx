@@ -2,6 +2,8 @@ import * as React from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
+import { IconSearch } from "@knitui/icons";
+
 import { Box } from "../Box";
 import { Text } from "../Text";
 import { Input } from "./Input";
@@ -113,6 +115,7 @@ export const WithSections: Story = {
   decorators: [(Story) => <Box width={320}>{<Story />}</Box>],
   render: (args) => (
     <Box gap="$md">
+      <Input {...args} leftSection={<IconSearch />} placeholder="Search" />
       <Input {...args} leftSection={<Text>@</Text>} placeholder="username" />
       <Input {...args} rightSection={<Text>.com</Text>} placeholder="domain" />
       <Input

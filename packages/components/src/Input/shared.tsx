@@ -433,6 +433,55 @@ const getSectionContent = (options: SectionContentOptions) => {
   return section ?? (position === "right" ? defaultSection : null);
 };
 
+type InputSectionInsetOptions = Pick<
+  InputChromeProps,
+  | "leftSection"
+  | "rightSection"
+  | "loading"
+  | "loadingPosition"
+  | "__clearSection"
+  | "__clearable"
+  | "__clearSectionMode"
+  | "__defaultRightSection"
+>;
+
+/**
+ * Host padding overrides for the sides that carry an adornment section.
+ *
+ * A section is a control-height square with its content centered, so it already
+ * holds the content→edge gap on BOTH of its sides (`(height − icon) / 2`). The
+ * host's own `paddingHorizontal` on that side would stack on top of it and push
+ * the text ~2.5× further from the icon than the icon sits from the border, so it
+ * is zeroed there. Resolved through `getSectionContent` — the same rule
+ * `InputChrome` renders by — so the inset can't drift from what is on screen.
+ */
+export const getInputSectionInsets = (
+  options: InputSectionInsetOptions,
+): { paddingLeft?: 0; paddingRight?: 0 } => {
+  const { loading = false, loadingPosition = "right" } = options;
+  const left = getSectionContent({
+    loading,
+    loadingPosition,
+    position: "left",
+    section: options.leftSection,
+  });
+  const right = getSectionContent({
+    loading,
+    loadingPosition,
+    position: "right",
+    section: options.rightSection,
+    clearSection: options.__clearSection,
+    clearable: options.__clearable,
+    clearSectionMode: options.__clearSectionMode,
+    defaultSection: options.__defaultRightSection,
+  });
+
+  return {
+    ...(left ? { paddingLeft: 0 as const } : null),
+    ...(right ? { paddingRight: 0 as const } : null),
+  };
+};
+
 const getSectionPointerEvents = (
   value: InputSectionPointerEvents,
 ): InputSectionFrameProps["sectionPointerEvents"] => (value === "all" ? "all" : "none");
