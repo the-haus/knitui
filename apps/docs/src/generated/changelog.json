@@ -108,6 +108,23 @@
       "slug": "components",
       "releases": [
         {
+          "version": "0.12.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Input / NativeSelect: the text no longer sits too far from a `leftSection`/`rightSection`. A section is a control-height square that already holds the gap around its icon, but the host still added its own horizontal padding on that side (26px icon→text vs 10px border→icon at `md`). The host padding is now dropped on any side carrying a section, loader, clear button or chevron — on web and native. A padding prop passed to the input still wins."
+            },
+            {
+              "kind": "patch",
+              "text": "Transition (native): a `keepMounted` child no longer crashes with \"Rendered more hooks than during the previous render\" when `mounted` turns true. The hidden frame was returned without the Tamagui `transition` prop and got it a render later, which changes an animated view's hook order. Every element the native Transition returns now carries the `transition` key (`null` when there is nothing to animate, e.g. under reduced motion)."
+            },
+            {
+              "kind": "patch",
+              "text": "PinInput: Backspace in an empty field works on Android. Soft keyboards (Gboard) send neither a key event nor a text change for it, so a wrong digit could not be walked back to from the keyboard. The focused empty field now holds a zero-width space on Android; deleting it steps back and clears the previous character. Also, an `onFocus`/`onBlur` passed through `getInputProps` is now called alongside the row's own handlers instead of replacing them (replacing them broke the focused-field tracking the placeholder relies on). - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.12.1",
           "changes": [
             {
@@ -401,6 +418,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.12.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.12.1",
           "changes": [
             {
@@ -656,6 +682,23 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.12.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.12.1",
           "changes": [
             {
@@ -872,6 +915,23 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.14",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        },
         {
           "version": "0.3.13",
           "changes": [
@@ -1224,6 +1284,23 @@
       "slug": "media",
       "releases": [
         {
+          "version": "0.4.8",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.4.7",
           "changes": [
             {
@@ -1473,6 +1550,23 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.12.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.12.1",
           "changes": [
             {
@@ -1685,6 +1779,27 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.3.14",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Sheet (native): a sheet that is open and at rest no longer vanishes. Reanimated writes the panel's `translateY` to the native view only when it changes; when the view lost that write (a modal sheet closing over a persistent one, the screen re-rendering after a sign-in: about one time in three on Android) the panel stayed at the off-screen value it started from while the sheet's state still said \"open\". The panel host now re-sends its transform after every render."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        },
         {
           "version": "0.3.13",
           "changes": [
@@ -1933,6 +2048,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.12.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.2"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.12.1",
           "changes": [
             {
@@ -2137,6 +2265,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "0.3.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.2"
+            }
+          ]
+        },
+        {
           "version": "0.3.2",
           "changes": [
             {
@@ -2337,6 +2474,84 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.12.2",
+      "entries": [
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Input / NativeSelect: the text no longer sits too far from a `leftSection`/`rightSection`. A section is a control-height square that already holds the gap around its icon, but the host still added its own horizontal padding on that side (26px icon→text vs 10px border→icon at `md`). The host padding is now dropped on any side carrying a section, loader, clear button or chevron — on web and native. A padding prop passed to the input still wins."
+            },
+            {
+              "kind": "patch",
+              "text": "Transition (native): a `keepMounted` child no longer crashes with \"Rendered more hooks than during the previous render\" when `mounted` turns true. The hidden frame was returned without the Tamagui `transition` prop and got it a render later, which changes an animated view's hook order. Every element the native Transition returns now carries the `transition` key (`null` when there is nothing to animate, e.g. under reduced motion)."
+            },
+            {
+              "kind": "patch",
+              "text": "PinInput: Backspace in an empty field works on Android. Soft keyboards (Gboard) send neither a key event nor a text change for it, so a wrong digit could not be walked back to from the keyboard. The focused empty field now holds a zero-width space on Android; deleting it steps back and clears the previous character. Also, an `onFocus`/`onBlur` passed through `getInputProps` is now called alongside the row's own handlers instead of replacing them (replacing them broke the focused-field tracking the placeholder relies on). - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.2"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.12.2"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.12.1",
       "entries": [
@@ -3403,6 +3618,28 @@
       ]
     },
     {
+      "version": "0.4.8",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.4.7",
       "entries": [
         {
@@ -3642,6 +3879,49 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.14",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Sheet (native): a sheet that is open and at rest no longer vanishes. Reanimated writes the panel's `translateY` to the native view only when it changes; when the view lost that write (a modal sheet closing over a persistent one, the screen re-rendering after a sign-in: about one time in three on Android) the panel stayed at the off-screen value it started from while the sheet's state still said \"open\". The panel host now re-sends its transform after every render."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[10b4ce3]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[784af02]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e6492e4] - @knitui/components@0.12.2 - @knitui/core@0.12.2 - @knitui/hooks@0.12.2 - @knitui/icons@0.12.2"
             }
           ]
         }
@@ -4092,6 +4372,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[4f7830c] - @knitui/components@0.5.0 - @knitui/core@0.5.0 - @knitui/hooks@0.5.0 - @knitui/icons@0.5.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.12.2"
             }
           ]
         }

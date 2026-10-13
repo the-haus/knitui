@@ -1,5 +1,18 @@
 # @knitui/sheet
 
+## 0.3.14
+
+### Patch Changes
+
+- c135642: Sheet (native): a sheet that is open and at rest no longer vanishes. Reanimated writes the panel's `translateY` to the native view only when it changes; when the view lost that write (a modal sheet closing over a persistent one, the screen re-rendering after a sign-in: about one time in three on Android) the panel stayed at the off-screen value it started from while the sheet's state still said "open". The panel host now re-sends its transform after every render.
+- Updated dependencies [10b4ce3]
+- Updated dependencies [784af02]
+- Updated dependencies [e6492e4]
+  - @knitui/components@0.12.2
+  - @knitui/core@0.12.2
+  - @knitui/hooks@0.12.2
+  - @knitui/icons@0.12.2
+
 ## 0.3.13
 
 ### Patch Changes
