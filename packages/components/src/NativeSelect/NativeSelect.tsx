@@ -4,6 +4,7 @@ import { isWeb, registerFocusable, styled, type TamaguiElement, useWebRef } from
 
 import { Combobox } from "../Combobox";
 import {
+  getInputSectionInsets,
   INPUT_CHROME_SLOTS,
   InputChrome,
   inputHostSizeVariant,
@@ -247,6 +248,17 @@ const NativeSelectControl = React.forwardRef<NativeSelectRef, NativeSelectContro
           flex={1}
           minWidth={0}
           size={effectiveSize}
+          {...getInputSectionInsets({
+            leftSection,
+            rightSection,
+            loading,
+            loadingPosition,
+            __clearSection,
+            __clearable,
+            __clearSectionMode,
+            // The chevron is always there unless a section replaces it.
+            __defaultRightSection: true,
+          })}
           {...selectHostProps}
           style={mergedStyle}
         >

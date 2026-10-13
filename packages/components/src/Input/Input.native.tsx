@@ -16,6 +16,7 @@ import type { InputNativeProps } from "./InputNativeProps";
 import {
   DEFAULT_PLACEHOLDER_COLOR,
   DEFAULT_SELECTION_COLOR,
+  getInputSectionInsets,
   getTextareaPaddingVertical,
   INPUT_CHROME_SLOTS,
   InputChrome,
@@ -557,6 +558,18 @@ const InputComponent = InputHostStyle.styleable<NativeInputProps>((props, forwar
         includeFontPadding={false}
         unstyled
         size={effectiveSize}
+        // After `size` so it beats the variant's `paddingHorizontal`; before
+        // `{...rest}` so a consumer-passed padding still wins.
+        {...getInputSectionInsets({
+          leftSection,
+          rightSection,
+          loading,
+          loadingPosition,
+          __clearSection,
+          __clearable,
+          __clearSectionMode,
+          __defaultRightSection,
+        })}
         // The host always renders `unstyled`, so `defaultStyles.color` (the only
         // place the text color is set) never applies. Native `TextInput` doesn't
         // inherit color from ancestors the way web does, so without this the typed

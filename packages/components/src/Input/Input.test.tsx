@@ -4,6 +4,7 @@ import type { GetRef } from "@knitui/core";
 
 import { fireEvent, render, screen } from "../test-utils";
 import { Input } from "./Input";
+import { getInputSectionInsets } from "./shared";
 
 const SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 
@@ -181,5 +182,87 @@ describe("Input", () => {
 
   it("exposes Input.Chrome as a static part", () => {
     expect(Input.Chrome).toBeDefined();
+  });
+
+  // A section is a control-height square that already carries the content→edge
+  // gap on both of its sides, so the host must not add its own inset next to one
+  // (it used to: the text sat ~26px from a `md` icon that is 10px from the border).
+  describe("section insets", () => {
+    const hostClasses = (placeholder: string) =>
+      Array.from(screen.getByPlaceholderText(placeholder).classList);
+    const padding = (placeholder: string) => {
+      const classes = hostClasses(placeholder);
+      return {
+        left: classes.find((name) => name.startsWith("_pl-")),
+        right: classes.find((name) => name.startsWith("_pr-")),
+      };
+    };
+
+    it("keeps the size inset on both sides without sections", () => {
+      render(<Input placeholder="plain" />);
+      expect(padding("plain")).toEqual({ left: "_pl-t-space-md", right: "_pr-t-space-md" });
+    });
+
+    it("drops only the left inset next to a leftSection", () => {
+      render(<Input placeholder="left" leftSection={<span>L</span>} />);
+      expect(padding("left")).toEqual({ left: "_pl-0px", right: "_pr-t-space-md" });
+    });
+
+    it("drops only the right inset next to a rightSection", () => {
+      render(<Input placeholder="right" rightSection={<span>R</span>} />);
+      expect(padding("right")).toEqual({ left: "_pl-t-space-md", right: "_pr-0px" });
+    });
+
+    it.each(SIZES)("drops the left inset at the %s size", (size) => {
+      render(<Input size={size} placeholder={`s-${size}`} leftSection={<span>L</span>} />);
+      const { left, right } = padding(`s-${size}`);
+      expect(left).toBe("_pl-0px");
+      expect(right).toBe(`_pr-t-space-${size}`);
+    });
+
+    it("follows the loader, which stands in for a section", () => {
+      render(
+        <>
+          <Input placeholder="load-left" loading loadingPosition="left" />
+          <Input placeholder="load-right" loading />
+        </>,
+      );
+      expect(padding("load-left")).toEqual({ left: "_pl-0px", right: "_pr-t-space-md" });
+      expect(padding("load-right")).toEqual({ left: "_pl-t-space-md", right: "_pr-0px" });
+    });
+
+    it("applies to the multiline and button hosts too", () => {
+      render(
+        <>
+          <Input multiline placeholder="area" leftSection={<span>L</span>} />
+          <Input component="button" data-testid="button-host" leftSection={<span>L</span>} />
+        </>,
+      );
+      expect(padding("area").left).toBe("_pl-0px");
+      expect(screen.getByTestId("button-host")).toHaveClass("_pl-0px");
+    });
+
+    it("lets a consumer-passed padding win", () => {
+      render(<Input placeholder="custom" leftSection={<span>L</span>} paddingLeft="$xs" />);
+      expect(padding("custom").left).toBe("_pl-t-space-xs");
+    });
+
+    it("resolves the right side by the same rule the chrome renders by", () => {
+      const clear = <span>x</span>;
+      expect(getInputSectionInsets({})).toEqual({});
+      expect(getInputSectionInsets({ leftSection: <span /> })).toEqual({ paddingLeft: 0 });
+      expect(getInputSectionInsets({ __defaultRightSection: <span /> })).toEqual({
+        paddingRight: 0,
+      });
+      expect(getInputSectionInsets({ __clearable: true, __clearSection: clear })).toEqual({
+        paddingRight: 0,
+      });
+      // A clear node that isn't active renders nothing, so the inset stays.
+      expect(getInputSectionInsets({ __clearable: false, __clearSection: clear })).toEqual({});
+      // The loader replaces a section on its own side only.
+      expect(
+        getInputSectionInsets({ loading: true, loadingPosition: "left", rightSection: <span /> }),
+      ).toEqual({ paddingLeft: 0, paddingRight: 0 });
+    });
   });
 });

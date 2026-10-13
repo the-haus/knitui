@@ -18,6 +18,7 @@ import { Text } from "../Text";
 import {
   DEFAULT_PLACEHOLDER_COLOR,
   DEFAULT_SELECTION_COLOR,
+  getInputSectionInsets,
   INPUT_CHROME_SLOTS,
   InputChrome,
   InputClearButton,
@@ -368,12 +369,25 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     onKeyDown: onSubmitEditing || onKeyDown ? handleKeyDown : undefined,
     style: inputStyle,
   };
+  // After `size` so it beats the variant's `paddingHorizontal`; before the host
+  // props so a consumer-passed padding still wins.
+  const sectionInsets = getInputSectionInsets({
+    leftSection,
+    rightSection,
+    loading,
+    loadingPosition,
+    __clearSection,
+    __clearable,
+    __clearSectionMode,
+    __defaultRightSection,
+  });
   const sharedInputProps = {
     ref: composedRef as React.Ref<TamaguiElement>,
     flex: 1,
     minWidth: 0,
     unstyled: true,
     size: effectiveSize,
+    ...sectionInsets,
     ...(inputHostProps as object),
   };
   const styledInput =
@@ -381,6 +395,7 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
       <StyledButtonInput
         ref={composedRef as React.Ref<TamaguiElement>}
         size={effectiveSize}
+        {...sectionInsets}
         {...(buttonHostProps as object)}
       >
         {children}
