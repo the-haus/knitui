@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, isAndroid, styled, withStaticProperties } from "@knitui/core";
 import { useCallbackRef, useId, useMergedRef, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -93,6 +93,20 @@ export interface PinInputStyles {
 }
 
 const PIN_INPUT_SLOT_KEYS = ["field"] as const satisfies readonly (keyof PinInputStyles)[];
+
+/**
+ * What a focused EMPTY field holds on Android: a zero-width space.
+ *
+ * Android's soft keyboards (Gboard) send no key event for Backspace in an empty
+ * `EditText`, and with nothing to delete there is no text change either, so the
+ * field never hears the press: a wrong digit could not be walked back to with
+ * the keyboard at all (measured on an emulator: three digits in, Backspace in
+ * the fourth field did nothing). With one invisible character in the field,
+ * Backspace has something to delete, `onChangeText("")` arrives, and
+ * `handleChange` reads it as "Backspace in an empty field". Only the focused
+ * field carries it, so placeholders and the reported value are untouched.
+ */
+const EMPTY_SENTINEL = "\u200B";
 
 export interface PinInputProps extends Omit<
   PinInputRowProps,
@@ -242,7 +256,23 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
   // Event handlers keep a STABLE identity across renders (so per-field props and
   // ref callbacks below never churn) while always reading the latest state via
   // `useCallbackRef`. No manual dependency lists, no stale closures.
-  const handleChange = useCallbackRef((text: string, index: number) => {
+  const handleChange = useCallbackRef((raw: string, index: number) => {
+    // Android: the focused empty field holds `EMPTY_SENTINEL` (see there).
+    const text = raw.split(EMPTY_SENTINEL).join("");
+    if (isAndroid && raw === "" && (currentValue[index] ?? "") === "") {
+      // The sentinel itself was deleted: Backspace in an EMPTY field. Step back
+      // and clear the previous character, as a hardware Backspace does on web.
+      if (index > 0) {
+        const next = [...currentValue];
+        next[index - 1] = "";
+        setValues(next);
+        if (manageFocus) inputsRef.current[index - 1]?.focus?.();
+      } else {
+        // Nowhere to go: a new array re-asserts the sentinel in this field.
+        setValues([...currentValue]);
+      }
+      return;
+    }
     const setFieldValue = (val: string) => {
       const next = [...currentValue];
       next[index] = val;
@@ -332,6 +362,8 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
     [inputMode, type],
   );
 
+  const perField = (index: number) => getInputProps?.(index);
+
   return (
     <PinInputRow gap={gap} {...others}>
       {fields.map((field, index) => (
@@ -348,7 +380,10 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
           inputMode={resolvedInputMode}
           textAlign="center"
           paddingHorizontal={0}
-          value={currentValue[index] ?? ""}
+          value={
+            (currentValue[index] ?? "") ||
+            (isAndroid && focusedIndex === index ? EMPTY_SENTINEL : "")
+          }
           placeholder={focusedIndex === index ? "" : placeholder}
           autoFocus={autoFocus && index === 0}
           autoComplete={oneTimeCode ? "one-time-code" : "off"}
@@ -356,12 +391,20 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
           wrapperProps={wrapperProps}
           onChangeText={field.onChangeText}
           onKeyDown={field.onKeyDown}
-          onFocus={field.onFocus}
-          onBlur={field.onBlur}
           // The `field` style slot is sugar under the per-index `getInputProps`,
           // which is more explicit and wins where the two overlap.
           {...s.get("field")}
-          {...getInputProps?.(index)}
+          {...perField(index)}
+          // After the spreads: a consumer's `onFocus`/`onBlur` is CALLED, never a
+          // replacement. The row needs its own to know which field has the caret.
+          onFocus={(event: unknown) => {
+            field.onFocus();
+            (perField(index)?.onFocus as ((e: unknown) => void) | undefined)?.(event);
+          }}
+          onBlur={(event: unknown) => {
+            field.onBlur();
+            (perField(index)?.onBlur as ((e: unknown) => void) | undefined)?.(event);
+          }}
         />
       ))}
     </PinInputRow>

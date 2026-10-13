@@ -86,6 +86,23 @@ describe("PinInput", () => {
     expect(screen.queryByLabelText("from-slot")).not.toBeInTheDocument();
   });
 
+  it("calls a getInputProps onFocus/onBlur without losing its own focus tracking", () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    render(<PinInput length={2} placeholder="x" getInputProps={() => ({ onFocus, onBlur })} />);
+    const inputs = screen.getAllByLabelText("PinInput");
+    expect(inputs[0]).toHaveAttribute("placeholder", "x");
+
+    fireEvent.focus(inputs[0]);
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    // The row still knows which field has the caret: its placeholder is hidden.
+    expect(inputs[0]).toHaveAttribute("placeholder", "");
+
+    fireEvent.blur(inputs[0]);
+    expect(onBlur).toHaveBeenCalledTimes(1);
+    expect(inputs[0]).toHaveAttribute("placeholder", "x");
+  });
+
   it("exposes PinInput.Field as a static property", () => {
     expect(PinInput.Field).toBeDefined();
   });
