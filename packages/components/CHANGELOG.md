@@ -1,5 +1,16 @@
 # @knitui/components
 
+## 0.12.2
+
+### Patch Changes
+
+- 10b4ce3: Input / NativeSelect: the text no longer sits too far from a `leftSection`/`rightSection`. A section is a control-height square that already holds the gap around its icon, but the host still added its own horizontal padding on that side (26px icon→text vs 10px border→icon at `md`). The host padding is now dropped on any side carrying a section, loader, clear button or chevron — on web and native. A padding prop passed to the input still wins.
+- 784af02: Transition (native): a `keepMounted` child no longer crashes with "Rendered more hooks than during the previous render" when `mounted` turns true. The hidden frame was returned without the Tamagui `transition` prop and got it a render later, which changes an animated view's hook order. Every element the native Transition returns now carries the `transition` key (`null` when there is nothing to animate, e.g. under reduced motion).
+- e6492e4: PinInput: Backspace in an empty field works on Android. Soft keyboards (Gboard) send neither a key event nor a text change for it, so a wrong digit could not be walked back to from the keyboard. The focused empty field now holds a zero-width space on Android; deleting it steps back and clears the previous character. Also, an `onFocus`/`onBlur` passed through `getInputProps` is now called alongside the row's own handlers instead of replacing them (replacing them broke the focused-field tracking the placeholder relies on).
+  - @knitui/core@0.12.2
+  - @knitui/hooks@0.12.2
+  - @knitui/icons@0.12.2
+
 ## 0.12.1
 
 ### Patch Changes
