@@ -27,10 +27,17 @@ interface CardContextValue {
   orientation: "horizontal" | "vertical";
 }
 
-const CardContext = React.createContext<CardContextValue>({
-  padding: resolvePadding(DEFAULT_PADDING),
-  orientation: "vertical",
-});
+// No default value: resolving `DEFAULT_PADDING` here would read a token while
+// the module loads, which throws when it is evaluated before the Tamagui config
+// is registered (e.g. an SSR chunk that loads ahead of the config). A section
+// outside any `Card` resolves the default lazily, on render, instead.
+const CardContext = React.createContext<CardContextValue | null>(null);
+
+const useCardContext = (): CardContextValue =>
+  React.useContext(CardContext) ?? {
+    padding: resolvePadding(DEFAULT_PADDING),
+    orientation: "vertical",
+  };
 
 const CardFrame = styled(Box, {
   name: "Card",
@@ -101,7 +108,7 @@ type SectionBleed = Pick<
  */
 const CardSection = CardSectionFrame.styleable<CardSectionProps>(function CardSection(props, ref) {
   const { withBorder, inheritPadding, __first, __last, ...rest } = props;
-  const { padding, orientation } = React.useContext(CardContext);
+  const { padding, orientation } = useCardContext();
   const isHorizontal = orientation === "horizontal";
   const neg = -padding;
 
