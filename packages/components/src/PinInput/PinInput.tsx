@@ -5,6 +5,7 @@ import { useCallbackRef, useId, useMergedRef, useUncontrolled } from "@knitui/ho
 
 import { Box } from "../Box";
 import { Input, type InputProps, type InputSize } from "../Input";
+import { HiddenInput } from "../internal/hidden-input";
 import { gapVariant, type SizeKey, squareSizeVariant } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 
@@ -175,6 +176,17 @@ export interface PinInputProps extends Omit<
   /** Base id used to generate per-input ids. */
   id?: string;
 
+  /**
+   * Web only: form field name. When set, one `<input type="hidden">` carries the
+   * joined code, so a surrounding `<form>` (and password managers / one-time-code
+   * autofill, which look for a single named field) see the whole value. The
+   * per-character boxes themselves stay nameless. Ignored on native.
+   */
+  name?: string;
+
+  /** Web only: id of the `<form>` the hidden `name` input belongs to. */
+  form?: string;
+
   /** Props applied to each input, by index. */
   getInputProps?: (index: number) => Partial<InputProps>;
 
@@ -188,8 +200,9 @@ export interface PinInputProps extends Omit<
  * (`mask` → `type="password"` → native `secureTextEntry`) and focus advance work
  * cross-platform. Accent/theme comes from the Tamagui `theme` prop + palette ramp.
  *
- * Web-form parity (`name`/`form` hidden input) and multi-field paste distribution
- * are deferred; single-field paste of a full code is handled.
+ * Web forms: `name` (and `form`) render one hidden input carrying the joined code.
+ * Multi-field paste distribution is deferred; single-field paste of a full code is
+ * handled.
  */
 const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput(props, ref) {
   const {
@@ -214,6 +227,8 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
     oneTimeCode = true,
     ariaLabel = "PinInput",
     id,
+    name,
+    form,
     getInputProps,
     styles,
     ...others
@@ -407,6 +422,12 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
           }}
         />
       ))}
+      <HiddenInput
+        name={name}
+        form={form}
+        disabled={disabled}
+        value={currentValue.join("").trim()}
+      />
     </PinInputRow>
   );
 });
