@@ -3,6 +3,7 @@
 import { memo, useEffect, useRef, useSyncExternalStore } from "react";
 import { SvgXml } from "react-native-svg";
 
+import { captureSvgElement } from "./captureSvgElement";
 import {
   type CapturableSvg,
   type RasterRequest,
@@ -15,6 +16,10 @@ import {
  * out (not `display:none`, which would give it a zero bounding rect and make the
  * web `toDataURL` produce a blank image). `opacity:0` is safe on web because the
  * capture re-renders a serialized clone, not the live node.
+ *
+ * The capture is the kit's own `captureSvgElement`, not react-native-svg's
+ * `Svg.toDataURL`: same serialization, but into a CPU-backed canvas (see that
+ * file for the measured cost of the GPU readback it avoids).
  */
 function RasterSurface({
   req,
@@ -23,15 +28,21 @@ function RasterSurface({
   req: RasterRequest;
   store: RasterStore;
 }): React.JSX.Element {
-  const ref = useRef<CapturableSvg | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(
-    () => runCapture(ref, req, (uri, pixelWidth) => store.resolve(req.key, uri, pixelWidth)),
-    [req, store],
-  );
+  useEffect(() => {
+    const target: { current: CapturableSvg } = {
+      current: {
+        toDataURL: (callback, options) =>
+          captureSvgElement(hostRef.current?.querySelector("svg"), callback, options),
+      },
+    };
+    return runCapture(target, req, (uri, pixelWidth) => store.resolve(req.key, uri, pixelWidth));
+  }, [req, store]);
 
   return (
     <div
+      ref={hostRef}
       aria-hidden
       style={{
         position: "absolute",
@@ -44,7 +55,7 @@ function RasterSurface({
         overflow: "hidden",
       }}
     >
-      <SvgXml xml={req.svg} override={{ ref, width: req.width, height: req.height }} />
+      <SvgXml xml={req.svg} override={{ width: req.width, height: req.height }} />
     </div>
   );
 }
