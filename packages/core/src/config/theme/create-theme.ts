@@ -3,6 +3,7 @@ import { createFont, createTamagui, createTokens } from "@tamagui/core";
 import { createThemes } from "@tamagui/theme-builder";
 
 import { animations } from "../animations";
+import { toFontUnits } from "../font-units";
 import { media as defaultMedia } from "../media";
 import { OVER_MEDIA } from "../over-media";
 import {
@@ -142,6 +143,14 @@ const buildFonts = (
         letterSpacing: { ...config.letterSpacing, ...override.letterSpacing },
       } as FontConfig;
     }
+
+    // px in, `rem` out on the web (browser text zoom scales it), numbers on
+    // native — applied AFTER the overrides so a caller's px size converts too.
+    config = {
+      ...config,
+      size: toFontUnits(config.size),
+      ...(config.lineHeight ? { lineHeight: toFontUnits(config.lineHeight) } : {}),
+    };
 
     out[name] = createFont(config);
   }

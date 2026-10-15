@@ -52,6 +52,8 @@ export const font = { xxs: 12, xs: 14, sm: 16, md: 18, lg: 20, xl: 24, xxl: 28 }
 
 Registered as Tamagui tokens — `config/tokens.ts` (`createTokens({ color, space, size, radius, zIndex })`, each with a `true` alias → `sm`). Assembled in `config/config.ts` via `createTamagui({ animations, fonts, tokens, themes, shorthands, media, ... })`; `declare module "@tamagui/core"` augments the config type. Subpath `@knitui/core/config`.
 
+**Font tokens are `rem` on the web.** The font ladder is authored in px, but the `size` / `lineHeight` sections of every font (`config/fonts.ts` and `createTheme`) pass through `toFontUnits` (`config/font-units.ts`): on the web they become `px / 16` rem strings (browser text zoom + the user's default font size scale them, WCAG 1.4.4), on native they stay numbers. So never read a font token back from the config to do math — use the config-free `getFontSize` / `getLineHeight` (numeric px on every platform). When a variant pairs a token `fontSize` with a line height, give it the line-height TOKEN (`lineHeight: "$md"`), not `getLineHeight(...)` — a px number would not grow with text zoom.
+
 ### Two token surfaces
 
 - **Bare key** — the `size` **prop** on controls takes a bare `SizeKey` (no `$`): `size="md"`. From `internal/control-metrics.ts` (`SIZE_KEYS`, `SizeKey`, `DEFAULT_SIZE = "md"`).
