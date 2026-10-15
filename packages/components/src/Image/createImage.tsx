@@ -9,6 +9,7 @@ import {
   View,
   withStaticProperties,
 } from "@knitui/core";
+import { useCallbackRef, useMergedRef } from "@knitui/hooks";
 
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import {
@@ -201,6 +202,83 @@ export const resolveRadiusValue = (
   return Number.isFinite(numericValue) ? numericValue : undefined;
 };
 
+/** Frames `useWebCachedImageLoad` waits for the backend to put its `<img>` in the DOM. */
+const CACHED_LOAD_MAX_FRAMES = 10;
+
+/**
+ * Find the rendered `<img>` behind a backend instance on web: the instance itself
+ * (a plain `<img>` backend), or expo-image's container `<div>` (the LAST `<img>`
+ * in it is the current source; a placeholder node, when any, comes first).
+ */
+const findWebImg = (instance: unknown): HTMLImageElement | null => {
+  if (typeof HTMLElement === "undefined" || instance == null) return null;
+  if (instance instanceof HTMLImageElement) return instance;
+  const container = (instance as { containerViewRef?: { current?: unknown } }).containerViewRef
+    ?.current;
+  if (container instanceof HTMLElement) {
+    const imgs = container.querySelectorAll("img");
+    return imgs.length ? imgs[imgs.length - 1]! : null;
+  }
+  return null;
+};
+
+const sourceKey = (source: unknown): unknown =>
+  source && typeof source === "object" && "uri" in source
+    ? (source as { uri?: unknown }).uri
+    : source;
+
+/**
+ * Web only: report an image the browser already had as loaded.
+ *
+ * A cached image fires `load` as soon as React creates its `<img>`, which in a
+ * concurrent render can land before the commit; React then drops the event.
+ * expo-image's web fade holds the `<img>` at `opacity: 0` until that `onLoad`, so
+ * the image stayed loaded and invisible for good. After mount (and on each new
+ * source) this checks the committed `<img>`: when it is `complete` with a
+ * `naturalWidth` and no `load` reached us, it re-dispatches `load` on the element
+ * so the backend (and the consumer's `onLoad`) hear it once.
+ */
+function useWebCachedImageLoad(
+  forwardedRef: React.ForwardedRef<unknown>,
+  onLoad: ((...args: unknown[]) => void) | undefined,
+  source: unknown,
+) {
+  const instanceRef = React.useRef<unknown>(null);
+  const ref = useMergedRef(forwardedRef, instanceRef);
+  const loadedRef = React.useRef(false);
+  const latestOnLoad = useCallbackRef(onLoad);
+  const key = sourceKey(source);
+
+  const handleLoad = React.useCallback(
+    (...args: unknown[]) => {
+      loadedRef.current = true;
+      latestOnLoad(...args);
+    },
+    [latestOnLoad],
+  );
+
+  React.useEffect(() => {
+    if (!isWeb || typeof requestAnimationFrame === "undefined") return;
+    loadedRef.current = false;
+    let frame = 0;
+    let handle = 0;
+    const check = () => {
+      if (loadedRef.current) return;
+      const img = findWebImg(instanceRef.current);
+      if (img) {
+        if (img.complete && img.naturalWidth > 0) img.dispatchEvent(new Event("load"));
+        return;
+      }
+      if (frame++ < CACHED_LOAD_MAX_FRAMES) handle = requestAnimationFrame(check);
+    };
+    // The backend may add its `<img>` from its own effect, so look one frame on.
+    handle = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(handle);
+  }, [key]);
+
+  return { ref, onLoad: isWeb && onLoad ? handleLoad : onLoad };
+}
+
 /** Resolve a `$size`-token dimension to its numeric value, passing others through. */
 const resolveDimension = (value: ImageDimension): ImageDimension =>
   typeof value === "string" && value[0] === "$"
@@ -305,10 +383,16 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
     Record<string, unknown>
   >(function ImageBackendAdapter(backendProps, backendRef) {
     const { [TRANSITION_INLINE_ALIAS]: transitionValue, ...backendRest } = backendProps;
+    const { ref, onLoad } = useWebCachedImageLoad(
+      backendRef,
+      backendRest.onLoad as ((...args: unknown[]) => void) | undefined,
+      backendRest.source,
+    );
     return React.createElement(Component, {
       ...backendRest,
       ...(transitionValue !== undefined && { transition: transitionValue }),
-      ref: backendRef,
+      ...(onLoad && { onLoad }),
+      ref,
     });
   }) as unknown as ComponentType<Record<string, unknown>>;
 

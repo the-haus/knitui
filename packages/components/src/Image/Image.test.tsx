@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { fireEvent, render, screen } from "../test-utils";
+import { act, fireEvent, render, screen, waitFor } from "../test-utils";
 import { createImage, type resolveRadiusValue } from "./createImage";
 import { Image } from "./Image";
 import { normalizeContentPosition } from "./shared";
@@ -227,5 +227,46 @@ describe("normalizeContentPosition", () => {
 
   it("passes nullish values through", () => {
     expect(normalizeContentPosition(undefined)).toBeUndefined();
+  });
+});
+
+describe("Image on web: an image the browser already had (KIT-01)", () => {
+  const proto = HTMLImageElement.prototype;
+  const stubImg = (complete: boolean, naturalWidth: number) => {
+    jest.spyOn(proto, "complete", "get").mockReturnValue(complete);
+    jest.spyOn(proto, "naturalWidth", "get").mockReturnValue(naturalWidth);
+  };
+  afterEach(() => jest.restoreAllMocks());
+
+  it("reports a complete <img> as loaded after mount, so the fade shows it", async () => {
+    // React drops a `load` that fires before the commit; expo-image's fade then
+    // holds the <img> at its start class (opacity 0) forever.
+    stubImg(true, 640);
+    const onLoad = jest.fn();
+    render(<Image src="https://example.com/cached.png" alt="C" transition={300} onLoad={onLoad} />);
+    await waitFor(() => expect(onLoad).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByRole("img").className).not.toMatch(/cross-dissolve-start/),
+    );
+  });
+
+  it("leaves an <img> that is still loading to its own load event", async () => {
+    stubImg(false, 0);
+    const onLoad = jest.fn();
+    render(<Image src="https://example.com/slow.png" alt="S" transition={300} onLoad={onLoad} />);
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(onLoad).not.toHaveBeenCalled();
+    fireEvent.load(screen.getByRole("img"));
+    expect(onLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not report a second load once the real one arrived", async () => {
+    stubImg(false, 0);
+    const onLoad = jest.fn();
+    render(<Image src="https://example.com/a.png" alt="A" onLoad={onLoad} />);
+    fireEvent.load(screen.getByRole("img"));
+    stubImg(true, 640);
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(onLoad).toHaveBeenCalledTimes(1);
   });
 });
