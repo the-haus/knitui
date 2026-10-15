@@ -110,4 +110,22 @@ describe("Textarea", () => {
     render(<Textarea ref={ref} />);
     expect(ref.current).not.toBeNull();
   });
+
+  // The textarea's per-size line height is the font's line-height TOKEN (rem on
+  // the web), not a px number, so text zoom grows the line box with the text.
+  it.each([
+    ["xs", "xxs"],
+    ["lg", "lg"],
+  ] as const)("size %s takes the %s line-height token", (size, step) => {
+    render(<Textarea size={size} placeholder={`lh-${size}`} />);
+    const el = screen.getByPlaceholderText(`lh-${size}`);
+    const rules = Array.from(document.styleSheets).flatMap((sheet) =>
+      Array.from(sheet.cssRules).map((rule) => rule.cssText),
+    );
+    const lineHeightRules = Array.from(el.classList)
+      .filter((cls) => cls.startsWith("_lh-"))
+      .map((cls) => rules.find((rule) => rule.includes(`.${cls}`)));
+    expect(lineHeightRules).toHaveLength(1);
+    expect(lineHeightRules[0]).toContain(`line-height: var(--f-lineHeight-${step})`);
+  });
 });

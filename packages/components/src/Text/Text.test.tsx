@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type { GetRef } from "@knitui/core";
+import { getConfig, type GetRef } from "@knitui/core";
 
 import { render, screen } from "../test-utils";
 import { Text } from "./index";
@@ -64,5 +64,18 @@ describe("Text", () => {
     const ref = React.createRef<GetRef<typeof Text>>();
     render(<Text ref={ref}>hi</Text>);
     expect(ref.current).not.toBeNull();
+  });
+
+  // A11Y: on the web the font ladder is `rem`, so browser text-only zoom and a
+  // raised default font size scale the text; 1rem = 16px keeps the default look.
+  it("sizes text through rem font tokens on the web", () => {
+    render(<Text size="md">rem</Text>);
+    expect(screen.getByText("rem").className).toContain("_fz-f-size-md");
+
+    const css = getConfig().getCSS();
+    expect(css).toContain("--f-size-md:1.125rem");
+    expect(css).toContain("--f-lineHeight-md:1.625rem");
+    // no font size or line height token is left in px
+    expect(css).not.toMatch(/--f-(size|lineHeight)-[\w]+:[\d.]+px/);
   });
 });

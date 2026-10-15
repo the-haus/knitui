@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import type { GetProps, TamaguiElement } from "@knitui/core";
-import { getLineHeight, getTokenValue, styled, Theme } from "@knitui/core";
+import { getTokenValue, styled, Theme } from "@knitui/core";
 import { useCallbackRef, useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -185,49 +185,51 @@ export const getTextareaPaddingVertical = (size: InputSize | undefined): number 
 // field grows. Without it Tamagui's font pairing resolves the SAME line height
 // (the `md` step, 27px) for every `fontSize` token, so changing `size` only changed
 // the text size while the box height stayed put — i.e. `size` looked ignored on web.
-// The values match the native host's `getNativeLineHeight` (`round(fontSize × ratio)`
-// off the same clamped per-size `fontSize`), so a textarea row is the same height on
-// web, iOS and Android.
+// It names the line-height TOKEN of the same step as the clamped per-size
+// `fontSize` (the value `getLineHeight` computes, `round(fontSize × ratio)`), so it
+// matches the native host's `getNativeLineHeight` and a textarea row is the same
+// height on web, iOS and Android — and, being a token, it is `rem` on the web, so
+// browser text zoom grows the line box together with the text.
 const textareaHostSizeVariant = {
   xxs: {
     fontSize: M.xxs.fontSize,
-    lineHeight: getLineHeight(M.xxs.fontSize),
+    lineHeight: M.xxs.fontSize,
     paddingHorizontal: M.xxs.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.xxs,
   },
   xs: {
     fontSize: M.xs.fontSize,
-    lineHeight: getLineHeight(M.xs.fontSize),
+    lineHeight: M.xs.fontSize,
     paddingHorizontal: M.xs.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.xs,
   },
   sm: {
     fontSize: M.sm.fontSize,
-    lineHeight: getLineHeight(M.sm.fontSize),
+    lineHeight: M.sm.fontSize,
     paddingHorizontal: M.sm.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.sm,
   },
   md: {
     fontSize: M.md.fontSize,
-    lineHeight: getLineHeight(M.md.fontSize),
+    lineHeight: M.md.fontSize,
     paddingHorizontal: M.md.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.md,
   },
   lg: {
     fontSize: M.lg.fontSize,
-    lineHeight: getLineHeight(M.lg.fontSize),
+    lineHeight: M.lg.fontSize,
     paddingHorizontal: M.lg.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.lg,
   },
   xl: {
     fontSize: M.xl.fontSize,
-    lineHeight: getLineHeight(M.xl.fontSize),
+    lineHeight: M.xl.fontSize,
     paddingHorizontal: M.xl.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.xl,
   },
   xxl: {
     fontSize: M.xxl.fontSize,
-    lineHeight: getLineHeight(M.xxl.fontSize),
+    lineHeight: M.xxl.fontSize,
     paddingHorizontal: M.xxl.paddingHorizontal,
     paddingVertical: TEXTAREA_INSET_TOKEN.xxl,
   },
