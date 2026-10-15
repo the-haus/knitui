@@ -114,3 +114,29 @@ describe("Card", () => {
     expect(ref.current).not.toBeNull();
   });
 });
+
+describe("Card module load (KIT-04)", () => {
+  afterEach(() => jest.dontMock("@knitui/core"));
+
+  it("imports before the Tamagui config is registered", () => {
+    // Stand in for "no config yet": every token read throws, as Tamagui's own
+    // `getTokenValue` does before `createTamagui` runs (e.g. an SSR chunk that
+    // evaluates ahead of the config).
+    const getTokenValue = jest.fn(() => {
+      throw new Error("Missing tamagui config");
+    });
+    jest.isolateModules(() => {
+      jest.doMock("@knitui/core", () => ({
+        ...jest.requireActual("@knitui/core"),
+        getTokenValue,
+      }));
+      expect(() => require("./Card")).not.toThrow();
+    });
+    expect(getTokenValue).not.toHaveBeenCalled();
+  });
+
+  it("resolves the default padding on render for a section outside any Card", () => {
+    render(<Card.Section testID="loose">Loose section</Card.Section>);
+    expect(screen.getByText("Loose section")).toBeInTheDocument();
+  });
+});
