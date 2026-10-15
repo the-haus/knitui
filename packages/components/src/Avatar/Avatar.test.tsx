@@ -64,6 +64,14 @@ describe("Avatar", () => {
     expect(screen.getByTestId("avatar-img")).toBeInTheDocument();
   });
 
+  it("gives the photo an empty alt; the frame names it (KIT-02)", () => {
+    const { container } = render(<Avatar src="https://example.com/a.png" name="Jane Doe" />);
+    const img = container.querySelector("img");
+    expect(img).toHaveAttribute("alt", "");
+    // The one accessible image is the labelled frame.
+    expect(screen.getByRole("img", { name: "Jane Doe" })).toBeInTheDocument();
+  });
+
   it("forwards a group ref", () => {
     const ref = React.createRef<GetRef<typeof Avatar.Group>>();
     render(

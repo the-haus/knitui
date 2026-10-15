@@ -252,6 +252,10 @@ const AvatarComponent = AvatarFrame.styleable<AvatarProps>(function Avatar(props
           // load-error handler) so the engine's own wiring always wins.
           {...s.merge("image", {
             src,
+            // The frame already carries role="img" + aria-label; an empty alt
+            // keeps the photo itself out of the accessibility tree (WCAG 1.1.1:
+            // without one some screen readers announce the file name).
+            alt: "",
             width: "100%",
             height: "100%",
             fit: "cover",
