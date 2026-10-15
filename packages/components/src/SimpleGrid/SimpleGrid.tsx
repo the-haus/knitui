@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, getTokenValue, type SpaceTokens, styled } from "@knitui/core";
+import { type GetProps, getTokenValue, isWeb, type SpaceTokens, styled } from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
 import { slotStyles, type SlotStyles } from "../internal/styles";
@@ -34,12 +34,18 @@ const resolveSpacing = (spacing: SimpleGridSpacing): number => {
  * Equal-width column grid — mirrors Mantine's `SimpleGrid` (every column the same
  * width, unlike `Grid`'s 12-column spans). Cross-platform: there is no CSS grid on
  * native, so each child is wrapped in a cell `Box` and laid out with a flex-wrap
- * row + a negative-margin gap track (the same border-box technique as `Grid`).
+ * row. Rows are spaced with `rowGap`. The grid never reaches past its own box (no
+ * negative-margin track), so it cannot overflow a fixed-width scrolling parent.
  *
  * Two modes:
- *  - default `cols` mode — N equal columns (`width: 100/cols %`).
- *  - `minColWidth` mode — columns auto-fill at ≥ that width (`flexBasis`/`minWidth`),
- *    a cross-platform approximation of CSS `repeat(auto-fill/fit, minmax(min, 1fr))`.
+ *  - default `cols` mode — N equal columns (`width: 100/cols %`). The column gap
+ *    is split across each cell's inline padding by column index (column `c` of
+ *    `N` gets `c·g/N` before and `(N-1-c)·g/N` after), so every column's content
+ *    is equally wide, adjacent columns sit exactly `g` apart, and the outer
+ *    columns are flush with the grid's edges.
+ *  - `minColWidth` mode — columns auto-fill at ≥ that width (`flexBasis`/`minWidth`
+ *    less one gap, plus `columnGap`), a cross-platform approximation of CSS
+ *    `repeat(auto-fill/fit, minmax(min, 1fr))`.
  *
  * Responsive per-breakpoint values are intentionally deferred (single values only),
  * matching `Grid`. Accent/theme is inherited; no Mantine `color` prop.
@@ -93,8 +99,19 @@ const SIMPLE_GRID_SLOT_KEYS = ["cell"] as const satisfies readonly (keyof Simple
 /** Cell layout narrowed to the exact Box style props it targets. */
 type CellLayout = Pick<
   BoxProps,
-  "width" | "flexBasis" | "flexGrow" | "minWidth" | "paddingHorizontal" | "paddingVertical"
+  "width" | "flexBasis" | "flexGrow" | "minWidth" | "paddingLeft" | "paddingRight"
 >;
+
+/**
+ * `minColWidth` less one column gap, so a cell plus its trailing gap packs like
+ * the old half-gap-padded cell did (same column count and content width).
+ */
+const minLessGap = (min: number | string, gap: number): BoxProps["flexBasis"] => {
+  if (typeof min === "number") return Math.max(0, min - gap);
+  if (!gap) return min as BoxProps["flexBasis"];
+  // Web resolves the subtraction in CSS; native takes the string as given.
+  return (isWeb ? `calc(${min} - ${gap}px)` : min) as BoxProps["flexBasis"];
+};
 
 export const SimpleGrid = SimpleGridFrame.styleable<SimpleGridProps>(
   function SimpleGrid(props, ref) {
@@ -116,31 +133,36 @@ export const SimpleGrid = SimpleGridFrame.styleable<SimpleGridProps>(
     const sx = resolveSpacing(spacing);
     const sy = resolveSpacing(verticalSpacing ?? spacing);
 
-    const cell: CellLayout = {
-      paddingHorizontal: sx / 2,
-      paddingVertical: sy / 2,
+    const minMode = minColWidth !== undefined;
+    const cellLayout = (index: number): CellLayout => {
+      if (minMode) {
+        const basis = minLessGap(minColWidth, sx);
+        return {
+          flexBasis: basis,
+          minWidth: basis as BoxProps["minWidth"],
+          flexGrow: autoFlow === "auto-fit" ? 1 : 0,
+        };
+      }
+      const column = index % cols;
+      return {
+        width: `${100 / cols}%` as BoxProps["width"],
+        paddingLeft: (column * sx) / cols,
+        paddingRight: ((cols - 1 - column) * sx) / cols,
+      };
     };
-    if (minColWidth !== undefined) {
-      cell.flexBasis = minColWidth as BoxProps["flexBasis"];
-      cell.minWidth = minColWidth as BoxProps["minWidth"];
-      cell.flexGrow = autoFlow === "auto-fit" ? 1 : 0;
-    } else {
-      cell.width = `${100 / cols}%` as BoxProps["width"];
-    }
 
     const cells = React.Children.toArray(children)
       .filter(Boolean)
       .map((child, index) => (
-        // `styles.cell` is lower-precedence sugar; the computed `cell` layout
+        // `styles.cell` is lower-precedence sugar; the computed cell layout
         // (width/flexBasis/gap padding) is owned by `SimpleGrid` and wins.
-        <Box key={index} {...s.get("cell")} {...cell}>
+        <Box key={index} {...s.get("cell")} {...cellLayout(index)}>
           {child}
         </Box>
       ));
 
     return (
-      // Negative-margin track cancels the cells' half-gap padding so outer edges align.
-      <SimpleGridFrame ref={ref} marginHorizontal={-sx / 2} marginVertical={-sy / 2} {...rest}>
+      <SimpleGridFrame ref={ref} rowGap={sy} {...(minMode && { columnGap: sx })} {...rest}>
         {cells}
       </SimpleGridFrame>
     );
