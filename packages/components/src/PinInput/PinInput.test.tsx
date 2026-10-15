@@ -103,6 +103,31 @@ describe("PinInput", () => {
     expect(inputs[0]).toHaveAttribute("placeholder", "x");
   });
 
+  it("submits the joined code under `name`/`form` through one hidden input (KIT-03)", () => {
+    const { container } = render(
+      <form id="otp-form">
+        <PinInput name="code" form="otp-form" length={4} />
+      </form>,
+    );
+    const hidden = () =>
+      container.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="code"]');
+    expect(hidden()).toHaveLength(1);
+    expect(hidden()[0]).toHaveAttribute("form", "otp-form");
+    expect(hidden()[0]!.value).toBe("");
+    const fields = screen.getAllByLabelText("PinInput");
+    fireEvent.change(fields[0]!, { target: { value: "4" } });
+    fireEvent.change(fields[1]!, { target: { value: "2" } });
+    expect(hidden()[0]!.value).toBe("42");
+    // The boxes stay nameless; the hidden input is the one named field.
+    expect(container.querySelectorAll("input[name]")).toHaveLength(1);
+    expect(new FormData(container.querySelector("form")!).get("code")).toBe("42");
+  });
+
+  it("renders no hidden input without a name", () => {
+    const { container } = render(<PinInput />);
+    expect(container.querySelector('input[type="hidden"]')).toBeNull();
+  });
+
   it("exposes PinInput.Field as a static property", () => {
     expect(PinInput.Field).toBeDefined();
   });
