@@ -198,16 +198,35 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const dragEnabled = !disableDrag && maxHeight > 0 && isOpen;
 
   const draggingRef = React.useRef(false);
+  // Handle-press guard. On the web a mouse drag that starts on the handle ends
+  // with a `click` on it, which would cycle the detent once more after the drag
+  // settled. Raised when a drag activates; lowered one task after it ends, so
+  // the trailing `click` of that same pointer cycle (dispatched right after the
+  // pointerup, before any timer) is still swallowed, while a later tap or a
+  // keyboard / assistive-tech activation of the handle cycles as usual.
+  const suppressHandlePressRef = React.useRef(false);
+  const releaseTimerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const releaseHandlePress = React.useCallback(() => {
+    clearTimeout(releaseTimerRef.current);
+    releaseTimerRef.current = setTimeout(() => {
+      suppressHandlePressRef.current = false;
+    }, 0);
+  }, []);
+  React.useEffect(() => () => clearTimeout(releaseTimerRef.current), []);
   const onDragStart = React.useCallback(() => {
     draggingRef.current = true;
+    clearTimeout(releaseTimerRef.current);
+    suppressHandlePressRef.current = true;
   }, []);
   // A scroll-owned drag released without settling the panel — just clear the pause.
   const onScrollRelease = React.useCallback(() => {
     draggingRef.current = false;
-  }, []);
+    releaseHandlePress();
+  }, [releaseHandlePress]);
   const onDragSettle = React.useCallback(
     (result: SettleResult) => {
       draggingRef.current = false;
+      releaseHandlePress();
       // Closed out from under the drag (closed externally mid-drag, or the OS
       // cancelled the gesture so `onFinalize` re-settled to a visible snap):
       // never re-park on screen — drive the panel home to the closed position.
@@ -218,7 +237,7 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
       }
       motionRef.current.handleSettle(result);
     },
-    [finishClose, setClosing],
+    [finishClose, setClosing, releaseHandlePress],
   );
 
   const gesture = useSheetDrag({
@@ -403,7 +422,11 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const showHandle = slots.Handle !== undefined || withHandle;
   const handleNode = showHandle ? (
     <UnstyledButton
-      onPress={() => motionRef.current.cycle(positionRef.current)}
+      onPress={() => {
+        // The click that ends a drag begun on the handle is not a press.
+        if (suppressHandlePressRef.current) return;
+        motionRef.current.cycle(positionRef.current);
+      }}
       {...(isWeb
         ? { "aria-label": "Sheet drag handle" }
         : { accessibilityLabel: "Sheet drag handle" })}
