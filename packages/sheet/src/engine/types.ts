@@ -20,7 +20,13 @@ export interface SettleInput {
   dismissOffset: number;
   /** Whether a release may land on {@link dismissOffset} and dismiss the sheet. */
   dismissible: boolean;
-  /** |velocity| (px/s) above which a release commits in the fling direction. @default 300 */
+  /**
+   * The panel offset (px) when the drag began. A fling's "advance at least one
+   * snap" bias is measured from the snap nearest this, not from the release
+   * point. Omitted → the release point's nearest snap stands in for it.
+   */
+  startOffset?: number;
+  /** |velocity| (px/s) at or above which a release counts as a fling. @default 500 */
   flickThreshold?: number;
   /** Seconds of velocity projected past the release point. @default 0.2 */
   projection?: number;

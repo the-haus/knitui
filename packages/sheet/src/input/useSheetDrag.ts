@@ -169,6 +169,8 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         const result = settle({
           offset: offset.value,
           velocity: e.velocityY,
+          // Where the drag began: a fling's one-step bias counts from here.
+          startOffset: panStart.value,
           offsets,
           dismissOffset: closed,
           dismissible,

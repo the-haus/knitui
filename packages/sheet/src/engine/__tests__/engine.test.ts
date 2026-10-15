@@ -161,6 +161,59 @@ describe("settle", () => {
   });
 });
 
+// KIT-09: three snaps, the geometry of a map browse sheet on a 779px layer —
+// full 82% / half 46% / peek 12% → offsets 140 / 421 / 686.
+describe("settle — three snaps (KIT-09)", () => {
+  const offsets = [140, 421, 686];
+  const FULL = 0;
+  const HALF = 1;
+  const PEEK = 2;
+  const base = { offsets, dismissOffset: 779, dismissible: false };
+  const fromPeek = (dragUp: number, velocity: number) =>
+    settle({ ...base, startOffset: 686, offset: 686 - dragUp, velocity }).index;
+
+  it("a slow 300px drag up from peek lands on half, not full", () => {
+    // Released 35px past half. The release velocity of an unhurried touch
+    // drag sits around the old 300 px/s threshold, so pin a spread of them.
+    for (const v of [0, -150, -299, -300, -450, -499]) {
+      expect(fromPeek(300, v)).toBe(HALF);
+    }
+  });
+
+  it("a slow release lands on the snap nearest the release point", () => {
+    expect(fromPeek(120, -100)).toBe(PEEK); // 566: nearer 686 than 421
+    expect(fromPeek(150, -100)).toBe(HALF); // 536: nearer 421
+    expect(fromPeek(480, -100)).toBe(FULL); // 206: nearer 140
+  });
+
+  it("a quick flick from rest still advances one snap", () => {
+    expect(fromPeek(20, -800)).toBe(HALF);
+    expect(settle({ ...base, startOffset: 421, offset: 405, velocity: -800 }).index).toBe(FULL);
+    expect(settle({ ...base, startOffset: 421, offset: 437, velocity: 800 }).index).toBe(PEEK);
+  });
+
+  it("a fling goes at most one snap past the snap nearest the release", () => {
+    // Released near peek at a hard fling: projection alone would reach full.
+    expect(fromPeek(40, -3000)).toBe(HALF);
+    // Released near half, flung on: full.
+    expect(fromPeek(300, -900)).toBe(FULL);
+    expect(fromPeek(300, -2000)).toBe(FULL);
+  });
+
+  it("a fling that reverses the drag is not pushed past its start", () => {
+    // Up from peek to near half, then flicked back down: peek, never dismiss.
+    const r = settle({
+      offsets,
+      dismissOffset: 779,
+      dismissible: true,
+      startOffset: 686,
+      offset: 430,
+      velocity: 900,
+    });
+    expect(r).toEqual({ index: PEEK, offset: 686, dismiss: false });
+  });
+});
+
 describe("overlayOpacity", () => {
   it("is full at/above the fade-start (least-open snap)", () => {
     expect(overlayOpacity(200, 900, MAX)).toBe(1);
