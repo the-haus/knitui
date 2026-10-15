@@ -74,4 +74,48 @@ describe("SimpleGrid", () => {
     );
     expect(screen.getAllByTestId("cell")).toHaveLength(2);
   });
+
+  describe("gutter stays inside the grid (KIT-06)", () => {
+    const renderGrid = (props: React.ComponentProps<typeof SimpleGrid>, count: number) =>
+      render(
+        <SimpleGrid testID="grid" spacing={12} verticalSpacing={20} {...props}>
+          {Array.from({ length: count }, (_, i) => (
+            <span key={i}>{`c${i}`}</span>
+          ))}
+        </SimpleGrid>,
+      );
+    const cellOf = (text: string) => screen.getByText(text).parentElement!;
+
+    it("does not pull the track outward and spaces rows with rowGap", () => {
+      renderGrid({ cols: 3 }, 3);
+      const grid = screen.getByTestId("grid");
+      for (const side of ["Left", "Right", "Top", "Bottom"]) {
+        expect(grid.style.getPropertyValue(`margin-${side.toLowerCase()}`)).not.toMatch(/^-/);
+        expect(getComputedStyle(grid)[`margin${side}` as "marginLeft"]).not.toMatch(/^-/);
+      }
+      expect(grid).toHaveStyle({ rowGap: "20px" });
+    });
+
+    it("splits the column gap so outer columns are flush and every gap is the spacing", () => {
+      renderGrid({ cols: 3 }, 6);
+      // Column c of 3 with a 12px gap: c*12/3 before, (2-c)*12/3 after.
+      const expected = [
+        ["0px", "8px"],
+        ["4px", "4px"],
+        ["8px", "0px"],
+      ];
+      for (let i = 0; i < 6; i += 1) {
+        const [left, right] = expected[i % 3]!;
+        const cell = cellOf(`c${i}`);
+        expect(cell).toHaveStyle({ paddingLeft: left, paddingRight: right });
+        expect(cell).toHaveStyle({ width: `${100 / 3}%` });
+      }
+    });
+
+    it("uses columnGap in minColWidth mode with the basis less one gap", () => {
+      renderGrid({ minColWidth: 200 }, 2);
+      expect(screen.getByTestId("grid")).toHaveStyle({ columnGap: "12px", rowGap: "20px" });
+      expect(cellOf("c0")).toHaveStyle({ flexBasis: "188px", minWidth: "188px" });
+    });
+  });
 });

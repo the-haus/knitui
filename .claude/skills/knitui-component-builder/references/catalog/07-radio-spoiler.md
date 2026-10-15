@@ -110,7 +110,7 @@ Kit conventions confirmed by reading source: components are `styled(Box)`/`style
 - **Slots / `styles` keys:** `cell` (per-child wrapper Box).
 - **Platform:** shared. No CSS grid on native → each child wrapped in a cell Box laid out with flex-wrap row + negative-margin gap track (border-box technique, same as Grid).
 - **Builds on:** Box.
-- **Gotchas:** Two modes — `cols` mode sets `width: 100/cols %`; `minColWidth` mode sets `flexBasis`/`minWidth` (+`flexGrow:1` for auto-fit) as a flex approximation of `repeat(auto-fill/fit, minmax())`. Gap = half-padding on each cell cancelled by a negative margin on the frame so outer edges align. Responsive per-breakpoint values intentionally deferred (single values only). `styles.cell` is lower precedence than the computed cell layout.
+- **Gotchas:** Two modes — `cols` mode sets `width: 100/cols %`; `minColWidth` mode sets `flexBasis`/`minWidth` (+`flexGrow:1` for auto-fit) as a flex approximation of `repeat(auto-fill/fit, minmax())`. No negative-margin track (it overflowed fixed-width parents): rows use `rowGap`; in `cols` mode the column gap is split across each cell's inline padding by column index (`c·g/N` before, `(N-1-c)·g/N` after) so content widths are equal and outer columns flush; `minColWidth` mode uses `columnGap` with the basis less one gap. Responsive per-breakpoint values intentionally deferred (single values only). `styles.cell` is lower precedence than the computed cell layout.
 
 ### Skeleton
 
