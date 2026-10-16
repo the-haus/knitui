@@ -32385,6 +32385,14 @@
           "declaredIn": "packages/components/src/PinInput/PinInput.tsx"
         },
         {
+          "name": "form",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Web only: id of the `<form>` the hidden `name` input belongs to.",
+          "declaredIn": "packages/components/src/PinInput/PinInput.tsx"
+        },
+        {
           "name": "gap",
           "bucket": "own",
           "type": "((number | SpaceTokens) & (string | number)) | undefined",
@@ -32457,6 +32465,14 @@
           "required": false,
           "description": "Renders fields as password inputs.",
           "default": "false",
+          "declaredIn": "packages/components/src/PinInput/PinInput.tsx"
+        },
+        {
+          "name": "name",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Web only: form field name. When set, one `<input type=\"hidden\">` carries the joined code, so a surrounding `<form>` (and password managers / one-time-code autofill, which look for a single named field) see the whole value. The per-character boxes themselves stay nameless. Ignored on native.",
           "declaredIn": "packages/components/src/PinInput/PinInput.tsx"
         },
         {
@@ -32582,7 +32598,7 @@
       ],
       "counts": {
         "style": 494,
-        "own": 19,
+        "own": 21,
         "system": 6,
         "react": 2
       }
@@ -67578,6 +67594,22 @@
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
+          "name": "aria-label",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Accessible name of the panel. On web it is set on the element that carries the role (the dialog, or the region of a non-modal sheet); on native it becomes the panel's `accessibilityLabel`.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
+          "name": "aria-labelledby",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "Id of the element that names the panel (typically its visible title), set on the element that carries the role. Web only; takes precedence over `aria-label` for assistive tech.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
           "name": "children",
           "bucket": "own",
           "type": "ReactNode",
@@ -67660,7 +67692,7 @@
           "bucket": "own",
           "type": "boolean | undefined",
           "required": false,
-          "description": "Render into the app root (teleported) vs. inline.",
+          "description": "A modal sheet is teleported to the app root and exposed as a dialog (`role=\"dialog\"` + `aria-modal=\"true\"` on web, `accessibilityViewIsModal` on native). A non-modal sheet renders inline as a persistent panel: not a dialog, but a `role=\"region\"` landmark when it has an accessible name (`aria-label` / `aria-labelledby`), and no role without one.",
           "default": "true",
           "declaredIn": "packages/sheet/src/types.ts"
         },
@@ -67810,7 +67842,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 24,
+        "own": 26,
         "react": 2,
         "system": 2
       }
