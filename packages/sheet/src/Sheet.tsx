@@ -63,6 +63,8 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     style,
     testID,
     children,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledBy,
   } = props;
 
   /* ── Controlled / uncontrolled state ──────────────────────────────────── */
@@ -402,10 +404,23 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     <SheetScrollContext.Provider value={scrollContext}>{keyboardAware}</SheetScrollContext.Provider>
   );
 
-  // Web a11y rides on `role`/`aria-modal`; native on `accessibilityViewIsModal`.
-  // Neither is in `SheetFrame`'s style-prop types, so cast the a11y bag once.
+  // Web a11y rides on `role`/`aria-*`; native on `accessibilityViewIsModal` /
+  // `accessibilityLabel`. A modal sheet is a dialog; a non-modal one is a
+  // persistent panel beside the page (WAI-ARIA: a named `region` landmark, never
+  // a dialog), and an unnamed region is not a landmark, so it then has no role.
+  // None of this is in `SheetFrame`'s style-prop types, so cast the bag once.
+  const named = ariaLabel !== undefined || ariaLabelledBy !== undefined;
   const a11y = (
-    isWeb ? { role: "dialog", "aria-modal": modal } : { accessibilityViewIsModal: modal }
+    isWeb
+      ? {
+          ...(modal ? { role: "dialog", "aria-modal": true } : named ? { role: "region" } : null),
+          ...(ariaLabel !== undefined ? { "aria-label": ariaLabel } : null),
+          ...(ariaLabelledBy !== undefined ? { "aria-labelledby": ariaLabelledBy } : null),
+        }
+      : {
+          accessibilityViewIsModal: modal,
+          ...(ariaLabel !== undefined ? { accessibilityLabel: ariaLabel } : null),
+        }
   ) as GetProps<typeof SheetFrame>;
   const rootProps: GetProps<typeof SheetFrame> = {
     size,

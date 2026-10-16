@@ -102,6 +102,45 @@ describe("Tabs", () => {
     expect(document.getElementById(controls as string)).not.toBeNull();
   });
 
+  it("omits aria-controls when no panel is rendered (a segmented strip)", () => {
+    render(
+      <Tabs defaultValue="one">
+        <Tabs.List>
+          <Tabs.Tab value="one">One</Tabs.Tab>
+          <Tabs.Tab value="two">Two</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>,
+    );
+    for (const tab of screen.getAllByRole("tab")) {
+      expect(tab).not.toHaveAttribute("aria-controls");
+    }
+  });
+
+  it("points aria-controls only at panels that are mounted", () => {
+    render(<Basic defaultValue="one" keepMounted={false} />);
+    const one = screen.getByRole("tab", { name: "One" });
+    const two = screen.getByRole("tab", { name: "Two" });
+    expect(document.getElementById(one.getAttribute("aria-controls") as string)).not.toBeNull();
+    expect(two).not.toHaveAttribute("aria-controls");
+    fireEvent.click(two);
+    expect(document.getElementById(two.getAttribute("aria-controls") as string)).not.toBeNull();
+    expect(one).not.toHaveAttribute("aria-controls");
+  });
+
+  it("lets the caller's aria-controls win", () => {
+    render(
+      <Tabs defaultValue="one">
+        <Tabs.List>
+          <Tabs.Tab value="one" aria-controls="elsewhere">
+            One
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="one">Panel one</Tabs.Panel>
+      </Tabs>,
+    );
+    expect(screen.getByRole("tab", { name: "One" })).toHaveAttribute("aria-controls", "elsewhere");
+  });
+
   it("activates tabs with arrow keys by default", () => {
     render(<Basic defaultValue="one" />);
     screen.getByRole("tab", { name: "One" }).focus();

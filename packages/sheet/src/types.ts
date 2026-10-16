@@ -53,7 +53,14 @@ export interface SheetProps {
 
   /** Disable all drag handling. @default false */
   disableDrag?: boolean;
-  /** Render into the app root (teleported) vs. inline. @default true */
+  /**
+   * A modal sheet is teleported to the app root and exposed as a dialog
+   * (`role="dialog"` + `aria-modal="true"` on web, `accessibilityViewIsModal` on
+   * native). A non-modal sheet renders inline as a persistent panel: not a
+   * dialog, but a `role="region"` landmark when it has an accessible name
+   * (`aria-label` / `aria-labelledby`), and no role without one.
+   * @default true
+   */
   modal?: boolean;
   /** Render the scrim behind the panel. @default true */
   withOverlay?: boolean;
@@ -80,6 +87,19 @@ export interface SheetProps {
   overlayProps?: OverlayProps;
   /** Per-slot style overrides (`root` / `overlay` / `handle`). */
   styles?: SlotStyles<SheetStyles>;
+
+  /**
+   * Accessible name of the panel. On web it is set on the element that carries
+   * the role (the dialog, or the region of a non-modal sheet); on native it
+   * becomes the panel's `accessibilityLabel`.
+   */
+  "aria-label"?: string;
+  /**
+   * Id of the element that names the panel (typically its visible title), set on
+   * the element that carries the role. Web only; takes precedence over
+   * `aria-label` for assistive tech.
+   */
+  "aria-labelledby"?: string;
 
   /** Inline style on the panel surface. */
   style?: StyleProp<ViewStyle>;

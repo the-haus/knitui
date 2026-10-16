@@ -225,4 +225,47 @@ describe("Sheet", () => {
     act(() => ref.current?.open());
     expect(screen.getByText("panel body")).toBeInTheDocument();
   });
+
+  describe("accessible role and name", () => {
+    it("a modal sheet is a named dialog", () => {
+      render(
+        <Sheet opened onClose={() => {}} aria-label="Filters">
+          <Text>panel body</Text>
+        </Sheet>,
+      );
+      const dialog = screen.getByRole("dialog", { name: "Filters" });
+      expect(dialog).toHaveAttribute("aria-modal", "true");
+      expect(dialog).toContainElement(screen.getByText("panel body"));
+    });
+
+    it("a modal sheet takes its name from aria-labelledby", () => {
+      render(
+        <Sheet opened onClose={() => {}} aria-labelledby="sheet-title">
+          <Text id="sheet-title">Choose a status</Text>
+        </Sheet>,
+      );
+      expect(screen.getByRole("dialog", { name: "Choose a status" })).toBeInTheDocument();
+    });
+
+    it("a named non-modal sheet is a region, not a dialog", () => {
+      render(
+        <Sheet opened modal={false} trapFocus={false} withOverlay={false} aria-labelledby="t">
+          <Text id="t">42 festivals</Text>
+        </Sheet>,
+      );
+      expect(screen.queryByRole("dialog")).toBeNull();
+      const region = screen.getByRole("region", { name: "42 festivals" });
+      expect(region).not.toHaveAttribute("aria-modal");
+    });
+
+    it("an unnamed non-modal sheet has no role", () => {
+      render(
+        <Sheet opened modal={false} trapFocus={false} withOverlay={false} testID="sheet">
+          <Text>panel body</Text>
+        </Sheet>,
+      );
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+  });
 });

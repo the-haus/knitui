@@ -59,6 +59,40 @@ const TabsContext = React.createContext<TabsContextValue>({
   id: "",
 });
 
+/**
+ * Which panels are mounted right now. A `Tabs.Panel` registers its value while it
+ * renders; a `Tabs.Tab` points `aria-controls` at its panel only while that panel
+ * exists, so a strip without panels (a segmented switcher) or a panel unmounted by
+ * `keepMounted={false}` leaves no dangling id reference. Kept apart from
+ * `TabsContext` so a registration re-renders only the tabs.
+ */
+interface TabsPanelRegistry {
+  mounted: ReadonlyMap<string, number>;
+  register: (value: string) => () => void;
+}
+
+const TabsPanelRegistryContext = React.createContext<TabsPanelRegistry>({
+  mounted: new Map(),
+  register: () => () => {},
+});
+
+function useTabsPanelRegistry(): TabsPanelRegistry {
+  const [mounted, setMounted] = React.useState<ReadonlyMap<string, number>>(() => new Map());
+  const register = React.useCallback((value: string) => {
+    const bump = (delta: number) =>
+      setMounted((prev) => {
+        const next = new Map(prev);
+        const count = (next.get(value) ?? 0) + delta;
+        if (count > 0) next.set(value, count);
+        else next.delete(value);
+        return next;
+      });
+    bump(1);
+    return () => bump(-1);
+  }, []);
+  return React.useMemo(() => ({ mounted, register }), [mounted, register]);
+}
+
 const TabsStyleContext = createStyledContext<{
   size: TabsSize;
   variant: TabsVariant;
@@ -391,10 +425,20 @@ const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref)
   const press = usePressScale();
   const { value, children, leftSection, rightSection, disabled, ...rest } = props;
   const ctx = React.useContext(TabsContext);
+  const panels = React.useContext(TabsPanelRegistryContext);
   const s = useTabsSlots();
   const isActive = ctx.value === value;
   const panelId = `${ctx.id}-panel-${value}`;
   const tabId = `${ctx.id}-tab-${value}`;
+  // Point at the panel only while it is mounted (an id reference to a missing
+  // element is invalid ARIA); a caller's own `aria-controls` wins either way.
+  const restProps = rest as typeof rest & { "aria-controls"?: string };
+  const ariaControls =
+    "aria-controls" in restProps
+      ? restProps["aria-controls"]
+      : panels.mounted.has(value)
+        ? panelId
+        : undefined;
 
   const handlePress = React.useCallback(() => {
     if (disabled) return;
@@ -475,7 +519,7 @@ const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref)
       id={tabId}
       aria-selected={isActive}
       aria-disabled={disabled || undefined}
-      aria-controls={panelId}
+      aria-controls={ariaControls}
       {...keyboardProps}
     >
       {leftSection ? <TabSection {...s.get("section")}>{leftSection}</TabSection> : null}
@@ -506,12 +550,19 @@ export interface TabsPanelProps extends GetProps<typeof TabsPanelFrame> {
 const TabsPanel = TabsPanelFrame.styleable<TabsPanelProps>(function TabsPanel(props, ref) {
   const { value, children, keepMounted: keepMountedProp, ...rest } = props;
   const ctx = React.useContext(TabsContext);
+  const { register } = React.useContext(TabsPanelRegistryContext);
   const s = useTabsSlots();
 
   const isActive = ctx.value === value;
   const shouldMount = isActive || (keepMountedProp ?? ctx.keepMounted);
   const tabId = `${ctx.id}-tab-${value}`;
   const panelId = `${ctx.id}-panel-${value}`;
+
+  // Tell the tabs this panel exists, so its tab may name it in `aria-controls`.
+  React.useLayoutEffect(
+    () => (shouldMount ? register(value) : undefined),
+    [register, shouldMount, value],
+  );
 
   if (!shouldMount) return null;
 
@@ -634,6 +685,7 @@ const TabsComponent = TabsFrame.styleable<TabsProps>(function Tabs(props, ref) {
   } = props;
 
   const autoId = useId(id);
+  const panelRegistry = useTabsPanelRegistry();
 
   const [currentValue, setCurrentValue] = useUncontrolled<string | null>({
     value,
@@ -686,18 +738,20 @@ const TabsComponent = TabsFrame.styleable<TabsProps>(function Tabs(props, ref) {
 
   return (
     <TabsContext.Provider value={ctx}>
-      <TabsSlotStylesContext.Provider value={styles}>
-        <TabsFrame
-          ref={ref}
-          orientation={orientation}
-          variant={variant}
-          size={size}
-          flexDirection={flexDirection}
-          {...rest}
-        >
-          {children}
-        </TabsFrame>
-      </TabsSlotStylesContext.Provider>
+      <TabsPanelRegistryContext.Provider value={panelRegistry}>
+        <TabsSlotStylesContext.Provider value={styles}>
+          <TabsFrame
+            ref={ref}
+            orientation={orientation}
+            variant={variant}
+            size={size}
+            flexDirection={flexDirection}
+            {...rest}
+          >
+            {children}
+          </TabsFrame>
+        </TabsSlotStylesContext.Provider>
+      </TabsPanelRegistryContext.Provider>
     </TabsContext.Provider>
   );
 });
