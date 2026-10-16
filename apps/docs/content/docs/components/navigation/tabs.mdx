@@ -52,6 +52,9 @@ selected.
 On the web `Tabs` implements the ARIA tabs pattern: the list is a `tablist`, each
 tab a `tab` owning its panel via `aria-controls`, and each panel a `tabpanel`
 labelled by its tab. Ids are generated for you, or derived from the `id` prop.
+A tab names its panel only while that panel is mounted, so a strip without
+`Tabs.Panel`s (a segmented switcher) carries no `aria-controls`; pass your own
+`aria-controls` on a `Tabs.Tab` to point it elsewhere.
 
 Focus is managed with a **roving tabindex** — only the active tab is in the tab
 order, so <kbd>Tab</kbd> moves past the whole list rather than through every tab
