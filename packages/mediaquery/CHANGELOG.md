@@ -1,5 +1,13 @@
 # @knitui/mediaquery
 
+## 0.13.0
+
+### Patch Changes
+
+- Updated dependencies [633e669]
+  - @knitui/core@0.13.0
+  - @knitui/hooks@0.13.0
+
 ## 0.12.2
 
 ### Patch Changes

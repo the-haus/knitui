@@ -1,5 +1,29 @@
 # @knitui/components
 
+## 0.13.0
+
+### Patch Changes
+
+- 069938f: Avatar: the photo gets `alt=""`. The frame already carries `role="img"` and the `aria-label`; without an alt some screen readers announced the image file name (WCAG 1.1.1).
+- 8626180: Card: importing the module no longer reads a token. The context default resolved `$lg` at module scope, which threw when `Card` was evaluated before the Tamagui config was registered (e.g. an SSR chunk loading ahead of the config). A `Card.Section` outside any `Card` now resolves the default padding on render.
+- 633e669: Font tokens are `rem` on the web, so browser text-only zoom and a raised default font size now scale the kit's text (WCAG 1.4.4). The `size` and `lineHeight` sections of every font — the stock `fonts` and everything `createTheme` builds, including `fontSizes` and per-font `fonts.*.size` / `lineHeight` px overrides — are emitted as `px / 16` rem on the web (`$md` → `1.125rem`, its line height → `1.625rem`); native keeps numbers. With the default 16px root every size renders the same px as before. The Textarea's per-size line height is now the matching line-height token instead of a px number, so its rows grow with the text.
+
+  **Behaviour change (web):** reading a font token's value from the config (`config.fonts.body.size.md`, `getVariableValue` on a font token) now returns a rem string instead of a number. For px math use `getFontSize` / `getLineHeight`, which stay numeric on every platform. Raw numeric `fontSize` / `lineHeight` props are untouched and stay px. No new public API; nothing to migrate for apps that only use `$` tokens.
+
+- 5991b24: Image (web): an image the browser already had is shown. A cached image fires `load` as soon as its `<img>` is created, which in a concurrent render can land before the commit; React drops the event and expo-image's fade held the image at `opacity: 0` for good. After mount (and on each new source) a committed `<img>` that is `complete` with a `naturalWidth` and never reported `load` now gets it re-dispatched, so the fade runs and `onLoad` fires once.
+- 326ce54: PinInput: new `name` and `form` props (web only). With a `name`, one `<input type="hidden">` carries the joined code, so a surrounding form submits it as a single field (what password managers and one-time-code autofill look for). The per-character boxes stay nameless; native ignores both props.
+- e282fbd: Sheet: new `aria-label` / `aria-labelledby` props name the panel, on the element that carries its role (native: `aria-label` becomes the panel's `accessibilityLabel`). A modal sheet stays a dialog (`role="dialog"`, `aria-modal="true"`). A non-modal sheet (`modal={false}`, a persistent panel such as a browse sheet over a map) is no longer a dialog: it is a `role="region"` landmark when named, and has no role when not. Before, every sheet was `role="dialog"` with no way to name it (axe `aria-dialog-name`).
+
+  **Behaviour change (web):** a `modal={false}` sheet loses `role="dialog"` and `aria-modal="false"`. If you relied on the dialog role for a non-modal sheet, set `role` through `styles.root` (it still wins).
+
+  Tabs: a `Tabs.Tab` sets `aria-controls` only while its `Tabs.Panel` is mounted (panels register with the `Tabs` root), so a tab strip without panels, or a panel unmounted by `keepMounted={false}`, no longer points at a missing id (axe `aria-valid-attr-value`). A caller's own `aria-controls` on `Tabs.Tab` now wins over the generated one.
+
+- 574ac98: SimpleGrid: the gutter no longer overflows the parent. The grid used a negative-margin track, so inside a fixed-width scrolling column it reached half a gap past each edge and scrolled sideways. Rows now use `rowGap`; in `cols` mode the column gap is split across each cell's inline padding by column index (equal column widths, outer columns flush); `minColWidth` mode uses `columnGap`. The API and the visual spacing are unchanged.
+- Updated dependencies [633e669]
+  - @knitui/core@0.13.0
+  - @knitui/hooks@0.13.0
+  - @knitui/icons@0.13.0
+
 ## 0.12.2
 
 ### Patch Changes

@@ -6,6 +6,15 @@
       "slug": "core",
       "releases": [
         {
+          "version": "0.13.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Font tokens are `rem` on the web, so browser text-only zoom and a raised default font size now scale the kit's text (WCAG 1.4.4). The `size` and `lineHeight` sections of every font — the stock `fonts` and everything `createTheme` builds, including `fontSizes` and per-font `fonts.*.size` / `lineHeight` px overrides — are emitted as `px / 16` rem on the web (`$md` → `1.125rem`, its line height → `1.625rem`); native keeps numbers. With the default 16px root every size renders the same px as before. The Textarea's per-size line height is now the matching line-height token instead of a px number, so its rows grow with the text. **Behaviour change (web):** reading a font token's value from the config (`config.fonts.body.size.md`, `getVariableValue` on a font token) now returns a rem string instead of a number. For px math use `getFontSize` / `getLineHeight`, which stay numeric on every platform. Raw numeric `fontSize` / `lineHeight` props are untouched and stay px. No new public API; nothing to migrate for apps that only use `$` tokens."
+            }
+          ]
+        },
+        {
           "version": "0.11.0",
           "changes": [
             {
@@ -107,6 +116,43 @@
       "name": "@knitui/components",
       "slug": "components",
       "releases": [
+        {
+          "version": "0.13.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Avatar: the photo gets `alt=\"\"`. The frame already carries `role=\"img\"` and the `aria-label`; without an alt some screen readers announced the image file name (WCAG 1.1.1)."
+            },
+            {
+              "kind": "patch",
+              "text": "Card: importing the module no longer reads a token. The context default resolved `$lg` at module scope, which threw when `Card` was evaluated before the Tamagui config was registered (e.g. an SSR chunk loading ahead of the config). A `Card.Section` outside any `Card` now resolves the default padding on render."
+            },
+            {
+              "kind": "patch",
+              "text": "Font tokens are `rem` on the web, so browser text-only zoom and a raised default font size now scale the kit's text (WCAG 1.4.4). The `size` and `lineHeight` sections of every font — the stock `fonts` and everything `createTheme` builds, including `fontSizes` and per-font `fonts.*.size` / `lineHeight` px overrides — are emitted as `px / 16` rem on the web (`$md` → `1.125rem`, its line height → `1.625rem`); native keeps numbers. With the default 16px root every size renders the same px as before. The Textarea's per-size line height is now the matching line-height token instead of a px number, so its rows grow with the text. **Behaviour change (web):** reading a font token's value from the config (`config.fonts.body.size.md`, `getVariableValue` on a font token) now returns a rem string instead of a number. For px math use `getFontSize` / `getLineHeight`, which stay numeric on every platform. Raw numeric `fontSize` / `lineHeight` props are untouched and stay px. No new public API; nothing to migrate for apps that only use `$` tokens."
+            },
+            {
+              "kind": "patch",
+              "text": "Image (web): an image the browser already had is shown. A cached image fires `load` as soon as its `<img>` is created, which in a concurrent render can land before the commit; React drops the event and expo-image's fade held the image at `opacity: 0` for good. After mount (and on each new source) a committed `<img>` that is `complete` with a `naturalWidth` and never reported `load` now gets it re-dispatched, so the fade runs and `onLoad` fires once."
+            },
+            {
+              "kind": "patch",
+              "text": "PinInput: new `name` and `form` props (web only). With a `name`, one `<input type=\"hidden\">` carries the joined code, so a surrounding form submits it as a single field (what password managers and one-time-code autofill look for). The per-character boxes stay nameless; native ignores both props."
+            },
+            {
+              "kind": "patch",
+              "text": "Sheet: new `aria-label` / `aria-labelledby` props name the panel, on the element that carries its role (native: `aria-label` becomes the panel's `accessibilityLabel`). A modal sheet stays a dialog (`role=\"dialog\"`, `aria-modal=\"true\"`). A non-modal sheet (`modal={false}`, a persistent panel such as a browse sheet over a map) is no longer a dialog: it is a `role=\"region\"` landmark when named, and has no role when not. Before, every sheet was `role=\"dialog\"` with no way to name it (axe `aria-dialog-name`). **Behaviour change (web):** a `modal={false}` sheet loses `role=\"dialog\"` and `aria-modal=\"false\"`. If you relied on the dialog role for a non-modal sheet, set `role` through `styles.root` (it still wins). Tabs: a `Tabs.Tab` sets `aria-controls` only while its `Tabs.Panel` is mounted (panels register with the `Tabs` root), so a tab strip without panels, or a panel unmounted by `keepMounted={false}`, no longer points at a missing id (axe `aria-valid-attr-value`). A caller's own `aria-controls` on `Tabs.Tab` now wins over the generated one."
+            },
+            {
+              "kind": "patch",
+              "text": "SimpleGrid: the gutter no longer overflows the parent. The grid used a negative-margin track, so inside a fixed-width scrolling column it reached half a gap past each edge and scrolled sideways. Rows now use `rowGap`; in `cols` mode the column gap is split across each cell's inline padding by column index (equal column widths, outer columns flush); `minColWidth` mode uses `columnGap`. The API and the visual spacing are unchanged."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
+            }
+          ]
+        },
         {
           "version": "0.12.2",
           "changes": [
@@ -418,6 +464,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.13.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0"
+            }
+          ]
+        },
+        {
           "version": "0.12.2",
           "changes": [
             {
@@ -682,6 +737,39 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.13.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0"
+            }
+          ]
+        },
+        {
           "version": "0.12.2",
           "changes": [
             {
@@ -915,6 +1003,39 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.15",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
+            }
+          ]
+        },
         {
           "version": "0.3.14",
           "changes": [
@@ -1188,6 +1309,15 @@
       "slug": "map",
       "releases": [
         {
+          "version": "0.5.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "SvgImage (web): icons rasterize into a CPU-backed canvas. The capture used react-native-svg's `toDataURL`, whose canvas Chrome backs with the GPU, so reading each tiny bitmap back stalled the main thread (in headless Chrome the five icons of a cold map took 1.9 s; now under 0.1 s). The kit now does the same serialization itself with `willReadFrequently`, and a capture with no `<svg>` or a failed decode reports empty so it is retried instead of hanging on its slot."
+            }
+          ]
+        },
+        {
           "version": "0.5.1",
           "changes": [
             {
@@ -1283,6 +1413,39 @@
       "name": "@knitui/media",
       "slug": "media",
       "releases": [
+        {
+          "version": "0.4.9",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
+            }
+          ]
+        },
         {
           "version": "0.4.8",
           "changes": [
@@ -1550,6 +1713,39 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.13.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0"
+            }
+          ]
+        },
+        {
           "version": "0.12.2",
           "changes": [
             {
@@ -1779,6 +1975,51 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.4.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Sheet: new `aria-label` / `aria-labelledby` props name the panel, on the element that carries its role (native: `aria-label` becomes the panel's `accessibilityLabel`). A modal sheet stays a dialog (`role=\"dialog\"`, `aria-modal=\"true\"`). A non-modal sheet (`modal={false}`, a persistent panel such as a browse sheet over a map) is no longer a dialog: it is a `role=\"region\"` landmark when named, and has no role when not. Before, every sheet was `role=\"dialog\"` with no way to name it (axe `aria-dialog-name`). **Behaviour change (web):** a `modal={false}` sheet loses `role=\"dialog\"` and `aria-modal=\"false\"`. If you relied on the dialog role for a non-modal sheet, set `role` through `styles.root` (it still wins). Tabs: a `Tabs.Tab` sets `aria-controls` only while its `Tabs.Panel` is mounted (panels register with the `Tabs` root), so a tab strip without panels, or a panel unmounted by `keepMounted={false}`, no longer points at a missing id (axe `aria-valid-attr-value`). A caller's own `aria-controls` on `Tabs.Tab` now wins over the generated one."
+            },
+            {
+              "kind": "patch",
+              "text": "Sheet: the handle no longer cycles the detent after a drag. On the web a mouse drag that starts on the handle ends with a `click` on it, so the sheet stepped once more after it settled (dragging from half down to peek landed on full). A press in the same pointer cycle as a drag is now ignored; a later tap and keyboard / assistive-tech activation of the handle still cycle."
+            },
+            {
+              "kind": "patch",
+              "text": "Sheet: a slow drag settles on the snap nearest where it was released. The fling bias (\"a flick advances at least one snap\") counted from the snap nearest the RELEASE point, so a drag up from the lowest of three snaps that let go just past the middle one, at any speed over 300 px/s (an unhurried touch drag), was pushed on to the top snap. The bias now counts from the snap the drag started on, only flings (500 px/s and up, was 300) are projected forward at all, and a fling lands at most one snap past the one nearest its release. `settle()` takes an optional `startOffset`; the drag gesture passes it."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
+            }
+          ]
+        },
         {
           "version": "0.3.14",
           "changes": [
@@ -2048,6 +2289,15 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.13.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0 - @knitui/hooks@0.13.0"
+            }
+          ]
+        },
+        {
           "version": "0.12.2",
           "changes": [
             {
@@ -2265,6 +2515,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "0.3.4",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0"
+            }
+          ]
+        },
+        {
           "version": "0.3.3",
           "changes": [
             {
@@ -2474,6 +2733,141 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.13.0",
+      "entries": [
+        {
+          "package": "@knitui/core",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Font tokens are `rem` on the web, so browser text-only zoom and a raised default font size now scale the kit's text (WCAG 1.4.4). The `size` and `lineHeight` sections of every font — the stock `fonts` and everything `createTheme` builds, including `fontSizes` and per-font `fonts.*.size` / `lineHeight` px overrides — are emitted as `px / 16` rem on the web (`$md` → `1.125rem`, its line height → `1.625rem`); native keeps numbers. With the default 16px root every size renders the same px as before. The Textarea's per-size line height is now the matching line-height token instead of a px number, so its rows grow with the text. **Behaviour change (web):** reading a font token's value from the config (`config.fonts.body.size.md`, `getVariableValue` on a font token) now returns a rem string instead of a number. For px math use `getFontSize` / `getLineHeight`, which stay numeric on every platform. Raw numeric `fontSize` / `lineHeight` props are untouched and stay px. No new public API; nothing to migrate for apps that only use `$` tokens."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Avatar: the photo gets `alt=\"\"`. The frame already carries `role=\"img\"` and the `aria-label`; without an alt some screen readers announced the image file name (WCAG 1.1.1)."
+            },
+            {
+              "kind": "patch",
+              "text": "Card: importing the module no longer reads a token. The context default resolved `$lg` at module scope, which threw when `Card` was evaluated before the Tamagui config was registered (e.g. an SSR chunk loading ahead of the config). A `Card.Section` outside any `Card` now resolves the default padding on render."
+            },
+            {
+              "kind": "patch",
+              "text": "Font tokens are `rem` on the web, so browser text-only zoom and a raised default font size now scale the kit's text (WCAG 1.4.4). The `size` and `lineHeight` sections of every font — the stock `fonts` and everything `createTheme` builds, including `fontSizes` and per-font `fonts.*.size` / `lineHeight` px overrides — are emitted as `px / 16` rem on the web (`$md` → `1.125rem`, its line height → `1.625rem`); native keeps numbers. With the default 16px root every size renders the same px as before. The Textarea's per-size line height is now the matching line-height token instead of a px number, so its rows grow with the text. **Behaviour change (web):** reading a font token's value from the config (`config.fonts.body.size.md`, `getVariableValue` on a font token) now returns a rem string instead of a number. For px math use `getFontSize` / `getLineHeight`, which stay numeric on every platform. Raw numeric `fontSize` / `lineHeight` props are untouched and stay px. No new public API; nothing to migrate for apps that only use `$` tokens."
+            },
+            {
+              "kind": "patch",
+              "text": "Image (web): an image the browser already had is shown. A cached image fires `load` as soon as its `<img>` is created, which in a concurrent render can land before the commit; React drops the event and expo-image's fade held the image at `opacity: 0` for good. After mount (and on each new source) a committed `<img>` that is `complete` with a `naturalWidth` and never reported `load` now gets it re-dispatched, so the fade runs and `onLoad` fires once."
+            },
+            {
+              "kind": "patch",
+              "text": "PinInput: new `name` and `form` props (web only). With a `name`, one `<input type=\"hidden\">` carries the joined code, so a surrounding form submits it as a single field (what password managers and one-time-code autofill look for). The per-character boxes stay nameless; native ignores both props."
+            },
+            {
+              "kind": "patch",
+              "text": "Sheet: new `aria-label` / `aria-labelledby` props name the panel, on the element that carries its role (native: `aria-label` becomes the panel's `accessibilityLabel`). A modal sheet stays a dialog (`role=\"dialog\"`, `aria-modal=\"true\"`). A non-modal sheet (`modal={false}`, a persistent panel such as a browse sheet over a map) is no longer a dialog: it is a `role=\"region\"` landmark when named, and has no role when not. Before, every sheet was `role=\"dialog\"` with no way to name it (axe `aria-dialog-name`). **Behaviour change (web):** a `modal={false}` sheet loses `role=\"dialog\"` and `aria-modal=\"false\"`. If you relied on the dialog role for a non-modal sheet, set `role` through `styles.root` (it still wins). Tabs: a `Tabs.Tab` sets `aria-controls` only while its `Tabs.Panel` is mounted (panels register with the `Tabs` root), so a tab strip without panels, or a panel unmounted by `keepMounted={false}`, no longer points at a missing id (axe `aria-valid-attr-value`). A caller's own `aria-controls` on `Tabs.Tab` now wins over the generated one."
+            },
+            {
+              "kind": "patch",
+              "text": "SimpleGrid: the gutter no longer overflows the parent. The grid used a negative-margin track, so inside a fixed-width scrolling column it reached half a gap past each edge and scrolled sideways. Rows now use `rowGap`; in `cols` mode the column gap is split across each cell's inline padding by column index (equal column widths, outer columns flush); `minColWidth` mode uses `columnGap`. The API and the visual spacing are unchanged."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0 - @knitui/hooks@0.13.0"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.12.2",
       "entries": [
@@ -3528,6 +3922,20 @@
       ]
     },
     {
+      "version": "0.5.2",
+      "entries": [
+        {
+          "package": "@knitui/map",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "SvgImage (web): icons rasterize into a CPU-backed canvas. The capture used react-native-svg's `toDataURL`, whose canvas Chrome backs with the GPU, so reading each tiny bitmap back stalled the main thread (in headless Chrome the five icons of a cold map took 1.9 s; now under 0.1 s). The kit now does the same serialization itself with `willReadFrequently`, and a capture with no `<svg>` or a failed decode reports empty so it is retried instead of hanging on its slot."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.5.1",
       "entries": [
         {
@@ -3612,6 +4020,44 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[4f7830c] - @knitui/core@0.5.0 - @knitui/hooks@0.5.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.9",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
             }
           ]
         }
@@ -3870,6 +4316,51 @@
           ]
         },
         {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Sheet: new `aria-label` / `aria-labelledby` props name the panel, on the element that carries its role (native: `aria-label` becomes the panel's `accessibilityLabel`). A modal sheet stays a dialog (`role=\"dialog\"`, `aria-modal=\"true\"`). A non-modal sheet (`modal={false}`, a persistent panel such as a browse sheet over a map) is no longer a dialog: it is a `role=\"region\"` landmark when named, and has no role when not. Before, every sheet was `role=\"dialog\"` with no way to name it (axe `aria-dialog-name`). **Behaviour change (web):** a `modal={false}` sheet loses `role=\"dialog\"` and `aria-modal=\"false\"`. If you relied on the dialog role for a non-modal sheet, set `role` through `styles.root` (it still wins). Tabs: a `Tabs.Tab` sets `aria-controls` only while its `Tabs.Panel` is mounted (panels register with the `Tabs` root), so a tab strip without panels, or a panel unmounted by `keepMounted={false}`, no longer points at a missing id (axe `aria-valid-attr-value`). A caller's own `aria-controls` on `Tabs.Tab` now wins over the generated one."
+            },
+            {
+              "kind": "patch",
+              "text": "Sheet: the handle no longer cycles the detent after a drag. On the web a mouse drag that starts on the handle ends with a `click` on it, so the sheet stepped once more after it settled (dragging from half down to peek landed on full). A press in the same pointer cycle as a drag is now ignored; a later tap and keyboard / assistive-tech activation of the handle still cycle."
+            },
+            {
+              "kind": "patch",
+              "text": "Sheet: a slow drag settles on the snap nearest where it was released. The fling bias (\"a flick advances at least one snap\") counted from the snap nearest the RELEASE point, so a drag up from the lowest of three snaps that let go just past the middle one, at any speed over 300 px/s (an unhurried touch drag), was pushed on to the top snap. The bias now counts from the snap the drag started on, only flings (500 px/s and up, was 300) are projected forward at all, and a fling lands at most one snap past the one nearest its release. `settle()` takes an optional `startOffset`; the drag gesture passes it."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
+            }
+          ]
+        },
+        {
           "package": "@knitui/mediaquery",
           "changes": [
             {
@@ -3879,6 +4370,44 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.15",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[069938f]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[8626180]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[5991b24]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[326ce54]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e282fbd]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[574ac98] - @knitui/components@0.13.0 - @knitui/core@0.13.0 - @knitui/hooks@0.13.0 - @knitui/icons@0.13.0"
             }
           ]
         }
@@ -4324,6 +4853,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[5c6d758] - @knitui/components@0.6.0 - @knitui/icons@0.6.0 - @knitui/core@0.6.0 - @knitui/hooks@0.6.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[633e669] - @knitui/core@0.13.0"
             }
           ]
         }

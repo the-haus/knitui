@@ -1,5 +1,31 @@
 # @knitui/sheet
 
+## 0.4.0
+
+### Minor Changes
+
+- e282fbd: Sheet: new `aria-label` / `aria-labelledby` props name the panel, on the element that carries its role (native: `aria-label` becomes the panel's `accessibilityLabel`). A modal sheet stays a dialog (`role="dialog"`, `aria-modal="true"`). A non-modal sheet (`modal={false}`, a persistent panel such as a browse sheet over a map) is no longer a dialog: it is a `role="region"` landmark when named, and has no role when not. Before, every sheet was `role="dialog"` with no way to name it (axe `aria-dialog-name`).
+
+  **Behaviour change (web):** a `modal={false}` sheet loses `role="dialog"` and `aria-modal="false"`. If you relied on the dialog role for a non-modal sheet, set `role` through `styles.root` (it still wins).
+
+  Tabs: a `Tabs.Tab` sets `aria-controls` only while its `Tabs.Panel` is mounted (panels register with the `Tabs` root), so a tab strip without panels, or a panel unmounted by `keepMounted={false}`, no longer points at a missing id (axe `aria-valid-attr-value`). A caller's own `aria-controls` on `Tabs.Tab` now wins over the generated one.
+
+### Patch Changes
+
+- 744cf71: Sheet: the handle no longer cycles the detent after a drag. On the web a mouse drag that starts on the handle ends with a `click` on it, so the sheet stepped once more after it settled (dragging from half down to peek landed on full). A press in the same pointer cycle as a drag is now ignored; a later tap and keyboard / assistive-tech activation of the handle still cycle.
+- f2512b5: Sheet: a slow drag settles on the snap nearest where it was released. The fling bias ("a flick advances at least one snap") counted from the snap nearest the RELEASE point, so a drag up from the lowest of three snaps that let go just past the middle one, at any speed over 300 px/s (an unhurried touch drag), was pushed on to the top snap. The bias now counts from the snap the drag started on, only flings (500 px/s and up, was 300) are projected forward at all, and a fling lands at most one snap past the one nearest its release. `settle()` takes an optional `startOffset`; the drag gesture passes it.
+- Updated dependencies [069938f]
+- Updated dependencies [8626180]
+- Updated dependencies [633e669]
+- Updated dependencies [5991b24]
+- Updated dependencies [326ce54]
+- Updated dependencies [e282fbd]
+- Updated dependencies [574ac98]
+  - @knitui/components@0.13.0
+  - @knitui/core@0.13.0
+  - @knitui/hooks@0.13.0
+  - @knitui/icons@0.13.0
+
 ## 0.3.14
 
 ### Patch Changes
