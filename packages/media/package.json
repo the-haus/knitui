@@ -90,6 +90,7 @@
     "expo-video": "~57.0.4"
   },
   "peerDependencies": {
+    "expo-modules-core": "*",
     "react": "*",
     "react-native": "*",
     "react-native-reanimated": "*"
