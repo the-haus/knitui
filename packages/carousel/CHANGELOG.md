@@ -1,5 +1,15 @@
 # @knitui/carousel
 
+## 0.3.16
+
+### Patch Changes
+
+- Updated dependencies [9955de3]
+  - @knitui/components@0.14.0
+  - @knitui/core@0.14.0
+  - @knitui/hooks@0.14.0
+  - @knitui/icons@0.14.0
+
 ## 0.3.15
 
 ### Patch Changes

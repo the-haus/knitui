@@ -117,6 +117,27 @@
       "slug": "components",
       "releases": [
         {
+          "version": "0.14.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Image (web): the kit renders its own `<img>` on the web instead of expo-image's web build, so an image shows as soon as the browser can. expo-image added its `<img>` from an effect (a blank frame on every mount, an empty box in server-rendered HTML) and started each mount's fade at `opacity: 0`, cached or not; a virtualized list, a revisited page or a hydrating one remounts images all the time, so they blinked. The `<img>` is now in the first render and in the SSR markup, never held hidden, lazy-loaded by default (`loading`, `priority` → `fetchpriority`), with `contentFit` / `contentPosition`, `blurRadius`, URL `placeholder`s and expo-image's load / error / display payloads as before. `Image.prefetch` warms the browser cache. Native is unchanged (expo-image, `Image.native.tsx`). **Behaviour change (web):** `transition` no longer fades on the web; it stays a native fade. BlurHash / ThumbHash placeholders and `tintColor` do not render on the web, and the cache-management statics (`clearMemoryCache`, `clearDiskCache`, `getCachePathAsync`, `generateBlurhashAsync`, `loadAsync`) are no-ops there."
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.14.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/icons@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.13.0",
           "changes": [
             {
@@ -464,6 +485,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "0.14.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.13.0",
           "changes": [
             {
@@ -737,6 +767,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "0.14.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.13.0",
           "changes": [
             {
@@ -1003,6 +1042,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "0.3.16",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0 - @knitui/icons@0.14.0"
+            }
+          ]
+        },
         {
           "version": "0.3.15",
           "changes": [
@@ -1414,6 +1462,19 @@
       "slug": "media",
       "releases": [
         {
+          "version": "0.4.10",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Video (web): `@knitui/media` installs the `globalThis.expo` polyfill itself before it loads `expo-video`. expo-video's web build reads `globalThis.expo.SharedObject` at import time without importing expo-modules-core, so it relied on something else having loaded it first: the `expo` entry in an Expo app, or (until `@knitui/components` 0.14 rendered its own web `<img>`) expo-image. A web app with neither (a Next app, a test) crashed with \"Cannot read properties of undefined (reading 'SharedObject')\". `expo-modules-core` is now a peer dependency (every Expo app already has it through `expo`)."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0 - @knitui/icons@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.4.9",
           "changes": [
             {
@@ -1713,6 +1774,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "0.14.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.13.0",
           "changes": [
             {
@@ -1975,6 +2045,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "0.4.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0 - @knitui/icons@0.14.0"
+            }
+          ]
+        },
         {
           "version": "0.4.0",
           "changes": [
@@ -2289,6 +2368,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "0.14.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.13.0",
           "changes": [
             {
@@ -2515,6 +2607,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "0.3.5",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            }
+          ]
+        },
+        {
           "version": "0.3.4",
           "changes": [
             {
@@ -2733,6 +2834,72 @@
     }
   ],
   "timeline": [
+    {
+      "version": "0.14.0",
+      "entries": [
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "Image (web): the kit renders its own `<img>` on the web instead of expo-image's web build, so an image shows as soon as the browser can. expo-image added its `<img>` from an effect (a blank frame on every mount, an empty box in server-rendered HTML) and started each mount's fade at `opacity: 0`, cached or not; a virtualized list, a revisited page or a hydrating one remounts images all the time, so they blinked. The `<img>` is now in the first render and in the SSR markup, never held hidden, lazy-loaded by default (`loading`, `priority` → `fetchpriority`), with `contentFit` / `contentPosition`, `blurRadius`, URL `placeholder`s and expo-image's load / error / display payloads as before. `Image.prefetch` warms the browser cache. Native is unchanged (expo-image, `Image.native.tsx`). **Behaviour change (web):** `transition` no longer fades on the web; it stays a native fade. BlurHash / ThumbHash placeholders and `tintColor` do not render on the web, and the cache-management statics (`clearMemoryCache`, `clearDiskCache`, `getCachePathAsync`, `generateBlurhashAsync`, `loadAsync`) are no-ops there."
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.14.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/icons@0.14.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@0.14.0"
+            }
+          ]
+        }
+      ]
+    },
     {
       "version": "0.13.0",
       "entries": [
@@ -4026,6 +4193,24 @@
       ]
     },
     {
+      "version": "0.4.10",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Video (web): `@knitui/media` installs the `globalThis.expo` polyfill itself before it loads `expo-video`. expo-video's web build reads `globalThis.expo.SharedObject` at import time without importing expo-modules-core, so it relied on something else having loaded it first: the `expo` entry in an Expo app, or (until `@knitui/components` 0.14 rendered its own web `<img>`) expo-image. A web app with neither (a Next app, a test) crashed with \"Cannot read properties of undefined (reading 'SharedObject')\". `expo-modules-core` is now a peer dependency (every Expo app already has it through `expo`)."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0 - @knitui/icons@0.14.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.4.9",
       "entries": [
         {
@@ -4223,6 +4408,15 @@
               "text": "Updated dependencies[85594a1] - @knitui/core@0.8.0 - @knitui/components@0.8.0 - @knitui/hooks@0.8.0 - @knitui/icons@0.8.0"
             }
           ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0 - @knitui/icons@0.14.0"
+            }
+          ]
         }
       ]
     },
@@ -4370,6 +4564,20 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@0.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.16",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[9955de3] - @knitui/components@0.14.0 - @knitui/core@0.14.0 - @knitui/hooks@0.14.0 - @knitui/icons@0.14.0"
             }
           ]
         }
@@ -4750,6 +4958,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[caa2d7e] - @knitui/components@0.6.1 - @knitui/core@0.6.1 - @knitui/hooks@0.6.1 - @knitui/icons@0.6.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@0.14.0"
             }
           ]
         }

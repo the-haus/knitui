@@ -2739,6 +2739,7 @@
       "storybookUrl": "https://the-haus.github.io/knitui/components/?path=/docs/display-image",
       "componentPath": "packages/components/src/Image/Image.tsx",
       "testPath": "packages/components/src/Image/Image.test.tsx",
+      "nativePath": "packages/components/src/Image/Image.native.tsx",
       "args": {
         "src": "https://picsum.photos/seed/knitui/400/300",
         "alt": "Sample image",
