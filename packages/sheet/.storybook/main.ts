@@ -4,9 +4,9 @@ import type { StorybookConfig } from "@storybook/react-vite";
  * Storybook for @knitui/sheet.
  *
  * The sheet is cross-platform: the web build (`*.tsx` / `*.web.tsx`) renders
- * through react-native-web, while native-only animation lives in `*.tsx` files
- * that the web target overrides with `*.web.tsx`. We wire up the same bits the
- * components Storybook does:
+ * through react-native-web, while the native-only drag and animation
+ * (gesture-handler, reanimated) live in `*.native.tsx` twins the web never
+ * resolves. We wire up the same bits the components Storybook does:
  *   1. tell Tamagui it's targeting web (`TAMAGUI_TARGET`),
  *   2. resolve React Native platform extensions, preferring `.web.*`, and
  *   3. alias `react-native` → `react-native-web`.
@@ -38,10 +38,9 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     const { mergeConfig } = await import("vite");
 
-    // NOTE: Reanimated's worklets Babel plugin doesn't run in Storybook's Vite
-    // pipeline, so the web build animates via an imperative painter
-    // (view/paint.web.ts subscribing to the offset SharedValue) instead of
-    // `useAnimatedStyle` — see README "Web rendering".
+    // The web build has no reanimated: a pointer-events drag and a
+    // requestAnimationFrame spring drive an imperative painter (view/animated.tsx)
+    // — see README "Web rendering".
     return mergeConfig(config, {
       define: {
         "process.env.TAMAGUI_TARGET": JSON.stringify("web"),

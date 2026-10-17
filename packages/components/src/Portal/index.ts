@@ -6,10 +6,12 @@ export {
 } from "./OverlayHost";
 export type { OverlayHostProps, PortalHostProps, PortalProps, PortalProviderProps } from "./types";
 /**
- * Portal system — a thin re-export of `react-native-teleport`.
+ * Portal system — a thin re-export of `@knitui/core/portal`, which is
+ * `react-native-teleport` on native and the kit's own react-dom port of it on
+ * web (so a web bundle never reaches a react-native-* package).
  *
- * `react-native-teleport` performs **native view re-parenting** (real Fabric
- * portals on iOS/Android, `createPortal` + DOM `moveBefore` on web), so overlays
+ * Native performs **native view re-parenting** (real Fabric portals on
+ * iOS/Android); web uses `createPortal` + DOM `moveBefore`, so overlays
  * (`Popover`, `Menu`, `Tooltip`, `Modal`, `Drawer`, …) truly escape clipping and
  * stacking ancestors instead of relying on JS re-rendering or `zIndex` tricks.
  *
@@ -27,4 +29,4 @@ export type { OverlayHostProps, PortalHostProps, PortalProps, PortalProviderProp
  *
  * @see https://kirillzyusko.github.io/react-native-teleport
  */
-export { Portal, PortalHost, PortalProvider, usePortal } from "react-native-teleport";
+export { Portal, PortalHost, PortalProvider, usePortal } from "@knitui/core/portal";

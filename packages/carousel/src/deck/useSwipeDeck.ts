@@ -1,8 +1,9 @@
 import * as React from "react";
-import { type SharedValue, useSharedValue } from "react-native-reanimated";
+import type { SharedValue } from "react-native-reanimated";
 
 import type { LayoutChangeEvent } from "@knitui/core";
 
+import { useSharedValue } from "../motion/runtime";
 import type { SwipeDeckProps, SwipeDeckRef, SwipeDirection } from "./types";
 
 /** The current top card's imperative API, registered by whichever card is on top. */

@@ -1,10 +1,10 @@
 import type * as React from "react";
-import type { WithSpringConfig } from "react-native-reanimated";
 
 import type { OverlayProps } from "@knitui/components";
 import type { SlotStyles, StyleProp, ViewStyle } from "@knitui/core";
 
 import type { SheetStyles } from "./chrome";
+import type { SheetSpringConfig } from "./motion/spring-config";
 
 /** Top-corner rounding scale for the panel. */
 export type SheetSize = "sm" | "md" | "lg" | "xl";
@@ -68,7 +68,7 @@ export interface SheetProps {
   withHandle?: boolean;
 
   /** Per-instance spring override (passed to reanimated `withSpring`). */
-  animationConfig?: WithSpringConfig;
+  animationConfig?: SheetSpringConfig;
   /** Lift the panel above the soft keyboard (native). @default false */
   moveOnKeyboardChange?: boolean;
   /** Opt out of locking body scroll while open (web). @default false */

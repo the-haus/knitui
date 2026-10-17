@@ -1,10 +1,10 @@
 import * as React from "react";
-import { GestureDetector } from "react-native-gesture-handler";
-import { useSharedValue, withSpring } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
 
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
+import { DragDetector } from "../input/DragDetector";
+import { animate, useSharedValue, withSpring } from "../motion/webMotion";
 import { transformToCss } from "../view/transformToCss";
 import { DeckCardBox } from "./chrome";
 import { stampOpacityFor } from "./decide";
@@ -25,7 +25,8 @@ import { useCardGesture } from "./useCardGesture";
  * transform (and each stamp's opacity) imperatively, subscribing to the drag /
  * `depth` / size shared values via `useSharedValueListener` — which fires
  * synchronously on every `.value` write on web. The gesture + fling logic is
- * identical to native (`useCardGesture`). Each card owns an animated stack slot
+ * identical to native (`useCardGesture`, whose web twin runs it on pointer
+ * events, so no web bundle reaches the gesture or animation libraries). Each card owns an animated stack slot
  * (`depthSV`) that springs to the `depth` prop, so a promoted card rises
  * smoothly without any deck-wide value that must reset with the React index bump.
  */
@@ -54,7 +55,7 @@ export function SwipeCard(props: SwipeCardProps) {
   const ty = useSharedValue(0);
   const depthSV = useSharedValue(depth);
   React.useEffect(() => {
-    depthSV.value = withSpring(depth, { damping: 18, stiffness: 160 });
+    animate(depthSV, withSpring(depth, { damping: 18, stiffness: 160 }));
   }, [depth, depthSV]);
 
   const cardRef = React.useRef<HTMLElement | null>(null);
@@ -126,7 +127,7 @@ export function SwipeCard(props: SwipeCardProps) {
   };
 
   return (
-    <GestureDetector gesture={gesture}>
+    <DragDetector gesture={gesture}>
       <Box ref={cardRef as never} style={[CARD_BASE, initialStyle]}>
         <DeckCardBox {...cardStyle}>{children}</DeckCardBox>
         {isTop &&
@@ -145,6 +146,6 @@ export function SwipeCard(props: SwipeCardProps) {
             );
           })}
       </Box>
-    </GestureDetector>
+    </DragDetector>
   );
 }

@@ -1,7 +1,6 @@
-import { Extrapolation, interpolate } from "react-native-reanimated";
-
 import type { ViewStyle } from "@knitui/core";
 
+import { Extrapolation, interpolate } from "../motion/runtime";
 import type { AnimationStyle, CubeConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
 

@@ -1,10 +1,10 @@
 import * as React from "react";
-import { useSharedValue } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
 
 import { itemProgress, rawIndex } from "../engine";
 import { sanitizeAnimationStyle } from "../layouts";
+import { useSharedValue } from "../motion/webMotion";
 import { SlideBox, useSlideStyle } from "./chrome";
 import { SLIDE_BASE, slideContent, slideDimension } from "./Item.shared";
 import type { ItemProps } from "./Item.types";

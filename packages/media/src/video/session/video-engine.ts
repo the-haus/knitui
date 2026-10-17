@@ -1,47 +1,36 @@
 /**
- * Entry for the shared video engine: one imperatively-created `expo-video` player
- * (NOT the `useVideoPlayer` hook, so its lifecycle is owned by the engine, not a
- * component) wrapped in an {@link ExpoVideoController} and the generic session.
- *
- * Cross-platform — `expo-video` resolves to its native module on device and to
- * its `.web` backend in the browser. The `VideoView` is VISUAL: it is rendered
- * once by {@link MediaProvider} and teleported into the active player's frame,
- * binding to this controller's player via the surface.
+ * Entry for the shared video engine — WEB. One kit-owned {@link WebVideoPlayer}
+ * wrapped in the same {@link ExpoVideoController} and generic session the native
+ * build uses. The `<video>` element is VISUAL: it is rendered once by
+ * {@link MediaProvider} (through `VideoSurface`) and teleported into the active
+ * player's frame. The native build creates an `expo-video` player instead
+ * (`video-engine.native.ts`); the web build never loads expo.
  */
-import "../expo-globals";
-
-import { createVideoPlayer } from "expo-video";
+import type { VideoPlayer } from "expo-video";
 import * as React from "react";
 
 import { MediaContext } from "../../provider/context";
 import { ExpoVideoController } from "../controller/expo-controller";
+import { WebVideoPlayer } from "../web/web-video-player";
 import { buildVideoEngine, type VideoEngine } from "./video-engine.shared";
 
 /** Create a fresh, isolated video engine (owned by `<MediaProvider>`). */
 export function createVideoEngine(): VideoEngine {
-  const player = createVideoPlayer(null);
+  // The controller is typed over expo's `VideoPlayer`; the web player implements
+  // the part of it the controller calls.
+  const player = new WebVideoPlayer(null) as unknown as VideoPlayer;
   return buildVideoEngine(new ExpoVideoController(player));
 }
 
 let singleton: VideoEngine | null = null;
 
-/**
- * The process-wide video engine — the ONE real `expo-video` player for the whole
- * app. Both `<MediaProvider>` and the no-provider fallback resolve THIS, so there
- * is never a second, competing player. Idempotent, so a StrictMode/double-invoked
- * caller gets the same instance.
- */
+/** The process-wide video engine — the ONE real player for the whole app. */
 export function getSharedVideoSession(): VideoEngine {
   if (!singleton) singleton = createVideoEngine();
   return singleton;
 }
 
-/**
- * TEST ONLY: dispose and clear the process singleton so the next
- * {@link getSharedVideoSession} builds a fresh one. Lets each test start from a
- * clean shared player (the engine is process-global in production and never torn
- * down there).
- */
+/** TEST ONLY: dispose and clear the process singleton. */
 export function resetSharedVideoSessionForTests(): void {
   singleton?.dispose();
   singleton = null;

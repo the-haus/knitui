@@ -1,6 +1,5 @@
 import * as React from "react";
-import { type SharedValue, useAnimatedReaction, useSharedValue } from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
+import type { SharedValue } from "react-native-reanimated";
 
 import { isWeb } from "@knitui/core";
 
@@ -8,6 +7,7 @@ import { activeIndex, clamp, mod, offsetFor, progressFor, rawIndex } from "../en
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
 import type { CarouselProps, CarouselRef, ScrollToOptions, StepOptions } from "../types";
 import { animateOffset } from "./animations";
+import { scheduleOnRN, useAnimatedReaction, useSharedValue } from "./runtime";
 
 /** Defaults resolved once from the public props. */
 export interface ResolvedConfig {

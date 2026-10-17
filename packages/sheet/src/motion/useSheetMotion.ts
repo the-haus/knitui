@@ -1,14 +1,10 @@
 import * as React from "react";
-import {
-  cancelAnimation,
-  type SharedValue,
-  useSharedValue,
-  type WithSpringConfig,
-} from "react-native-reanimated";
 
 import { closedOffset, snapOffsets } from "../engine";
 import type { SettleResult } from "../engine";
 import { animateOffset } from "./animate";
+import type { SheetSpringConfig } from "./spring-config";
+import { cancelMotion, type SheetValue, useMotionValue } from "./value";
 
 export interface SheetMotionParams {
   /** Snap points (0–100 % visible, most-visible → least-visible). */
@@ -16,7 +12,7 @@ export interface SheetMotionParams {
   /** Measured available height (px). 0 until the layer has laid out. */
   maxHeight: number;
   /** Per-instance spring override. */
-  animationConfig?: WithSpringConfig;
+  animationConfig?: SheetSpringConfig;
   /** Whether a drag past the lowest snap may dismiss the sheet. */
   dismissOnSnapToBottom: boolean;
   /** Commit a new snap index to component state (controlled/uncontrolled). */
@@ -27,7 +23,7 @@ export interface SheetMotionParams {
 
 export interface SheetMotion {
   /** The single source of truth: panel translateY (px). */
-  offset: SharedValue<number>;
+  offset: SheetValue<number>;
   /** Snap offsets, ascending (index 0 = most open). */
   offsets: number[];
   /** Fully-closed (off-screen) offset. */
@@ -37,7 +33,7 @@ export interface SheetMotion {
   /** Whether dragging past the lowest snap dismisses. */
   dismissible: boolean;
   /** Spring config in effect (default or per-instance). */
-  spring?: WithSpringConfig;
+  spring?: SheetSpringConfig;
   /** Animate to a snap WITHOUT writing state (external `position` sync). */
   glideTo: (index: number) => void;
   /** Snap from the closed position on open (instant reset → spring up). */
@@ -61,7 +57,8 @@ function clampIndex(index: number, length: number): number {
 }
 
 /**
- * Owns the panel `offset` SharedValue and derives the snap geometry from the
+ * Owns the panel `offset` (a reanimated SharedValue on native, a web
+ * `MotionValue` in the browser — `./value`) and derives the snap geometry from the
  * measured height. Returns a controller the gesture, handle, buttons, imperative
  * API, and open/close lifecycle all drive. No React state lives here — snap
  * commits are forwarded to the component via `setPosition`.
@@ -79,11 +76,11 @@ export function useSheetMotion(params: SheetMotionParams): SheetMotion {
   // Start parked far off-screen so the panel is invisible until the layer has
   // measured and the open animation parks it at the real closed offset — no
   // first-frame flash of a fully-open panel before the geometry is known.
-  const offset = useSharedValue(OFFSCREEN);
+  const offset = useMotionValue(OFFSCREEN);
 
   // Stop any in-flight spring when the sheet leaves the tree, so a removed sheet
-  // never leaves a reanimated loop running on a detached shared value.
-  React.useEffect(() => () => cancelAnimation(offset), [offset]);
+  // never leaves an animation loop running on a detached value.
+  React.useEffect(() => () => cancelMotion(offset), [offset]);
 
   const offsets = React.useMemo(() => snapOffsets(snapPoints, maxHeight), [snapPoints, maxHeight]);
   const closed = closedOffset(maxHeight);

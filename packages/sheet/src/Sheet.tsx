@@ -1,6 +1,4 @@
 import * as React from "react";
-import { Gesture } from "react-native-gesture-handler";
-import { useSharedValue } from "react-native-reanimated";
 
 import { KeyboardAvoidingView, Portal, UnstyledButton, useOverlayHost } from "@knitui/components";
 import {
@@ -26,8 +24,10 @@ import {
 import type { SettleResult } from "./engine";
 import { useSharedValueListener } from "./hooks/useSharedValueListener";
 import { useStableRecord } from "./hooks/useStableRecord";
+import { useScrollGesture } from "./input/scrollGesture";
 import { useSheetDrag } from "./input/useSheetDrag";
 import { useSheetMotion } from "./motion/useSheetMotion";
+import { useMotionValue } from "./motion/value";
 import type { SheetProps, SheetRef } from "./types";
 import { SheetScrollContext, type SheetScrollContextValue } from "./view/scrollContext";
 import { SheetScrollView } from "./view/ScrollView";
@@ -116,7 +116,7 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   // thread (see `useSharedValueListener`), and a worklet cannot read a JS ref — so
   // the flag is mirrored into a shared value and the watcher's gate is evaluated
   // where the offset lives, instead of waking the JS thread every frame.
-  const closingSV = useSharedValue(false);
+  const closingSV = useMotionValue(false);
   const setClosing = React.useCallback(
     (value: boolean) => {
       closingRef.current = value;
@@ -194,9 +194,9 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   // the Pan) and reports its live content offset back through `scrollOffsetY`.
   // Both are stable; on web the browser handles nested scroll, so the Pan is left
   // unaware of them (no coordination, current behaviour preserved).
-  const scrollOffsetY = useSharedValue(0);
+  const scrollOffsetY = useMotionValue(0);
 
-  const scrollGesture = React.useMemo(() => Gesture.Native(), []);
+  const scrollGesture = useScrollGesture();
   const dragEnabled = !disableDrag && maxHeight > 0 && isOpen;
 
   const draggingRef = React.useRef(false);

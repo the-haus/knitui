@@ -7,16 +7,17 @@ Native-first, with full web parity.
 ## Install
 
 ```sh
-# Expo
+# Expo / bare React Native
 npx expo install @knitui/sheet react-native-gesture-handler react-native-reanimated
 
-# bare React Native / web
-npm install @knitui/sheet react-native-gesture-handler react-native-reanimated
+# web only
+npm install @knitui/sheet
 ```
 
 `@knitui/sheet` builds on `@knitui/core` + `@knitui/components`; install those
 alongside the kit as usual. `react-native-gesture-handler` and
-`react-native-reanimated` are required peers. Like the rest of the kit it ships
+`react-native-reanimated` are peers on native only: the web build never imports
+them (see "Web rendering"). Like the rest of the kit it ships
 TypeScript source — Expo/Metro consume it directly, and Next.js picks it up via
 the `withKnitui` wrapper from `@knitui/plugins/next-plugin`.
 
@@ -64,20 +65,34 @@ Three layers, mirroring `@knitui/carousel`:
 1. **Engine** (`src/engine`) — platform-free, reanimated-free, DOM-free pure
    functions over the panel's signed `offset` (px). Snap geometry, velocity-aware
    `settle`, overlay-opacity. Directly unit-tested.
-2. **Motion + gesture** (`src/motion`, `src/input`) — the `offset` SharedValue, a
-   re-targetable spring (`animateOffset`), and the RNGH drag that runs `settle` on
-   the UI thread.
+2. **Motion + gesture** (`src/motion`, `src/input`) — the `offset` value, a
+   re-targetable spring (`animateOffset`), and the drag that runs `settle` on
+   release. Native: a reanimated SharedValue and an RNGH Pan on the UI thread
+   (`*.native.ts`); web: an observable, a `requestAnimationFrame` spring and a
+   pointer-events drag.
 3. **Surface + chrome** (`src/view`, `src/chrome`, `Sheet.tsx`) — styled parts,
    the slot system, per-slot `styles`, and the open/close lifecycle that reuses
    the kit's `Portal`, focus-trap, Escape, and scroll-lock.
 
 ### Web rendering
 
-Reanimated's `useAnimatedStyle` does not re-run under this repo's web tooling, so
-on web the panel transform and the scrim opacity are painted **imperatively** to
-the DOM node whenever `offset` changes (`view/animated.web.tsx` subscribing via
-`useSharedValueListener`). Native uses the declarative `useAnimatedStyle` path
-(`view/animated.tsx`).
+The web build never reaches a native-only library: no reanimated, no
+gesture-handler, no worklets. The `.native.*` twins hold them, and the web gets:
+
+- a **pointer-events drag** (`input/useSheetDrag.ts`): claims a pointer after
+  8 px of vertical travel, follows it within the travel range, settles on
+  release with the release velocity, re-settles to the nearest visible snap on
+  `pointercancel`, and swallows the click a drag ends with;
+- a **`requestAnimationFrame` spring** (`motion/animate.ts` over the pure
+  integrator in `motion/spring.ts`) driving a small observable
+  (`motion/value.ts`) in place of a SharedValue — it honours
+  `prefers-reduced-motion` by jumping straight to the target;
+- an **imperative painter** (`view/animated.tsx`) writing the panel transform
+  and the scrim opacity whenever `offset` changes.
+
+The snap, settle and handoff maths are the shared pure engine (`src/engine`) on
+both platforms. Native keeps the RNGH `Gesture.Pan` and reanimated's
+`useAnimatedStyle` (`*.native.tsx`).
 
 ## API
 
@@ -92,7 +107,7 @@ See `src/types.ts` for the full `SheetProps`. Key props:
 | `dismissOnSnapToBottom`                             | `false`         | Fling past the lowest snap to close.                    |
 | `disableDrag`                                       | `false`         | Disable all drag handling.                              |
 | `modal`                                             | `true`          | Teleport to the app root vs. render inline.             |
-| `animationConfig`                                   | —               | reanimated `withSpring` config override.                |
+| `animationConfig`                                   | —               | Spring override (`SheetSpringConfig`).                  |
 | `moveOnKeyboardChange`                              | `false`         | Lift above the soft keyboard (native).                  |
 | `size`                                              | `"lg"`          | Top-corner rounding scale.                              |
 | `styles`                                            | —               | Per-slot overrides: `root` / `overlay` / `handle`.      |

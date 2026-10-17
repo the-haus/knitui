@@ -1,5 +1,5 @@
 import * as React from "react";
-import { GestureDetector } from "react-native-gesture-handler";
+import { GestureDetector, type GestureType } from "react-native-gesture-handler";
 import Animated, {
   scrollTo,
   useAnimatedRef,
@@ -97,10 +97,10 @@ export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollVie
     );
 
     // No context (rendered outside a Sheet) → just scroll.
-    if (!ctx) return scroller;
+    if (!ctx?.scrollGesture) return scroller;
 
     // Bind the scroller to the sheet's Native gesture so it recognises together
     // with the sheet Pan (declared simultaneous on the Pan side).
-    return <GestureDetector gesture={ctx.scrollGesture}>{scroller}</GestureDetector>;
+    return <GestureDetector gesture={ctx.scrollGesture as GestureType}>{scroller}</GestureDetector>;
   },
 );

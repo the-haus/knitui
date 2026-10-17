@@ -10,13 +10,21 @@ A clean-sheet, cross-platform (React Native + Web) carousel / slider.
 # Expo
 npx expo install @knitui/carousel react-native-gesture-handler react-native-reanimated
 
-# bare React Native / web
+# bare React Native
 npm install @knitui/carousel react-native-gesture-handler react-native-reanimated
+
+# web only
+npm install @knitui/carousel
 ```
 
 `@knitui/carousel` builds on `@knitui/core` + `@knitui/components`; install those
-alongside the kit as usual. `react-native-gesture-handler` and
-`react-native-reanimated` are required peers. Like the rest of the kit it ships
+alongside the kit as usual. On native, `react-native-gesture-handler`,
+`react-native-reanimated` and `react-native-worklets` are required peers. The
+**web build never reaches them**: there the carousel drags with DOM pointer
+events and animates with its own small `requestAnimationFrame` runtime
+(`src/motion/webMotion.ts`). The public types still name Reanimated's
+`SharedValue` (for `scrollOffsetValue`, `progress`, `onProgressChange`): on web
+any object with a `.value` works, a Reanimated shared value included. Like the rest of the kit it ships
 TypeScript source — Expo/Metro consume it directly, and Next.js picks it up via
 the `withKnitui` wrapper from `@knitui/plugins/next-plugin`.
 
@@ -178,13 +186,29 @@ ref.current?.swipeRight();
 The hard part — the motion math — is a **platform-free, reanimated-free, DOM-free**
 engine of pure functions over a single signed scroll offset (`src/engine`). It is
 directly unit-tested without a renderer. The reanimated/worklet driver and the
-React views consume it; the only platform split is the input layer (gesture-handler
-on native, pointer/wheel/keyboard on web).
+React views consume it. Everything Reanimated / Worklets / gesture-handler is
+reached through platform twins, so a web bundle contains none of them:
+
+- `motion/runtime.ts` re-exports the few Reanimated / Worklets primitives the
+  shared files use (`useSharedValue`, `useAnimatedReaction`, `scheduleOnRN`,
+  `interpolate`, `Extrapolation`); `runtime.web.ts` serves the same names from
+  `motion/webMotion.ts` (plain JS shared values with listeners, rAF timing /
+  spring / decay, Reanimated's `interpolate`, honouring `prefers-reduced-motion`).
+- `input/DragDetector.ts` is RNGH's `GestureDetector`; `DragDetector.web.tsx`
+  attaches the pointer-event pan (`input/webPan.ts`) that `useDragGesture.web.ts`
+  and `deck/useCardGesture.web.ts` return.
+- `motion/animations`, `pagination/dotAnimation`, `pagination/selectedDot`,
+  `view/Item`, `view/NativeTrack` and `deck/SwipeCard` have `.web` twins; the
+  native files are the Reanimated originals.
+
+On web, `gestureConfig` (it tweaks RNGH's `Gesture.Pan()`) has no effect. A
+press that interrupts a running snap stops it and, if it never becomes a drag,
+settles to the nearest page.
 
 ```
 src/
   engine/        # pure functions: offset↔index, itemProgress (loop core), settle, window
-  motion/        # reanimated worklet wrappers (shared RN + web)
+  motion/        # reanimated worklet wrappers (native) + webMotion (web)
   input/         # platform-split gesture/pointer input
   layouts/       # (progress,index) => ViewStyle worklets
   view/          # <Carousel>, Track, Item, virtualization
@@ -215,7 +239,7 @@ Reanimated's web _reactivity_ (`useAnimatedStyle` re-running on shared-value cha
 this repo's Vite tooling — Vite doesn't apply the worklets Babel plugin. So the web build does **not**
 animate slides through `useAnimatedStyle`. Instead it uses an **imperative rAF painter**
 (`view/painter.web.ts` + `Item.web.tsx`): one `requestAnimationFrame` loop reads the live `offset`
-shared value (which Reanimated's runtime _does_ tick for `withTiming`/`withSpring`/`withDecay`) and
+shared value (which the web motion runtime, `motion/webMotion.ts`, ticks for timing / spring / decay) and
 writes each slide's transform/opacity/zIndex to the DOM directly. This mirrors the pattern ScrollArea
 uses for its web thumbs. Native keeps the standard `useAnimatedStyle` path (`Item.tsx`). The only
 platform split in the view layer is `Item` + `painter`.

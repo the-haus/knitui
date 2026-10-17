@@ -41,6 +41,12 @@
       "types": "./lib/typescript/config/config.d.ts",
       "default": "./src/config/config.ts"
     },
+    "./portal": {
+      "source": "./src/portal/index.ts",
+      "react-native": "./src/portal/index.ts",
+      "types": "./lib/typescript/portal/index.d.ts",
+      "default": "./src/portal/index.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -77,10 +83,14 @@
     "react": "*",
     "react-native": "*",
     "react-native-gesture-handler": "*",
-    "react-native-reanimated": "*"
+    "react-native-reanimated": "*",
+    "react-dom": "*"
   },
   "peerDependenciesMeta": {
     "react-native-web": {
+      "optional": true
+    },
+    "react-dom": {
       "optional": true
     }
   },

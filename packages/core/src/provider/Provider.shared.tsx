@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
-import { PortalProvider } from "react-native-teleport";
 
 import { getConfig, setConfig, TamaguiProvider, View } from "@tamagui/core";
 
 import defaultConfig from "../config/config";
+import { PortalProvider } from "../portal";
 import { ColorSchemeContext } from "./ColorSchemeContext";
 import type {
   ColorScheme,
@@ -119,8 +119,8 @@ export function SharedProvider({
          */}
         <View flex={1} backgroundColor={backgroundColor}>
           {/*
-           * `PortalProvider` (react-native-teleport) enables native view
-           * re-parenting and mounts a full-screen host named "root". Overlays
+           * `PortalProvider` (`../portal`: react-native-teleport on native, the kit's
+           * react-dom port on web) mounts a full-screen host named "root". Overlays
            * (`Popover`/`Menu`/`Tooltip`/`Modal`/`Drawer`/…) teleport into it via
            * `<Portal hostName="root">`, so they escape clipping/stacking ancestors
            * on every platform. It sits inside `TamaguiProvider` so the host — and

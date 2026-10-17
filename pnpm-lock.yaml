@@ -617,6 +617,9 @@ importers:
       '@tamagui/theme-builder':
         specifier: 2.7.7
         version: 2.7.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-dom:
+        specifier: '*'
+        version: 19.2.3(react@19.2.3)
       react-native-teleport:
         specifier: 1.2.2
         version: 1.2.2(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)

@@ -2,6 +2,8 @@ import * as React from "react";
 import { type SharedValue, useAnimatedReaction } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
+import type { SheetValue } from "../motion/value.types";
+
 /**
  * Subscribe to a reanimated `SharedValue` (NATIVE build).
  *
@@ -17,10 +19,12 @@ import { scheduleOnRN } from "react-native-worklets";
  * consumers are in sync from the start (matching the web build's once-on-subscribe).
  */
 export function useSharedValueListener<T>(
-  sv: SharedValue<T>,
+  value: SheetValue<T>,
   fn: (value: T) => void,
   filter?: (value: T) => boolean,
 ): void {
+  // A reanimated SharedValue on native (`motion/value.native`).
+  const sv = value as SharedValue<T>;
   const latest = React.useRef(fn);
   latest.current = fn;
 

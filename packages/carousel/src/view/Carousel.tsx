@@ -1,5 +1,4 @@
 import * as React from "react";
-import { GestureDetector } from "react-native-gesture-handler";
 
 import { ActionIcon } from "@knitui/components";
 import { isWeb, type LayoutChangeEvent, type ViewStyle, withStaticProperties } from "@knitui/core";
@@ -10,6 +9,7 @@ import { IconChevronRight } from "@knitui/icons/IconChevronRight";
 import { IconChevronUp } from "@knitui/icons/IconChevronUp";
 
 import { useAutoplay } from "../hooks/useAutoplay";
+import { DragDetector } from "../input/DragDetector";
 import { useDragCursor } from "../input/useDragCursor";
 import { useDragGesture } from "../input/useDragGesture";
 import { useKeyboard } from "../input/useKeyboard";
@@ -286,7 +286,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
             ) : null}
           </CarouselViewport>
         ) : (
-          <GestureDetector gesture={gesture}>
+          <DragDetector gesture={gesture}>
             <CarouselViewport
               collapsable={false}
               {...s.get("viewport")}
@@ -312,7 +312,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
                 />
               ) : null}
             </CarouselViewport>
-          </GestureDetector>
+          </DragDetector>
         )}
         {controls}
         {indicators}

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { StyleSheet, View } from "react-native";
-import { PortalHost } from "react-native-teleport";
+
+import { PortalHost } from "@knitui/core/portal";
 
 import type { OverlayHostProps } from "./types";
 

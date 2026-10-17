@@ -1,9 +1,9 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { type SharedValue, useAnimatedReaction } from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
+import type { SharedValue } from "react-native-reanimated";
 
 import { prefetchWindow, rawIndex, visibleWindow } from "../engine";
+import { scheduleOnRN, useAnimatedReaction } from "../motion/runtime";
 import type { AnimationStyle, RenderItem } from "../types";
 import { Item } from "./Item";
 import { useWebPainter } from "./painter";

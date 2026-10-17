@@ -1,54 +1,28 @@
 /**
- * The global audio-session API — a thin, cross-platform pass-through to
- * `expo-audio`'s session functions. `expo-audio` resolves to its native module on
- * device and to its `.web` backend in the browser, so a SINGLE file drives both:
- * `setAudioModeAsync` is a real no-op on web (the browser has no audio session),
- * and `setIsAudioActiveAsync` pauses active web players when toggled off.
- *
- * The one native-only function is `requestNotificationPermissionsAsync` (Android
- * lock-screen controls); it is absent from the web backend, so we feature-detect
- * it and fall back to the browser `Notification` API there. That detection is
- * why this file takes a NAMESPACE import: a named import of a binding the web
- * backend doesn't export is a hard "Attempted import error" in webpack/Next,
- * even when the call site is guarded — reading it off the namespace defers the
- * lookup to runtime, where `undefined` is exactly what the guard expects.
+ * The global audio-session API — WEB. The browser has no audio session to
+ * configure, so `setAudioMode` is a no-op; `setIsAudioActive(false)` pauses every
+ * kit web player and holds them paused until re-enabled; notification permission
+ * is the browser `Notification` API (relevant only for MediaSession now-playing).
+ * The native build passes through to expo-audio (`audio-mode.native.ts`).
  */
-import * as ExpoAudio from "expo-audio";
-
+import { setWebAudioActive } from "../web/web-audio-player";
 import type {
   AudioModeConfig,
   AudioSessionApi,
   NotificationPermissionResult,
 } from "./audio-mode.shared";
 
-const { setAudioModeAsync, setIsAudioActiveAsync } = ExpoAudio;
-const requestNotificationPermissionsAsync = (ExpoAudio as Partial<typeof ExpoAudio>)
-  .requestNotificationPermissionsAsync;
-
-export function setAudioMode(mode: AudioModeConfig): Promise<void> {
-  return setAudioModeAsync(mode);
+export function setAudioMode(_mode: AudioModeConfig): Promise<void> {
+  return Promise.resolve();
 }
 
 export function setIsAudioActive(active: boolean): Promise<void> {
-  return setIsAudioActiveAsync(active);
+  setWebAudioActive(active);
+  return Promise.resolve();
 }
 
 export async function requestNotificationPermissions(): Promise<NotificationPermissionResult> {
-  // Native (Android): delegate to expo-audio. The web backend doesn't ship this
-  // function, so `requestNotificationPermissionsAsync` is `undefined` there.
-  if (typeof requestNotificationPermissionsAsync === "function") {
-    const res = await requestNotificationPermissionsAsync();
-    return {
-      granted: res.granted,
-      status:
-        res.status === "granted" ? "granted" : res.status === "denied" ? "denied" : "undetermined",
-      canAskAgain: res.canAskAgain,
-    };
-  }
-
-  // Web best-effort: the `Notification` API is the closest analogue, and is only
-  // relevant if the app also surfaces now-playing via MediaSession. Absent it,
-  // report granted so cross-platform call sites stay uniform.
+  // Absent the API, report granted so cross-platform call sites stay uniform.
   const N = (globalThis as { Notification?: { requestPermission?: () => Promise<string> } })
     .Notification;
   if (!N || typeof N.requestPermission !== "function") {

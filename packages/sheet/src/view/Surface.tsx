@@ -1,23 +1,24 @@
 import * as React from "react";
-import { GestureDetector, type PanGesture } from "react-native-gesture-handler";
-import type { SharedValue } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
 import { type GetProps, isWeb, type LayoutChangeEvent, type TamaguiElement } from "@knitui/core";
 
 import { SheetFrame } from "../chrome";
+import type { SheetDrag } from "../input/drag.types";
+import type { SheetValue } from "../motion/value.types";
 import { AnimatedFrameHost, AnimatedOverlay } from "./animated";
 import type { AnimatedOverlayProps } from "./animated.types";
+import { DragArea } from "./DragArea";
 
 export interface SurfaceProps {
   /** Panel translateY (px). */
-  offset: SharedValue<number>;
+  offset: SheetValue<number>;
   /** Scrim fade geometry. */
   fadeStart: number;
   closed: number;
   overlayMaxOpacity: number;
-  /** The composed drag gesture. */
-  gesture: PanGesture;
+  /** The composed drag (`useSheetDrag`). */
+  gesture: SheetDrag;
   /** Root stack order. */
   zIndex: number;
   /** Render the scrim. */
@@ -42,9 +43,10 @@ export interface SurfaceProps {
 }
 
 /**
- * The full-cover positioning layer: scrim behind, the gesture-wrapped animated
+ * The full-cover positioning layer: scrim behind, the drag-wrapped animated
  * panel in front. Platform-agnostic — the animation binding lives in the
- * `animated{,.web}.tsx` hosts it composes. The `ref` is the focus-trap target
+ * `animated{,.web}.tsx` hosts and the drag binding in the `DragArea{,.native}`
+ * twins it composes. The `ref` is the focus-trap target
  * (the layer); `box-none` lets the scrim + panel take events while the layer's
  * own box never swallows clicks meant for the page behind a closed sheet.
  */
@@ -83,35 +85,30 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
        * `box-none`: when the scrim is present it fills the layer (pointer-events
        * auto) and the whole area is draggable; without a scrim only the panel is
        * solid, so empty regions fall through to the page behind. A stationary tap
-       * never crosses the pan's activation threshold, so the scrim's own
+       * never crosses the drag's activation threshold, so the scrim's own
        * `onPress` (tap-to-dismiss) still fires.
        */}
-      <GestureDetector gesture={gesture}>
-        <Box
-          pointerEvents="box-none"
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-        >
-          {withOverlay ? (
-            <AnimatedOverlay
-              offset={offset}
-              fadeStart={fadeStart}
-              closed={closed}
-              maxOpacity={overlayMaxOpacity}
-              onPress={onOverlayPress}
-              overlayProps={overlayProps}
-            />
-          ) : null}
+      <DragArea drag={gesture}>
+        {withOverlay ? (
+          <AnimatedOverlay
+            offset={offset}
+            fadeStart={fadeStart}
+            closed={closed}
+            maxOpacity={overlayMaxOpacity}
+            onPress={onOverlayPress}
+            overlayProps={overlayProps}
+          />
+        ) : null}
 
-          <AnimatedFrameHost offset={offset}>
-            <SheetFrame {...rootProps}>
-              {handle}
-              {header}
-              {children}
-              {footer}
-            </SheetFrame>
-          </AnimatedFrameHost>
-        </Box>
-      </GestureDetector>
+        <AnimatedFrameHost offset={offset}>
+          <SheetFrame {...rootProps}>
+            {handle}
+            {header}
+            {children}
+            {footer}
+          </SheetFrame>
+        </AnimatedFrameHost>
+      </DragArea>
     </Box>
   );
 });

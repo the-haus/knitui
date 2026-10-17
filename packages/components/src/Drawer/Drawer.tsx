@@ -1,6 +1,5 @@
 import * as React from "react";
-import { GestureDetector } from "react-native-gesture-handler";
-import { useSharedValue, type WithSpringConfig } from "react-native-reanimated";
+import type { WithSpringConfig } from "react-native-reanimated";
 
 import { type GetProps, styled, type TamaguiElement, withStaticProperties } from "@knitui/core";
 import { useElementSize, useId } from "@knitui/hooks";
@@ -20,7 +19,14 @@ import {
   shadowVariant,
   type SizeKey,
 } from "../internal/style-props";
-import { type DragAxis, DragDismissHost, DragDismissOverlay, useDragDismiss } from "../Modal/drag";
+import {
+  type DragAxis,
+  DragDismissDetector,
+  DragDismissHost,
+  DragDismissOverlay,
+  useDragDismiss,
+  useDragOffset,
+} from "../Modal/drag";
 import {
   ModalBase,
   type ModalBaseSharedProps,
@@ -187,8 +193,8 @@ export interface DrawerProps extends ModalBaseSharedProps, DrawerContentFramePro
    */
   duration?: number;
   /**
-   * Allow dragging the panel toward its anchored edge to dismiss (reanimated +
-   * gesture, the same mechanic as `@knitui/sheet`). The CSS enter/exit slide is
+   * Allow dragging the panel toward its anchored edge to dismiss (Reanimated +
+   * RNGH on native, pointer events on web; the same mechanic as `@knitui/sheet`). The CSS enter/exit slide is
    * unchanged; this only adds the interactive drag-to-close. @default false
    */
   dragToDismiss?: boolean;
@@ -197,7 +203,10 @@ export interface DrawerProps extends ModalBaseSharedProps, DrawerContentFramePro
    * which releasing dismisses (a fling toward the edge always dismisses). @default 0.3
    */
   dragThreshold?: number;
-  /** Spring config for the drag settle (reanimated `withSpring`). */
+  /**
+   * Spring config for the drag settle — Reanimated `withSpring`'s parameters, on
+   * both platforms (web runs the same spring without Reanimated).
+   */
   animationConfig?: WithSpringConfig;
 }
 
@@ -275,7 +284,7 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
   // left/right, height for top/bottom); the gesture is off until measured / when
   // disabled. Reset to rest on (re)open so a prior dismiss doesn't park it off-screen.
   const drag = DRAG[position];
-  const dragOffset = useSharedValue(0);
+  const dragOffset = useDragOffset();
   // Measure the panel's main-axis size cross-platform (ResizeObserver on web /
   // onLayout on native) as the dismiss extent — Tamagui's onLayout is unreliable
   // on web. Reset to rest on (re)open so a prior dismiss doesn't park it off-screen.
@@ -284,7 +293,7 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
   // Reset the drag travel to rest whenever the drawer (re)opens, so a prior
   // drag-dismiss (which parks the offset off-screen) doesn't leave it parked on
   // the next open. In an effect (not during render) — writing a shared value
-  // mid-render trips reanimated's "write during render" guard.
+  // mid-render trips reanimated's "write during render" guard on native.
   React.useEffect(() => {
     if (opened) dragOffset.value = 0;
   }, [opened, dragOffset]);
@@ -392,7 +401,7 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
       padding={offset}
     >
       {dragToDismiss ? (
-        <GestureDetector gesture={dragGesture}>
+        <DragDismissDetector gesture={dragGesture}>
           {/*
             One gesture spans the scrim AND the panel so the drawer can be dragged
             from the backdrop, not just the panel. This full-cover catcher stands
@@ -434,7 +443,7 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
               {drawerContent}
             </DragDismissHost>
           </Box>
-        </GestureDetector>
+        </DragDismissDetector>
       ) : (
         drawerContent
       )}

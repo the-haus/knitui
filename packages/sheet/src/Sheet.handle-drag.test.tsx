@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Text } from "@knitui/components";
 
-import type { SheetDragParams } from "./input/useSheetDrag";
+import type { SheetDragParams } from "./input/drag.types";
 import { Sheet } from "./Sheet";
 import { act, fireEvent, render, screen } from "./test-utils";
 

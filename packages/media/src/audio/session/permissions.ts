@@ -1,30 +1,40 @@
 /**
- * Microphone permissions — a thin, cross-platform pass-through to `expo-audio`.
- * `expo-audio` resolves to its native module on device and to its `.web` backend
- * in the browser, where `getRecordingPermissionsAsync` / `requestRecordingPermissionsAsync`
- * are implemented over the Permissions API + a `getUserMedia` probe. A SINGLE
- * file drives both — there is no hand-written web permission path anymore.
+ * Microphone permissions — WEB: the Permissions API to read, a `getUserMedia`
+ * probe to prompt. The native build passes through to expo-audio
+ * (`permissions.native.ts`).
  */
-import type { PermissionResponse } from "expo";
-import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from "expo-audio";
+import { getUserMedia } from "../../shared/web-media";
+import type { AudioPermissionResponse } from "./permissions.shared";
 
-import { type AudioPermissionResponse, type AudioPermissionStatus } from "./permissions.shared";
+const GRANTED: AudioPermissionResponse = { granted: true, status: "granted", canAskAgain: true };
+const DENIED: AudioPermissionResponse = { granted: false, status: "denied", canAskAgain: true };
 
-function map(response: PermissionResponse): AudioPermissionResponse {
-  const status: AudioPermissionStatus = response.granted
-    ? "granted"
-    : response.canAskAgain
-      ? "undetermined"
-      : "denied";
-  return { granted: response.granted, status, canAskAgain: response.canAskAgain };
+async function queryMicrophone(): Promise<PermissionState | null> {
+  if (typeof navigator === "undefined" || !navigator.permissions?.query) return null;
+  try {
+    const { state } = await navigator.permissions.query({ name: "microphone" as PermissionName });
+    return state;
+  } catch {
+    // Firefox doesn't know the `microphone` permission name.
+    return null;
+  }
 }
 
-/** Read the current microphone permission. */
+/** Read the current microphone permission (prompts when the browser can't say). */
 export async function getRecordingPermissions(): Promise<AudioPermissionResponse> {
-  return map(await getRecordingPermissionsAsync());
+  const state = await queryMicrophone();
+  if (state === "granted") return GRANTED;
+  if (state === "denied") return DENIED;
+  return requestRecordingPermissions();
 }
 
 /** Prompt for microphone access. */
 export async function requestRecordingPermissions(): Promise<AudioPermissionResponse> {
-  return map(await requestRecordingPermissionsAsync());
+  try {
+    const stream = await getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    return GRANTED;
+  } catch {
+    return DENIED;
+  }
 }

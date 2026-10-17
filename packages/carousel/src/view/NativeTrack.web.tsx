@@ -1,5 +1,5 @@
 import * as React from "react";
-import { type SharedValue, useSharedValue } from "react-native-reanimated";
+import type { SharedValue } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
 import type { StyleProp, ViewStyle } from "@knitui/core";
@@ -7,6 +7,7 @@ import type { StyleProp, ViewStyle } from "@knitui/core";
 import { itemProgress, mod, rawIndex } from "../engine";
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
 import type { SeekFn } from "../motion/useCarouselCore";
+import { useSharedValue } from "../motion/webMotion";
 import { SlideBox, useSlideStyle } from "./chrome";
 import { slideContent } from "./Item.shared";
 import {

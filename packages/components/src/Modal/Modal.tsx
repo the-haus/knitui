@@ -1,6 +1,5 @@
 import * as React from "react";
-import { GestureDetector } from "react-native-gesture-handler";
-import { useSharedValue, type WithSpringConfig } from "react-native-reanimated";
+import type { WithSpringConfig } from "react-native-reanimated";
 
 import {
   type GetProps,
@@ -28,7 +27,13 @@ import {
 } from "../internal/style-props";
 import { ScrollArea } from "../ScrollArea";
 import { Text } from "../Text";
-import { DragDismissHost, DragDismissOverlay, useDragDismiss } from "./drag";
+import {
+  DragDismissDetector,
+  DragDismissHost,
+  DragDismissOverlay,
+  useDragDismiss,
+  useDragOffset,
+} from "./drag";
 import {
   ModalBase,
   type ModalBaseSharedProps,
@@ -218,8 +223,8 @@ export interface ModalProps extends ModalBaseSharedProps, ModalContentFrameProps
    */
   duration?: number;
   /**
-   * Allow dragging the panel down to dismiss (reanimated + gesture, the same
-   * mechanic as `@knitui/sheet`). The CSS enter/exit motion is unchanged; this only
+   * Allow dragging the panel down to dismiss (Reanimated + RNGH on native, pointer
+   * events on web; the same mechanic as `@knitui/sheet`). The CSS enter/exit motion is unchanged; this only
    * adds the interactive drag-to-close. @default false
    */
   dragToDismiss?: boolean;
@@ -228,7 +233,10 @@ export interface ModalProps extends ModalBaseSharedProps, ModalContentFrameProps
    * dismisses (a downward fling always dismisses). @default 0.3
    */
   dragThreshold?: number;
-  /** Spring config for the drag settle (reanimated `withSpring`). */
+  /**
+   * Spring config for the drag settle — Reanimated `withSpring`'s parameters, on
+   * both platforms (web runs the same spring without Reanimated).
+   */
   animationConfig?: WithSpringConfig;
 }
 
@@ -292,7 +300,7 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
   // (ResizeObserver on web / onLayout on native — Tamagui's onLayout is unreliable
   // on web). The gesture is disabled until measured / when off, and resets to rest
   // whenever the modal (re)opens so a prior drag-dismiss doesn't park it off-screen.
-  const dragOffset = useSharedValue(0);
+  const dragOffset = useDragOffset();
   const { ref: sizeRef, rootProps: sizeRootProps, height: dragExtent } = useElementSize();
   // The panel isn't pinned to the bottom edge (it sits centred or near the top),
   // so a committed drag-dismiss must travel the full viewport height to slide it
@@ -324,7 +332,7 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
   // Reset the drag travel to rest whenever the modal (re)opens, so a prior
   // drag-dismiss (which parks the offset off-screen) doesn't leave it parked on
   // the next open. In an effect (not during render) — writing a shared value
-  // mid-render trips reanimated's "write during render" guard.
+  // mid-render trips reanimated's "write during render" guard on native.
   React.useEffect(() => {
     if (opened) dragOffset.value = 0;
   }, [opened, dragOffset]);
@@ -489,7 +497,7 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
         />
       ) : null}
       {dragToDismiss ? (
-        <GestureDetector gesture={dragGesture}>
+        <DragDismissDetector gesture={dragGesture}>
           {/*
             One gesture spans the scrim AND the panel so the modal can be dragged
             from the backdrop, not just the panel. This full-cover catcher stands
@@ -532,7 +540,7 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
               {modalContent}
             </DragDismissHost>
           </Box>
-        </GestureDetector>
+        </DragDismissDetector>
       ) : (
         modalContent
       )}
