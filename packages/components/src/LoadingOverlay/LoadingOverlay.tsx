@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps } from "@knitui/core";
+import { type GetProps, styleable } from "@knitui/core";
 
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Loader, type LoaderProps } from "../Loader";
@@ -62,7 +62,8 @@ export interface LoadingOverlayProps extends LoadingOverlayFrameProps {
  * web-only enter/exit `transitionProps` wrapper is intentionally omitted
  * (cross-platform); visibility is a plain mount/unmount.
  */
-export const LoadingOverlay = Overlay.styleable<LoadingOverlayProps>(
+export const LoadingOverlay = styleable<LoadingOverlayProps>(
+  Overlay,
   function LoadingOverlay(props, ref) {
     const { visible = false, loaderProps, overlayProps, styles, zIndex = 400, ...rest } = props;
 

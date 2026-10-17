@@ -50,13 +50,13 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <YearsList
           {...args}
           getYearControlProps={(date) => ({ selected: date === value })}
           __onControlClick={(_event, date) => setValue(date)}
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -111,7 +111,7 @@ export const StyledSlots: Story = {
   render: () => (
     <YearsList
       decade={DECADE}
-      styles={{ control: { backgroundColor: "$blue4" }, cell: { padding: "$xxs" } }}
+      styles={{ control: { backgroundColor: "blue4" }, cell: { padding: "xxs" } }}
     />
   ),
 };
@@ -119,10 +119,10 @@ export const StyledSlots: Story = {
 /** Every size token. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["xs", "sm", "md", "lg"] as const).map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <YearsList decade={DECADE} size={size} />

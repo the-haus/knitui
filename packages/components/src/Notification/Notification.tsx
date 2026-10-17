@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -14,20 +14,20 @@ import { Text } from "../Text";
 
 /**
  * Self-contained notification tile — mirrors Mantine's `Notification`. A row of:
- * a `$color9` left accent line (shown only when there is NO icon), an optional
+ * a `color9` left accent line (shown only when there is NO icon), an optional
  * themed circular icon/loader badge, a body (`title` + message), and an optional
  * close button. Accent comes from the `theme` prop + palette ramp, never a
  * Mantine `color` prop. `role="alert"` plus wired `aria-labelledby` /
  * `aria-describedby`.
  */
 const NotificationFrame = styled(Box, {
-  name: "Notification",
+  displayName: "Notification",
   flexDirection: "row",
   alignItems: "center",
-  backgroundColor: "$background",
-  paddingVertical: "$sm",
-  paddingHorizontal: "$md",
-  gap: "$sm",
+  backgroundColor: "background",
+  paddingVertical: "sm",
+  paddingHorizontal: "md",
+  gap: "sm",
   overflow: "hidden",
   borderWidth: 1,
   borderColor: "transparent",
@@ -37,11 +37,11 @@ const NotificationFrame = styled(Box, {
     radius: radiusVariant,
     /** Border on the root element. */
     withBorder: {
-      true: { borderColor: "$color7" },
+      true: { borderColor: "color7" },
     },
     /** The colored accent line, shown when there is no icon badge. */
     hasIcon: {
-      false: { borderLeftWidth: 4, borderLeftColor: "$color9" },
+      false: { borderLeftWidth: 4, borderLeftColor: "color9" },
     },
   } as const,
 
@@ -50,49 +50,49 @@ const NotificationFrame = styled(Box, {
 
 /** Circular themed badge wrapping the icon or a small loader. */
 const NotificationIcon = styled(Box, {
-  name: "NotificationIcon",
-  width: "$xl",
-  height: "$xl",
+  displayName: "NotificationIcon",
+  width: "xl",
+  height: "xl",
   borderRadius: 9999,
-  backgroundColor: "$color9",
+  backgroundColor: "color9",
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
 });
 
 const NotificationBody = styled(Box, {
-  name: "NotificationBody",
+  displayName: "NotificationBody",
   flexDirection: "column",
   flex: 1,
-  gap: "$xs",
+  gap: "xs",
 });
 
 const NotificationTitle = styled(Text, {
-  name: "NotificationTitle",
+  displayName: "NotificationTitle",
   fontWeight: "700",
-  fontSize: "$sm",
-  color: "$color12",
+  fontSize: "sm",
+  color: "color12",
 });
 
 const NotificationMessage = styled(Text, {
-  name: "NotificationMessage",
-  fontSize: "$sm",
-  color: "$color11",
+  displayName: "NotificationMessage",
+  fontSize: "sm",
+  color: "color11",
 });
 
 const NotificationContent = styled(Box, {
-  name: "NotificationContent",
+  displayName: "NotificationContent",
 });
 
 const NotificationIconText = styled(Text, {
-  name: "NotificationIconText",
-  color: "$color1",
-  fontSize: "$sm",
+  displayName: "NotificationIconText",
+  color: "color1",
+  fontSize: "sm",
   fontWeight: "700",
   userSelect: "none",
 });
 
-type NotificationFrameProps = Omit<GetProps<typeof NotificationFrame>, "children">;
+type NotificationFrameProps = Omit<GetProps<typeof NotificationFrame>, "children" | "hasIcon">;
 
 /**
  * Named slots for {@link NotificationStyles}. Each maps to a styled part the
@@ -188,7 +188,8 @@ function classifyBody(children: React.ReactNode): NotificationBodyKind {
   return "text";
 }
 
-const NotificationComponent = NotificationFrame.styleable<NotificationProps>(
+const NotificationComponent = styleable<NotificationProps>(
+  NotificationFrame,
   function Notification(props, ref) {
     const {
       title,
@@ -241,10 +242,10 @@ const NotificationComponent = NotificationFrame.styleable<NotificationProps>(
             ) : typeof icon === "string" || typeof icon === "number" ? (
               <NotificationIconText>{icon}</NotificationIconText>
             ) : (
-              // The icon sits ON the `$color9` badge fill, so it takes the
-              // CONTRAST color (`$color1`, matching `NotificationIconText`) and a
+              // The icon sits ON the `color9` badge fill, so it takes the
+              // CONTRAST color (`color1`, matching `NotificationIconText`) and a
               // size suited to the circular badge — no per-call sizing needed.
-              <ControlIconProvider color="$color1" size="sm">
+              <ControlIconProvider color="color1" size="sm">
                 {icon}
               </ControlIconProvider>
             )}

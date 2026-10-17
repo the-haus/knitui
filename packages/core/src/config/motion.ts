@@ -58,11 +58,55 @@ export const EASINGS = {
 export type EasingToken = keyof typeof EASINGS;
 
 /**
- * The overshoot curve behind the `bouncy` driver key on web. Co-located with the
- * native spring it mirrors (`animations.native.ts`) is impossible across the
- * package split, so the two live next to their drivers; this constant is the one
- * shared definition of the web side. NOTE: web (cubic-bezier) and native (spring)
- * still differ in feel — reconciling them to a single perceived curve is tracked
- * as a follow-up in docs/animation-system-plan.md.
+ * The `bouncy` spring, in physics terms. v3 presets are the SAME motion on every
+ * driver (the web compiles a spring to a `linear()` easing that traces the real
+ * curve), so this one definition now drives web and native alike. These are the
+ * numbers the native driver was already tuned with; on web they replace the old
+ * `cubic-bezier` overshoot, so web and native finally match (an intentional
+ * timing shift of the v3 migration).
+ */
+export const BOUNCY_SPRING = { damping: 10, mass: 0.9, stiffness: 100 } as const;
+
+/**
+ * @deprecated v2's web-only approximation of `bouncy`. v3 runs the real spring
+ * ({@link BOUNCY_SPRING}) on every driver; kept for callers that build their own
+ * CSS transition strings.
  */
 export const BOUNCY_BEZIER = "cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+
+const timing = (duration: number, easing: string) =>
+  ({ type: "timing", duration, easing }) as const;
+
+/**
+ * The kit's named `transition` presets, in Tamagui v3's unified preset format
+ * (`{ type: "timing", duration, easing }` or a spring), shared VERBATIM by the
+ * web CSS driver (`animations.ts`) and the native reanimated driver
+ * (`animations.native.ts`). One table, one motion per name, on every platform.
+ *
+ * - Duration presets (`fast` / `medium` / `slow`) and named effects (`bouncy` /
+ *   `pulse` / `spin` / `stripe`) are what components reference
+ *   (`transition="fast"`).
+ * - Easing-curve keys (`linear` / `ease` / `ease-in` / `ease-out` /
+ *   `ease-in-out`) carry the base duration; callers retime them with the object
+ *   form (`transition={{ preset: "ease-out", duration: 250 }}`), which keeps the
+ *   curve.
+ *
+ * v2's `"100ms"` key is gone: in v3 a duration is plain CSS, so
+ * `transition="100ms"` works on every driver with nothing configured.
+ */
+export const MOTION_PRESETS = {
+  fast: timing(DURATIONS.fast, EASINGS.standard),
+  medium: timing(DURATIONS.base, EASINGS.standard),
+  slow: timing(DURATIONS.slow, EASINGS.standard),
+  bouncy: BOUNCY_SPRING,
+  pulse: timing(DURATIONS.ambient, EASINGS.standard),
+  spin: timing(700, EASINGS.linear),
+  stripe: timing(180, EASINGS.linear),
+  linear: timing(DURATIONS.base, EASINGS.linear),
+  ease: timing(DURATIONS.base, EASINGS.gentle),
+  "ease-in": timing(DURATIONS.base, EASINGS.accelerate),
+  "ease-out": timing(DURATIONS.base, EASINGS.decelerate),
+  "ease-in-out": timing(DURATIONS.base, EASINGS.standard),
+} as const;
+
+export type MotionPresetName = keyof typeof MOTION_PRESETS;

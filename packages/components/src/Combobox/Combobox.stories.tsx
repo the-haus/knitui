@@ -3,6 +3,8 @@ import type { ComponentProps } from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
+import { useMergedRef } from "@knitui/hooks";
+
 import { Combobox } from ".";
 import { Box } from "../Box";
 import { Button } from "../Button";
@@ -80,11 +82,24 @@ type Story = StoryObj<ComponentProps<typeof Combobox>>;
 /* Shared helpers                                                              */
 /* -------------------------------------------------------------------------- */
 
-/** A minimal inline text input used as a combobox target in stories. */
-function SearchInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+/**
+ * A minimal inline text input used as a combobox target in stories. `Combobox.Target`
+ * passes the anchor ref as `rootRef` (the kit inputs' visible-frame ref); a raw
+ * `<input>` would leak it to the DOM, so it is merged into the input's own ref.
+ */
+function SearchInput({
+  rootRef,
+  ref,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  rootRef?: React.Ref<HTMLInputElement>;
+  ref?: React.Ref<HTMLInputElement>;
+}) {
+  const mergedRef = useMergedRef(ref, rootRef);
   return (
     <input
       {...props}
+      ref={mergedRef}
       style={{
         border: "1px solid #ccc",
         borderRadius: 4,
@@ -118,7 +133,7 @@ export const Playground: Story = {
     };
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox {...args} store={store} onOptionSubmit={handleSubmit}>
           <Combobox.Target>
             <SearchInput
@@ -146,7 +161,7 @@ export const Playground: Story = {
             </Combobox.Options>
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {selected ?? "—"}
         </Text>
       </Box>
@@ -157,12 +172,12 @@ export const Playground: Story = {
 /** Demonstrates the five size tokens on the dropdown font and spacing. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="flex-start">
       {SIZES.map((size) => {
         const store = useCombobox({ defaultOpened: true });
         return (
-          <Box key={size} gap="$xs" alignItems="center">
-            <Text fontSize="$xs" color="$color11">
+          <Box key={size} gap="xs" alignItems="center">
+            <Text fontSize="xs" color="color11">
               {size}
             </Text>
             <Combobox {...args} size={size} store={store}>
@@ -195,12 +210,12 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => {
         const store = useCombobox({ defaultOpened: true });
         return (
-          <Box key={shadow} gap="$xs" alignItems="center" position="relative" width={200}>
-            <Text fontSize="$xs" color="$color11">
+          <Box key={shadow} gap="xs" alignItems="center" position="relative" width={200}>
+            <Text fontSize="xs" color="color11">
               {shadow}
             </Text>
             <Combobox {...args} shadow={shadow} store={store} withinPortal={false}>
@@ -238,7 +253,7 @@ export const Controlled: Story = {
     };
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox {...args} store={store} onOptionSubmit={handleSubmit}>
           <Combobox.Target>
             <SearchInput
@@ -266,7 +281,7 @@ export const Controlled: Story = {
             </Combobox.Options>
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {selected ?? "—"}
         </Text>
       </Box>
@@ -290,7 +305,7 @@ export const Grouped: Story = {
     };
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox {...args} store={store} onOptionSubmit={handleSubmit}>
           <Combobox.Target>
             <SearchInput
@@ -325,7 +340,7 @@ export const Grouped: Story = {
             </Combobox.Options>
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {selected ?? "—"}
         </Text>
       </Box>
@@ -349,7 +364,7 @@ export const DisabledOption: Story = {
     };
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox {...args} store={store} onOptionSubmit={handleSubmit}>
           <Combobox.Target>
             <SearchInput
@@ -374,7 +389,7 @@ export const DisabledOption: Story = {
             </Combobox.Options>
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {selected ?? "—"}
         </Text>
       </Box>
@@ -418,7 +433,7 @@ export const WithHeaderAndFooter: Story = {
     };
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox {...args} store={store} onOptionSubmit={handleSubmit}>
           <Combobox.Target>
             <SearchInput
@@ -431,7 +446,7 @@ export const WithHeaderAndFooter: Story = {
           </Combobox.Target>
           <Combobox.Dropdown onMouseDown={(e: React.MouseEvent) => e.preventDefault()}>
             <Combobox.Header>
-              <Text fontSize="$xs" color="$color11">
+              <Text fontSize="xs" color="color11">
                 <Text>⭐</Text> Popular picks
               </Text>
             </Combobox.Header>
@@ -443,13 +458,13 @@ export const WithHeaderAndFooter: Story = {
               ))}
             </Combobox.Options>
             <Combobox.Footer>
-              <Text fontSize="$xs" color="$color11">
+              <Text fontSize="xs" color="color11">
                 Showing 3 of {FRUITS.length} results
               </Text>
             </Combobox.Footer>
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {selected ?? "—"}
         </Text>
       </Box>
@@ -464,7 +479,7 @@ export const WithClearAndChevron: Story = {
     const store = useCombobox({ defaultOpened: false });
 
     return (
-      <Box flexDirection="row" alignItems="center" gap="$xs">
+      <Box flexDirection="row" alignItems="center" gap="xs">
         <Combobox
           {...args}
           store={store}
@@ -511,7 +526,7 @@ export const ButtonTarget: Story = {
     const store = useCombobox({ defaultOpened: false });
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox
           {...args}
           store={store}
@@ -534,7 +549,7 @@ export const ButtonTarget: Story = {
             </Combobox.Options>
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {value ?? "—"}
         </Text>
       </Box>
@@ -553,7 +568,7 @@ export const OptionsDropdown: Story = {
     const store = useCombobox({ defaultOpened: true });
 
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Combobox
           {...args}
           store={store}
@@ -576,7 +591,7 @@ export const OptionsDropdown: Story = {
               data={FRUITS}
               value={value}
               renderOption={({ option, checked }) => (
-                <Text flex={1} fontSize="$sm" color="$color12">
+                <Text flex={1} fontSize="sm" color="color12">
                   {checked ? "★ " : ""}
                   {option.label}
                 </Text>
@@ -584,7 +599,7 @@ export const OptionsDropdown: Story = {
             />
           </Combobox.Dropdown>
         </Combobox>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {value ?? "—"}
         </Text>
       </Box>

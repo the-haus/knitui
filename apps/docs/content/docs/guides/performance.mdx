@@ -27,9 +27,17 @@ or a route:
 const Map = dynamic(() => import("./Map"), { ssr: false });
 ```
 
-**3. `.styleable()` frames.** Most kit components keep a runtime wrapper, so the
-web output is not pure static CSS. That is the composability trade-off — budget for
-it rather than hoping extraction removes it.
+**3. `styleable()` components.** Most kit components keep a runtime wrapper
+(Tamagui v3's `createStyledHOC` is always `neverFlatten`), so the web output is not
+pure static CSS. That is the composability trade-off — budget for it rather than
+hoping extraction removes it. In your own code, prefer static variants,
+`styled.dynamic` and `.resolve` over a `styleable()` wrapper when there is no real
+behaviour; those stay flattenable. See [styled()](/docs/foundations/styled).
+
+**4. Local overrides with `ThemeUpdate`.** Swapping a sub-theme with
+`<Theme name>` re-renders the subtree. To change one or two keys (an error border,
+a red focus ring), `<ThemeUpdate borderColor="red8">` restyles through CSS
+variables on the web without a re-render.
 
 ## Long lists
 

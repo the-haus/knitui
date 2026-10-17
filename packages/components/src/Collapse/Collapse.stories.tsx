@@ -75,14 +75,14 @@ type Story = StoryObj<ComponentProps<typeof Collapse>>;
 
 const DemoCard = () => (
   <Box
-    backgroundColor="$color2"
-    borderColor="$borderColor"
+    backgroundColor="color2"
+    borderColor="borderColor"
     borderWidth={1}
-    borderRadius="$md"
-    padding="$md"
+    borderRadius="md"
+    padding="md"
     width={300}
   >
-    <Text fontWeight="700" marginBottom="$xs">
+    <Text fontWeight="700" marginBottom="xs">
       Collapsed region
     </Text>
     <Text>
@@ -110,14 +110,14 @@ export const Controlled: Story = {
   render: (args) => {
     const [open, setOpen] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <Box
           render="button"
           onPress={() => setOpen((v) => !v)}
-          backgroundColor="$color4"
-          borderRadius="$sm"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
+          backgroundColor="color4"
+          borderRadius="sm"
+          paddingHorizontal="md"
+          paddingVertical="sm"
           cursor="pointer"
         >
           <Text>{open ? "▲ Hide details" : "▼ Show details"}</Text>
@@ -148,7 +148,7 @@ export const DefaultCollapsed: Story = {
   args: { expanded: false },
   render: (args) => (
     <Box>
-      <Text color="$color10" marginBottom="$sm">
+      <Text color="color10" marginBottom="sm">
         The region below is collapsed — content is unmounted.
       </Text>
       <Collapse {...args}>
@@ -162,10 +162,10 @@ export const DefaultCollapsed: Story = {
 export const Shadows: Story = {
   args: { expanded: true },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
         <Collapse key={shadow} {...args} shadow={shadow}>
-          <Box backgroundColor="$color2" borderRadius="$md" padding="$md" width={120}>
+          <Box backgroundColor="color2" borderRadius="md" padding="md" width={120}>
             <Text fontWeight="700">{shadow}</Text>
           </Box>
         </Collapse>
@@ -178,8 +178,8 @@ export const Shadows: Story = {
 export const KeepMounted: Story = {
   args: { expanded: false, keepMounted: true },
   render: (args) => (
-    <Box gap="$sm">
-      <Text color="$color10">
+    <Box gap="sm">
+      <Text color="color10">
         Collapsed with keepMounted — the content node stays in the DOM (check DevTools) but is
         hidden from assistive technology via aria-hidden.
       </Text>
@@ -195,14 +195,14 @@ export const HorizontalOrientation: Story = {
   render: (args) => {
     const [open, setOpen] = React.useState(true);
     return (
-      <Box gap="$md" alignItems="flex-start" flexDirection="row" flexWrap="wrap">
+      <Box gap="md" alignItems="flex-start" flexDirection="row" flexWrap="wrap">
         <Box
           render="button"
           onPress={() => setOpen((v) => !v)}
-          backgroundColor="$color4"
-          borderRadius="$sm"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
+          backgroundColor="color4"
+          borderRadius="sm"
+          paddingHorizontal="md"
+          paddingVertical="sm"
           cursor="pointer"
           flexShrink={0}
         >
@@ -210,14 +210,14 @@ export const HorizontalOrientation: Story = {
         </Box>
         <Collapse {...args} orientation="horizontal" expanded={open}>
           <Box
-            backgroundColor="$color2"
-            borderColor="$borderColor"
+            backgroundColor="color2"
+            borderColor="borderColor"
             borderWidth={1}
-            borderRadius="$md"
-            padding="$md"
+            borderRadius="md"
+            padding="md"
             width={240}
           >
-            <Text fontWeight="700" marginBottom="$xs">
+            <Text fontWeight="700" marginBottom="xs">
               Horizontal panel
             </Text>
             <Text>Animates along the width axis.</Text>
@@ -237,14 +237,14 @@ export const NoOpacityAnimation: Story = {
   render: (args) => {
     const [open, setOpen] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <Box
           render="button"
           onPress={() => setOpen((v) => !v)}
-          backgroundColor="$color4"
-          borderRadius="$sm"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
+          backgroundColor="color4"
+          borderRadius="sm"
+          paddingHorizontal="md"
+          paddingVertical="sm"
           cursor="pointer"
         >
           <Text>{open ? "▲ Hide" : "▼ Show (no fade)"}</Text>
@@ -266,8 +266,8 @@ export const Styles: Story = {
   args: {
     expanded: true,
     styles: {
-      root: { borderColor: "$blue7", borderWidth: 2, borderRadius: "$md" },
-      content: { backgroundColor: "$blue3", padding: "$md" },
+      root: { borderColor: "blue7", borderWidth: 2, borderRadius: "md" },
+      content: { backgroundColor: "blue3", padding: "md" },
     },
   },
   render: (args) => (
@@ -288,16 +288,16 @@ export const MultipleRegions: Story = {
     const [openIndex, setOpenIndex] = React.useState<number | null>(0);
 
     return (
-      <Box width={320} gap="$xs">
+      <Box width={320} gap="xs">
         {items.map((item, i) => (
           <Box key={item.label}>
             <Box
               render="button"
               onPress={() => setOpenIndex(openIndex === i ? null : i)}
-              backgroundColor="$color3"
-              borderRadius="$sm"
-              paddingHorizontal="$md"
-              paddingVertical="$sm"
+              backgroundColor="color3"
+              borderRadius="sm"
+              paddingHorizontal="md"
+              paddingVertical="sm"
               cursor="pointer"
             >
               <Text fontWeight="600">
@@ -306,12 +306,12 @@ export const MultipleRegions: Story = {
             </Box>
             <Collapse {...args} expanded={openIndex === i}>
               <Box
-                backgroundColor="$color2"
-                borderColor="$borderColor"
+                backgroundColor="color2"
+                borderColor="borderColor"
                 borderWidth={1}
-                borderBottomLeftRadius="$sm"
-                borderBottomRightRadius="$sm"
-                padding="$md"
+                borderBottomLeftRadius="sm"
+                borderBottomRightRadius="sm"
+                padding="md"
               >
                 <Text>{item.body}</Text>
               </Box>

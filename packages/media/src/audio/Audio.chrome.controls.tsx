@@ -22,7 +22,7 @@ import {
   Stack,
   Text,
 } from "@knitui/components";
-import { isWeb } from "@knitui/core";
+import { isWeb, styled } from "@knitui/core";
 import { IconCheck } from "@knitui/icons/IconCheck";
 import { IconPlayerPauseFilled } from "@knitui/icons/IconPlayerPauseFilled";
 import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
@@ -32,8 +32,21 @@ import { IconRewindBackward10 } from "@knitui/icons/IconRewindBackward10";
 import { IconRewindForward10 } from "@knitui/icons/IconRewindForward10";
 
 import { clampMediaSize } from "../control-size";
+import {
+  formatScrubLabel,
+  formatVolumeLabel,
+  hoverProps,
+  LiveDot,
+  percentWidth,
+  ScrubberBuffered,
+  ScrubberFrame,
+  TABULAR_NUMS,
+  useScrubPreview,
+  VERTICAL_VOLUME_STYLES,
+  VOLUME_LENGTH,
+} from "../shared/chrome";
 import { volumeIconFor } from "./Audio.chrome.internal";
-import { hoverProps, scrubberSizeFor, shallowEqual, useAudio, useAudioState } from "./Audio.shared";
+import { scrubberSizeFor, shallowEqual, useAudio, useAudioState } from "./Audio.shared";
 import { bufferedFractionOf, formatTime } from "./engine";
 
 /* -------------------------------------------------------------------------- */
@@ -94,6 +107,7 @@ export const SeekButton = React.memo(function SeekButton({
 export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
   const { controller, size } = useAudio("Scrubber");
   // Reads the per-tick fields — this control SHOULD re-render every frame.
+  // Everything else it renders is static or stable.
   const { currentTime, duration, isLive, bufferedPosition } = useAudioState(
     (s) => ({
       currentTime: s.currentTime,
@@ -103,17 +117,15 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
     }),
     shallowEqual,
   );
+  const seekTo = React.useCallback((v: number) => void controller.seekTo(v), [controller]);
+  const { preview, onChange, onChangeEnd } = useScrubPreview(seekTo);
   const hasDuration = Number.isFinite(duration) && duration > 0;
-  const bufferedPct = Math.round(bufferedFractionOf({ bufferedPosition, duration }) * 100);
-
-  // While dragging we show a local preview value and only commit the seek on
-  // release, so incoming timeUpdate events don't fight the thumb.
-  const [scrubValue, setScrubValue] = React.useState<number | null>(null);
+  const buffered = percentWidth(bufferedFractionOf({ bufferedPosition, duration }));
 
   if (isLive) {
     return (
-      <Group gap="$xs" align="center" height={20}>
-        <Box width={8} height={8} borderRadius={8} backgroundColor="$red9" />
+      <Group gap="xs" align="center" height={20}>
+        <LiveDot />
         <Text size="xs" fontWeight="600">
           LIVE
         </Text>
@@ -121,22 +133,11 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
     );
   }
 
-  const displayValue = scrubValue ?? (hasDuration ? Math.min(currentTime, duration) : 0);
+  const displayValue = preview ?? (hasDuration ? Math.min(currentTime, duration) : 0);
 
   return (
-    <Box position="relative" width="100%" justifyContent="center">
-      {/* Buffered underlay, centered on the (vertically-centered) slider track. */}
-      <Box
-        position="absolute"
-        top="50%"
-        marginTop={-2}
-        left={0}
-        height={4}
-        borderRadius={4}
-        backgroundColor="$color6"
-        width={`${bufferedPct}%`}
-        pointerEvents="none"
-      />
+    <ScrubberFrame>
+      <ScrubberBuffered style={buffered} />
       <Slider
         value={displayValue}
         min={0}
@@ -144,15 +145,12 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
         step={0.1}
         size={scrubberSizeFor(size)}
         disabled={!hasDuration}
-        label={(v: number) => formatTime(v)}
+        label={formatScrubLabel}
         aria-label="Seek"
-        onChange={(v: number) => setScrubValue(v)}
-        onChangeEnd={(v: number) => {
-          void controller.seekTo(v);
-          setScrubValue(null);
-        }}
+        onChange={onChange}
+        onChangeEnd={onChangeEnd}
       />
-    </Box>
+    </ScrubberFrame>
   );
 });
 
@@ -168,7 +166,7 @@ export const TimeCurrent = React.memo(function TimeCurrent(): React.ReactElement
   // to produce a byte-identical string 3 out of 4 times.
   const currentTime = useAudioState((s) => Math.floor(s.currentTime));
   return (
-    <Text size="xs" fontVariant={["tabular-nums"]} {...styles?.get("time")}>
+    <Text size="xs" fontVariant={TABULAR_NUMS} {...styles?.get("time")}>
       {formatTime(currentTime)}
     </Text>
   );
@@ -179,7 +177,7 @@ export const TimeDuration = React.memo(function TimeDuration(): React.ReactEleme
   const { styles } = useAudio("Time");
   const duration = useAudioState((s) => (Number.isFinite(s.duration) ? s.duration : 0));
   return (
-    <Text size="xs" fontVariant={["tabular-nums"]} color="$color11" {...styles?.get("time")}>
+    <Text size="xs" fontVariant={TABULAR_NUMS} color="color11" {...styles?.get("time")}>
       {formatTime(duration)}
     </Text>
   );
@@ -197,7 +195,7 @@ export const TimeDisplay = React.memo(function TimeDisplay(): React.ReactElement
     shallowEqual,
   );
   return (
-    <Text size="xs" fontVariant={["tabular-nums"]} {...styles?.get("time")}>
+    <Text size="xs" fontVariant={TABULAR_NUMS} {...styles?.get("time")}>
       {formatTime(currentTime)} / {formatTime(duration)}
     </Text>
   );
@@ -232,8 +230,6 @@ export interface VolumeSliderProps {
   orientation?: "horizontal" | "vertical";
 }
 
-const VOLUME_LENGTH = 84;
-
 /**
  * The bare volume slider. Returns `null` when the backend can't take a
  * programmatic volume (e.g. mobile Safari).
@@ -246,6 +242,15 @@ export const VolumeSlider = React.memo(function VolumeSlider({
     (s) => ({ muted: s.muted, volume: s.volume }),
     shallowEqual,
   );
+  const mutedRef = React.useRef(muted);
+  mutedRef.current = muted;
+  const onChange = React.useCallback(
+    (v: number) => {
+      controller.setVolume(v);
+      if (mutedRef.current && v > 0) controller.setMuted(false);
+    },
+    [controller],
+  );
   if (!capabilities.canSetVolume) return null;
   const vertical = orientation === "vertical";
   const slider = (
@@ -256,16 +261,24 @@ export const VolumeSlider = React.memo(function VolumeSlider({
       max={1}
       step={0.05}
       size={scrubberSizeFor(size)}
-      label={(v: number) => `${Math.round(v * 100)}%`}
+      label={formatVolumeLabel}
       aria-label="Volume"
-      styles={vertical ? { trackContainer: { height: VOLUME_LENGTH } } : undefined}
-      onChange={(v: number) => {
-        controller.setVolume(v);
-        if (muted && v > 0) controller.setMuted(false);
-      }}
+      {...(vertical ? { styles: VERTICAL_VOLUME_STYLES } : null)}
+      onChange={onChange}
     />
   );
   return vertical ? slider : <Box width={VOLUME_LENGTH}>{slider}</Box>;
+});
+
+/** The web hover-reveal clip around the inline volume slider. */
+const VolumeReveal = styled(Box, {
+  displayName: "AudioVolumeReveal",
+  width: 0,
+  overflow: "hidden",
+  opacity: 0,
+  variants: {
+    open: { true: { width: VOLUME_LENGTH, opacity: 1 } },
+  } as const,
 });
 
 /**
@@ -276,12 +289,20 @@ export const VolumeSlider = React.memo(function VolumeSlider({
 export const VolumeControl = React.memo(function VolumeControl(): React.ReactElement {
   const { capabilities } = useAudio("Volume");
   const [open, setOpen] = React.useState(false);
+  const revealHover = React.useMemo(
+    () =>
+      hoverProps(
+        () => setOpen(true),
+        () => setOpen(false),
+      ),
+    [],
+  );
 
   if (!capabilities.canSetVolume) return <MuteButton />;
 
   if (!isWeb) {
     return (
-      <Group gap="$xxs" align="center" wrap="nowrap">
+      <Group gap="xxs" align="center" wrap="nowrap">
         <MuteButton />
         <VolumeSlider />
       </Group>
@@ -289,16 +310,11 @@ export const VolumeControl = React.memo(function VolumeControl(): React.ReactEle
   }
 
   return (
-    <Group
-      gap="$xxs"
-      align="center"
-      wrap="nowrap"
-      {...hoverProps({ onHoverIn: () => setOpen(true), onHoverOut: () => setOpen(false) })}
-    >
+    <Group gap="xxs" align="center" wrap="nowrap" {...revealHover}>
       <MuteButton />
-      <Box width={open ? VOLUME_LENGTH : 0} overflow="hidden" opacity={open ? 1 : 0}>
+      <VolumeReveal open={open}>
         <VolumeSlider />
-      </Box>
+      </VolumeReveal>
     </Group>
   );
 });
@@ -317,7 +333,12 @@ export const PlaybackRateMenu = React.memo(function PlaybackRateMenu(): React.Re
   return (
     <Menu position="top" trigger="click" opened={opened} onChange={setOpened}>
       <Menu.Target>
-        <ActionIcon size={clampMediaSize(size)} variant="subtle" aria-label="Playback speed">
+        <ActionIcon
+          size={clampMediaSize(size)}
+          variant="subtle"
+          // The visible rate must be part of the name (WCAG 2.5.3 label-in-name).
+          aria-label={`Playback speed ${playbackRate}×`}
+        >
           <Text size="xs" fontWeight="700">
             {playbackRate}×
           </Text>
@@ -383,8 +404,8 @@ export const ErrorOverlay = React.memo(function ErrorOverlay(): React.ReactEleme
   );
   if (status !== "error") return null;
   return (
-    <Group justify="space-between" align="center" gap="$sm" width="100%">
-      <Text size="sm" color="$red11" fontWeight="500">
+    <Group justify="space-between" align="center" gap="sm" width="100%">
+      <Text size="sm" color="red11" fontWeight="500">
         {error?.message ?? "This audio could not be played."}
       </Text>
       <Button size="xs" variant="light" onPress={() => void controller.retry()}>
@@ -402,23 +423,23 @@ export function ControlBar(): React.ReactElement {
   const isError = useAudioState((s) => s.status === "error");
   if (isError) return <ErrorOverlay />;
   return (
-    <Stack gap="$xs" width="100%">
+    <Stack gap="xs" width="100%">
       {/* Scrubber row: current time · scrubber · total time, with breathing room. */}
-      <Group gap="$sm" align="center" wrap="nowrap">
+      <Group gap="sm" align="center" wrap="nowrap">
         <TimeCurrent />
-        <Box flex={1} marginHorizontal="$xs">
+        <Box flex={1} marginHorizontal="xs">
           <Scrubber />
         </Box>
         <TimeDuration />
       </Group>
       {/* Transport row. */}
-      <Group justify="space-between" align="center" gap="$xs" wrap="nowrap">
-        <Group gap="$xxs" align="center" wrap="nowrap">
+      <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <PlayPauseButton />
           <SeekButton seconds={-10} />
           <SeekButton seconds={10} />
         </Group>
-        <Group gap="$xxs" align="center" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <VolumeControl />
           <PlaybackRateMenu />
           <LoopButton />

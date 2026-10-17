@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, isWeb, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, isWeb, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -23,10 +23,10 @@ export type FieldsetVariant = "default" | "filled" | "unstyled";
  * `margin: 0` clears the browser's UA `margin-inline: 2px` on `<fieldset>`.
  */
 const FieldsetFrame = styled(Box, {
-  name: "Fieldset",
+  displayName: "Fieldset",
   flexDirection: "column",
-  padding: "$lg",
-  borderRadius: "$md",
+  padding: "lg",
+  borderRadius: "md",
 
   margin: 0,
   minWidth: 0,
@@ -35,13 +35,13 @@ const FieldsetFrame = styled(Box, {
     variant: {
       default: {
         borderWidth: 1,
-        borderColor: "$borderColor",
-        backgroundColor: "$background",
+        borderColor: "borderColor",
+        backgroundColor: "background",
       },
       filled: {
         borderWidth: 1,
-        borderColor: "$borderColor",
-        backgroundColor: "$color2",
+        borderColor: "borderColor",
+        backgroundColor: "color2",
       },
       unstyled: {
         padding: 0,
@@ -69,15 +69,15 @@ const FieldsetFrame = styled(Box, {
 // float/display tweaks don't restore its height. We keep the semantic <fieldset>
 // (so its native `disabled` cascade still works) and name it via `aria-labelledby`.
 const FieldsetLegend = styled(Text, {
-  name: "FieldsetLegend",
-  fontSize: "$sm",
+  displayName: "FieldsetLegend",
+  fontSize: "sm",
   fontWeight: "600",
-  color: "$color",
-  marginBottom: "$xs",
+  color: "color",
+  marginBottom: "xs",
 
   variants: {
     unstyled: {
-      true: { marginBottom: "$sm" },
+      true: { marginBottom: "sm" },
     },
   } as const,
 });
@@ -86,13 +86,21 @@ const FieldsetLegend = styled(Text, {
 /* Fieldset                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Web host elements, created once. The `disabled` one is a real
+ * `<fieldset disabled>` so the browser's native cascade disables every control
+ * inside (v3 only forwards `disabled` to form-control hosts, not `<fieldset>`).
+ */
+const FIELDSET = <fieldset />;
+const FIELDSET_DISABLED = <fieldset disabled />;
+
 type FieldsetFrameProps = Omit<GetProps<typeof FieldsetFrame>, "disabled" | "disabledState">;
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`) for `Fieldset`. Each key
  * maps to the props of the styled part it targets, so
- * `styles={{ legend: { color: "$red9" } }}` is sugar for
- * `<Fieldset.Legend color="$red9" />`.
+ * `styles={{ legend: { color: "red9" } }}` is sugar for
+ * `<Fieldset.Legend color="red9" />`.
  */
 export interface FieldsetStyles {
   /** Props for the fieldset frame (`Fieldset.Frame`). */
@@ -120,12 +128,12 @@ export interface FieldsetProps extends FieldsetFrameProps {
  * and `legend`. Renders a semantic `<fieldset>`/`<legend>` on web (no-op tag on
  * native).
  */
-const FieldsetComponent = FieldsetFrame.styleable<FieldsetProps>(function Fieldset(props, ref) {
+const FieldsetComponent = styleable<FieldsetProps>(FieldsetFrame, function Fieldset(props, ref) {
   const { legend, variant = "default", disabled, children, styles, ...rest } = props;
   const s = slotStyles<FieldsetStyles>(styles, FIELDSET_SLOT_KEYS, "Fieldset");
   const uid = useId();
   const legendId = legend != null ? `${uid}-legend` : undefined;
-  const fieldsetRender = isWeb ? <fieldset disabled={disabled ? true : undefined} /> : "fieldset";
+  const fieldsetRender = isWeb ? (disabled ? FIELDSET_DISABLED : FIELDSET) : "fieldset";
 
   return (
     <FieldsetFrame

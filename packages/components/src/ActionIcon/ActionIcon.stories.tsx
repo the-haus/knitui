@@ -64,9 +64,9 @@ const GRADIENT_THEMES = ["blue", "red", "green", "orange", "pink", "teal"] as co
 /** A swatch with a caption underneath — keeps the variant/size grids legible. */
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Box alignItems="center" gap="$xs">
+    <Box alignItems="center" gap="xs">
       {children}
-      <Text fontSize="$xs" color="$color11">
+      <Text fontSize="xs" color="color11">
         {label}
       </Text>
     </Box>
@@ -106,7 +106,7 @@ const meta = {
     },
     radius: {
       control: "text",
-      description: "Theme radius token (e.g. `$sm`) or any CSS value.",
+      description: "Theme radius token (e.g. `sm`) or any CSS value.",
     },
     gradient: {
       control: "object",
@@ -137,7 +137,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side, captioned. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {VARIANTS.map((variant) => (
         <Labeled key={variant} label={variant}>
           <ActionIcon {...args} variant={variant} aria-label={variant}>
@@ -152,7 +152,7 @@ export const Variants: Story = {
 /** The seven token sizes, from xxs to xxl — the icon auto-scales to each. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-end">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-end">
       {SIZES.map((size) => (
         <Labeled key={size} label={size}>
           <ActionIcon {...args} size={size} aria-label={size}>
@@ -167,10 +167,10 @@ export const Sizes: Story = {
 /** `radius` rounds the square — from a soft `xs` to a full circle. */
 export const Radius: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {RADII.map((radius) => (
         <Labeled key={radius} label={radius}>
-          <ActionIcon {...args} radius={`$${radius}`} aria-label={radius}>
+          <ActionIcon {...args} radius={radius} aria-label={radius}>
             <IconStar />
           </ActionIcon>
         </Labeled>
@@ -190,7 +190,7 @@ export const Radius: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Labeled key={shadow} label={shadow}>
           <ActionIcon {...args} shadow={shadow} aria-label={shadow}>
@@ -215,7 +215,7 @@ export const Disabled: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {THEMES.map((theme) => (
         <Labeled key={theme} label={theme}>
           <ActionIcon {...args} theme={theme} aria-label={theme}>
@@ -230,7 +230,7 @@ export const Themed: Story = {
 /** A realistic toolbar — distinct icons, a `subtle` variant, and a flush group. */
 export const Toolbar: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$sm" alignItems="center">
+    <Box flexDirection="row" gap="sm" alignItems="center">
       <ActionIcon.Group>
         <ActionIcon {...args} variant="default" aria-label="bold">
           <IconBold />
@@ -262,7 +262,7 @@ export const Toolbar: Story = {
 /** `ActionIcon.Group` attaches icons flush; `orientation` flips the axis. */
 export const Group: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <ActionIcon.Group>
         <ActionIcon {...args} variant="default" aria-label="bold">
           <IconBold />
@@ -307,9 +307,9 @@ export const GroupWithSection: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <ActionIcon key={size} variant={variant} size={size} aria-label={`${variant}-${size}`}>
               <IconStar />
@@ -328,14 +328,14 @@ export const Matrix: Story = {
  */
 export const Styles: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$lg" alignItems="center">
+    <Box flexDirection="row" gap="lg" alignItems="center">
       <Labeled label="loader slot">
         <ActionIcon
           {...args}
           variant="light"
           loading
           aria-label="saving"
-          styles={{ loader: { backgroundColor: "$red9" } }}
+          styles={{ loader: { backgroundColor: "red9" } }}
         >
           <IconStar />
         </ActionIcon>
@@ -345,7 +345,7 @@ export const Styles: Story = {
           {...args}
           variant="default"
           aria-label="favourite"
-          styles={{ icon: { color: "$red9" } }}
+          styles={{ icon: { color: "red9" } }}
         >
           ★
         </ActionIcon>
@@ -357,12 +357,12 @@ export const Styles: Story = {
 /**
  * `variant="gradient"` fills the square with a linear gradient. With no
  * `gradient` prop it falls back to the theme ramp; otherwise pass a two-color
- * shorthand, `$colorN` tokens, or a multi-step `stops` array. The icon
+ * shorthand, `colorN` ramp names, or a multi-step `stops` array. The icon
  * auto-colors white on the gradient.
  */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       <Labeled label="theme ramp">
         <ActionIcon {...args} variant="gradient" aria-label="theme ramp">
           <IconStar />
@@ -382,7 +382,7 @@ export const Gradient: Story = {
         <ActionIcon
           {...args}
           variant="gradient"
-          gradient={{ from: "$blue9", to: "$teal9" }}
+          gradient={{ from: "blue9", to: "teal9" }}
           aria-label="token gradient"
         >
           <IconStar />
@@ -412,7 +412,7 @@ export const Gradient: Story = {
 /** A set of curated gradient presets — handy starting points. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <Labeled key={name} label={name}>
           <ActionIcon {...args} variant="gradient" gradient={gradient} aria-label={name}>
@@ -427,7 +427,7 @@ export const GradientPresets: Story = {
 /** `variant="gradient"` with no `gradient` prop derives the gradient from each theme. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {GRADIENT_THEMES.map((theme) => (
         <Labeled key={theme} label={theme}>
           <ActionIcon {...args} variant="gradient" theme={theme} aria-label={theme}>
@@ -442,7 +442,7 @@ export const GradientThemed: Story = {
 /** One gradient (Sunset) across the full size scale. */
 export const GradientSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-end">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-end">
       {SIZES.map((size) => (
         <Labeled key={size} label={size}>
           <ActionIcon

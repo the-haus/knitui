@@ -41,9 +41,9 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("");
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <AmPmInput {...args} labels={labels} value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Value: {value === "" ? "empty" : value}
         </Text>
       </Box>
@@ -88,9 +88,9 @@ export const Localized: Story = {
   render: () => {
     const [value, setValue] = React.useState("");
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <AmPmInput labels={{ am: "vm", pm: "nm" }} focusable value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Value: {value === "" ? "empty" : value}
         </Text>
       </Box>

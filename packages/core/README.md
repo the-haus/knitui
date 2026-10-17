@@ -51,19 +51,23 @@ from `@knitui/components`). You should never need to import `@tamagui/*`,
 
 ## Build-tool integrations
 
-The Tamagui compiler and the per-bundler plugins (babel, metro, next, vite,
-webpack) plus the Next.js SSR provider live in their own package,
+The Tamagui v3 compiler and the per-bundler plugins (metro, next, vite, webpack)
+plus the Next.js SSR provider live in their own package,
 [`@knitui/plugins`](../plugins), so a runtime-only consumer of `@knitui/core`
 doesn't pull the build-tool dependency surface. Each entry point comes pre-wired
-with this package's config + component list baked in:
+with this package's config + component list baked in. On native, the compiler
+runs inside Metro (Tamagui v3 has no babel plugin):
 
 ```js
-// babel.config.js
-require("@knitui/plugins/babel-plugin");
+// metro.config.js
+const { getDefaultConfig } = require("expo/metro-config");
+const { withKnitui } = require("@knitui/plugins/metro");
+module.exports = withKnitui(getDefaultConfig(__dirname));
 ```
 
-See the [`@knitui/plugins` README](../plugins/README.md) for the metro, next, vite,
-and webpack setups.
+See the [`@knitui/plugins` README](../plugins/README.md) for the next, vite, and
+webpack setups. Upgrading from 0.x (Tamagui v2)? See
+[Upgrading to Knit UI 1.0](https://knitui.dev/docs/guides/upgrading-to-v1).
 
 ## Custom branding — `createTheme`
 
@@ -104,7 +108,7 @@ export const config = createTheme({
     heading: { family: "Sora", weight: { 7: "800" } },
     mono: "JetBrains Mono",
   },
-  defaultFont: "body",
+  defaultFont: "body", // written into `settings.defaultFont` (Tamagui v3)
 
   // responsive
   breakpoints: { md: 900 }, // rebuilds the media queries
@@ -113,11 +117,13 @@ export const config = createTheme({
   // motion / styling
   animations: myDriver, // replace the animation driver
   shorthands: { bgc: "backgroundColor" },
-  settings: { onlyAllowShorthands: false },
+  settings: { onlyAllowShorthands: false }, // v3 `createTamagui` settings
   // (initial color scheme is a runtime concern — set it on
   //  <Provider defaultColorScheme="light" /> rather than here)
 
   // escape hatches for anything not surfaced above (both deep-merged)
+  // `themeBuilder` feeds `@tamagui/config-v5/builder`'s createThemes (Tamagui v3
+  // dropped `@tamagui/theme-builder`; same options: templates, masks, …)
   themeBuilder: {/* templates, masks, … merged into createThemes */},
   themes: undefined, // a fully-built themes object bypasses the builder
   tamagui: {/* deep-merged into createTamagui() — augments, never clobbers */},

@@ -116,8 +116,8 @@ export const StyledParts: Story = {
         previousLabel="Previous year"
         nextLabel="Next year"
         styles={{
-          headerControl: { borderRadius: "$lg" },
-          headerLevelLabel: { color: "$color11" },
+          headerControl: { borderRadius: "lg" },
+          headerLevelLabel: { color: "color11" },
         }}
       />
     </Box>
@@ -127,7 +127,7 @@ export const StyledParts: Story = {
 /** Every size from the shared `xxs…xxl` cell-metrics ladder. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
         <YearLevel
           key={size}

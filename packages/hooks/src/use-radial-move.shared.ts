@@ -1,7 +1,8 @@
 import type { RefObject } from "react";
-import type { GestureResponderEvent, LayoutChangeEvent } from "react-native";
 
-import type { TamaguiElement } from "@knitui/core";
+import type { LayoutChangeEvent, TamaguiElement } from "@knitui/core";
+
+import type { GestureResponderEvent } from "./use-move.shared";
 
 export interface UseRadialMoveOptions {
   /** Called once the gesture finishes (pointer / touch up), with the final value. */

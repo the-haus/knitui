@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Burger, type BurgerSize } from "./Burger";
 
@@ -103,5 +104,44 @@ describe("Burger", () => {
     // Three bars all share the `line` slot.
     expect(screen.getAllByTestId("line")).toHaveLength(3);
     expect(screen.getByTestId("text")).toHaveTextContent("Menu");
+  });
+});
+
+describe("Burger v3 style resolution (web CSS)", () => {
+  const lines = (root: HTMLElement) =>
+    Array.from(root.querySelectorAll<HTMLElement>("div > div")).filter(
+      (el) => baseValue(el, "position") === "absolute",
+    );
+
+  it("is a focusable <button> with the kit focus ring", () => {
+    render(<Burger aria-label="m" />);
+    const el = screen.getByRole("button", { name: "m" });
+    expect(el.tagName).toBe("BUTTON");
+    expect(hasFocusRing(el)).toBe(true);
+  });
+
+  it("keeps the base line colour when no `color` is passed", () => {
+    render(<Burger aria-label="m" />);
+    const bars = lines(screen.getByRole("button", { name: "m" }));
+    expect(bars).toHaveLength(3);
+    for (const bar of bars) expect(baseValue(bar, "background-color")).toBe("var(--color12)");
+  });
+
+  it("an explicit color recolours every line", () => {
+    render(<Burger aria-label="m" color="red9" />);
+    for (const bar of lines(screen.getByRole("button", { name: "m" })))
+      expect(baseValue(bar, "background-color")).toBe("var(--red9)");
+  });
+
+  it("the line slot colour survives when no `color` prop is passed", () => {
+    render(<Burger aria-label="m" styles={{ line: { backgroundColor: "blue9" } }} />);
+    for (const bar of lines(screen.getByRole("button", { name: "m" })))
+      expect(baseValue(bar, "background-color")).toBe("var(--blue9)");
+  });
+
+  it("sizes the icon square from the size scale", () => {
+    render(<Burger aria-label="m" size="lg" />);
+    const icon = screen.getByRole("button", { name: "m" }).firstElementChild as HTMLElement;
+    expect(baseValue(icon, "width")).toBe("var(--t-size-lg)");
   });
 });

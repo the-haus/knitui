@@ -1,7 +1,6 @@
 import * as React from "react";
-import type { LayoutChangeEvent } from "react-native";
 
-import { type TamaguiElement, withStaticProperties } from "@knitui/core";
+import { type LayoutChangeEvent, type TamaguiElement, withStaticProperties } from "@knitui/core";
 import { useDismissOnScroll } from "@knitui/hooks";
 
 import { dismissKeyboard } from "../internal/dismiss-keyboard";
@@ -89,8 +88,8 @@ const PopoverDropdown = React.forwardRef<TamaguiElement, PopoverDropdownProps>(
           // absolute scrim inside the portal host.
           fixed={false}
           zIndex={ctx.zIndex - 1}
-          backgroundOpacity={ctx.withOverlay ? undefined : 0}
-          onPress={closeOnClickOutside ? dismissFromScrim : undefined}
+          {...(ctx.withOverlay ? null : { backgroundOpacity: 0 })}
+          {...(closeOnClickOutside ? { onPress: dismissFromScrim } : null)}
           {...ctx.overlayProps}
         />
       ) : null;

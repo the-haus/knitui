@@ -17,7 +17,7 @@ import { ModalBaseInner } from "./modal-base-inner";
  * describe how their content frame is positioned:
  *
  *  - portals the layer (the `Portal` re-applies the active `Theme` across the
- *    DOM boundary, so `$background`/ramp tokens keep resolving),
+ *    DOM boundary, so `background`/ramp theme keys keep resolving),
  *  - paints a full-cover `Overlay` scrim BEHIND the content (content frames carry
  *    `position:"relative", zIndex:1`; the scrim sits at `zIndex:0`), so a click on
  *    the empty area around the content hits the scrim and closes,
@@ -29,7 +29,7 @@ import { ModalBaseInner } from "./modal-base-inner";
  * class of deferral as `Overlay`'s web-only `blur`/`gradient`). Both entrance AND
  * exit are animated: the whole layer is wrapped in `AnimatePresence`, which holds
  * it mounted through its exit before unmounting, so the scrim fade and the content
- * frame's `exitStyle` (supplied by the consumer) play on close. `keepMounted`
+ * frame's `exit:` clauses (supplied by the consumer) play on close. `keepMounted`
  * opts out (the node never leaves, so it only toggles `display`).
  */
 /** Props every public overlay (`Modal`/`Drawer`) shares, mirroring Mantine names. */
@@ -278,11 +278,13 @@ export function ModalBase(props: ModalBaseProps) {
         // box never swallows clicks meant for the page behind a closed layer.
         pointerEvents="box-none"
         flexDirection={direction}
-        alignItems={align}
-        justifyContent={justify}
-        padding={padding}
-        paddingVertical={paddingVertical}
-        paddingHorizontal={paddingHorizontal}
+        // Optional layout props are spread only when set: in v3 an explicit
+        // `prop={undefined}` claims the call-site slot (docs/v3/conventions.md §5).
+        {...(align !== undefined ? { alignItems: align } : null)}
+        {...(justify !== undefined ? { justifyContent: justify } : null)}
+        {...(padding !== undefined ? { padding } : null)}
+        {...(paddingVertical !== undefined ? { paddingVertical } : null)}
+        {...(paddingHorizontal !== undefined ? { paddingHorizontal } : null)}
       >
         {withOverlay ? (
           <Overlay
@@ -306,7 +308,7 @@ export function ModalBase(props: ModalBaseProps) {
   // Default: `AnimatePresence` holds the whole layer (scrim + content) in the tree
   // through its EXIT animation, then unmounts it. The keyed `Portal` child becoming
   // `null` on close is what triggers the exit; the scrim's `overlayMotion` and the
-  // content frame's `exitStyle` both play. `AnimatePresence` sits OUTSIDE the
+  // content frame's `exit:` clauses both play. `AnimatePresence` sits OUTSIDE the
   // `Portal` so the parent/child relationship its presence protocol relies on
   // survives the teleport re-parent (the same constraint `Dialog` documents).
   return (

@@ -20,15 +20,26 @@ type TextStyleProps = GetProps<typeof TamaguiText>;
  * deliberate divergence — use the `c` style prop / `theme`, not a `color` prop.
  */
 export const Text = styled(TamaguiText, {
-  name: "Text",
-  fontFamily: "$body",
-  color: "$color",
-  fontSize: "$md",
+  displayName: "Text",
+  fontFamily: "body",
+  color: "color",
+  fontSize: "md",
+  // v2 parity: Tamagui v2's shared `font_*` rule gave every font-classed text the
+  // font's `$true` line height (the `md` step) whatever its `fontSize`. v3's rule
+  // only sets `font-family` (and fonts have no `true` key), so without this every
+  // Text fell back to `line-height: normal` and text rows shrank (26px → 15–33px).
+  // Components that pair line height with size set it explicitly and win. Web
+  // only (a static spread, not a `web:` clause, so a later bare value still
+  // replaces it): v2 never applied a default line height on native.
+  ...(isWeb ? { lineHeight: "md" as const } : null),
   variants: {
     size: fontSizeVariant,
-    lineClamp: {
-      ":number": (val: number) => ({ numberOfLines: val }),
-    },
+    /**
+     * Multi-line clamp. Maps onto the host `numberOfLines`, which v3's own Text
+     * turns into `-webkit-line-clamp` on web (a variant of the base Text there)
+     * and passes to the native `<Text>` on iOS/Android.
+     */
+    lineClamp: styled.dynamic<number>((lines) => ({ numberOfLines: lines })),
     truncate: {
       true: { ellipsis: true },
       end: { ellipsis: true },
@@ -61,9 +72,13 @@ export const Text = styled(TamaguiText, {
         fontFamily: "inherit" as TextStyleProps["fontFamily"],
       },
     },
-    span: {
-      true: { render: "span" },
-    },
+    /**
+     * Mantine parity: render an inline element. The kit's `Text` already renders
+     * a `<span>` on web (and an inline RN `<Text>` on native), so this is a
+     * declared, consumed prop with no style of its own — a variant body cannot
+     * carry `render` in v3. Use `render="p"` / `Paragraph` for a block.
+     */
+    span: styled.dynamic<boolean>(),
   } as const,
 });
 

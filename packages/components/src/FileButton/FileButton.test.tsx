@@ -139,3 +139,12 @@ describe("FileButton", () => {
     expect(screen.getByTestId("label-slot")).toBeInTheDocument();
   });
 });
+
+describe("FileButton web host", () => {
+  it("keeps the picker input hidden and the trigger a real <button>", () => {
+    render(<FileButton onChange={() => {}}>Pick</FileButton>);
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input.style.display).toBe("none");
+    expect(screen.getByRole("button", { name: "Pick" }).tagName).toBe("BUTTON");
+  });
+});

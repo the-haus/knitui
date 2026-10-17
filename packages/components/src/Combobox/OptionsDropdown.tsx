@@ -13,6 +13,7 @@ import {
   type ComboboxEmptyProps,
   type ComboboxGroupProps,
   type ComboboxOptionProps,
+  getComboboxOptionId,
 } from "./Combobox";
 
 /** Props spread onto every rendered `Combobox.Option` (minus the per-row controlled ones). */
@@ -93,10 +94,17 @@ export interface OptionsDropdownProps {
   emptyProps?: EmptyPassthroughProps;
   /** Accessible label for the listbox. */
   "aria-label"?: string;
+  /**
+   * Id prefix for the rendered option rows. When set, every row gets the id
+   * `getComboboxOptionId(optionIdPrefix, value)`, so the trigger can point
+   * `aria-activedescendant` at the keyboard-highlighted option.
+   */
+  optionIdPrefix?: string;
 }
 
 interface OptionRowProps {
   item: ComboboxItem;
+  id?: string;
   checked: boolean;
   active: boolean;
   withCheckIcon: boolean;
@@ -114,6 +122,7 @@ interface OptionRowProps {
  */
 const OptionRow = React.memo(function OptionRow({
   item,
+  id,
   checked,
   active,
   withCheckIcon,
@@ -124,7 +133,7 @@ const OptionRow = React.memo(function OptionRow({
   const check = withCheckIcon ? (
     <Box width={16} alignItems="center" justifyContent="center">
       {checked ? (
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           ✓
         </Text>
       ) : null}
@@ -134,6 +143,7 @@ const OptionRow = React.memo(function OptionRow({
   return (
     <Combobox.Option
       {...optionProps}
+      {...(id ? { id } : null)}
       value={item.value}
       selected={checked}
       active={active}
@@ -144,7 +154,7 @@ const OptionRow = React.memo(function OptionRow({
       ) : (
         <>
           {withCheckIcon && checkIconPosition === "left" ? check : null}
-          <Text flex={1} fontSize="$sm" color="$color12" userSelect="none">
+          <Text flex={1} fontSize="sm" color="color12" userSelect="none">
             {item.label}
           </Text>
           {withCheckIcon && checkIconPosition === "right" ? check : null}
@@ -177,6 +187,7 @@ export function OptionsDropdown(props: OptionsDropdownProps) {
     groupProps,
     emptyProps,
     "aria-label": ariaLabel,
+    optionIdPrefix,
   } = props;
 
   // Multi-select membership is O(1) per option — building the set once keeps the
@@ -191,6 +202,7 @@ export function OptionsDropdown(props: OptionsDropdownProps) {
       <OptionRow
         key={item.value}
         item={item}
+        id={optionIdPrefix ? getComboboxOptionId(optionIdPrefix, item.value) : undefined}
         checked={isChecked(item.value)}
         active={activeValue != null && activeValue === item.value}
         withCheckIcon={withCheckIcon}
@@ -219,6 +231,7 @@ export function OptionsDropdown(props: OptionsDropdownProps) {
     optionProps,
     groupProps,
     renderOption,
+    optionIdPrefix,
   ]);
 
   if (data.length === 0) {

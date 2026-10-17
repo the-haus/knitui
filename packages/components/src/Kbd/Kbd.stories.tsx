@@ -50,7 +50,7 @@ export const Playground: Story = {};
 /** The seven sizes side by side, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Kbd key={size} {...args} size={size}>
           {size}
@@ -63,7 +63,7 @@ export const Sizes: Story = {
 /** Common single-key labels shown at the default size. */
 export const CommonKeys: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {["Ctrl", "Alt", "Shift", "Tab", "Esc", "Enter", "⌘", "⌥", "⇧"].map((key) => (
         <Kbd key={key} {...args}>
           {key}
@@ -76,7 +76,7 @@ export const CommonKeys: Story = {
 /** Keyboard shortcuts composed of multiple Kbd keys separated by a plus sign. */
 export const Shortcut: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xs" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xs" alignItems="center">
       <Kbd {...args}>Ctrl</Kbd>
       <Text>+</Text>
       <Kbd {...args}>Shift</Kbd>
@@ -89,7 +89,7 @@ export const Shortcut: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink", "gray"] as const).map((theme) => (
         <Kbd key={theme} {...args} theme={theme}>
           {theme}
@@ -102,7 +102,7 @@ export const Themed: Story = {
 /** Larger key labels such as function keys and navigation keys. */
 export const SpecialKeys: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {["F1", "F2", "F5", "F12", "PgUp", "PgDn", "Home", "End", "Del", "Ins"].map((key) => (
         <Kbd key={key} {...args} size="md">
           {key}

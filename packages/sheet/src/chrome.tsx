@@ -26,6 +26,43 @@ import {
 /* ── Styled chrome ──────────────────────────────────────────────────────── */
 
 /**
+ * The full-cover sheet layer: `fixed` to the viewport on web (a portal layer
+ * must not scroll with the page), `absolute` over the host on native. One v3
+ * platform clause instead of a per-render `isWeb` style object. `box-none` lets
+ * empty regions fall through to the page when there is no scrim.
+ */
+export const SheetLayer = styled(Box, {
+  displayName: "SheetLayer",
+  position: "absolute web:fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  pointerEvents: "box-none",
+});
+
+/**
+ * An absolute inset-0 fill inside the layer: the gesture capture container, and
+ * (web) the painted panel host / scrim host. `stack` orders the scrim (0) below
+ * the panel (1). Static, so every use flattens; the painters only ever write
+ * `transform` / `opacity` imperatively, which no style here sets.
+ */
+export const SheetFill = styled(Box, {
+  displayName: "SheetFill",
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  variants: {
+    stack: {
+      scrim: { zIndex: 0 },
+      panel: { zIndex: 1 },
+    },
+  } as const,
+});
+
+/**
  * The visible panel surface. Fills its animated host (`flex: 1`) so the
  * background extends to the bottom of the screen — no gap shows through if a
  * spring overshoots past the most-open snap. `position: "relative"` is REQUIRED:
@@ -34,21 +71,21 @@ import {
  * ancestor; RN/RNW Views are relative by default.
  */
 export const SheetFrame = styled(Box, {
-  name: "Sheet",
+  displayName: "Sheet",
   position: "relative",
   flex: 1,
-  backgroundColor: "$background",
-  borderTopLeftRadius: "$lg",
-  borderTopRightRadius: "$lg",
+  backgroundColor: "background",
+  borderTopLeftRadius: "lg",
+  borderTopRightRadius: "lg",
   overflow: "hidden",
 
   variants: {
     /** Top-corner rounding scale. */
     size: {
-      sm: { borderTopLeftRadius: "$sm", borderTopRightRadius: "$sm" },
-      md: { borderTopLeftRadius: "$md", borderTopRightRadius: "$md" },
-      lg: { borderTopLeftRadius: "$lg", borderTopRightRadius: "$lg" },
-      xl: { borderTopLeftRadius: "$xl", borderTopRightRadius: "$xl" },
+      sm: { borderTopLeftRadius: "sm", borderTopRightRadius: "sm" },
+      md: { borderTopLeftRadius: "md", borderTopRightRadius: "md" },
+      lg: { borderTopLeftRadius: "lg", borderTopRightRadius: "lg" },
+      xl: { borderTopLeftRadius: "xl", borderTopRightRadius: "xl" },
     },
   } as const,
 
@@ -61,21 +98,21 @@ export const SheetFrame = styled(Box, {
  * padded row so the whole strip is an easy touch target.
  */
 export const SheetHandleBar = styled(Box, {
-  name: "SheetHandle",
+  displayName: "SheetHandle",
   alignSelf: "center",
   width: 40,
   height: 5,
   borderRadius: 999,
-  backgroundColor: "$color7",
-  marginVertical: "$sm",
+  backgroundColor: "color7",
+  marginVertical: "sm",
 });
 
 /** Wrapper row around the handle so the entire strip is pressable / spaced. */
 export const SheetHandleRow = styled(Box, {
-  name: "SheetHandleRow",
+  displayName: "SheetHandleRow",
   alignItems: "center",
   justifyContent: "center",
-  paddingTop: "$xs",
+  paddingTop: "xs",
 });
 
 /**
@@ -87,10 +124,10 @@ export const SheetHandleRow = styled(Box, {
  * slot or props spread on `Sheet.Header`.
  */
 export const SheetHeader = styled(Box, {
-  name: "SheetHeader",
+  displayName: "SheetHeader",
   flexShrink: 0,
-  paddingHorizontal: "$md",
-  paddingBottom: "$sm",
+  paddingHorizontal: "md",
+  paddingBottom: "sm",
 });
 
 /**
@@ -101,10 +138,10 @@ export const SheetHeader = styled(Box, {
  * the `footer` style slot or props spread on `Sheet.Footer`.
  */
 export const SheetFooter = styled(Box, {
-  name: "SheetFooter",
+  displayName: "SheetFooter",
   flexShrink: 0,
-  paddingHorizontal: "$md",
-  paddingTop: "$sm",
+  paddingHorizontal: "md",
+  paddingTop: "sm",
 });
 
 /* ── Marker slots ───────────────────────────────────────────────────────── */
@@ -147,8 +184,8 @@ export const SheetSlots = defineSlots({
 
 /**
  * Named style slots. Each key maps to the props of the styled part it targets,
- * so `styles={{ root: { backgroundColor: "$blue2" } }}` is sugar for
- * `<Sheet.Frame backgroundColor="$blue2" />`. The one rule:
+ * so `styles={{ root: { backgroundColor: "blue2" } }}` is sugar for
+ * `<Sheet.Frame backgroundColor="blue2" />`. The one rule:
  * `defaults < styles[slot] < explicit props < inline`.
  */
 export interface SheetStyles {

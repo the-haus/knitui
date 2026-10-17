@@ -48,9 +48,9 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<number | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <TimeControlsList {...args} value={value} onSelect={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -114,7 +114,7 @@ export const StyledSlots: Story = {
         value={value}
         onSelect={setValue}
         reversed={false}
-        styles={{ control: { backgroundColor: "$blue4" } }}
+        styles={{ control: { backgroundColor: "blue4" } }}
       />
     );
   },
@@ -131,10 +131,10 @@ export const AmPm: Story = {
 /** Every size token. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$lg" flexDirection="row" alignItems="flex-start">
+    <Box gap="lg" flexDirection="row" alignItems="flex-start">
       {(["xs", "sm", "md", "lg"] as const).map((size) => (
-        <Box key={size} gap="$xs" alignItems="center">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs" alignItems="center">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <TimeControlsList

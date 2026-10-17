@@ -59,7 +59,7 @@ export const Disabled: Story = {
 
 /**
  * A selected range across a month strip: the edges round their outer corners
- * (`firstInRange`/`lastInRange`), the middle is a squared `$color4` tint, and the
+ * (`firstInRange`/`lastInRange`), the middle is a squared `color4` tint, and the
  * endpoints are `selected`. Cells sit flush so the tint reads as one band.
  */
 export const Range: Story = {
@@ -91,7 +91,7 @@ export const CustomContent: Story = {
     children: (
       <Box alignItems="center">
         <Text>2026</Text>
-        <Box width={4} height={4} borderRadius={2} backgroundColor="$color9" marginTop={2} />
+        <Box width={4} height={4} borderRadius={2} backgroundColor="color9" marginTop={2} />
       </Box>
     ),
   },
@@ -105,10 +105,10 @@ export const Themed: Story = {
 /** Every size token, from `xxs` to `xxl`. */
 export const Sizes: Story = {
   render: () => (
-    <Box flexDirection="row" gap="$lg" alignItems="center">
+    <Box flexDirection="row" gap="lg" alignItems="center">
       {(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const).map((size) => (
-        <Box key={size} gap="$xs" alignItems="center">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs" alignItems="center">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <PickerControl size={size} selected aria-label={`Jan ${size}`}>

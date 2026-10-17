@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { DURATIONS, type GetProps, styled } from "@knitui/core";
+import { DURATIONS, type GetProps, styleable, styled } from "@knitui/core";
 import { useReducedMotion } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -17,8 +17,8 @@ import { asRevealHost, type RevealPulseMotion, useRevealPulse } from "../interna
  * NOT redeclared as variants (avoids the style-prop name-collision class of bug).
  */
 const SkeletonFrame = styled(Box, {
-  name: "Skeleton",
-  backgroundColor: "$color4",
+  displayName: "Skeleton",
+  backgroundColor: "color4",
   overflow: "hidden",
 
   variants: {
@@ -38,11 +38,34 @@ const SkeletonFrame = styled(Box, {
 // reanimated `Animated.*` view (identity on web, where the loop is plain CSS).
 const SkeletonLoopFrame = asLoopHost(SkeletonFrame);
 
-/** Precise web a11y prop objects; spread to dodge excess-property checks. */
-const busyProps = (busy: boolean): { "aria-busy"?: boolean } => ({ "aria-busy": busy });
-const hiddenProps = (): { "aria-hidden"?: boolean } => ({ "aria-hidden": true });
+/** The real children, kept in the layout (intrinsic size) but invisible. */
+const SkeletonContent = styled(Box, { displayName: "SkeletonContent", opacity: 0 });
+
+/**
+ * Precise web a11y prop objects, as module constants (spread to dodge
+ * excess-property checks without allocating per render).
+ */
+const BUSY: { "aria-busy"?: boolean } = { "aria-busy": true };
+const NOT_BUSY: { "aria-busy"?: boolean } = { "aria-busy": false };
+const HIDDEN: { "aria-hidden"?: boolean } = { "aria-hidden": true };
 
 type SkeletonStyle = Pick<GetProps<typeof Box>, "width" | "height">;
+
+/**
+ * Only the dimensions that are SET: v3 treats an explicit `undefined` style prop
+ * as "clear the base / variant value" (conventions §5), so absent ones are left out.
+ */
+const dimsOf = (
+  width: SkeletonStyle["width"],
+  height: SkeletonStyle["height"],
+): SkeletonStyle | null =>
+  width == null
+    ? height == null
+      ? null
+      : { height }
+    : height == null
+      ? { width }
+      : { width, height };
 
 export interface SkeletonProps extends GetProps<typeof SkeletonFrame> {
   /** When false, renders `children` normally with no placeholder. @default true */
@@ -60,7 +83,7 @@ export interface SkeletonProps extends GetProps<typeof SkeletonFrame> {
  */
 const SkeletonGroupContext = React.createContext(false);
 
-export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton(props, ref) {
+export const Skeleton = styleable<SkeletonProps>(SkeletonFrame, function Skeleton(props, ref) {
   const {
     visible = true,
     circle = false,
@@ -93,9 +116,8 @@ export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton
 
   // When not visible, render children as-is (a transparent pass-through wrapper).
   if (!visible) {
-    const passthrough: SkeletonStyle = { width, height };
     return (
-      <Box ref={ref} {...passthrough} {...busyProps(false)} {...rest}>
+      <Box ref={ref} {...dimsOf(width, height)} {...NOT_BUSY} {...rest}>
         {children}
       </Box>
     );
@@ -103,27 +125,24 @@ export const Skeleton = SkeletonFrame.styleable<SkeletonProps>(function Skeleton
 
   // A circle with only a height mirrors it onto width so it stays equal-sided.
   const resolvedWidth = circle && width == null ? height : width;
-  const dims: SkeletonStyle = { width: resolvedWidth, height };
 
   return (
     <SkeletonLoopFrame
       ref={ref}
       circle={circle}
       radius={radius}
-      {...dims}
+      {...dimsOf(resolvedWidth, height)}
       // The looping pulse runs only while animating; otherwise the placeholder
       // is static. `loop` is `{ style }` — spread it as the host `style` object
       // (the hook's compositor/UI-thread driver lives there, not in Tamagui
       // style props). The frame is an `asLoopHost` reanimated view on native so
       // that animated `style` has a valid host.
       {...(pulsing ? loop : null)}
-      {...(grouped ? hiddenProps() : busyProps(true))}
+      {...(grouped ? HIDDEN : BUSY)}
       {...rest}
     >
       {/* Children preserve intrinsic size but stay hidden behind the placeholder. */}
-      <Box opacity={0} {...hiddenProps()}>
-        {children}
-      </Box>
+      <SkeletonContent {...HIDDEN}>{children}</SkeletonContent>
     </SkeletonLoopFrame>
   );
 });
@@ -162,7 +181,7 @@ export interface SkeletonGroupProps extends GetProps<typeof Box>, RevealPulseMot
  * `aria-busy` region — grouped blocks are hidden from assistive tech. Reduced
  * motion keeps the hold and drops the fade and pulse.
  *
- *   <SkeletonGroup flex={1} gap="$md">
+ *   <SkeletonGroup flex={1} gap="md">
  *     <Skeleton height={220} radius={0} />
  *     <Skeleton width="60%" height={20} />
  *   </SkeletonGroup>

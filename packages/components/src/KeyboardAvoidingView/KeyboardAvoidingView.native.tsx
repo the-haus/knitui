@@ -7,7 +7,7 @@ import { type GetProps, styled } from "@knitui/core";
  * Native build of the `KeyboardAvoidingView` form primitive.
  *
  * A `styled()` wrapper over React Native's built-in `KeyboardAvoidingView`, so
- * the kit's token-aware style props (`padding="$md"`, `flex`, …) work while the
+ * the kit's token-aware style props (`padding="md"`, `flex`, …) work while the
  * view lifts its content above the soft keyboard.
  *
  * Defaults are tuned for the common case — a full-height form region: `flex: 1`
@@ -18,7 +18,7 @@ import { type GetProps, styled } from "@knitui/core";
  * on-screen keyboard, so the native-only props are accepted and ignored there.
  */
 const Frame = styled(RNKeyboardAvoidingView, {
-  name: "KeyboardAvoidingView",
+  displayName: "KeyboardAvoidingView",
   flex: 1,
 });
 

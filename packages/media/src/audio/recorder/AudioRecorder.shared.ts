@@ -31,43 +31,46 @@ export type AudioRecorderSize = MediaSize;
 
 /** Outer recorder card — a surface-toned container. */
 export const RecorderFrame = styled(Box, {
-  name: "AudioRecorder",
+  displayName: "AudioRecorder",
   position: "relative",
   width: "100%",
   flexDirection: "column",
-  backgroundColor: "$color2",
-  borderRadius: "$lg",
+  backgroundColor: "color2",
+  borderRadius: "lg",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  paddingHorizontal: "$md",
-  paddingVertical: "$sm",
-  gap: "$sm",
+  borderColor: "borderColor",
+  paddingHorizontal: "md",
+  paddingVertical: "sm",
+  gap: "sm",
 });
 
 /** The control-bar container that holds the transport + meter rows. */
 export const RecorderControlBarFrame = styled(Box, {
-  name: "AudioRecorderControlBar",
+  displayName: "AudioRecorderControlBar",
   width: "100%",
   flexDirection: "column",
-  gap: "$xs",
+  gap: "xs",
 });
 
 /** Horizontal level-meter track. */
 export const RecorderMeterTrack = styled(Box, {
-  name: "AudioRecorderMeterTrack",
+  displayName: "AudioRecorderMeterTrack",
   width: "100%",
   height: 6,
-  borderRadius: "$xl",
-  backgroundColor: "$color4",
+  borderRadius: "xl",
+  backgroundColor: "color4",
   overflow: "hidden",
 });
 
-/** Level-meter fill. */
+/**
+ * Level-meter fill. Coloured from the accent ramp (`color9`) of the sub-theme the
+ * meter mounts: green normally, red when the input clips (see `LevelMeter`).
+ */
 export const RecorderMeterFill = styled(Box, {
-  name: "AudioRecorderMeterFill",
+  displayName: "AudioRecorderMeterFill",
   height: "100%",
-  borderRadius: "$xl",
-  backgroundColor: "$green9",
+  borderRadius: "xl",
+  backgroundColor: "color9",
 });
 
 /* -------------------------------------------------------------------------- */

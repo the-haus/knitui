@@ -13,19 +13,13 @@
  */
 import * as React from "react";
 
-import { Box, PortalHost, useMotionPreset } from "@knitui/components";
-import {
-  isWeb,
-  slotStyles,
-  type TamaguiElement,
-  useTheme,
-  variableToString,
-  withStaticProperties,
-} from "@knitui/core";
+import { PortalHost, useReducedTransition } from "@knitui/components";
+import { isWeb, slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
 
 import { useMediaCallbacks } from "../core/react/useMediaCallbacks";
 import { useRequireMediaProvider, videoHostName } from "../provider/context";
 import { applyMediaKeyAction } from "../shared";
+import { hoverProps } from "../shared/chrome";
 import type { VideoController } from "./controller/video-controller-base";
 import { resolveKeyAction, type VideoKeyAction } from "./engine";
 import { useVideoController } from "./hooks/useVideoController";
@@ -52,14 +46,15 @@ import {
 } from "./Video.chrome";
 import {
   DEFAULT_AUTO_HIDE_MS,
-  hoverProps,
   useVideo,
   VIDEO_SLOT_KEYS,
   VideoContext,
   type VideoContextValue,
   VideoControlBarFrame,
   VideoFrame,
+  VideoLayer,
   type VideoProps,
+  VideoScrimGradient,
 } from "./Video.shared";
 
 function resolveAutoHideMs(autoHide: VideoProps["autoHide"]): number | null {
@@ -109,17 +104,6 @@ function applyKeyAction(
       applyMediaKeyAction(controller, state, action);
   }
 }
-
-/**
- * The bottom legibility scrim as a `linear-gradient`, built from the resolved
- * `$mediaScrim` token (web → a `var(--…)` reference that tracks the theme, native
- * → the raw color — both valid inside a gradient). Tamagui's `backgroundImage`
- * prop paints this on BOTH platforms (CSS gradient on web, RN's experimental
- * gradient on native), so there's one cross-platform scrim and no flat fallback.
- * A `linear-gradient` can't itself be a theme token, hence the resolve-and-interp.
- */
-const makeScrimGradient = (scrim: string): string =>
-  `linear-gradient(to top, ${scrim} 0%, transparent 100%)`;
 
 /** Fill style for the teleport host so the re-parented surface sizes to the frame. */
 const SURFACE_HOST_STYLE = {
@@ -210,13 +194,9 @@ function VideoRoot(props: VideoProps): React.ReactElement {
     surface,
   });
 
-  // The chrome's auto-hide fade — cross-platform + reduced-motion-safe (the
-  // preset collapses to no transition under reduced motion / disabled config).
-  const chromeMotion = useMotionPreset("fade");
-
-  // Resolve the scrim token once for the gradient (theme-independent value).
-  const theme = useTheme();
-  const scrimColor = variableToString(theme.mediaScrim);
+  // The chrome's auto-hide fade — an in-place opacity transition, cross-platform
+  // and reduced-motion-safe (collapses to no transition under reduced motion).
+  const chromeFade = useReducedTransition("fast", "opacity");
 
   /* Forward declarative callbacks. ----------------------------------------- */
   React.useEffect(() => {
@@ -400,38 +380,48 @@ function VideoRoot(props: VideoProps): React.ReactElement {
 
   const showChrome = controls !== false && !nativeControls;
 
+  // Stable handlers / style objects: the root re-renders on chrome show/hide, and
+  // fresh objects there would re-render every memoised child that receives them.
+  const chromeVisibleRef = React.useRef(chromeVisible);
+  chromeVisibleRef.current = chromeVisible;
+  const onSurfacePress = React.useCallback(() => {
+    if (chromeVisibleRef.current) tapTogglePlay();
+    else keepAlive();
+  }, [tapTogglePlay, keepAlive]);
+  const barHoverProps = React.useMemo(
+    () =>
+      hoverProps(
+        () => holdControls(true),
+        () => holdControls(false),
+      ),
+    [holdControls],
+  );
+  const posterStyle = React.useMemo(
+    () =>
+      poster && isWeb
+        ? ({
+            backgroundImage: `url("${poster}")`,
+            backgroundSize: contentFit === "cover" ? "cover" : "contain",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          } as never)
+        : undefined,
+    [poster, contentFit],
+  );
+
   return (
     <VideoContext.Provider value={ctx}>
       <VideoFrame
         ref={setFrameRef}
         testID={testID}
         width={width}
-        height={height}
-        aspectRatio={aspectRatio}
+        {...(height != null ? { height } : null)}
+        {...(aspectRatio != null ? { aspectRatio } : null)}
         {...accessor.get("root")}
       >
         {/* Poster placeholder (shown while this player is idle; the teleported
             shared <video> covers it when this player is active). */}
-        {poster ? (
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
-            backgroundColor="black"
-            style={
-              isWeb
-                ? ({
-                    backgroundImage: `url("${poster}")`,
-                    backgroundSize: contentFit === "cover" ? "cover" : "contain",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                  } as never)
-                : undefined
-            }
-          />
-        ) : null}
+        {poster ? <VideoLayer backgroundColor="black" style={posterStyle} /> : null}
 
         {/* The shared VideoView teleports into this host while this player is
             active. The host must carry its own fill size: react-native-teleport
@@ -442,16 +432,7 @@ function VideoRoot(props: VideoProps): React.ReactElement {
         <PortalHost name={videoHostName(playerId)} style={SURFACE_HOST_STYLE} />
 
         {/* Tap layer: reveal chrome / toggle on tap, without blocking controls. */}
-        {showChrome ? (
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
-            onPress={() => (chromeVisible ? tapTogglePlay() : keepAlive())}
-          />
-        ) : null}
+        {showChrome ? <VideoLayer onPress={onSurfacePress} /> : null}
 
         {/* Captions are content, not chrome — shown even with custom/no controls. */}
         <CaptionOverlay />
@@ -461,44 +442,29 @@ function VideoRoot(props: VideoProps): React.ReactElement {
         {showChrome ? <ErrorOverlay /> : null}
 
         {showChrome ? (
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
+          <VideoLayer
             pointerEvents="box-none"
             opacity={chromeVisible ? 1 : 0}
-            transition={chromeMotion.transition}
+            {...chromeFade}
             {...accessor.get("scrim")}
           >
             {/* Bottom scrim for legibility — one `backgroundImage` linear gradient
                 on both platforms (Tamagui maps it to RN's experimental gradient
                 on native, CSS `background-image` on web). */}
-            <Box
-              position="absolute"
-              left={0}
-              right={0}
-              bottom={0}
-              height="55%"
-              pointerEvents="none"
-              backgroundImage={makeScrimGradient(scrimColor)}
-            />
+            <VideoScrimGradient />
             <VideoControlBarFrame
               pointerEvents="auto"
-              paddingHorizontal={controlsOffset as never}
+              // Spread, never `paddingHorizontal={undefined}`: an explicit undefined
+              // style prop clears the frame's base inset in v3.
+              {...(controlsOffset != null ? { paddingHorizontal: controlsOffset } : null)}
               // Hovering the bar (and any flyout that descends from it) pins the
               // chrome open on web; leaving it re-arms the auto-hide timer.
-              {...hoverProps(
-                isWeb
-                  ? { onHoverIn: () => holdControls(true), onHoverOut: () => holdControls(false) }
-                  : {},
-              )}
+              {...barHoverProps}
               {...accessor.get("controlBar")}
             >
               {controls === true ? <ControlBar /> : controls}
             </VideoControlBarFrame>
-          </Box>
+          </VideoLayer>
         ) : null}
       </VideoFrame>
     </VideoContext.Provider>

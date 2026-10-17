@@ -1,14 +1,8 @@
 import * as React from "react";
 
-import {
-  type GetProps,
-  isWeb,
-  type RadiusTokens,
-  styled,
-  withStaticProperties,
-} from "@knitui/core";
+import { type GetProps, isWeb, type RadiusTokens, withStaticProperties } from "@knitui/core";
 
-import { Box } from "../Box";
+import { type Box } from "../Box";
 import { type Placement } from "../floating";
 import {
   type ArrowPosition,
@@ -18,10 +12,15 @@ import {
 import { type FloatingOffset } from "../internal/floating-offset";
 import { type MotionPresetName } from "../internal/motion";
 import { useOverlayChrome } from "../internal/overlay-chrome";
-import { hoverProps, shadowVariant } from "../internal/style-props";
+import { hoverProps, type shadowVariant } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
 import { type OverlayProps } from "../Overlay";
-import { Popover, type PopoverProps } from "../Popover";
+import {
+  Popover,
+  type PopoverDropdownProps,
+  type PopoverDropdownStyle,
+  type PopoverProps,
+} from "../Popover";
 import { type OverlayTransitionConfig } from "../Transition/use-overlay-transition";
 
 export type HoverCardPosition = Placement;
@@ -62,24 +61,6 @@ const useHoverCardContext = (): HoverCardContextValue => {
   return ctx;
 };
 
-/* -------------------------------------------------------------------------- */
-/* Styled dropdown frame                                                      */
-/* -------------------------------------------------------------------------- */
-
-const HoverCardDropdownFrame = styled(Box, {
-  name: "HoverCardDropdown",
-  // `fixed` is viewport-relative positioning that only exists on web; React
-  // Native supports `absolute`/`relative`/`static` only. The instance mirrors
-  // Popover/Tooltip and uses the platform-correct value.
-  position: isWeb ? ("fixed" as const) : ("absolute" as const),
-  padding: "$md",
-
-  variants: {
-    hidden: { true: { display: "none" } },
-    shadow: shadowVariant,
-  } as const,
-});
-
 /**
  * The appearance-only subset of {@link FloatingArrowProps} a consumer may style
  * via the `arrow` slot. The positioning-driven props stay internally controlled.
@@ -102,7 +83,7 @@ export interface HoverCardStyles {
   /** Props spread onto the `Overlay` scrim (under `overlayProps`). */
   overlay?: Partial<OverlayProps>;
   /** Props spread onto the dropdown frame (`HoverCard.Dropdown`). */
-  dropdown?: GetProps<typeof HoverCardDropdownFrame>;
+  dropdown?: PopoverDropdownStyle;
   /** Appearance props for the arrow; positioning stays internal. */
   arrow?: FloatingArrowStyle;
 }
@@ -410,7 +391,11 @@ function HoverCardTarget({ children, refProp = "ref" }: HoverCardTargetProps) {
 /* Dropdown                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export interface HoverCardDropdownProps extends GetProps<typeof HoverCardDropdownFrame> {}
+/**
+ * `HoverCard.Dropdown` renders through `Popover.Dropdown` (positioning, portal,
+ * theme, arrow, transition), so it takes exactly that part's props.
+ */
+export type HoverCardDropdownProps = PopoverDropdownProps;
 
 function HoverCardDropdown({ children, ...rest }: HoverCardDropdownProps) {
   const ctx = useHoverCardContext();
@@ -421,7 +406,7 @@ function HoverCardDropdown({ children, ...rest }: HoverCardDropdownProps) {
   // top: keep the card open while the pointer is over the dropdown.
   return (
     <Popover.Dropdown
-      padding="$md"
+      padding="md"
       // Keep open while the pointer is over the dropdown.
       {...hoverProps({ onHoverIn: ctx.cancel, onHoverOut: ctx.closeDropdown })}
       {...rest}

@@ -11,9 +11,13 @@ import { Text } from "../Text";
  * on native (no layout impact) while keeping it readable by VoiceOver/TalkBack.
  * Renders a semantic `<span>` on web. Accent/styling is irrelevant here — this
  * component is purely structural.
+ *
+ * A plain `styled()` component (flattenable): pure static styles plus a static
+ * `<span>` host.
  */
-const VisuallyHiddenFrame = styled(Text, {
-  name: "VisuallyHidden",
+export const VisuallyHidden = styled(Text, {
+  displayName: "VisuallyHidden",
+  render: "span",
   position: "absolute",
   width: 1,
   height: 1,
@@ -23,10 +27,4 @@ const VisuallyHiddenFrame = styled(Text, {
   overflow: "hidden",
 });
 
-export interface VisuallyHiddenProps extends GetProps<typeof VisuallyHiddenFrame> {}
-
-export const VisuallyHidden = VisuallyHiddenFrame.styleable<VisuallyHiddenProps>(
-  function VisuallyHidden(props, ref) {
-    return <VisuallyHiddenFrame ref={ref} {...props} render="span" />;
-  },
-);
+export type VisuallyHiddenProps = GetProps<typeof VisuallyHidden>;

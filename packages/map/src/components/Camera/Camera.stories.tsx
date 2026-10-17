@@ -175,7 +175,7 @@ export const ImperativeControls: Story = {
 
     return (
       <Box flex={1}>
-        <Group gap="$xs" p="$sm" wrap="wrap">
+        <Group gap="xs" p="sm" wrap="wrap">
           <Button
             size="xs"
             variant="default"

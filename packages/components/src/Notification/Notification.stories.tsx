@@ -114,7 +114,7 @@ export const WithoutCloseButton: Story = {
   },
 };
 
-/** withBorder adds a subtle $color7 border around the tile. */
+/** withBorder adds a subtle color7 border around the tile. */
 export const WithBorder: Story = {
   args: {
     title: "Bordered tile",
@@ -126,7 +126,7 @@ export const WithBorder: Story = {
 /** Each elevation of the `shadow` prop applied to the notification tile. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {SHADOWS.map((shadow) => (
         <Notification key={shadow} {...args} shadow={shadow} title={`shadow="${shadow}"`}>
           Notification with the {shadow} elevation.
@@ -141,7 +141,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [visible, setVisible] = React.useState(true);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         {visible ? (
           <Notification {...args} title="Dismissible" onClose={() => setVisible(false)}>
             Press the close button to dismiss this notification.
@@ -159,7 +159,7 @@ export const Controlled: Story = {
 /** All theme accents side by side — each one recolors the badge and accent line. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {THEMES.map((theme) => (
         <Notification key={theme} {...args} theme={theme} title={theme} icon={<Text>⭐</Text>}>
           Notification with the <Text fontWeight="700">{theme}</Text> theme accent.
@@ -176,9 +176,9 @@ export const Styles: Story = {
     children: "A confirmation email has been sent to your address.",
     icon: <Text>✉️</Text>,
     styles: {
-      icon: { backgroundColor: "$blue9" },
-      title: { color: "$red9" },
-      message: { color: "$blue11", fontWeight: "700" },
+      icon: { backgroundColor: "blue9" },
+      title: { color: "red9" },
+      message: { color: "blue11", fontWeight: "700" },
     },
   },
 };
@@ -186,7 +186,7 @@ export const Styles: Story = {
 /** All radius values — from sharp xs corners to very round xl corners. */
 export const Radii: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {RADIUS_VALUES.map((radius) => (
         <Notification key={radius} {...args} radius={radius} title={`radius="${radius}"`}>
           Border radius variant: {radius}

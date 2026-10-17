@@ -65,17 +65,17 @@ export function LiveAudioMeter({
 
   return (
     <Stack
-      gap="$sm"
-      padding="$md"
+      gap="sm"
+      padding="md"
       borderWidth={1}
-      borderColor="$borderColor"
-      borderRadius="$lg"
-      backgroundColor="$color2"
+      borderColor="borderColor"
+      borderRadius="lg"
+      backgroundColor="color2"
       aria-label={label}
       testID={testID}
     >
       <Group justify="space-between" align="center" wrap="nowrap">
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           {isStreaming ? <IconMicrophone size={18} /> : <IconMicrophoneOff size={18} />}
           <Text size="sm" fontWeight="600">
             {isStreaming ? "Listening" : "Microphone"}
@@ -89,11 +89,11 @@ export function LiveAudioMeter({
       <Progress value={value} size="lg" aria-label={`${metric} level`} />
 
       <Group justify="space-between" align="center">
-        <Text size="xs" color="$color11" fontVariant={["tabular-nums"]}>
+        <Text size="xs" color="color11" fontVariant={["tabular-nums"]}>
           {metric.toUpperCase()} {value}%
         </Text>
         {actualRate > 0 ? (
-          <Text size="xs" color="$color11" fontVariant={["tabular-nums"]}>
+          <Text size="xs" color="color11" fontVariant={["tabular-nums"]}>
             {Math.round(actualRate / 1000)} kHz
           </Text>
         ) : null}
@@ -101,7 +101,7 @@ export function LiveAudioMeter({
 
       {error ? (
         <Box>
-          <Text size="xs" color="$red11">
+          <Text size="xs" color="red11">
             {error}
           </Text>
         </Box>

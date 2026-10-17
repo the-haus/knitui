@@ -122,10 +122,10 @@ function VisualizerStage({
         height={height}
         justifyContent="center"
         alignItems="center"
-        borderRadius="$md"
-        backgroundColor="$red3"
+        borderRadius="md"
+        backgroundColor="red3"
       >
-        <Text size="xs" color="$red11">
+        <Text size="xs" color="red11">
           Failed to load the Skia visualizer: {error}
         </Text>
       </Box>
@@ -137,10 +137,10 @@ function VisualizerStage({
         height={height}
         justifyContent="center"
         alignItems="center"
-        borderRadius="$md"
-        backgroundColor="$color2"
+        borderRadius="md"
+        backgroundColor="color2"
       >
-        <Text size="sm" color="$color11">
+        <Text size="sm" color="color11">
           Loading visualizer…
         </Text>
       </Box>
@@ -183,7 +183,7 @@ function PlayerSpectrum({
   });
 
   return (
-    <Stack gap="$sm" width="100%" maxWidth={560}>
+    <Stack gap="sm" width="100%" maxWidth={560}>
       <VisualizerStage
         Visualizer={Visualizer}
         error={error}
@@ -274,17 +274,17 @@ function MicrophoneSpectrum({
 
   return (
     <Stack
-      gap="$sm"
-      padding="$md"
+      gap="sm"
+      padding="md"
       borderWidth={1}
-      borderColor="$borderColor"
-      borderRadius="$lg"
-      backgroundColor="$color2"
+      borderColor="borderColor"
+      borderRadius="lg"
+      backgroundColor="color2"
       maxWidth={560}
       width="100%"
     >
       <Group justify="space-between" align="center" wrap="nowrap">
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           {isStreaming ? <IconMicrophone size={18} /> : <IconMicrophoneOff size={18} />}
           <Text size="sm" fontWeight="600">
             {isStreaming ? "Listening" : "Microphone"}
@@ -305,7 +305,7 @@ function MicrophoneSpectrum({
       />
 
       {micError ? (
-        <Text size="xs" color="$red11">
+        <Text size="xs" color="red11">
           {micError}
         </Text>
       ) : null}
@@ -477,10 +477,10 @@ export const LiveMicrophone: Story = {
  */
 export const VariantsPreview: Story = {
   render: (args) => (
-    <Stack gap="$lg" width="100%" maxWidth={560}>
+    <Stack gap="lg" width="100%" maxWidth={560}>
       {(["bars", "mirror", "wave", "line", "dots", "radial"] as const).map((variant) => (
-        <Stack key={variant} gap="$xs">
-          <Text size="xs" color="$color11" textTransform="uppercase">
+        <Stack key={variant} gap="xs">
+          <Text size="xs" color="color11" textTransform="uppercase">
             {variant}
           </Text>
           <SyntheticSpectrum {...args} variant={variant} height={variant === "radial" ? 200 : 96} />

@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf, declarationsUnder } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Table } from "./Table";
 
@@ -131,10 +132,16 @@ describe("Table", () => {
     expect(screen.getAllByLabelText("row-slot")).toHaveLength(3);
   });
 
-  // Striping and column dividers are emitted as Tamagui atomic classes, so these
-  // guards look for the generated class prefix rather than a resolved value.
-  const hasBackground = (el: Element) => /_bg-/.test(el.className);
-  const hasLeftBorder = (el: Element) => /_borderLeftWidth-/.test(el.className);
+  // v3 emits hashed atomic classes, so these guards read the CSS rules that
+  // target the element (resting declarations only — no pseudo / media rules).
+  const restingDecls = (el: Element) =>
+    cssRulesOf(el)
+      .filter((rule) => !rule.startsWith("@") && !rule.includes(":where("))
+      .map((rule) => /\{([^{}]*)\}/.exec(rule)?.[1]?.trim() ?? "");
+  const hasBackground = (el: Element) =>
+    restingDecls(el).some((d) => d.startsWith("background-color"));
+  const hasLeftBorder = (el: Element) =>
+    restingDecls(el).some((d) => d.startsWith("border-left-width: 1px"));
 
   it("stripes body rows by position (composed path)", () => {
     render(
@@ -215,5 +222,82 @@ describe("Table", () => {
       </Table>,
     );
     expect(ref.current).not.toBeNull();
+  });
+
+  it("highlights rows on hover only when highlightOnHover is set", () => {
+    const { unmount } = render(
+      <Table highlightOnHover>
+        <Table.Tbody>
+          <Table.Tr testID="hl">
+            <Table.Td>x</Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>,
+    );
+    expect(declarationsUnder(screen.getByTestId("hl"), ":hover")).toContain(
+      "background-color: var(--color3)",
+    );
+    unmount();
+
+    render(
+      <Table>
+        <Table.Tbody>
+          <Table.Tr testID="plain">
+            <Table.Td>x</Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>,
+    );
+    expect(declarationsUnder(screen.getByTestId("plain"), ":hover")).toEqual([]);
+  });
+
+  it("composes the stripe fill with the hover fill on the same row", () => {
+    render(
+      <Table striped highlightOnHover>
+        <Table.Tbody>
+          <Table.Tr testID="both">
+            <Table.Td>x</Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>,
+    );
+    const row = screen.getByTestId("both");
+    expect(restingDecls(row)).toContain("background-color: var(--color2);");
+    expect(declarationsUnder(row, ":hover")).toContain("background-color: var(--color3)");
+  });
+
+  it("draws row dividers by default and drops them with withRowBorders={false}", () => {
+    const { unmount } = render(<Table data={{ body: [["a"]] }} />);
+    expect(restingDecls(screen.getByRole("row"))).toContain("border-bottom-width: 1px;");
+    unmount();
+    render(<Table withRowBorders={false} data={{ body: [["a"]] }} />);
+    expect(restingDecls(screen.getByRole("row"))).toContain("border-bottom-width: 0px;");
+  });
+
+  it("resolves horizontal/vertical spacing tokens and raw numbers onto cells", () => {
+    const { unmount } = render(
+      <Table horizontalSpacing="xl" verticalSpacing="xxs" data={{ body: [["tok"]] }} />,
+    );
+    const decls = restingDecls(screen.getByText("tok"));
+    expect(decls).toContain("padding-inline: var(--t-space-xl);");
+    expect(decls).toContain("padding-block: var(--t-space-xxs);");
+    unmount();
+
+    render(<Table horizontalSpacing={14} data={{ body: [["num"]] }} />);
+    expect(restingDecls(screen.getByText("num"))).toContain("padding-inline: 14px;");
+  });
+
+  it("renders header cells bold with the columnheader role", () => {
+    render(<Table data={{ head: ["H"], body: [["b"]] }} />);
+    const th = screen.getByRole("columnheader");
+    expect(restingDecls(th)).toContain("font-weight: 700;");
+    expect(restingDecls(screen.getByRole("cell"))).not.toContain("font-weight: 700;");
+  });
+
+  it("does not leak styled frame names onto the DOM", () => {
+    render(<Table data={{ head: ["h"], body: [["a"]], caption: "c" }} />);
+    const table = screen.getByRole("table");
+    expect(table).not.toHaveAttribute("name");
+    expect(table.querySelector("[name]")).toBeNull();
   });
 });

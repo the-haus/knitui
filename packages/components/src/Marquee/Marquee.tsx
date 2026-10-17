@@ -1,11 +1,17 @@
 import * as React from "react";
 
-import { type GetProps, getTokenValue, isWeb, styled, withStaticProperties } from "@knitui/core";
+import {
+  type GetProps,
+  isWeb,
+  resolveToken,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useElementSize } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { renderTextChild } from "../internal/render-text-child";
-import { hoverProps } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { LoopView, useLoopingAnimation } from "../internal/use-looping-animation";
 import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
@@ -15,43 +21,51 @@ import { Text } from "../Text";
 /* Styled parts                                                               */
 /* -------------------------------------------------------------------------- */
 
-const orientationVariant = {
-  orientation: {
-    horizontal: { flexDirection: "row" },
-    vertical: { flexDirection: "column" },
-  },
-} as const;
-
 /** Clipping frame — repeated content scrolls inside it. */
 const MarqueeRoot = styled(Box, {
-  name: "Marquee",
+  displayName: "Marquee",
   position: "relative",
   overflow: "hidden",
   display: "flex",
   maxWidth: "100%",
   maxHeight: "100%",
-  variants: orientationVariant,
+  variants: {
+    orientation: {
+      horizontal: { flexDirection: "row" },
+      vertical: { flexDirection: "column" },
+    },
+  } as const,
   defaultVariants: { orientation: "horizontal" },
 });
 
 /** The translated track holding every repeated group. */
 const MarqueeContent = styled(Box, {
-  name: "MarqueeContent",
-  variants: orientationVariant,
+  displayName: "MarqueeContent",
+  variants: {
+    orientation: {
+      horizontal: { flexDirection: "row" },
+      vertical: { flexDirection: "column" },
+    },
+  } as const,
   defaultVariants: { orientation: "horizontal" },
 });
 
 /** One copy of the children, repeated `repeat` times for seamless scrolling. */
 const MarqueeGroup = styled(Box, {
-  name: "MarqueeGroup",
+  displayName: "MarqueeGroup",
   flexShrink: 0,
-  variants: orientationVariant,
+  variants: {
+    orientation: {
+      horizontal: { flexDirection: "row" },
+      vertical: { flexDirection: "column" },
+    },
+  } as const,
   defaultVariants: { orientation: "horizontal" },
 });
 
 /** String/number children wrapped as themed text for native-safe rendering. */
 const MarqueeText = styled(Text, {
-  name: "MarqueeText",
+  displayName: "MarqueeText",
 });
 
 /* -------------------------------------------------------------------------- */
@@ -62,8 +76,8 @@ export type MarqueeOrientation = "horizontal" | "vertical";
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ group: { gap: "$lg" } }}` is sugar
- * for `<Marquee.Group gap="$lg" />`. The `group` slot applies to every repeated
+ * of the styled part it targets, so `styles={{ group: { gap: "lg" } }}` is sugar
+ * for `<Marquee.Group gap="lg" />`. The `group` slot applies to every repeated
  * copy; `text` applies to text children rendered via `Marquee.Text`.
  */
 export interface MarqueeStyles {
@@ -111,12 +125,15 @@ export interface MarqueeProps extends MarqueeRootProps {
   styles?: SlotStyles<MarqueeStyles>;
 }
 
-/** Resolve a spacing value (token or number) to a px number. */
+/** Resolve a spacing value (space token, number or `"12px"`) to a px number. */
 function resolveSpacePx(value: number | string): number {
   if (typeof value === "number") return value;
-  const resolved = getTokenValue(value as Parameters<typeof getTokenValue>[0], "space");
-  return typeof resolved === "number" ? resolved : 0;
+  const resolved = resolveToken(value, "space") ?? Number.parseFloat(value);
+  return typeof resolved === "number" && Number.isFinite(resolved) ? resolved : 0;
 }
+
+/** A repeated copy is decorative — hidden from assistive tech. */
+const HIDDEN = { "aria-hidden": true } as const;
 
 /* -------------------------------------------------------------------------- */
 /* Marquee                                                                    */
@@ -131,11 +148,7 @@ function resolveSpacePx(value: number | string): number {
  * snap-back. Respects reduced motion (the primitive renders a static frame);
  * `pauseOnHover` toggles the CSS animation play-state on web (a no-op on native).
  */
-type HiddenProps = {
-  "aria-hidden"?: true;
-};
-
-const MarqueeComponent = MarqueeRoot.styleable<MarqueeProps>(function Marquee(props, ref) {
+const MarqueeComponent = styleable<MarqueeProps>(MarqueeRoot, function Marquee(props, ref) {
   const {
     reverse = false,
     pauseOnHover = false,
@@ -145,7 +158,7 @@ const MarqueeComponent = MarqueeRoot.styleable<MarqueeProps>(function Marquee(pr
     fadeEdges: _fadeEdges,
     fadeEdgeColor: _fadeEdgeColor,
     fadeEdgeSize: _fadeEdgeSize,
-    gap = "$md",
+    gap = "md",
     orientation = "horizontal",
     children,
     styles,
@@ -156,6 +169,7 @@ const MarqueeComponent = MarqueeRoot.styleable<MarqueeProps>(function Marquee(pr
 
   const [paused, setPaused] = React.useState(false);
   const { ref: groupRef, rootProps, width, height } = useElementSize();
+  const measureProps = { ref: groupRef, ...rootProps };
 
   const horizontal = orientation === "horizontal";
   const groupLen = horizontal ? width : height;
@@ -178,9 +192,12 @@ const MarqueeComponent = MarqueeRoot.styleable<MarqueeProps>(function Marquee(pr
   const pausePlayState =
     isWeb && pauseOnHover ? { animationPlayState: paused ? "paused" : "running" } : null;
 
-  const hover = pauseOnHover
-    ? hoverProps({ onHoverIn: () => setPaused(true), onHoverOut: () => setPaused(false) })
-    : {};
+  // v3 web wires hover listeners only for `onMouseEnter`/`onMouseLeave` (not
+  // `onHoverIn`/`onHoverOut` alone), and the pause is web-only anyway.
+  const hover =
+    isWeb && pauseOnHover
+      ? { onMouseEnter: () => setPaused(true), onMouseLeave: () => setPaused(false) }
+      : null;
 
   // `renderTextChild` only forwards `children`, so pre-bind the `text` slot props
   // onto `MarqueeText` via a stable, memoized wrapper before handing it off.
@@ -188,22 +205,17 @@ const MarqueeComponent = MarqueeRoot.styleable<MarqueeProps>(function Marquee(pr
   const renderedChildren = renderTextChild(children, MarqueeTextSlot);
 
   const groupProps = s.get("group");
-  const groups = Array.from({ length: Math.max(1, repeat) }, (_, i) => {
-    const hiddenProps: HiddenProps = i === 0 ? {} : { "aria-hidden": true };
-
-    return (
-      <MarqueeGroup
-        key={i}
-        {...groupProps}
-        orientation={orientation}
-        gap={gap}
-        {...hiddenProps}
-        {...(i === 0 ? { ref: groupRef, ...rootProps } : null)}
-      >
-        {renderedChildren}
-      </MarqueeGroup>
-    );
-  });
+  const groups = Array.from({ length: Math.max(1, repeat) }, (_, i) => (
+    <MarqueeGroup
+      key={i}
+      {...groupProps}
+      orientation={orientation}
+      gap={gap}
+      {...(i === 0 ? measureProps : HIDDEN)}
+    >
+      {renderedChildren}
+    </MarqueeGroup>
+  ));
 
   return (
     <MarqueeRoot ref={ref} orientation={orientation} {...hover} {...s.get("root")} {...rest}>

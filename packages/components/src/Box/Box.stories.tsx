@@ -20,18 +20,18 @@ const meta = {
     },
   },
   args: {
-    padding: "$md",
-    backgroundColor: "$background",
+    padding: "md",
+    backgroundColor: "background",
   },
   argTypes: {
     padding: {
       control: "select",
-      options: ["$xs", "$sm", "$md", "$lg", "$xl"],
+      options: ["xs", "sm", "md", "lg", "xl"],
       description: "Inner spacing — maps to a Tamagui space token.",
     },
     margin: {
       control: "select",
-      options: [undefined, "$xs", "$sm", "$md", "$lg", "$xl"],
+      options: [undefined, "xs", "sm", "md", "lg", "xl"],
       description: "Outer spacing — maps to a Tamagui space token.",
     },
     backgroundColor: {
@@ -40,7 +40,7 @@ const meta = {
     },
     borderRadius: {
       control: "select",
-      options: [undefined, "$xxs", "$xs", "$sm", "$md", "$lg", "$xl", "$xxl"],
+      options: [undefined, "xxs", "xs", "sm", "md", "lg", "xl", "xxl"],
       description: "Border radius token from the radius scale.",
     },
     opacity: {
@@ -71,9 +71,9 @@ export const Playground: Story = {
 /** Box as a flex row container — the foundation for horizontal layouts. */
 export const FlexRow: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {["Alpha", "Beta", "Gamma", "Delta"].map((label) => (
-        <Box key={label} padding="$sm" backgroundColor="$color4" borderRadius="$sm">
+        <Box key={label} padding="sm" backgroundColor="color4" borderRadius="sm">
           <Text>{label}</Text>
         </Box>
       ))}
@@ -84,9 +84,9 @@ export const FlexRow: Story = {
 /** Box as a flex column container — stack children vertically with a gap. */
 export const FlexColumn: Story = {
   render: () => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {["First", "Second", "Third"].map((label) => (
-        <Box key={label} padding="$sm" backgroundColor="$color3" borderRadius="$sm">
+        <Box key={label} padding="sm" backgroundColor="color3" borderRadius="sm">
           <Text>{label}</Text>
         </Box>
       ))}
@@ -94,17 +94,17 @@ export const FlexColumn: Story = {
   ),
 };
 
-/** Spacing tokens applied as padding and margin — $xs through $xl. */
+/** Spacing tokens applied as padding and margin — xs through xl. */
 export const SpacingTokens: Story = {
   render: () => (
-    <Box flexDirection="column" gap="$sm">
-      {(["$xs", "$sm", "$md", "$lg", "$xl"] as const).map((token) => (
-        <Box key={token} flexDirection="row" alignItems="center" gap="$sm">
-          <Box width="$lg">
-            <Text fontSize="$xs">{token}</Text>
+    <Box flexDirection="column" gap="sm">
+      {(["xs", "sm", "md", "lg", "xl"] as const).map((token) => (
+        <Box key={token} flexDirection="row" alignItems="center" gap="sm">
+          <Box width="lg">
+            <Text fontSize="xs">{token}</Text>
           </Box>
-          <Box padding={token} backgroundColor="$color5" borderRadius="$sm">
-            <Text fontSize="$xs">padding {token}</Text>
+          <Box padding={token} backgroundColor="color5" borderRadius="sm">
+            <Text fontSize="xs">padding {token}</Text>
           </Box>
         </Box>
       ))}
@@ -115,17 +115,17 @@ export const SpacingTokens: Story = {
 /** Theme token for background and border — Box picks up the active theme palette. */
 export const ThemedSurfaces: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
-      {(["$color1", "$color3", "$color5", "$color7", "$color9"] as const).map((token) => (
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
+      {(["color1", "color3", "color5", "color7", "color9"] as const).map((token) => (
         <Box
           key={token}
-          padding="$md"
+          padding="md"
           backgroundColor={token}
-          borderRadius="$md"
-          width="$xxl"
+          borderRadius="md"
+          width="xxl"
           alignItems="center"
         >
-          <Text fontSize="$xs">{token}</Text>
+          <Text fontSize="xs">{token}</Text>
         </Box>
       ))}
     </Box>
@@ -135,11 +135,11 @@ export const ThemedSurfaces: Story = {
 /** Nested Box elements — demonstrates natural composition and depth. */
 export const Nested: Story = {
   render: () => (
-    <Box padding="$lg" backgroundColor="$color2" borderRadius="$md">
+    <Box padding="lg" backgroundColor="color2" borderRadius="md">
       <Text fontWeight="bold">Outer</Text>
-      <Box marginTop="$sm" padding="$md" backgroundColor="$color4" borderRadius="$sm">
+      <Box marginTop="sm" padding="md" backgroundColor="color4" borderRadius="sm">
         <Text fontWeight="bold">Middle</Text>
-        <Box marginTop="$sm" padding="$sm" backgroundColor="$color6" borderRadius="$xs">
+        <Box marginTop="sm" padding="sm" backgroundColor="color6" borderRadius="xs">
           <Text>Inner</Text>
         </Box>
       </Box>
@@ -153,18 +153,18 @@ export const Nested: Story = {
  */
 export const Shadows: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Box
           key={shadow}
           shadow={shadow}
-          padding="$md"
-          backgroundColor="$color1"
-          borderRadius="$md"
-          width="$xxl"
+          padding="md"
+          backgroundColor="color1"
+          borderRadius="md"
+          width="xxl"
           alignItems="center"
         >
-          <Text fontSize="$xs">{shadow}</Text>
+          <Text fontSize="xs">{shadow}</Text>
         </Box>
       ))}
     </Box>
@@ -174,18 +174,18 @@ export const Shadows: Story = {
 /** Reduced opacity — Box supports the `opacity` prop directly. */
 export const Opacity: Story = {
   render: () => (
-    <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box flexDirection="row" gap="md" alignItems="center">
       {[1, 0.75, 0.5, 0.25].map((value) => (
         <Box
           key={value}
           opacity={value}
-          padding="$md"
-          backgroundColor="$color8"
-          borderRadius="$sm"
-          width="$xxl"
+          padding="md"
+          backgroundColor="color8"
+          borderRadius="sm"
+          width="xxl"
           alignItems="center"
         >
-          <Text fontSize="$xs">{value}</Text>
+          <Text fontSize="xs">{value}</Text>
         </Box>
       ))}
     </Box>

@@ -16,7 +16,7 @@
 // (#11/#12) to `YearsList`/`PickerControl`. The numbered rules in
 // `_reference/README.md` that apply here: #1 (this header), #2 (shared size
 // context), #7 (`styles` sugar + `getYearControlProps` passthrough), #9 (locale),
-// #10 (min/max bounds), #11 (delegated a11y), #13 (`.styleable` + typed ref),
+// #10 (min/max bounds), #11 (delegated a11y), #13 (`styleable()` + typed ref),
 // #14 (`withStaticProperties`), #15 (no dynamic hide styles — none used here).
 // ───────────────────────────────────────────────────────────────────────────
 import * as React from "react";
@@ -29,6 +29,7 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -63,10 +64,10 @@ const DecadeLevelContext = createStyledContext<{ size: CalendarSize }>({ size: "
 
 // ── 5/13. Styled root ───────────────────────────────────────────────────────
 // The level root is a styled `Box` column (the dates norm: a real styled part so
-// `.styleable` can forward a ref + style props onto it). It establishes the
+// `styleable()` can forward a ref + style props onto it). It establishes the
 // shared `size` context; the header and grid own the `size` variant themselves.
 const DecadeLevelFrame = styled(Box, {
-  name: "DecadeLevel",
+  displayName: "DecadeLevel",
   context: DecadeLevelContext,
   flexDirection: "column",
 
@@ -152,7 +153,7 @@ export interface DecadeLevelProps extends DecadeLevelFrameProps, DecadeLevelSett
  * `DatesProvider` locale. All `__onControl*` / `__getControlRef` / `__preventFocus`
  * / `__stopPropagation` plumbing is forwarded straight to the `YearsList`.
  *
- * Per-slot style sugar: `styles={{ headerControl: { borderRadius: "$lg" } }}` routes
+ * Per-slot style sugar: `styles={{ headerControl: { borderRadius: "lg" } }}` routes
  * onto the matching part; per-cell tuning stays on `getYearControlProps(date)`.
  * a11y/interaction/sizing for the cells are delegated to `YearsList`/`PickerControl`
  * and the header to `CalendarHeader`. Forwards its ref + style props to the root.
@@ -160,7 +161,8 @@ export interface DecadeLevelProps extends DecadeLevelFrameProps, DecadeLevelSett
  * @example
  * <DecadeLevel decade="2024-01-01" onNext={nextDecade} onPrevious={prevDecade} />
  */
-const DecadeLevelComponent = DecadeLevelFrame.styleable<DecadeLevelProps>(
+const DecadeLevelComponent = styleable<DecadeLevelProps>(
+  DecadeLevelFrame,
   function DecadeLevel(props, ref) {
     const {
       // YearsList settings

@@ -31,7 +31,7 @@ const meta = {
     keepMounted: false,
     withinPortal: false,
     zIndex: 300,
-    position: { bottom: "$xl", right: "$xl" },
+    position: { bottom: "xl", right: "xl" },
     children: "This is a dialog message.",
   },
   argTypes: {
@@ -69,17 +69,17 @@ export const Playground: Story = {};
 /** All seven content widths stacked to compare the size presets. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size, i) => (
         <Dialog
           key={size}
           {...args}
           size={size}
           withinPortal={false}
-          position={{ bottom: 32 + i * 110, right: "$xl" }}
+          position={{ bottom: 32 + i * 110, right: "xl" }}
           withCloseButton={false}
         >
-          <Text fontWeight="700" marginBottom="$xs">
+          <Text fontWeight="700" marginBottom="xs">
             size="{size}"
           </Text>
           <Text>Width preset: {size}.</Text>
@@ -96,14 +96,14 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SHADOWS.map((shadow, i) => (
         <Dialog
           key={shadow}
           {...args}
           shadow={shadow}
           withinPortal={false}
-          position={{ bottom: 32 + i * 90, right: "$xl" }}
+          position={{ bottom: 32 + i * 90, right: "xl" }}
           withCloseButton={false}
         >
           <Text fontWeight="700">shadow="{shadow}"</Text>
@@ -119,21 +119,21 @@ export const Trigger: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" gap="$md" padding="$xl">
+      <Box alignItems="center" gap="md" padding="xl">
         <Button onPress={() => setOpened(true)}>Open dialog</Button>
         <Dialog
           {...args}
           opened={opened}
           onClose={() => setOpened(false)}
-          position={{ bottom: "$xl", right: "$xl" }}
+          position={{ bottom: "xl", right: "xl" }}
         >
-          <Text fontWeight="700" marginBottom="$xs">
+          <Text fontWeight="700" marginBottom="xs">
             Cookie preferences
           </Text>
-          <Text marginBottom="$md">
+          <Text marginBottom="md">
             We use cookies to improve your experience. Accept all or customise below.
           </Text>
-          <Box flexDirection="row" gap="$sm">
+          <Box flexDirection="row" gap="sm">
             <Button size="xs" variant="filled" onPress={() => setOpened(false)}>
               Accept all
             </Button>
@@ -153,17 +153,17 @@ export const WithoutCloseButton: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(true);
     return (
-      <Box alignItems="center" padding="$xl">
+      <Box alignItems="center" padding="xl">
         {!opened && (
           <Button size="sm" onPress={() => setOpened(true)}>
             Re-open
           </Button>
         )}
-        <Dialog {...args} opened={opened} position={{ bottom: "$xl", right: "$xl" }}>
-          <Text fontWeight="700" marginBottom="$xs">
+        <Dialog {...args} opened={opened} position={{ bottom: "xl", right: "xl" }}>
+          <Text fontWeight="700" marginBottom="xs">
             No close button
           </Text>
-          <Text marginBottom="$md">Dismiss using the button below.</Text>
+          <Text marginBottom="md">Dismiss using the button below.</Text>
           <Button size="xs" variant="default" fullWidth onPress={() => setOpened(false)}>
             Got it
           </Button>
@@ -179,20 +179,20 @@ export const KeepMounted: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" gap="$md" padding="$xl">
+      <Box alignItems="center" gap="md" padding="xl">
         <Button onPress={() => setOpened((v) => !v)}>
           {opened ? "Hide dialog" : "Show dialog"}
         </Button>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           keepMounted=true — DOM node persists regardless of opened
         </Text>
         <Dialog
           {...args}
           opened={opened}
           onClose={() => setOpened(false)}
-          position={{ bottom: "$xl", right: "$xl" }}
+          position={{ bottom: "xl", right: "xl" }}
         >
-          <Text fontWeight="700" marginBottom="$xs">
+          <Text fontWeight="700" marginBottom="xs">
             Kept in DOM
           </Text>
           <Text>The dialog node stays mounted even when closed.</Text>
@@ -210,10 +210,10 @@ export const CornerPositions: Story = {
     <Box flex={1} width="100%" height={500} position="relative">
       {(
         [
-          { label: "Bottom-Right", position: { bottom: "$md", right: "$md" } },
-          { label: "Bottom-Left", position: { bottom: "$md", left: "$md" } },
-          { label: "Top-Right", position: { top: "$md", right: "$md" } },
-          { label: "Top-Left", position: { top: "$md", left: "$md" } },
+          { label: "Bottom-Right", position: { bottom: "md", right: "md" } },
+          { label: "Bottom-Left", position: { bottom: "md", left: "md" } },
+          { label: "Top-Right", position: { top: "md", right: "md" } },
+          { label: "Top-Left", position: { top: "md", left: "md" } },
         ] as const
       ).map(({ label, position }) => (
         <Dialog
@@ -225,7 +225,7 @@ export const CornerPositions: Story = {
           onClose={undefined}
           withCloseButton={false}
         >
-          <Text fontWeight="700" fontSize="$xs">
+          <Text fontWeight="700" fontSize="xs">
             {label}
           </Text>
         </Dialog>
@@ -239,15 +239,15 @@ export const Styles: Story = {
   args: {
     opened: true,
     withinPortal: false,
-    position: { bottom: "$xl", right: "$xl" },
+    position: { bottom: "xl", right: "xl" },
     styles: {
-      content: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      closeButton: { styles: { icon: { color: "$red9" } } },
+      content: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      closeButton: { styles: { icon: { color: "red9" } } },
     },
   },
   render: (args) => (
     <Dialog {...args}>
-      <Text fontWeight="700" marginBottom="$xs">
+      <Text fontWeight="700" marginBottom="xs">
         Styled dialog
       </Text>
       <Text>The content frame and close button are restyled via the styles prop.</Text>
@@ -259,14 +259,14 @@ export const Styles: Story = {
 export const WithActions: Story = {
   args: { withinPortal: false },
   render: (args) => (
-    <Dialog {...args} opened position={{ bottom: "$xl", right: "$xl" }} size="md">
-      <Text fontWeight="700" fontSize="$md" marginBottom="$xs">
+    <Dialog {...args} opened position={{ bottom: "xl", right: "xl" }} size="md">
+      <Text fontWeight="700" fontSize="md" marginBottom="xs">
         ⭐ New feature available
       </Text>
-      <Text color="$color11" marginBottom="$md">
+      <Text color="color11" marginBottom="md">
         We shipped a redesigned dashboard. Try it out and let us know what you think.
       </Text>
-      <Box flexDirection="row" gap="$sm">
+      <Box flexDirection="row" gap="sm">
         <Button size="sm" variant="filled">
           Try it now
         </Button>

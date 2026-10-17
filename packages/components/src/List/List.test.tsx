@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { List } from "./List";
 
@@ -142,5 +143,36 @@ describe("List", () => {
     );
     expect(screen.getByText("own")).toBeInTheDocument();
     expect(screen.queryByText("fallback")).not.toBeInTheDocument();
+  });
+
+  it("scales item label and marker text with the list size through context", () => {
+    render(
+      <List size="lg">
+        <List.Item>Big</List.Item>
+      </List>,
+    );
+    expect(cssRulesOf(screen.getByText("Big")).join("\n")).toContain("font-size: var(--f-size-lg)");
+    expect(cssRulesOf(screen.getByText("•")).join("\n")).toContain("font-size: var(--f-size-lg)");
+  });
+
+  it("centres markers with labels when `center` is set", () => {
+    render(
+      <List center>
+        <List.Item testID="item">Centred</List.Item>
+      </List>,
+    );
+    expect(screen.getByTestId("item")).toHaveStyle({ alignItems: "center" });
+  });
+
+  it("maps `spacing` onto the gap between items and `withPadding` onto an inset", () => {
+    render(
+      <List spacing="sm" withPadding testID="list">
+        <List.Item>a</List.Item>
+      </List>,
+    );
+    const list = screen.getByTestId("list");
+    const rules = cssRulesOf(list).join("\n");
+    expect(rules).toContain("gap: var(--t-space-sm)");
+    expect(rules).toContain("padding-left: var(--t-space-md)");
   });
 });

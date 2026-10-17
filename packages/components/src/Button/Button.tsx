@@ -6,6 +6,7 @@ import {
   defineSlots,
   type GetProps,
   isWeb,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -47,23 +48,25 @@ const ButtonContext = createStyledContext<{ size: ButtonSize; variant: ButtonVar
 
 /**
  * Button — composed from `Box` + `Text`. Colors reference the active theme's
- * palette ramp ($color1…$color12), so `theme="red"` recolors it with no
+ * palette ramp (`color1`…`color12`), so `theme="red"` recolors it with no
  * per-component logic. `variant` chooses how the ramp applies; `size` sets the
  * metrics. `justify` overrides the horizontal alignment of inner content
- * (`justifyContent`). hoverStyle/pressStyle are real Tamagui pseudo states.
+ * (`justifyContent`). Hover / press are v3 flat clauses inside the variant's
+ * `backgroundColor` (`"color9 hover:color10 press:color8"`); they compose with
+ * the base press-dip `scale: "press:0.97"` per (property, condition) slot.
  */
 const ButtonFrame = styled(Box, {
-  name: "Button",
+  displayName: "Button",
   context: ButtonContext,
   role: "button",
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
-  gap: "$sm",
+  gap: "sm",
   borderWidth: 1,
   borderColor: "transparent",
   ...webCursor("pointer"),
-  // Tactile press-dip — merges with the per-variant `pressStyle` color below and
+  // Tactile press-dip — composes with the per-variant `press:` colour below and
   // eases via the `usePressScale()` props applied on render (reduced-motion aware).
   ...pressScaleStyle,
   // Keyboard-focus ring (web) — variant-independent, so it lives on the base and
@@ -75,21 +78,15 @@ const ButtonFrame = styled(Box, {
     // `variant-colors` ladder so Button/ActionIcon and `theme="…"` stay in lockstep.
     variant: {
       ...controlColorVariant,
-      // `name: "Button"` collided with a `surface3`-templated entry in Tamagui's
-      // (deprecated) `defaultComponentThemes`, so until `core/config/themes.ts`
-      // set `componentThemes: false` this frame resolved inside a
-      // `<scheme>_Button` theme where `$borderColor` was offset from step 4 to
-      // step 7. `default` is the ONLY variant that reads `$borderColor` (every
-      // other one is an explicit `$colorN` or `transparent`, which the surface
-      // template left alone), so pin just that one to keep its shipped weight.
-      default: { ...controlColorVariant.default, borderColor: "$color7" },
+      // The shipped `default` Button border is `color7` (v2 resolved `borderColor`
+      // inside a `<scheme>_Button` component theme, offset to step 7). Pin it so
+      // the button keeps its weight now that component themes are gone.
+      default: { ...controlColorVariant.default, borderColor: "color7" },
     },
     size: {
       ...controlVariant,
     },
-    radius: {
-      ...radiusVariant,
-    },
+    radius: radiusVariant,
     /** Override horizontal alignment of inner content (label + sections). */
     justify: justifyVariant,
     fullWidth: {
@@ -105,7 +102,7 @@ const ButtonFrame = styled(Box, {
 });
 
 const ButtonText = styled(Text, {
-  name: "ButtonText",
+  displayName: "ButtonText",
   context: ButtonContext,
   fontWeight: "600",
   userSelect: "none",
@@ -136,7 +133,7 @@ const ButtonText = styled(Text, {
  * Alert's `.Icon`. Layout (gap, axis) still lives on the `ButtonFrame`.
  */
 const ButtonSection = styled(Box, {
-  name: "ButtonSection",
+  displayName: "ButtonSection",
   context: ButtonContext,
   flexDirection: "row",
   alignItems: "center",
@@ -150,6 +147,31 @@ const ButtonSection = styled(Box, {
  * render inside `ButtonText`. These markers render nothing themselves; the
  * `ButtonFrame` below owns layout, just as before.
  */
+/**
+ * Loading with no left visual: the label row stays in the layout invisibly (so
+ * the width never jumps) — NOT aria-hidden, the label is still the button's
+ * name — and the loader sits centred on top. Static frames, nothing per render.
+ */
+const ButtonLoadingContent = styled(Box, {
+  displayName: "ButtonLoadingContent",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: "sm",
+  opacity: 0,
+});
+
+const ButtonLoaderOverlay = styled(Box, {
+  displayName: "ButtonLoaderOverlay",
+  position: "absolute",
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  alignItems: "center",
+  justifyContent: "center",
+  pointerEvents: "none",
+});
+
 const ButtonSlots = defineSlots({
   Left: createSlot<"Left">("Left"),
   Label: createSlot<"Label">("Label"),
@@ -158,8 +180,8 @@ const ButtonSlots = defineSlots({
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the
- * props of the styled part it targets, so `styles={{ label: { color: "$red9" } }}`
- * is sugar for `<Button.Label color="$red9" />`. Canonical vocabulary:
+ * props of the styled part it targets, so `styles={{ label: { color: "red9" } }}`
+ * is sugar for `<Button.Label color="red9" />`. Canonical vocabulary:
  * `left` / `label` / `right` / `loader`.
  */
 export interface ButtonStyles {
@@ -186,9 +208,16 @@ const BUTTON_SLOT_KEYS = [
   "loader",
 ] as const satisfies readonly (keyof ButtonStyles)[];
 
-type ButtonFrameProps = Omit<GetProps<typeof ButtonFrame>, "disabled">;
+/**
+ * `size` / `variant` are narrowed to single keys (no v3 clause programs such as
+ * `size="sm md:lg"`): the render reads them as DATA (icon size, loader size,
+ * `ControlIconProvider`), which a clause program cannot feed.
+ */
+type ButtonFrameProps = Omit<GetProps<typeof ButtonFrame>, "disabled" | "size" | "variant">;
 
 export interface ButtonProps extends ButtonFrameProps {
+  size?: ButtonSize;
+  variant?: ButtonVariant;
   /**
    * Destination — renders the button as a real `<a href>` (`role="link"`) on web,
    * so middle-click and ⌘-click open a new tab. Ignored on native (navigate in
@@ -209,12 +238,12 @@ export interface ButtonProps extends ButtonFrameProps {
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
 
-const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props, ref) {
+const ButtonComponent = styleable<ButtonProps>(ButtonFrame, function Button(props, ref) {
   const {
     children,
     loading,
@@ -314,34 +343,18 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
       {left}
       {overlayLoader ? (
         <>
-          <Box
-            flexDirection="row"
-            alignItems="center"
-            gap="$sm"
-            // Invisible, NOT aria-hidden: the label is still the button's name
-            // while it loads.
-            opacity={0}
-          >
+          <ButtonLoadingContent>
             {renderTextChild(label, LabelText)}
             {right}
-          </Box>
-          <Box
-            position="absolute"
-            top={0}
-            right={0}
-            bottom={0}
-            left={0}
-            alignItems="center"
-            justifyContent="center"
-            pointerEvents="none"
-          >
+          </ButtonLoadingContent>
+          <ButtonLoaderOverlay>
             <Loader
               size={controlIconSize(size)}
               type="oval"
               theme="gray"
               {...s.merge("loader", loaderProps)}
             />
-          </Box>
+          </ButtonLoaderOverlay>
         </>
       ) : (
         <>
@@ -358,7 +371,7 @@ const ButtonComponent = ButtonFrame.styleable<ButtonProps>(function Button(props
  * (`gap: 0`); `orientation` switches the main axis.
  */
 const ButtonGroupFrame = styled(Box, {
-  name: "ButtonGroup",
+  displayName: "ButtonGroup",
   role: "group",
   flexDirection: "row",
   alignSelf: "flex-start",
@@ -372,44 +385,59 @@ const ButtonGroupFrame = styled(Box, {
   defaultVariants: { orientation: "horizontal" },
 });
 
-type EdgeStyle = {
-  borderTopLeftRadius?: 0;
-  borderTopRightRadius?: 0;
-  borderBottomLeftRadius?: 0;
-  borderBottomRightRadius?: 0;
-  marginLeft?: number;
-  marginTop?: number;
-};
+/**
+ * Edge-stripping for attached group children, as module constants keyed by the
+ * child's position. Only the edges that change are SET — v3 treats an explicit
+ * `undefined` style prop as "clear the variant value" (conventions §5), so the
+ * outer corners are simply absent and keep the child's own `radius`.
+ */
+const EDGE = {
+  horizontal: {
+    only: {},
+    first: { borderTopRightRadius: 0, borderBottomRightRadius: 0 },
+    middle: {
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+      marginLeft: -1,
+    },
+    last: { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, marginLeft: -1 },
+  },
+  vertical: {
+    only: {},
+    first: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+    middle: {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      marginTop: -1,
+    },
+    last: { borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: -1 },
+  },
+} as const;
 
-export interface ButtonGroupProps extends GetProps<typeof ButtonGroupFrame> {}
+type EdgePosition = keyof (typeof EDGE)["horizontal"];
 
-const ButtonGroup = ButtonGroupFrame.styleable<ButtonGroupProps>(function ButtonGroup(props, ref) {
+const edgePosition = (index: number, lastIndex: number): EdgePosition =>
+  lastIndex === 0 ? "only" : index === 0 ? "first" : index === lastIndex ? "last" : "middle";
+
+export interface ButtonGroupProps extends Omit<GetProps<typeof ButtonGroupFrame>, "orientation"> {
+  /** Main axis of the attached row. A single key: it also picks the edge-stripping. */
+  orientation?: "horizontal" | "vertical";
+}
+
+const ButtonGroup = styleable<ButtonGroupProps>(ButtonGroupFrame, function ButtonGroup(props, ref) {
   const { children, orientation = "horizontal", ...rest } = props;
   const items = React.Children.toArray(children).filter(Boolean);
-  const horizontal = orientation === "horizontal";
   const lastIndex = items.length - 1;
 
   return (
     <ButtonGroupFrame ref={ref} orientation={orientation} {...rest}>
       {items.map((child, i) => {
         if (!React.isValidElement(child)) return child;
-        const isFirst = i === 0;
-        const isLast = i === lastIndex;
-        const edge: EdgeStyle = horizontal
-          ? {
-              borderTopLeftRadius: isFirst ? undefined : 0,
-              borderBottomLeftRadius: isFirst ? undefined : 0,
-              borderTopRightRadius: isLast ? undefined : 0,
-              borderBottomRightRadius: isLast ? undefined : 0,
-              marginLeft: isFirst ? undefined : -1,
-            }
-          : {
-              borderTopLeftRadius: isFirst ? undefined : 0,
-              borderTopRightRadius: isFirst ? undefined : 0,
-              borderBottomLeftRadius: isLast ? undefined : 0,
-              borderBottomRightRadius: isLast ? undefined : 0,
-              marginTop: isFirst ? undefined : -1,
-            };
+        const edge = EDGE[orientation][edgePosition(i, lastIndex)];
         return React.cloneElement(child, { key: i, ...edge });
       })}
     </ButtonGroupFrame>
@@ -422,20 +450,18 @@ const ButtonGroup = ButtonGroupFrame.styleable<ButtonGroupProps>(function Button
  * Gets the same edge-stripping as buttons from the group's child iteration.
  */
 const ButtonGroupSection = styled(Box, {
-  name: "ButtonGroupSection",
+  displayName: "ButtonGroupSection",
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  backgroundColor: "$background",
+  borderColor: "borderColor",
+  backgroundColor: "background",
   variants: {
     size: {
       ...controlVariant,
     },
-    radius: {
-      ...radiusVariant,
-    },
+    radius: radiusVariant,
   } as const,
   defaultVariants: { size: "md", radius: "md" },
 });

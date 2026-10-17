@@ -9,12 +9,12 @@ import { SimpleGrid } from "./SimpleGrid";
 /** Helper that renders a visually distinct grid cell so the layout is easy to see. */
 const Cell = ({ label }: { label: string }) => (
   <Box
-    backgroundColor="$color4"
-    borderRadius="$sm"
-    padding="$md"
+    backgroundColor="color4"
+    borderRadius="sm"
+    padding="md"
     alignItems="center"
     justifyContent="center"
-    minHeight="$xxl"
+    minHeight="xxl"
   >
     <Text fontWeight="600">{label}</Text>
   </Box>
@@ -46,7 +46,7 @@ const meta = {
     spacing: {
       control: "inline-radio",
       options: ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"],
-      description: "Gap between columns — space key, `$space` token, or raw px number.",
+      description: "Gap between columns — a space token (xxs–xxl) or a raw px number.",
     },
     verticalSpacing: {
       control: "inline-radio",
@@ -86,9 +86,9 @@ export const Playground: Story = {
 /** Fixed column count — two, three and four columns, each wrapping six cells. */
 export const ColumnCounts: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {([2, 3, 4] as const).map((cols) => (
-        <Box key={cols} gap="$sm">
+        <Box key={cols} gap="sm">
           <Text fontWeight="700">{cols} columns</Text>
           <SimpleGrid cols={cols} spacing="md">
             {Array.from({ length: 6 }, (_, i) => (
@@ -104,9 +104,9 @@ export const ColumnCounts: Story = {
 /** Spacing scale — all seven space keys applied to the same 3-column grid. */
 export const SpacingScale: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const).map((spacing) => (
-        <Box key={spacing} gap="$sm">
+        <Box key={spacing} gap="sm">
           <Text fontWeight="700">spacing="{spacing}"</Text>
           <SimpleGrid cols={3} spacing={spacing}>
             <Cell label="A" />
@@ -154,9 +154,9 @@ export const MinColWidth: Story = {
 /** auto-fit vs auto-fill — auto-fit stretches the last row to fill; auto-fill leaves gaps. */
 export const AutoFitVsFill: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {(["auto-fit", "auto-fill"] as const).map((autoFlow) => (
-        <Box key={autoFlow} gap="$sm">
+        <Box key={autoFlow} gap="sm">
           <Text fontWeight="700">autoFlow="{autoFlow}"</Text>
           <SimpleGrid minColWidth={160} autoFlow={autoFlow} spacing="md">
             <Cell label="1" />
@@ -177,13 +177,13 @@ export const Empty: Story = {
   render: (args) => (
     <Box
       borderWidth={1}
-      borderColor="$borderColor"
+      borderColor="borderColor"
       borderStyle="dashed"
-      borderRadius="$sm"
-      padding="$md"
+      borderRadius="sm"
+      padding="md"
     >
       <SimpleGrid {...args} />
-      <Text color="$color9" fontSize="$sm" marginTop="$sm">
+      <Text color="color9" fontSize="sm" marginTop="sm">
         (empty grid — no children)
       </Text>
     </Box>
@@ -195,7 +195,7 @@ export const Styles: Story = {
   args: {
     cols: 3,
     styles: {
-      cell: { backgroundColor: "$blue3", borderRadius: "$sm" },
+      cell: { backgroundColor: "blue3", borderRadius: "sm" },
     },
   },
   render: (args) => (

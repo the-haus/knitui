@@ -1,7 +1,7 @@
 import * as React from "react";
 import type * as ReactDOMServer from "react-dom/server";
 
-import { Provider } from "@knitui/core";
+import { getTokens, Provider, type TamaguiElement } from "@knitui/core";
 
 import { act, fireEvent, render, screen, waitFor } from "../test-utils";
 import { createImage, type resolveRadiusValue } from "./createImage";
@@ -51,7 +51,7 @@ describe("Image", () => {
   });
 
   it("forwards its ref to the underlying element", () => {
-    const ref = React.createRef<HTMLImageElement>();
+    const ref = React.createRef<TamaguiElement>();
     render(<Image ref={ref} src="https://example.com/a.png" alt="A" />);
     expect(ref.current).not.toBeNull();
   });
@@ -158,6 +158,78 @@ describe("Image composable parts", () => {
       <Image src="https://example.com/a.png" alt="A" styles={{ image: { fit: "contain" } }} />,
     );
     expect(screen.getByRole("img").style.objectFit).toBe("contain");
+  });
+
+  // Regression: v2 detected tokens by a `$` sigil, so after the v3 rename
+  // (`radius="md"`, `width="xl"`) the token silently fell through to no radius.
+  it("resolves a radius token to its raw value", () => {
+    const md = (getTokens().radius as Record<string, { val: number }>).md!.val;
+    render(<Image src="https://example.com/a.png" alt="A" radius="md" width={80} height={80} />);
+    const box = screen.getByRole("img").parentElement!;
+    expect(box.style.borderTopLeftRadius).toBe(`${md}px`);
+  });
+
+  it("resolves a size-token width/height to pixels and keeps numbers raw", () => {
+    const xl = (getTokens().size as Record<string, { val: number }>).xl!.val;
+    render(<Image src="https://example.com/a.png" alt="A" width="xl" height={50} />);
+    const box = screen.getByRole("img").parentElement!;
+    expect(box.style.width).toBe(`${xl}px`);
+    expect(box.style.height).toBe("50px");
+  });
+
+  it("passes a CSS radius / dimension string through", () => {
+    render(<Image src="https://example.com/a.png" alt="A" radius="50%" width="100%" height={40} />);
+    const box = screen.getByRole("img").parentElement!;
+    expect(box.style.borderTopLeftRadius).toBe("50%");
+    expect(box.style.width).toBe("100%");
+  });
+
+  // v3 drops theme-name colours on a non-Tamagui host; the web build lifts them
+  // into the backend's style as theme CSS variables. (Asserted on the props the
+  // backend receives: jsdom's CSSOM silently rejects `var()` colours on `el.style`.)
+  it("keeps theme colour props (bg / borderColor) on web", () => {
+    let style: Record<string, unknown> | undefined;
+    let props: Record<string, unknown> = {};
+    const Capturing = createImage({
+      Component: (p: Record<string, unknown>) => {
+        props = p;
+        const flat = Array.isArray(p.style) ? Object.assign({}, ...p.style.flat()) : p.style;
+        style = flat as Record<string, unknown>;
+        return null;
+      },
+    });
+    render(<Capturing src="https://example.com/a.png" bg="color3" borderColor="red9" />);
+    expect(String(style?.backgroundColor)).toMatch(/var\(--color3/);
+    expect(String(style?.borderColor)).toMatch(/var\(--red9/);
+    expect(props).not.toHaveProperty("bg");
+  });
+
+  it("applies the shared shadow ladder", () => {
+    render(<Image src="https://example.com/a.png" alt="A" shadow="md" width={40} height={40} />);
+    expect(screen.getByRole("img").parentElement!.style.boxShadow).toContain("dropShadowColor");
+  });
+
+  it("forwards fallbackProps onto the backing image (below explicit props)", () => {
+    render(
+      <Image
+        src="https://example.com/a.png"
+        alt="A"
+        fit="cover"
+        fallbackProps={{ fit: "contain", objectPosition: "left" }}
+      />,
+    );
+    const img = screen.getByRole("img");
+    expect(img.style.objectFit).toBe("cover");
+    expect(img.style.objectPosition).toContain("left 0px");
+  });
+
+  it("treats the sugar Image as the Root's image child (no second image)", () => {
+    render(
+      <Image.Root src="https://example.com/root.png">
+        <Image src="https://example.com/child.png" alt="C" />
+      </Image.Root>,
+    );
+    expect(screen.getAllByRole("img")).toHaveLength(1);
   });
 });
 

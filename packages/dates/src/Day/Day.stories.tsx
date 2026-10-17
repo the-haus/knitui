@@ -88,7 +88,7 @@ export const Static: Story = {
 
 /**
  * A selected range across a week strip: the edges round their outer corners
- * (`firstInRange`/`lastInRange`), the middle is a squared `$color4` tint, and the
+ * (`firstInRange`/`lastInRange`), the middle is a squared `color4` tint, and the
  * endpoints are `selected`. Cells sit flush so the tint reads as one band.
  */
 export const Range: Story = {
@@ -118,7 +118,7 @@ export const CustomRenderDay: Story = {
     renderDay: (date) => (
       <Box alignItems="center">
         <Text>{new Date(date).getUTCDate()}</Text>
-        <Box width={4} height={4} borderRadius={2} backgroundColor="$color9" marginTop={2} />
+        <Box width={4} height={4} borderRadius={2} backgroundColor="color9" marginTop={2} />
       </Box>
     ),
   },
@@ -132,10 +132,10 @@ export const Themed: Story = {
 /** Every size token, from `xxs` to `xxl`. */
 export const Sizes: Story = {
   render: () => (
-    <Box flexDirection="row" gap="$lg" alignItems="center">
+    <Box flexDirection="row" gap="lg" alignItems="center">
       {(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const).map((size) => (
-        <Box key={size} gap="$xs" alignItems="center">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs" alignItems="center">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <Day date={DATE} size={size} selected />

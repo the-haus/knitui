@@ -3,15 +3,18 @@ import type { ComponentProps, ComponentType } from "react";
 
 import {
   type GetProps,
-  getTokenValue,
   isWeb,
+  resolveToken,
+  styleable,
   styled,
   View,
   withStaticProperties,
 } from "@knitui/core";
 import { useCallbackRef, useMergedRef } from "@knitui/hooks";
 
+import { shadowVariant } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
+import { themeColorToCssVar } from "../internal/theme-color-web";
 import {
   attachImageStatics,
   normalizeContentPosition,
@@ -42,19 +45,14 @@ type ImageLoadLikeEvent = {
   };
 };
 type ComponentWithImageStatics = Partial<ImageType>;
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
 type ImageLoadEvent = Parameters<NonNullable<ImageProps["onLoad"]>>[0];
 type ImageErrorEvent = Parameters<NonNullable<ImageProps["onError"]>>[0];
 
-// Radius/size token keys, matching the canonical set in internal/style-props.
-// Missing keys silently drop to no-radius, so this must stay in sync.
-const SIZE_KEYS = new Set(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"]);
-
 /**
  * Internal alias the unified `transition` prop is forwarded under. expo-image's
- * `transition` (a numeric fade duration / config) collides with Tamagui v2's
+ * `transition` (a numeric fade duration / config) collides with Tamagui's
  * reserved `transition` animation prop: Tamagui treats ANY component where
- * `"transition" in props` as animated (see @tamagui/web useComponentState) and
+ * `"transition" in props` as animated (v3 still does) and
  * engages its animation driver. On web that driver calls `getComputedStyle(host)`,
  * but the backing expo-image host ref is not a DOM `Element`, so it throws
  * ("parameter 1 is not of type 'Element'") and blanks the tree. We therefore
@@ -171,10 +169,6 @@ export const resolveRadiusValue = (
 ): unknown => {
   if (typeof value === "number" || value == null) return value;
 
-  if (typeof value === "object" && "isVar" in value && "val" in value) {
-    return resolveRadiusValue(value.val, dimensions);
-  }
-
   if (typeof value !== "string") return value;
 
   // Percentages (e.g. "50%" for circular avatars). expo-image's web build
@@ -195,12 +189,42 @@ export const resolveRadiusValue = (
     return basis !== undefined ? basis * fraction : 9999;
   }
 
-  const token = value[0] === "$" ? value : SIZE_KEYS.has(value) ? `$${value}` : undefined;
-  if (token) return getTokenValue(token as TokenValueInput, "radius");
+  // A radius token (`"md"`, `"radius.md"`) resolves through the active config.
+  const token = resolveToken(value, "radius");
+  if (token !== undefined) return token;
 
   const numericValue = Number.parseFloat(value);
   return Number.isFinite(numericValue) ? numericValue : undefined;
 };
+
+/**
+ * Colour style props (longhand or the kit's shorthand) that v3 drops when it
+ * styles a NON-Tamagui host such as the image backend: theme names
+ * (`bg="color3"`) never reach the DOM. On web they are lifted into the inline
+ * style as the theme's CSS variable (theme-free, follows theme changes).
+ */
+const COLOR_STYLE_KEYS: Readonly<Record<string, string>> = {
+  bg: "backgroundColor",
+  backgroundColor: "backgroundColor",
+  borderColor: "borderColor",
+  borderTopColor: "borderTopColor",
+  borderRightColor: "borderRightColor",
+  borderBottomColor: "borderBottomColor",
+  borderLeftColor: "borderLeftColor",
+};
+
+/** Web: pull theme-name colour props out of `rest` into an inline style block. */
+function liftWebColors(rest: Record<string, unknown>): Record<string, string> | undefined {
+  if (!isWeb) return undefined;
+  let lifted: Record<string, string> | undefined;
+  for (const key in COLOR_STYLE_KEYS) {
+    const value = rest[key];
+    if (typeof value !== "string") continue;
+    (lifted ??= {})[COLOR_STYLE_KEYS[key]!] = themeColorToCssVar(value);
+    delete rest[key];
+  }
+  return lifted;
+}
 
 /** Frames `useWebCachedImageLoad` waits for the backend to put its `<img>` in the DOM. */
 const CACHED_LOAD_MAX_FRAMES = 10;
@@ -282,10 +306,14 @@ function useWebCachedImageLoad(
   return { ref, onLoad: isWeb && onLoad ? handleLoad : onLoad };
 }
 
-/** Resolve a `$size`-token dimension to its numeric value, passing others through. */
+/**
+ * Resolve a size-token dimension (`"md"`) to its raw value, passing numbers and
+ * CSS lengths (`"100%"`, `"auto"`) through. The raw value both sizes the frame
+ * and, when numeric, becomes the backend source's intrinsic width/height.
+ */
 const resolveDimension = (value: ImageDimension): ImageDimension =>
-  typeof value === "string" && value[0] === "$"
-    ? (getTokenValue(value as TokenValueInput, "size") as ImageDimension)
+  typeof value === "string"
+    ? ((resolveToken(value, "size") as ImageDimension | undefined) ?? value)
     : value;
 
 /**
@@ -349,7 +377,7 @@ type ImageContextValue = {
  *
  * You then get every expo-image prop (transition, placeholder, cachePolicy, …)
  * plus the unified API (`src`, `fit`/`objectFit`, `objectPosition`, `radius`,
- * `fallbackSrc`) and Tamagui styling (`w`, `h`, `bg`, `$token`s).
+ * `fallbackSrc`) and Tamagui styling (`w`, `h`, `bg`, token names like `"md"`).
  * <Image src="https://example.com/photo.jpg" fit="cover" transition={300} radius="md" />
  *
  * @example
@@ -402,7 +430,11 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
   const StyledImage = styled(
     BaseComponent,
     {
-      name: "Image",
+      displayName: "Image",
+      variants: {
+        // The shared elevation ladder (`shadow="md"`), as on `Box`.
+        shadow: shadowVariant,
+      } as const,
     },
     {
       inlineProps: inlinePropsSet,
@@ -417,14 +449,40 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
   const ImageContext = React.createContext<ImageContextValue | undefined>(undefined);
 
   /**
-   * The backing image — the engine. Resolves the unified API (`src`/`fit`/
-   * `radius`/`fallbackSrc`/`objectPosition`) and the cross-platform load/error
-   * events, then renders through the Tamagui-styled wrapper. When rendered under
-   * an `Image.Root` it reads/updates the shared fallback state via context;
-   * standalone it owns its own state via `useImageFallback`.
+   * The unified-API props: the engine's own surface plus an optional per-slot
+   * `styles` map and the legacy `fallbackProps` (both target the backing image).
    */
-  const ImagePart = StyledImage.styleable<CombinedProps>((incomingProps, ref) => {
-    const props = incomingProps as CombinedProps;
+  type SugarProps = CombinedProps & {
+    /** Per-slot style sugar — props spread onto the matching part. */
+    styles?: SlotStyles<ImageStyles>;
+    /** Props spread onto the backing image (alias for `styles.image`). */
+    fallbackProps?: Partial<ImageProps>;
+  };
+
+  /**
+   * The backing image — the engine, and also the public `Image` itself (the
+   * sugar used to be a separate wrapper; folding it in saves one component
+   * layer per image, which adds up in long lists). Resolves the unified API
+   * (`src`/`fit`/`radius`/`fallbackSrc`/`objectPosition`) and the
+   * cross-platform load/error events, then renders through the Tamagui-styled
+   * wrapper. When rendered under an `Image.Root` it reads/updates the shared
+   * fallback state via context; standalone it owns its own state via
+   * `useImageFallback`.
+   */
+  const ImagePart = styleable<SugarProps>(StyledImage, function Image(incomingProps, ref) {
+    const { styles, fallbackProps, ...direct } = incomingProps as SugarProps;
+    // Engine props win over the per-slot sugar (explicit beats sugar); the image
+    // slot and the legacy `fallbackProps` are the same target. Only allocate a
+    // merged object when either sugar is present.
+    const props = (
+      styles || fallbackProps
+        ? {
+            ...slotStyles<ImageStyles>(styles, IMAGE_SLOT_KEYS, "Image").get("image"),
+            ...fallbackProps,
+            ...direct,
+          }
+        : direct
+    ) as CombinedProps;
     const {
       src,
       source,
@@ -472,6 +530,8 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
     const incomingStyle = Array.isArray(rest.style)
       ? Object.assign({}, ...rest.style.flat())
       : rest.style;
+    // `rest` is this render's own object (a destructuring rest), safe to edit.
+    const liftedColors = liftWebColors(rest as Record<string, unknown>);
 
     const resolvedBorderRadius = resolveRadiusValue(radius ?? borderRadius, {
       width: resolvedWidth,
@@ -506,6 +566,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
       ...rest,
       source: finalSource,
       style: {
+        ...liftedColors,
         ...incomingStyle,
         ...(resolvedBorderRadius !== undefined && { borderRadius: resolvedBorderRadius }),
         ...(resolvedWidth !== undefined && { width: resolvedWidth }),
@@ -587,11 +648,11 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
   };
 
   const RootFrame = styled(View, {
-    name: "ImageRoot",
+    displayName: "ImageRoot",
     position: "relative",
   });
 
-  const Root = RootFrame.styleable<RootProps>((props, ref) => {
+  const Root = styleable<RootProps>(RootFrame, (props, ref) => {
     // Split children out at runtime without forming `CombinedProps & {children}`
     // — that intersection overflows the checker (TS2590). The remaining props are
     // the unified image API, re-typed for the `.src`/`.source` reads below.
@@ -635,7 +696,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
    * (and no usable `fallbackSrc` rendered). Layers absolutely over the image.
    */
   const FallbackFrame = styled(View, {
-    name: "ImageFallback",
+    displayName: "ImageFallback",
     position: "absolute",
     top: 0,
     left: 0,
@@ -645,7 +706,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
     justifyContent: "center",
   });
 
-  const Fallback = FallbackFrame.styleable<GetProps<typeof FallbackFrame>>((props, ref) => {
+  const Fallback = styleable<GetProps<typeof FallbackFrame>>(FallbackFrame, (props, ref) => {
     const ctx = React.useContext(ImageContext);
     if (ctx && !ctx.errored) return null;
     return <FallbackFrame ref={ref} {...props} />;
@@ -656,7 +717,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
    * displayed and has not errored. Layers absolutely over the image.
    */
   const PlaceholderFrame = styled(View, {
-    name: "ImagePlaceholder",
+    displayName: "ImagePlaceholder",
     position: "absolute",
     top: 0,
     left: 0,
@@ -666,7 +727,8 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
     justifyContent: "center",
   });
 
-  const Placeholder = PlaceholderFrame.styleable<GetProps<typeof PlaceholderFrame>>(
+  const Placeholder = styleable<GetProps<typeof PlaceholderFrame>>(
+    PlaceholderFrame,
     (props, ref) => {
       const ctx = React.useContext(ImageContext);
       if (ctx && (ctx.loaded || ctx.errored)) return null;
@@ -679,7 +741,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
    * captions). Unlike `Fallback`/`Placeholder` it does not depend on load state.
    */
   const Overlay = styled(View, {
-    name: "ImageOverlay",
+    displayName: "ImageOverlay",
     position: "absolute",
     top: 0,
     left: 0,
@@ -687,36 +749,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
     bottom: 0,
   });
 
-  /**
-   * The unified-API sugar. Thin wrapper over the engine: it accepts the classic
-   * `<Image src=… fallbackSrc=… />` surface (rendering the backing image
-   * directly so the host `<img>` stays the queryable/ref'd element), plus an
-   * optional per-slot `styles` map and `fallbackProps`. For multi-layer
-   * composition use the `Image.Root` + parts form.
-   */
-  type SugarProps = CombinedProps & {
-    /** Per-slot style sugar — props spread onto the matching part. */
-    styles?: SlotStyles<ImageStyles>;
-    /** Props spread onto the backing image (alias for `styles.image`). */
-    fallbackProps?: Partial<ImageProps>;
-  };
-
-  const ImageComponent = StyledImage.styleable<SugarProps>((incomingProps, ref) => {
-    const { styles, fallbackProps, ...rest } = incomingProps as SugarProps;
-    const s = slotStyles<ImageStyles>(styles, IMAGE_SLOT_KEYS, "Image");
-    // Engine props win over the per-slot sugar (explicit beats sugar); the
-    // image slot and the legacy `fallbackProps` are the same target.
-    return (
-      <ImagePartLoose
-        ref={ref}
-        {...s.get("image")}
-        {...fallbackProps}
-        {...(rest as CombinedProps)}
-      />
-    );
-  });
-
-  const ImageWithParts = withStaticProperties(ImageComponent, {
+  const ImageWithParts = withStaticProperties(ImagePart, {
     Root,
     Image: ImagePart,
     Fallback,

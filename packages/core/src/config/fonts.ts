@@ -1,6 +1,6 @@
 import { createFont } from "@tamagui/core";
 
-import { toFontUnits } from "./font-units";
+import { toFontUnits, toLineHeightUnits } from "./font-units";
 import { font as f, lineHeightRatios as lh, monoFontFamily, systemFontFamily } from "./scales";
 
 // Authored in px; `toFontUnits` emits them as `rem` on the web (so browser text
@@ -13,9 +13,9 @@ const size = toFontUnits({
   lg: f.lg,
   xl: f.xl,
   xxl: f.xxl,
-  true: f.md,
 });
-const lineHeight = toFontUnits({
+// Line heights: rem on the web, `"<n>px"` on native (a bare number is a RATIO in v3).
+const lineHeight = toLineHeightUnits({
   xxs: Math.round(f.xxs * lh.xxs),
   xs: Math.round(f.xs * lh.xs),
   sm: Math.round(f.sm * lh.sm),
@@ -23,31 +23,33 @@ const lineHeight = toFontUnits({
   lg: Math.round(f.lg * lh.lg),
   xl: Math.round(f.xl * lh.xl),
   xxl: Math.round(f.xxl * lh.xxl),
-  true: Math.round(f.md * lh.md),
 });
-const weight = { 4: "400", 5: "500", 6: "600", 7: "700", true: "400" };
+const weight = { 4: "400", 5: "500", 6: "600", 7: "700" };
+// v3 reserves the `true` key, so letter spacing is declared on the first step and
+// `createFont` fills every other size key from it.
+const letterSpacing = { xxs: 0 };
 
 export const bodyFont = createFont({
   family: systemFontFamily,
   size,
   lineHeight,
   weight,
-  letterSpacing: { true: 0 },
+  letterSpacing,
 });
 
 export const headingFont = createFont({
   family: systemFontFamily,
   size,
   lineHeight,
-  weight: { ...weight, true: "700" },
-  letterSpacing: { true: 0 },
+  weight,
+  letterSpacing,
 });
 
 export const monoFont = createFont({
   family: monoFontFamily,
   size,
   lineHeight,
-  weight: { ...weight, true: "400" },
+  weight,
 });
 
 export const fonts = { body: bodyFont, heading: headingFont, mono: monoFont };

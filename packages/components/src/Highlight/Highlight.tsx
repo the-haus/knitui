@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps } from "@knitui/core";
+import { type GetProps, styleable } from "@knitui/core";
 
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Mark, type MarkProps } from "../Mark";
@@ -190,7 +190,7 @@ export interface HighlightProps extends Omit<GetProps<typeof Text>, "children"> 
  * `highlightStyles={{ hello: { theme: "red" }, world: { theme: "blue" } }}`.
  * Inherits the full `Text` surface (`size`, `fw`, `c`, …) and forwards its ref.
  */
-export const Highlight = Text.styleable<HighlightProps>(function Highlight(props, ref) {
+export const Highlight = styleable<HighlightProps>(Text, function Highlight(props, ref) {
   const {
     children,
     highlight,

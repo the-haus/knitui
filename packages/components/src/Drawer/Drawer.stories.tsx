@@ -50,7 +50,7 @@ const meta = {
     title: { control: "text" },
     offset: {
       control: "text",
-      description: "Gap between the panel and the viewport edge. Prefer `$space` tokens.",
+      description: "Gap between the panel and the viewport edge. Prefer space tokens (`md`).",
     },
     radius: { control: "text" },
     shadow: {
@@ -75,14 +75,14 @@ export const Playground: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open drawer
         </Text>
@@ -97,14 +97,14 @@ export const Trigger: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open drawer
         </Text>
@@ -115,7 +115,7 @@ export const Trigger: Story = {
           title="Controlled drawer"
         >
           <Text>This drawer is fully controlled — the parent manages the open state.</Text>
-          <Text marginTop="$md" color="$color11">
+          <Text marginTop="md" color="color11">
             Press the close button or click outside to dismiss it.
           </Text>
         </Drawer>
@@ -129,16 +129,16 @@ export const Positions: Story = {
   render: (args) => {
     const [position, setPosition] = React.useState<(typeof POSITIONS)[number] | null>(null);
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {POSITIONS.map((pos) => (
           <Text
             key={pos}
             onPress={() => setPosition(pos)}
-            padding="$sm"
-            paddingHorizontal="$md"
-            backgroundColor="$color5"
-            borderRadius="$sm"
-            color="$color12"
+            padding="sm"
+            paddingHorizontal="md"
+            backgroundColor="color5"
+            borderRadius="sm"
+            color="color12"
           >
             {pos}
           </Text>
@@ -162,16 +162,16 @@ export const Sizes: Story = {
   render: (args) => {
     const [size, setSize] = React.useState<(typeof SIZES)[number] | null>(null);
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {SIZES.map((s) => (
           <Text
             key={s}
             onPress={() => setSize(s)}
-            padding="$sm"
-            paddingHorizontal="$md"
-            backgroundColor="$color5"
-            borderRadius="$sm"
-            color="$color12"
+            padding="sm"
+            paddingHorizontal="md"
+            backgroundColor="color5"
+            borderRadius="sm"
+            color="color12"
           >
             {s}
           </Text>
@@ -195,14 +195,14 @@ export const NoTitle: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open (no title)
         </Text>
@@ -219,14 +219,14 @@ export const WithoutCloseButton: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open (no close button)
         </Text>
@@ -249,14 +249,14 @@ export const WithOffset: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open with offset
         </Text>
@@ -265,8 +265,8 @@ export const WithOffset: Story = {
           opened={opened}
           onClose={() => setOpened(false)}
           title="Offset drawer"
-          offset="$md"
-          radius="$md"
+          offset="md"
+          radius="md"
         >
           <Text>A tokenized gap separates this panel from the viewport edge.</Text>
         </Drawer>
@@ -283,12 +283,12 @@ export const WithOffset: Story = {
  */
 export const Shadows: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center" padding="$xl">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center" padding="xl">
       {SHADOWS.map((shadow) => (
         <Drawer.Content
           key={shadow}
           shadow={shadow}
-          radius="$md"
+          radius="md"
           alignSelf="auto"
           width={140}
           height={100}
@@ -307,14 +307,14 @@ export const CompoundAPI: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open (compound)
         </Text>
@@ -348,14 +348,14 @@ export const Styles: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box alignItems="center" justifyContent="center" padding="$lg">
+      <Box alignItems="center" justifyContent="center" padding="lg">
         <Text
           onPress={() => setOpened(true)}
-          padding="$sm"
-          paddingHorizontal="$md"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          color="$color12"
+          padding="sm"
+          paddingHorizontal="md"
+          backgroundColor="color5"
+          borderRadius="sm"
+          color="color12"
         >
           Open (styled)
         </Text>
@@ -365,9 +365,9 @@ export const Styles: Story = {
           onClose={() => setOpened(false)}
           title="Styled drawer"
           styles={{
-            overlay: { backgroundColor: "$blue3" },
-            content: { borderColor: "$blue9", borderWidth: 2 },
-            title: { color: "$blue11" },
+            overlay: { backgroundColor: "blue3" },
+            content: { borderColor: "blue9", borderWidth: 2 },
+            title: { color: "blue11" },
           }}
         >
           <Text>
@@ -390,16 +390,16 @@ export const DragToDismiss: Story = {
   render: (args) => {
     const [position, setPosition] = React.useState<(typeof POSITIONS)[number] | null>(null);
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {POSITIONS.map((pos) => (
           <Text
             key={pos}
             onPress={() => setPosition(pos)}
-            padding="$sm"
-            paddingHorizontal="$md"
-            backgroundColor="$color5"
-            borderRadius="$sm"
-            color="$color12"
+            padding="sm"
+            paddingHorizontal="md"
+            backgroundColor="color5"
+            borderRadius="sm"
+            color="color12"
           >
             {pos}
           </Text>

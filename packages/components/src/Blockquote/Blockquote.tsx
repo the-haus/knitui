@@ -3,21 +3,26 @@ import * as React from "react";
 import {
   createStyledContext,
   type GetProps,
-  getTokenValue,
+  resolveToken,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 
 import { Box } from "../Box";
 import { renderTextChild } from "../internal/render-text-child";
-import { endRadiusVariant, fontSizeVariant, type SizeKey } from "../internal/style-props";
+import {
+  endRadiusVariant,
+  fontSizeVariant,
+  type SizeKey,
+  tableVariant,
+} from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
 import { Text } from "../Text";
 
 type BlockquoteSize = SizeKey;
 type BlockquoteIconSize = BlockquoteSize | number;
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
 
 const DEFAULT_SIZE: BlockquoteSize = "md";
 const DEFAULT_ICON_SIZE: BlockquoteIconSize = "xl";
@@ -30,87 +35,90 @@ const BlockquoteContext = createStyledContext<{ size: BlockquoteSize }>({
  * Quotation block — mirrors Mantine's `Blockquote`. A solid accent border on the
  * inline-start edge, a subtle tinted surface, an optional `icon` badge floated
  * over the top-left corner, and an optional `cite`. Accent comes from the theme
- * ramp (`$color9` border, `$color2` surface, `$color11` icon); recolor via the
+ * ramp (`color9` border, `color2` surface, `color11` icon); recolor via the
  * `theme` prop. `radius` rounds the inline-end corners (the bordered edge stays
  * square). Renders a `<blockquote>` element.
  */
 const BlockquoteFrame = styled(Box, {
-  name: "Blockquote",
+  displayName: "Blockquote",
   context: BlockquoteContext,
   position: "relative",
-  backgroundColor: "$color2",
+  backgroundColor: "color2",
   borderLeftWidth: 3,
-  borderLeftColor: "$color9",
+  borderLeftColor: "color9",
 
   variants: {
     radius: endRadiusVariant,
     // Vertical padding stays a step below horizontal so a quote reads as a wide,
     // balanced block (not an over-tall box) — and the progression is smooth.
     size: {
-      xxs: { paddingVertical: "$xs", paddingHorizontal: "$sm" },
-      xs: { paddingVertical: "$sm", paddingHorizontal: "$md" },
-      sm: { paddingVertical: "$md", paddingHorizontal: "$lg" },
-      md: { paddingVertical: "$lg", paddingHorizontal: "$xl" },
-      lg: { paddingVertical: "$xl", paddingHorizontal: "$xl" },
-      xl: { paddingVertical: "$xl", paddingHorizontal: "$xxl" },
-      xxl: { paddingVertical: "$xxl", paddingHorizontal: "$xxl" },
+      xxs: { paddingVertical: "xs", paddingHorizontal: "sm" },
+      xs: { paddingVertical: "sm", paddingHorizontal: "md" },
+      sm: { paddingVertical: "md", paddingHorizontal: "lg" },
+      md: { paddingVertical: "lg", paddingHorizontal: "xl" },
+      lg: { paddingVertical: "xl", paddingHorizontal: "xl" },
+      xl: { paddingVertical: "xl", paddingHorizontal: "xxl" },
+      xxl: { paddingVertical: "xxl", paddingHorizontal: "xxl" },
     },
   } as const,
 
   defaultVariants: { radius: "md", size: DEFAULT_SIZE },
 });
 
+/** The badge square from the `size` token scale, or a raw px number. */
+const iconSizeVariant = tableVariant(
+  {
+    xxs: { width: "xxs", height: "xxs" },
+    xs: { width: "xs", height: "xs" },
+    sm: { width: "sm", height: "sm" },
+    md: { width: "md", height: "md" },
+    lg: { width: "lg", height: "lg" },
+    xl: { width: "xl", height: "xl" },
+    xxl: { width: "xxl", height: "xxl" },
+  },
+  (px: number) => ({ width: px, height: px }),
+);
+
 /** Circular accent badge floated over the top-left corner. */
 const BlockquoteIcon = styled(Box, {
-  name: "BlockquoteIcon",
+  displayName: "BlockquoteIcon",
   position: "absolute",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "$background",
+  backgroundColor: "background",
   borderRadius: 9999,
 
   variants: {
-    iconSize: {
-      xxs: { width: "$xxs", height: "$xxs" },
-      xs: { width: "$xs", height: "$xs" },
-      sm: { width: "$sm", height: "$sm" },
-      md: { width: "$md", height: "$md" },
-      lg: { width: "$lg", height: "$lg" },
-      xl: { width: "$xl", height: "$xl" },
-      xxl: { width: "$xxl", height: "$xxl" },
-      ":number": (val: number) => ({ width: val, height: val }),
-    },
+    iconSize: iconSizeVariant,
   } as const,
 
   defaultVariants: { iconSize: DEFAULT_ICON_SIZE },
 });
 
 const BlockquoteText = styled(Text, {
-  name: "BlockquoteText",
+  displayName: "BlockquoteText",
   context: BlockquoteContext,
   variants: {
-    size: {
-      ...fontSizeVariant,
-    },
+    size: fontSizeVariant,
   } as const,
 });
 
 /** Attribution line beneath the quote — dimmed and slightly smaller. */
 const BlockquoteCite = styled(Text, {
-  name: "BlockquoteCite",
+  displayName: "BlockquoteCite",
   context: BlockquoteContext,
   display: "flex",
   opacity: 0.6,
 
   variants: {
     size: {
-      xxs: { marginTop: "$xxs", fontSize: "$xxs" },
-      xs: { marginTop: "$xs", fontSize: "$xs" },
-      sm: { marginTop: "$sm", fontSize: "$xs" },
-      md: { marginTop: "$md", fontSize: "$sm" },
-      lg: { marginTop: "$lg", fontSize: "$sm" },
-      xl: { marginTop: "$xl", fontSize: "$md" },
-      xxl: { marginTop: "$xxl", fontSize: "$lg" },
+      xxs: { marginTop: "xxs", fontSize: "xxs" },
+      xs: { marginTop: "xs", fontSize: "xs" },
+      sm: { marginTop: "sm", fontSize: "xs" },
+      md: { marginTop: "md", fontSize: "sm" },
+      lg: { marginTop: "lg", fontSize: "sm" },
+      xl: { marginTop: "xl", fontSize: "md" },
+      xxl: { marginTop: "xxl", fontSize: "lg" },
     },
   } as const,
 
@@ -121,8 +129,8 @@ type BlockquoteFrameProps = Omit<GetProps<typeof BlockquoteFrame>, "size">;
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ cite: { color: "$red9" } }}` is
- * sugar for `<Blockquote.Cite color="$red9" />`. Mirrors the gold-standard `Alert`
+ * of the styled part it targets, so `styles={{ cite: { color: "red9" } }}` is
+ * sugar for `<Blockquote.Cite color="red9" />`. Mirrors the gold-standard `Alert`
  * shape. The root frame is reached via top-level props, so it has no slot.
  */
 export interface BlockquoteStyles {
@@ -143,7 +151,7 @@ const BLOCKQUOTE_SLOT_KEYS = [
 export interface BlockquoteProps extends BlockquoteFrameProps {
   /** Icon displayed in a badge at the top-left of the quote. */
   icon?: React.ReactNode;
-  /** Width/height of the icon badge. Token sizes use the `$size` scale; numbers are px. @default "xl" */
+  /** Width/height of the icon badge. Token sizes use the `size` scale; numbers are px. @default "xl" */
   iconSize?: BlockquoteIconSize;
   /** Attribution for the quote, rendered beneath it. */
   cite?: React.ReactNode;
@@ -153,13 +161,15 @@ export interface BlockquoteProps extends BlockquoteFrameProps {
   styles?: SlotStyles<BlockquoteStyles>;
 }
 
+/** Half the badge size, negated: floats the badge centre onto the corner. */
 function resolveIconOffset(iconSize: BlockquoteIconSize): number {
   if (typeof iconSize === "number") return -iconSize / 2;
-  const value = getTokenValue(`$${iconSize}` as TokenValueInput, "size");
+  const value = resolveToken(iconSize, "size");
   return typeof value === "number" ? -value / 2 : -24;
 }
 
-const BlockquoteComponent = BlockquoteFrame.styleable<BlockquoteProps>(
+const BlockquoteComponent = styleable<BlockquoteProps>(
+  BlockquoteFrame,
   function Blockquote(props, ref) {
     const {
       children,
@@ -187,8 +197,8 @@ const BlockquoteComponent = BlockquoteFrame.styleable<BlockquoteProps>(
             // (`iconSize` + corner offset) wins so the badge stays positioned.
             {...s.get("icon")}
             iconSize={iconSize}
-            top="$0"
-            left="$0"
+            top={0}
+            left={0}
             x={offset}
             y={offset}
           >

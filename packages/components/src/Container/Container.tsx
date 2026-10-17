@@ -14,25 +14,21 @@ export type ContainerSize = SizeKey;
  * Box — there is no Mantine `color` prop. (Mantine's web-only CSS-grid `strategy`
  * is out of scope; block centering is enough cross-platform.)
  */
-const ContainerFrame = styled(Box, {
-  name: "Container",
+export const Container = styled(Box, {
+  displayName: "Container",
   width: "100%",
   marginHorizontal: "auto",
-  paddingHorizontal: "$md",
+  paddingHorizontal: "md",
   variants: {
-    size: {
-      ...containerSizeVariant,
-    },
+    size: containerSizeVariant,
     /** Span the full parent width; wins over `size`'s max-width. */
-    fluid: {
-      true: { maxWidth: "100%" },
-    },
+    fluid: styled.dynamic<boolean>(),
   } as const,
   defaultVariants: { size: "md" },
-});
+})
+  // `fluid` must beat `size` regardless of prop order, so it lives one tier
+  // above the variants (a component resolver) instead of in the variant body,
+  // where the later-written prop would win. A call-site `maxWidth` still wins.
+  .resolve((props) => ({ maxWidth: props.fluid ? "100%" : undefined }));
 
-export type ContainerProps = GetProps<typeof ContainerFrame>;
-
-export const Container = ContainerFrame.styleable<ContainerProps>(function Container(props, ref) {
-  return <ContainerFrame ref={ref} {...props} />;
-});
+export type ContainerProps = GetProps<typeof Container>;

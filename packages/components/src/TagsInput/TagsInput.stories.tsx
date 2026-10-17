@@ -60,7 +60,7 @@ export const Playground: Story = {};
 /** All seven sizes rendered side by side so metrics can be compared at a glance. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
         <TagsInput
           key={size}
@@ -78,7 +78,7 @@ export const Sizes: Story = {
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SHADOWS.map((shadow) => (
         <TagsInput
           key={shadow}
@@ -156,7 +156,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string[]>(["react", "tamagui"]);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <TagsInput
           {...args}
           label="Controlled tags"
@@ -177,8 +177,8 @@ export const Styles: Story = {
     defaultValue: ["alpha", "beta", "gamma"],
     placeholder: "Add tag…",
     styles: {
-      pill: { backgroundColor: "$blue3" },
-      trigger: { borderColor: "$blue7" },
+      pill: { backgroundColor: "blue3" },
+      trigger: { borderColor: "blue7" },
     },
   },
 };

@@ -63,7 +63,7 @@ export const Playground: Story = {};
 /** The full seven-step type scale, each size on its own line. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
         <Paragraph key={size} {...args} size={size}>
           {size} - {SAMPLE_TEXT}
@@ -119,10 +119,11 @@ export const RichChildren: Story = {
 /** `inherit` forwards all font properties from a parent element. */
 export const Inherit: Story = {
   render: (args) => (
-    <Box gap="$sm">
+    <Box gap="sm">
       <Paragraph size="xl">
         Parent at xl - child below inherits:
-        <Paragraph {...args} inherit size={undefined}>
+        {/* An inline host: a `<p>` cannot nest inside another `<p>`. */}
+        <Paragraph {...args} inherit render="span">
           {" "}
           I inherit the xl font from my parent.
         </Paragraph>
@@ -134,10 +135,10 @@ export const Inherit: Story = {
 /** All sizes in a stacked comparison. */
 export const ScaleComparison: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" alignItems="baseline" gap="$sm">
-          <Paragraph size="xs" theme="gray" width="$md">
+        <Box key={size} flexDirection="row" alignItems="baseline" gap="sm">
+          <Paragraph size="xs" theme="gray" width="md">
             {size}
           </Paragraph>
           <Paragraph size={size}>The quick brown fox jumps over the lazy dog.</Paragraph>

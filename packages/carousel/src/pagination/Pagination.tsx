@@ -51,6 +51,9 @@ interface DotProps {
   renderDot?: (index: number, selected: boolean) => React.ReactNode;
 }
 
+/** The dot eases only what its two states change (not layout). */
+const DOT_TRANSITION_PROPERTIES = "transform, opacity, backgroundColor";
+
 function DotInner({
   index,
   selected,
@@ -66,7 +69,7 @@ function DotInner({
   //
   // Reduced-motion-safe transition key (null under prefers-reduced-motion); this
   // is what eases the scale/opacity/colour change between the two dot states.
-  const dotTransition = useReducedTransition("fast");
+  const dotTransition = useReducedTransition("fast", DOT_TRANSITION_PROPERTIES);
 
   // Slide dots are a button group with `aria-current` on the active one — the
   // APG-correct choice without associated tabpanels (a tablist would need them).

@@ -108,7 +108,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side, at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Button key={variant} {...args} variant={variant}>
           {variant}
@@ -121,7 +121,7 @@ export const Variants: Story = {
 /** The seven token sizes, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Button key={size} {...args} size={size}>
           {size}
@@ -137,7 +137,7 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Button key={shadow} {...args} shadow={shadow}>
           {shadow}
@@ -181,7 +181,7 @@ export const WithSections: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <Button key={theme} {...args} theme={theme}>
           {theme}
@@ -194,7 +194,7 @@ export const Themed: Story = {
 /** `Button.Group` attaches buttons flush together; `orientation` flips the axis. */
 export const Group: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Button.Group>
         <Button {...args} variant="default">
           Left
@@ -239,9 +239,9 @@ export const GroupSection: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Button key={size} variant={variant} size={size}>
               {variant}
@@ -256,14 +256,14 @@ export const Matrix: Story = {
 /** Gradient fills — the themed default ramp, a two-color shorthand, a token gradient, and a multi-step stops gradient. */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Button {...args} variant="gradient">
         Themed
       </Button>
       <Button {...args} variant="gradient" gradient={{ from: "#4f46e5", to: "#ec4899", deg: 60 }}>
         Shorthand
       </Button>
-      <Button {...args} variant="gradient" gradient={{ from: "$blue9", to: "$teal9" }}>
+      <Button {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
         Tokens
       </Button>
       <Button {...args} variant="gradient" gradient={GRADIENT_PRESETS.Spectrum}>
@@ -276,7 +276,7 @@ export const Gradient: Story = {
 /** A handful of curated gradient presets — both two-color and multi-step. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <Button key={name} {...args} variant="gradient" gradient={gradient}>
           {name}
@@ -289,7 +289,7 @@ export const GradientPresets: Story = {
 /** With no `gradient` prop, `variant="gradient"` falls back to the active theme's ramp. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "orange", "pink", "teal"] as const).map((theme) => (
         <Button key={theme} {...args} variant="gradient" theme={theme}>
           {theme}
@@ -302,7 +302,7 @@ export const GradientThemed: Story = {
 /** A gradient fill across the seven token sizes. */
 export const GradientSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Button
           key={size}
@@ -321,7 +321,7 @@ export const GradientSizes: Story = {
 /** The same two-color gradient swept through a range of angles. */
 export const GradientAngles: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {[0, 45, 90, 135, 180].map((deg) => (
         <Button
           key={deg}
@@ -343,8 +343,8 @@ export const Styles: Story = {
     variant: "default",
     rightSection: <Text>→</Text>,
     styles: {
-      label: { color: "$blue11", fontWeight: "700" },
-      right: { backgroundColor: "$red3" },
+      label: { color: "blue11", fontWeight: "700" },
+      right: { backgroundColor: "red3" },
     },
   },
 };

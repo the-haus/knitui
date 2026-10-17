@@ -8,7 +8,7 @@
 import * as React from "react";
 
 import { ActionIcon, Box, Menu, Slider, Text } from "@knitui/components";
-import { isWeb } from "@knitui/core";
+import { isWeb, styled } from "@knitui/core";
 import { IconCheck } from "@knitui/icons/IconCheck";
 import { IconMaximize } from "@knitui/icons/IconMaximize";
 import { IconMinimize } from "@knitui/icons/IconMinimize";
@@ -17,8 +17,14 @@ import { IconPictureInPictureOff } from "@knitui/icons/IconPictureInPictureOff";
 import { IconSettings } from "@knitui/icons/IconSettings";
 
 import { clampMediaSize } from "../control-size";
+import {
+  formatVolumeLabel,
+  hoverProps,
+  VERTICAL_VOLUME_STYLES,
+  VOLUME_LENGTH,
+} from "../shared/chrome";
 import { OnScrimIcons, useHoldWhileOpen, volumeIconFor } from "./Video.chrome.internal";
-import { hoverProps, shallowEqual, useVideo, useVideoState } from "./Video.shared";
+import { shallowEqual, useVideo, useVideoState } from "./Video.shared";
 
 /* -------------------------------------------------------------------------- */
 /* Volume                                                                     */
@@ -28,9 +34,6 @@ export interface VolumeSliderProps {
   /** Layout axis. Default `'horizontal'`. */
   orientation?: "horizontal" | "vertical";
 }
-
-/** Compact main-axis length for either orientation (px). */
-const VOLUME_LENGTH = 84;
 
 /**
  * The bare volume slider. Horizontal by default; pass `orientation="vertical"`
@@ -45,6 +48,16 @@ export const VolumeSlider = React.memo(function VolumeSlider({
     (s) => ({ muted: s.muted, volume: s.volume }),
     shallowEqual,
   );
+  const mutedRef = React.useRef(muted);
+  mutedRef.current = muted;
+  const onChange = React.useCallback(
+    (v: number) => {
+      keepAlive();
+      controller.setVolume(v);
+      if (mutedRef.current && v > 0) controller.setMuted(false);
+    },
+    [controller, keepAlive],
+  );
   if (!capabilities.canSetVolume) return null;
   const vertical = orientation === "vertical";
   const slider = (
@@ -55,17 +68,25 @@ export const VolumeSlider = React.memo(function VolumeSlider({
       max={1}
       step={0.05}
       size="xs"
-      label={(v: number) => `${Math.round(v * 100)}%`}
+      label={formatVolumeLabel}
       aria-label="Volume"
-      styles={vertical ? { trackContainer: { height: VOLUME_LENGTH } } : undefined}
-      onChange={(v: number) => {
-        keepAlive();
-        controller.setVolume(v);
-        if (muted && v > 0) controller.setMuted(false);
-      }}
+      {...(vertical ? { styles: VERTICAL_VOLUME_STYLES } : null)}
+      onChange={onChange}
     />
   );
   return vertical ? slider : <Box width={VOLUME_LENGTH}>{slider}</Box>;
+});
+
+/** The vertical volume flyout, flush against the trigger's top edge. */
+const VolumeFlyout = styled(Box, {
+  displayName: "VideoVolumeFlyout",
+  position: "absolute",
+  bottom: "100%",
+  alignItems: "center",
+  paddingVertical: "sm",
+  paddingHorizontal: "xs",
+  borderRadius: "sm",
+  backgroundColor: "mediaControlSurface",
 });
 
 /**
@@ -84,6 +105,14 @@ export const VolumeControl = React.memo(function VolumeControl(): React.ReactEle
   const off = muted || volume === 0;
   const VolumeIcon = volumeIconFor(muted, volume);
   const [open, setOpen] = React.useState(false);
+  const flyoutHover = React.useMemo(
+    () =>
+      hoverProps(
+        () => setOpen(true),
+        () => setOpen(false),
+      ),
+    [],
+  );
 
   // The flyout has no hover-out on native, so dismiss it with the chrome.
   React.useEffect(() => {
@@ -110,27 +139,13 @@ export const VolumeControl = React.memo(function VolumeControl(): React.ReactEle
   if (!capabilities.canSetVolume) return trigger;
 
   return (
-    <Box
-      position="relative"
-      alignItems="center"
-      {...hoverProps(
-        isWeb ? { onHoverIn: () => setOpen(true), onHoverOut: () => setOpen(false) } : {},
-      )}
-    >
+    <Box position="relative" alignItems="center" {...flyoutHover}>
       {open ? (
         // Flush against the trigger's top edge (no gap) so the pointer can
         // travel into the flyout without a hover-out closing it.
-        <Box
-          position="absolute"
-          bottom="100%"
-          alignItems="center"
-          paddingVertical="$sm"
-          paddingHorizontal="$xs"
-          borderRadius="$sm"
-          backgroundColor="$mediaControlSurface"
-        >
+        <VolumeFlyout>
           <VolumeSlider orientation="vertical" />
-        </Box>
+        </VolumeFlyout>
       ) : null}
       {trigger}
     </Box>
@@ -154,10 +169,11 @@ export const PlaybackRateMenu = React.memo(function PlaybackRateMenu(): React.Re
         <ActionIcon
           size={clampMediaSize(size)}
           variant="transparent"
-          aria-label="Playback speed"
+          // The visible rate must be part of the name (WCAG 2.5.3 label-in-name).
+          aria-label={`Playback speed ${playbackRate}×`}
           onPress={keepAlive}
         >
-          <Text size="xs" fontWeight="700" color="$mediaOnScrim">
+          <Text size="xs" fontWeight="700" color="mediaOnScrim">
             {playbackRate}×
           </Text>
         </ActionIcon>

@@ -1,13 +1,18 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useUncontrolled } from "@knitui/hooks";
 
-import { Box, type BoxProps } from "../Box";
+import { Box } from "../Box";
 import { HiddenInput } from "../internal/hidden-input";
 import { usePressScale, useReducedTransition } from "../internal/motion";
 import {
-  animateOnlyProps,
   controlFontVariant,
   controlVariant,
   focusRingStyle,
@@ -41,15 +46,15 @@ const SegmentedControlContext = createStyledContext<{
 
 /**
  * Mirrors Mantine's `SegmentedControl` — a single-select row (or column) of
- * mutually-exclusive options. The active option sits on a raised `$background`
- * indicator that slides animatedly over a `$color3` track. Accent comes from
+ * mutually-exclusive options. The active option sits on a raised `background`
+ * indicator that slides animatedly over a `color3` track. Accent comes from
  * the active theme's palette ramp via the `theme` prop, never a Mantine `color`
  * prop.
  */
 const SegmentedControlRoot = styled(Box, {
-  name: "SegmentedControl",
+  displayName: "SegmentedControl",
   context: SegmentedControlContext,
-  backgroundColor: "$color3",
+  backgroundColor: "color3",
   alignSelf: "flex-start",
   position: "relative",
 
@@ -59,13 +64,13 @@ const SegmentedControlRoot = styled(Box, {
       vertical: { flexDirection: "column" },
     },
     size: {
-      xxs: { padding: "$xxs", borderRadius: "$xs" },
-      xs: { padding: "$xxs", borderRadius: "$sm" },
-      sm: { padding: "$xxs", borderRadius: "$sm" },
-      md: { padding: "$xxs", borderRadius: "$md" },
-      lg: { padding: "$xxs", borderRadius: "$md" },
-      xl: { padding: "$xxs", borderRadius: "$lg" },
-      xxl: { padding: "$xxs", borderRadius: "$lg" },
+      xxs: { padding: "xxs", borderRadius: "xs" },
+      xs: { padding: "xxs", borderRadius: "sm" },
+      sm: { padding: "xxs", borderRadius: "sm" },
+      md: { padding: "xxs", borderRadius: "md" },
+      lg: { padding: "xxs", borderRadius: "md" },
+      xl: { padding: "xxs", borderRadius: "lg" },
+      xxl: { padding: "xxs", borderRadius: "lg" },
     },
     radius: radiusVariant,
     shadow: shadowVariant,
@@ -82,18 +87,62 @@ const SegmentedControlRoot = styled(Box, {
 
 /** Border-radius tokens matching each size's control variant, for the control + floating indicator. */
 const INDICATOR_RADIUS = {
-  xxs: "$xxs",
-  xs: "$xs",
-  sm: "$xs",
-  md: "$sm",
-  lg: "$sm",
-  xl: "$md",
-  xxl: "$md",
+  xxs: "xxs",
+  xs: "xs",
+  sm: "xs",
+  md: "sm",
+  lg: "sm",
+  xl: "md",
+  xxl: "md",
 } as const satisfies Record<SegmentedControlSize, string>;
+
+/**
+ * The floating active-item indicator. Static look (v3 resolves the bare
+ * `dropShadowColor` theme name inside the `boxShadow` recipe on web and native);
+ * only its measured box (left/top/width/height) is passed at render.
+ */
+const SegmentedControlIndicator = styled(Box, {
+  displayName: "SegmentedControlIndicator",
+  position: "absolute",
+  backgroundColor: "background",
+  boxShadow: "0px 1px 4px 0px dropShadowColor",
+  zIndex: 0,
+  pointerEvents: "none",
+
+  variants: {
+    size: {
+      xxs: { borderRadius: INDICATOR_RADIUS.xxs },
+      xs: { borderRadius: INDICATOR_RADIUS.xs },
+      sm: { borderRadius: INDICATOR_RADIUS.sm },
+      md: { borderRadius: INDICATOR_RADIUS.md },
+      lg: { borderRadius: INDICATOR_RADIUS.lg },
+      xl: { borderRadius: INDICATOR_RADIUS.xl },
+      xxl: { borderRadius: INDICATOR_RADIUS.xxl },
+    },
+  } as const,
+});
+
+/** Thin divider between two inactive neighbours. */
+const SegmentedControlSeparator = styled(Box, {
+  displayName: "SegmentedControlSeparator",
+  backgroundColor: "color5",
+  alignSelf: "center",
+  zIndex: 1,
+
+  variants: {
+    orientation: {
+      horizontal: { width: 1, height: "60%" },
+      vertical: { height: 1, width: "60%" },
+    },
+  } as const,
+});
+
+/** The indicator slides on its layout box only. */
+const INDICATOR_TRANSITION_PROPERTIES = ["left", "top", "width", "height"] as const;
 
 /** One pressable segment. Background is transparent — the floating indicator handles the active look. */
 const SegmentedControlControl = styled(Box, {
-  name: "SegmentedControlControl",
+  displayName: "SegmentedControlControl",
   context: SegmentedControlContext,
   alignItems: "center",
   justifyContent: "center",
@@ -119,7 +168,7 @@ const SegmentedControlControl = styled(Box, {
       // Keep variant for API/type parity — visual is handled by the floating indicator.
       true: {},
       false: {
-        hoverStyle: { backgroundColor: "$color4" },
+        backgroundColor: "hover:color4",
       },
     },
     grow: {
@@ -134,7 +183,7 @@ const SegmentedControlControl = styled(Box, {
 });
 
 const SegmentedControlLabel = styled(Text, {
-  name: "SegmentedControlLabel",
+  displayName: "SegmentedControlLabel",
   context: SegmentedControlContext,
   fontWeight: "500",
   userSelect: "none",
@@ -145,8 +194,8 @@ const SegmentedControlLabel = styled(Text, {
       ...controlFontVariant,
     },
     active: {
-      true: { color: "$color12" },
-      false: { color: "$color11" },
+      true: { color: "color12" },
+      false: { color: "color11" },
     },
   } as const,
 });
@@ -172,9 +221,21 @@ export const SEGMENTED_CONTROL_SLOTS = [
   "label",
 ] as const satisfies readonly (keyof SegmentedControlSlots)[];
 
+/**
+ * `transitionDuration` / `transitionTimingFunction` are CSS style props in v3;
+ * the root's own ones are omitted because here they configure the INDICATOR
+ * slide (Mantine's names, in ms / easing keyword).
+ */
 export interface SegmentedControlProps extends Omit<
   GetProps<typeof SegmentedControlRoot>,
-  "children" | "disabled" | "fullWidth" | "onChange" | "orientation" | "size"
+  | "children"
+  | "disabled"
+  | "fullWidth"
+  | "onChange"
+  | "orientation"
+  | "size"
+  | "transitionDuration"
+  | "transitionTimingFunction"
 > {
   /** Options to render — bare strings or `{ value, label, disabled }`. */
   data: (string | SegmentedControlItem)[];
@@ -232,7 +293,8 @@ function SegmentedControlHiddenInput(props: SegmentedControlHiddenInputProps) {
   return <HiddenInput name={name} value={value} disabled={disabled} />;
 }
 
-const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProps>(
+const SegmentedControlBase = styleable<SegmentedControlProps>(
+  SegmentedControlRoot,
   function SegmentedControl(props, ref) {
     const {
       data,
@@ -257,6 +319,7 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
     const press = usePressScale();
     const indicatorTransition = useReducedTransition(
       timedTransition(transitionDuration, transitionTimingFunction),
+      INDICATOR_TRANSITION_PROPERTIES,
     );
 
     const s = slotStyles<SegmentedControlSlots>(
@@ -334,7 +397,6 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
     };
 
     const keyboardProps: object = { onKeyDown: handleKeyDown };
-    const sepColor: BoxProps["backgroundColor"] = "$color5";
 
     return (
       <SegmentedControlRoot
@@ -353,26 +415,18 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
         <SegmentedControlHiddenInput name={name} value={current} disabled={disabled} />
 
         {/* Floating animated indicator — rendered first so it sits below item content.
-            The slide animates the layout props left/top/width/height (deferred the
-            transform-based slide: segments may differ in size, so a scaleX/scaleY
-            slide would distort the indicator's border-radius + shadow and regress the
-            look — kept the layout animation, scoped via animateOnly). Honors the
-            component's transitionDuration/transitionTimingFunction; null when reduced
-            motion is requested so the indicator snaps to position. */}
+            The slide animates the layout props left/top/width/height (a transform
+            slide would distort the radius + shadow when segments differ in size),
+            scoped with the v3 transition `properties`. Honors transitionDuration /
+            transitionTimingFunction; `null` under reduced motion (snaps). */}
         {activeLayout ? (
-          <Box
-            position="absolute"
+          <SegmentedControlIndicator
+            size={size}
             left={activeLayout.x}
             top={activeLayout.y}
             width={activeLayout.width}
             height={activeLayout.height}
-            backgroundColor="$background"
-            borderRadius={INDICATOR_RADIUS[size]}
-            boxShadow="0px 1px 4px 0px $dropShadowColor"
             {...indicatorTransition}
-            {...animateOnlyProps(["left", "top", "width", "height"])}
-            zIndex={0}
-            pointerEvents="none"
           />
         ) : null}
 
@@ -382,16 +436,7 @@ const SegmentedControlBase = SegmentedControlRoot.styleable<SegmentedControlProp
           const showSeparator = withItemsBorders && index > 0 && !active && !prevActive;
           return (
             <React.Fragment key={item.value}>
-              {showSeparator ? (
-                <Box
-                  backgroundColor={sepColor}
-                  alignSelf="center"
-                  zIndex={1}
-                  {...(orientation === "horizontal"
-                    ? { width: 1, height: "60%" }
-                    : { height: 1, width: "60%" })}
-                />
-              ) : null}
+              {showSeparator ? <SegmentedControlSeparator orientation={orientation} /> : null}
               <SegmentedControlControl
                 {...press}
                 size={size}

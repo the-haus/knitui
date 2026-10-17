@@ -16,7 +16,7 @@
 // a11y/interaction (#11/#12) to `Month`/`Day`. The numbered rules in
 // `_reference/README.md` that apply here: #1 (this header), #2 (shared size
 // context), #7 (`styles` sugar + `getDayProps` passthrough — owned by `Month`),
-// #9 (locale), #10 (min/max bounds), #11 (delegated a11y), #13 (`.styleable` +
+// #9 (locale), #10 (min/max bounds), #11 (delegated a11y), #13 (`styleable()` +
 // typed ref), #14 (`withStaticProperties`), #15 (no dynamic hide styles — none
 // used here). Unlike `DecadeLevel`, a month is NOT the top level: it zooms out to
 // a year, so the level control stays interactive (`onLevelClick`/`hasNextLevel`).
@@ -31,6 +31,7 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -59,10 +60,10 @@ const MonthLevelContext = createStyledContext<{ size: CalendarSize }>({ size: "m
 
 // ── 5/13. Styled root ─────────────────────────────────────────────────────────
 // The level root is a styled `Box` column (the dates norm: a real styled part so
-// `.styleable` can forward a ref + style props onto it). It establishes the
+// `styleable()` can forward a ref + style props onto it). It establishes the
 // shared `size` context; the header and grid own the `size` variant themselves.
 const MonthLevelFrame = styled(Box, {
-  name: "MonthLevel",
+  displayName: "MonthLevel",
   context: MonthLevelContext,
   flexDirection: "column",
 
@@ -152,7 +153,7 @@ export interface MonthLevelProps extends MonthLevelFrameProps, MonthLevelSetting
  * locale. All `__onDay*` / `__getDayRef` / `__preventFocus` / `__stopPropagation`
  * plumbing is forwarded straight to the `Month`.
  *
- * Per-slot style sugar: `styles={{ headerControl: { borderRadius: "$lg" } }}` routes
+ * Per-slot style sugar: `styles={{ headerControl: { borderRadius: "lg" } }}` routes
  * onto the matching part; per-cell tuning stays on `getDayProps(date)`. The day
  * grid's a11y/interaction/sizing are delegated to `Month`/`Day` and the header to
  * `CalendarHeader`. Forwards its ref + style props to the root.
@@ -160,7 +161,8 @@ export interface MonthLevelProps extends MonthLevelFrameProps, MonthLevelSetting
  * @example
  * <MonthLevel month="2024-01-01" onNext={nextMonth} onPrevious={prevMonth} onLevelClick={zoomOut} />
  */
-const MonthLevelComponent = MonthLevelFrame.styleable<MonthLevelProps>(
+const MonthLevelComponent = styleable<MonthLevelProps>(
+  MonthLevelFrame,
   function MonthLevel(props, ref) {
     const {
       // Month settings

@@ -22,6 +22,95 @@ import globals from "globals";
  * conflict. Net effect: `pnpm lint` flags formatting issues across every
  * package and `pnpm lint:fix` reformats them. `pnpm format` still works too.
  */
+/**
+ * Tamagui v3 guardrails (docs/v3/conventions.md §1, §2, §5), as one
+ * `no-restricted-syntax` block for shipped source (`src/**`, stories and tests
+ * included). Each group can be switched off by the one package that owns the
+ * construct:
+ *
+ * - `tamaguiImports` — only `@knitui/core` (and the `@knitui/plugins` bundler
+ *   wrappers) import `tamagui` / `@tamagui/*`; everything else imports the v3
+ *   surface from `@knitui/core`.
+ * - `styleable` — v2's `Frame.styleable(…)` is gone in v3; use
+ *   `styleable(Frame, …)` from `@knitui/core`.
+ * - `sigil` — v3 tokens have no `$`, so `v[0] === "$"`, `charCodeAt(0) === 36`
+ *   and `startsWith("$")` silently stop detecting tokens. Use `isToken` /
+ *   `resolveToken` from `@knitui/core`. (`@knitui/core` implements those, and
+ *   `@knitui/map`'s MapLibre `$type` expressions are not Tamagui tokens.)
+ *
+ * @param {{ tamaguiImports?: boolean, styleable?: boolean, sigil?: boolean }} [groups]
+ */
+export function tamaguiV3Restrictions({
+  tamaguiImports = true,
+  styleable = true,
+  sigil = true,
+} = {}) {
+  const TAMAGUI_SOURCE = "/^(tamagui|@tamagui\\/)/";
+  const importMessage =
+    "Import Tamagui APIs from `@knitui/core` (only packages/core/src and packages/plugins may import `tamagui` / `@tamagui/*`).";
+  const sigilMessage =
+    "v3 tokens have no `$` sigil — detecting tokens by shape silently fails. Use `isToken()` / `resolveToken()` from `@knitui/core`.";
+  const equality = "/^[!=]==?$/";
+  const selectors = [
+    ...(tamaguiImports
+      ? [
+          { selector: `ImportDeclaration[source.value=${TAMAGUI_SOURCE}]`, message: importMessage },
+          {
+            selector: `ExportNamedDeclaration[source.value=${TAMAGUI_SOURCE}]`,
+            message: importMessage,
+          },
+          {
+            selector: `ExportAllDeclaration[source.value=${TAMAGUI_SOURCE}]`,
+            message: importMessage,
+          },
+          { selector: `ImportExpression[source.value=${TAMAGUI_SOURCE}]`, message: importMessage },
+        ]
+      : []),
+    ...(styleable
+      ? [
+          {
+            selector:
+              "CallExpression[callee.type='MemberExpression'][callee.property.name='styleable']",
+            message:
+              "`.styleable()` was removed in Tamagui v3. Use `styleable<Props>(Frame, render)` from `@knitui/core` (and only for real behaviour; see conventions §5).",
+          },
+        ]
+      : []),
+    ...(sigil
+      ? [
+          {
+            selector: `BinaryExpression[operator=${equality}][left.callee.property.name='charCodeAt'][right.value=36]`,
+            message: sigilMessage,
+          },
+          {
+            selector: `BinaryExpression[operator=${equality}][right.callee.property.name='charCodeAt'][left.value=36]`,
+            message: sigilMessage,
+          },
+          {
+            selector: `BinaryExpression[operator=${equality}][left.type='MemberExpression'][left.computed=true][left.property.value=0][right.value='$']`,
+            message: sigilMessage,
+          },
+          {
+            selector: `BinaryExpression[operator=${equality}][right.type='MemberExpression'][right.computed=true][right.property.value=0][left.value='$']`,
+            message: sigilMessage,
+          },
+          {
+            selector: `BinaryExpression[operator=${equality}][left.callee.property.name='charAt'][right.value='$']`,
+            message: sigilMessage,
+          },
+          {
+            selector: "CallExpression[callee.property.name='startsWith'][arguments.0.value='$']",
+            message: sigilMessage,
+          },
+        ]
+      : []),
+  ];
+  return {
+    files: ["src/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+    rules: { "no-restricted-syntax": selectors.length ? ["error", ...selectors] : "off" },
+  };
+}
+
 const base = [
   // Never lint build output, deps, or scratch dirs.
   {
@@ -194,6 +283,10 @@ const base = [
       ],
     },
   },
+
+  // Tamagui v3 guardrails — see `tamaguiV3Restrictions` above. Packages that own
+  // a restricted construct re-add the block with that group switched off.
+  tamaguiV3Restrictions(),
 
   // Plain JS / CJS files (build-tool plugins, configs, scripts) are CommonJS by
   // nature — `require()` is correct here, and they run in Node.

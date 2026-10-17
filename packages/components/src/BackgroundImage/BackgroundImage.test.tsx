@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { BackgroundImage } from "./BackgroundImage";
 
@@ -104,5 +105,28 @@ describe("BackgroundImage", () => {
       </BackgroundImage>,
     );
     expect(ref.current).not.toBeNull();
+  });
+
+  it("resolves a radius token onto the clipping frame", () => {
+    render(
+      <BackgroundImage testID="bg-frame" src="https://example.com/bg.jpg" radius="md">
+        <span>R</span>
+      </BackgroundImage>,
+    );
+    const rules = cssRulesOf(screen.getByTestId("bg-frame")).join("\n");
+    expect(rules).toMatch(/border-.*radius: var\(--t-radius-md\)/);
+    expect(rules).toContain("overflow");
+  });
+
+  it("lets imageProps.fit through when the component's own fit is absent", () => {
+    render(<BackgroundImage src="https://example.com/bg.jpg" imageProps={{ fit: "fill" }} />);
+    expect(document.querySelector("img")?.style.objectFit).toBe("fill");
+  });
+
+  it("tiles a web background for resizeMode='repeat' instead of an <img>", () => {
+    render(<BackgroundImage testID="bg-r" src="https://example.com/t.png" resizeMode="repeat" />);
+    expect(document.querySelector("img")).toBeNull();
+    const tile = screen.getByTestId("bg-r").firstElementChild as HTMLElement;
+    expect(tile.getAttribute("aria-hidden")).toBe("true");
   });
 });

@@ -5,13 +5,13 @@ import { Text } from "../Text";
 /**
  * Body paragraph — `Text` rendered as a semantic `<p>` (Mantine's
  * `<Text component="p">`). Inherits all `Text` features.
+ *
+ * A plain `styled()` component (flattenable): the `<p>` host is a static
+ * `render` default, so a caller can still pick another host (`render="div"`).
  */
-const ParagraphFrame = styled(Text, {
-  name: "Paragraph",
+export const Paragraph = styled(Text, {
+  displayName: "Paragraph",
+  render: "p",
 });
 
-export interface ParagraphProps extends GetProps<typeof ParagraphFrame> {}
-
-export const Paragraph = ParagraphFrame.styleable<ParagraphProps>(function Paragraph(props, ref) {
-  return <ParagraphFrame ref={ref} {...props} render="p" />;
-});
+export type ParagraphProps = GetProps<typeof Paragraph>;

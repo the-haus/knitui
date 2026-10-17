@@ -1,4 +1,4 @@
-import { getTokenValue } from "@knitui/core";
+import { resolveToken } from "@knitui/core";
 
 /**
  * THE canonical control-sizing table — the single source of truth for how every
@@ -8,7 +8,7 @@ import { getTokenValue } from "@knitui/core";
  * and radius is defined exactly once. Re-tune a column here and Button, Input,
  * Badge, Avatar, Progress, and Slider all move together.
  *
- * Every value is a TOKEN KEY (`"$md"`), which resolves per-property: `$md` is
+ * Every value is a bare TOKEN NAME (`"md"`), which resolves per-property: `md` is
  * `size.md` (40) on `height`, `space.md` (16) on `paddingHorizontal`/`gap`,
  * `font.md` (18) on `fontSize`, `radius.md` (8) on `borderRadius`. See
  * `core/config/scales.ts` for the raw numbers and `docs/sizing/README.md` for the
@@ -26,70 +26,70 @@ import { getTokenValue } from "@knitui/core";
  * (Resolved from `core/config/scales.ts`; this table had drifted from it.)
  *
  * `fontSize` is intentionally CLAMPED at the bottom two steps (xxs/xs borrow the
- * 12px `$xxs` font instead of their same-key font) so tiny controls aren't
- * dominated by text. `md` takes `$sm` (16), not its same-key 18: 18px put the
+ * 12px `xxs` font instead of their same-key font) so tiny controls aren't
+ * dominated by text. `md` takes `sm` (16), not its same-key 18: 18px put the
  * default 40px control's label at heading size — larger than the body text
  * around it — and left no 16 step between `sm` (14) and `lg` (20). `borderRadius` is
- * CAPPED at `$lg` (16) so large controls stay rectangles, not accidental pills.
+ * CAPPED at `lg` (16) so large controls stay rectangles, not accidental pills.
  * `paddingHorizontalPill` is the standard padding bumped one space step — the one
  * sanctioned divergence, used by the pill family (Badge/Chip/Pill).
  */
 export const controlMetrics = {
   xxs: {
-    height: "$xxs",
-    fontSize: "$xxs",
-    paddingHorizontal: "$xxs",
-    paddingHorizontalPill: "$xs",
-    gap: "$xxs",
-    borderRadius: "$xs",
+    height: "xxs",
+    fontSize: "xxs",
+    paddingHorizontal: "xxs",
+    paddingHorizontalPill: "xs",
+    gap: "xxs",
+    borderRadius: "xs",
   },
   xs: {
-    height: "$xs",
-    fontSize: "$xxs",
-    paddingHorizontal: "$xs",
-    paddingHorizontalPill: "$sm",
-    gap: "$xxs",
-    borderRadius: "$xs",
+    height: "xs",
+    fontSize: "xxs",
+    paddingHorizontal: "xs",
+    paddingHorizontalPill: "sm",
+    gap: "xxs",
+    borderRadius: "xs",
   },
   sm: {
-    height: "$sm",
-    fontSize: "$xs",
-    paddingHorizontal: "$sm",
-    paddingHorizontalPill: "$md",
-    gap: "$xs",
-    borderRadius: "$sm",
+    height: "sm",
+    fontSize: "xs",
+    paddingHorizontal: "sm",
+    paddingHorizontalPill: "md",
+    gap: "xs",
+    borderRadius: "sm",
   },
   md: {
-    height: "$md",
-    fontSize: "$sm",
-    paddingHorizontal: "$md",
-    paddingHorizontalPill: "$lg",
-    gap: "$xs",
-    borderRadius: "$sm",
+    height: "md",
+    fontSize: "sm",
+    paddingHorizontal: "md",
+    paddingHorizontalPill: "lg",
+    gap: "xs",
+    borderRadius: "sm",
   },
   lg: {
-    height: "$lg",
-    fontSize: "$lg",
-    paddingHorizontal: "$lg",
-    paddingHorizontalPill: "$xl",
-    gap: "$sm",
-    borderRadius: "$md",
+    height: "lg",
+    fontSize: "lg",
+    paddingHorizontal: "lg",
+    paddingHorizontalPill: "xl",
+    gap: "sm",
+    borderRadius: "md",
   },
   xl: {
-    height: "$xl",
-    fontSize: "$xl",
-    paddingHorizontal: "$xl",
-    paddingHorizontalPill: "$xl",
-    gap: "$sm",
-    borderRadius: "$md",
+    height: "xl",
+    fontSize: "xl",
+    paddingHorizontal: "xl",
+    paddingHorizontalPill: "xl",
+    gap: "sm",
+    borderRadius: "md",
   },
   xxl: {
-    height: "$xxl",
-    fontSize: "$xxl",
-    paddingHorizontal: "$xxl",
-    paddingHorizontalPill: "$xxl",
-    gap: "$md",
-    borderRadius: "$lg",
+    height: "xxl",
+    fontSize: "xxl",
+    paddingHorizontal: "xxl",
+    paddingHorizontalPill: "xxl",
+    gap: "md",
+    borderRadius: "lg",
   },
 } as const;
 
@@ -103,13 +103,13 @@ export const DEFAULT_SIZE = "md" as const satisfies SizeKey;
 
 /**
  * Resolve a size key (`"md"`) to its raw pixel HEIGHT, or pass a number through,
- * via Tamagui's token system (`$md` on the `size` group → 40). RENDER-TIME only:
- * `getTokenValue` reads the live config, which exists once `createTamagui` has run,
- * so never call this while building a styled variant (module-load) — express those
- * with `$`-token strings instead, which resolve at the style layer without the config.
+ * via the active config's `size` tokens (`md` → 40). RENDER-TIME only: the config
+ * exists once `createTamagui` has run, so never call this while building a styled
+ * variant (module load) — use the bare token names there, which resolve at the
+ * style layer. An unknown key resolves to `0`.
  */
 export const resolveSizePx = (size: SizeKey | number): number => {
   if (typeof size === "number") return size;
-  const resolved = getTokenValue(`$${size}` as Parameters<typeof getTokenValue>[0], "size");
+  const resolved = resolveToken(size, "size");
   return typeof resolved === "number" ? resolved : 0;
 };

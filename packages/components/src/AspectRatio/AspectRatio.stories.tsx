@@ -44,7 +44,7 @@ type Story = StoryObj<ComponentProps<typeof AspectRatio>>;
 export const Playground: Story = {
   args: {
     children: (
-      <Box flex={1} backgroundColor="$color5" alignItems="center" justifyContent="center">
+      <Box flex={1} backgroundColor="color5" alignItems="center" justifyContent="center">
         <Text>16 / 9</Text>
       </Box>
     ),
@@ -56,7 +56,7 @@ export const Square: Story = {
   args: {
     ratio: 1,
     children: (
-      <Box flex={1} backgroundColor="$color5" alignItems="center" justifyContent="center">
+      <Box flex={1} backgroundColor="color5" alignItems="center" justifyContent="center">
         <Text>1 : 1</Text>
       </Box>
     ),
@@ -68,7 +68,7 @@ export const Widescreen: Story = {
   args: {
     ratio: 16 / 9,
     children: (
-      <Box flex={1} backgroundColor="$color6" alignItems="center" justifyContent="center">
+      <Box flex={1} backgroundColor="color6" alignItems="center" justifyContent="center">
         <Text>16 : 9</Text>
       </Box>
     ),
@@ -80,7 +80,7 @@ export const Portrait: Story = {
   args: {
     ratio: 9 / 16,
     children: (
-      <Box flex={1} backgroundColor="$color7" alignItems="center" justifyContent="center">
+      <Box flex={1} backgroundColor="color7" alignItems="center" justifyContent="center">
         <Text>9 : 16</Text>
       </Box>
     ),
@@ -105,11 +105,11 @@ export const CommonRatios: Story = {
     ];
 
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="flex-start">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="flex-start">
         {RATIOS.map(({ label, value }) => (
           <Box key={label} width={120}>
             <AspectRatio ratio={value}>
-              <Box flex={1} backgroundColor="$color5" alignItems="center" justifyContent="center">
+              <Box flex={1} backgroundColor="color5" alignItems="center" justifyContent="center">
                 <Text>{label}</Text>
               </Box>
             </AspectRatio>
@@ -134,13 +134,13 @@ export const InsideFlexRow: Story = {
     ),
   ],
   render: () => (
-    <Box flexDirection="row" height={160} gap="$md" alignItems="stretch">
+    <Box flexDirection="row" height={160} gap="md" alignItems="stretch">
       <AspectRatio ratio={1}>
-        <Box flex={1} backgroundColor="$color5" alignItems="center" justifyContent="center">
+        <Box flex={1} backgroundColor="color5" alignItems="center" justifyContent="center">
           <Text>1 : 1</Text>
         </Box>
       </AspectRatio>
-      <Box flex={1} backgroundColor="$color3" alignItems="center" justifyContent="center">
+      <Box flex={1} backgroundColor="color3" alignItems="center" justifyContent="center">
         <Text>flex sibling</Text>
       </Box>
     </Box>
@@ -155,7 +155,7 @@ export const OverflowClipped: Story = {
       <Box
         width={640}
         height={640}
-        backgroundColor="$color8"
+        backgroundColor="color8"
         alignItems="center"
         justifyContent="center"
       >
@@ -170,7 +170,7 @@ export const WithImagePlaceholder: Story = {
   args: {
     ratio: 16 / 9,
     children: (
-      <Box flex={1} backgroundColor="$color4" alignItems="center" justifyContent="center" gap="$sm">
+      <Box flex={1} backgroundColor="color4" alignItems="center" justifyContent="center" gap="sm">
         <Text fontSize={32}>🖼</Text>
         <Text>Image placeholder</Text>
       </Box>

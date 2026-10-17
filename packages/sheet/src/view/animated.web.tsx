@@ -1,7 +1,8 @@
 import * as React from "react";
 
-import { Box, Overlay } from "@knitui/components";
+import { Overlay } from "@knitui/components";
 
+import { SheetFill } from "../chrome";
 import { overlayOpacity } from "../engine";
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
 import type { AnimatedOverlayProps, FrameHostProps } from "./animated.types";
@@ -30,12 +31,9 @@ export function AnimatedFrameHost({ offset, children }: FrameHostProps) {
   useSharedValueListener(offset, paint);
 
   return (
-    <Box
-      ref={ref as never}
-      style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
-    >
+    <SheetFill ref={ref as never} stack="panel">
       {children}
-    </Box>
+    </SheetFill>
   );
 }
 
@@ -61,12 +59,8 @@ export function AnimatedOverlay({
   useSharedValueListener(offset, paint);
 
   return (
-    <Box
-      ref={ref as never}
-      pointerEvents="box-none"
-      style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
-    >
+    <SheetFill ref={ref as never} stack="scrim" pointerEvents="box-none">
       <Overlay onPress={onPress} zIndex={0} {...overlayProps} />
-    </Box>
+    </SheetFill>
   );
 }

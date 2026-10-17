@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { hasFocusRing, restingCss } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Stepper } from "./Stepper";
 
@@ -217,5 +218,83 @@ describe("Stepper", () => {
       );
       expect(screen.getByTestId("tl-content")).toHaveTextContent("step one");
     });
+  });
+
+  const resting = restingCss;
+
+  it("makes selectable steps keyboard-activatable buttons with a focus ring", () => {
+    const onStepClick = jest.fn();
+    render(
+      <Stepper active={1} onStepClick={onStepClick}>
+        <Stepper.Step label="First" />
+        <Stepper.Step label="Second" />
+      </Stepper>,
+    );
+    const [first] = screen.getAllByRole("button");
+    expect(first).toHaveAttribute("tabindex", "0");
+    expect(hasFocusRing(first!)).toBe(true);
+    fireEvent.keyDown(first!, { key: "Enter" });
+    expect(onStepClick).toHaveBeenCalledWith(0);
+  });
+
+  it("leaves non-selectable steps out of the tab order", () => {
+    render(
+      <Stepper active={0}>
+        <Stepper.Step label="Only" />
+      </Stepper>,
+    );
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getByText("Only").closest("[tabindex]")).toBeNull();
+  });
+
+  it("fills completed bubbles and outlines the in-progress one", () => {
+    render(
+      <Stepper active={1} styles={{ bubble: { testID: "bubble" } }}>
+        <Stepper.Step label="Done" />
+        <Stepper.Step label="Now" />
+        <Stepper.Step label="Later" />
+      </Stepper>,
+    );
+    const [done, now, later] = screen.getAllByTestId("bubble");
+    expect(resting(done!)).toMatch(/background-color: var\(--color9\)/);
+    expect(resting(now!)).toMatch(/border-color: var\(--color9\)/);
+    expect(resting(now!)).toMatch(/background-color: transparent/);
+    expect(resting(later!)).toMatch(/background-color: var\(--color2\)/);
+  });
+
+  it("draws timeline bullets as filled dots once reached, open rings before", () => {
+    render(
+      <Stepper variant="timeline" active={0} styles={{ bubble: { testID: "dot" } }}>
+        <Stepper.Step label="A" />
+        <Stepper.Step label="B" />
+      </Stepper>,
+    );
+    const [reached, pending] = screen.getAllByTestId("dot");
+    expect(resting(reached!)).toMatch(/background-color: var\(--color9\)/);
+    expect(resting(pending!)).toMatch(/background-color: var\(--background\)/);
+  });
+
+  it("sizes connectors on the cross axis only, per orientation", () => {
+    const { unmount } = render(
+      <Stepper active={0} styles={{ connector: { testID: "line" } }}>
+        <Stepper.Step label="A" />
+        <Stepper.Step label="B" />
+      </Stepper>,
+    );
+    const horizontal = resting(screen.getByTestId("line"));
+    expect(horizontal).toMatch(/height: 2px/);
+    expect(horizontal).not.toMatch(/(^|[^-])width:/);
+    unmount();
+
+    render(
+      <Stepper active={0} orientation="vertical" styles={{ connector: { testID: "line" } }}>
+        <Stepper.Step label="A" />
+        <Stepper.Step label="B" />
+      </Stepper>,
+    );
+    const vertical = resting(screen.getByTestId("line"));
+    expect(vertical).toMatch(/width: 2px/);
+    expect(vertical).toMatch(/height: var\(--t-size-sm\)/);
+    expect(vertical).toMatch(/margin-left: var\(--t-space-md\)/);
   });
 });

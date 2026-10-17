@@ -42,15 +42,17 @@ focus recolour coherently — and children inherit it. A `color` prop can only t
 one surface.
 
 **Styles are props, not CSS objects.** Slot styles are spread onto the styled part,
-so they take component props and token values, including pseudo-state props:
+so they take component props and token values. States and breakpoints are clauses
+inside the value instead of `:hover` selectors or media blocks:
 
 ```tsx
 <Button styles={{ label: { fontWeight: "700" }, left: { opacity: 0.6 } }} />
-<Box hoverStyle={{ bg: "$color3" }} />   // not `:hover` in a css object
+<Box bg="color2 hover:color3" p="sm gtMd:lg" />   // not `:hover` / `@media` in a css object
 ```
 
 **Tokens instead of theme-function callbacks.** No `sx={(theme) => …}`; use token
-props directly (`p="$md"`, `c="$color11"`), which work identically on native.
+props directly (`p="md"`, `c="color11"` — bare names, no prefix), which work
+identically on native.
 
 **`onPress`, not `onClick`.** `onClick` is web-only. The kit standardises on
 `onPress` everywhere; on the web it lands on a real `<button>`.

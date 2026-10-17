@@ -1,11 +1,16 @@
 import * as React from "react";
 
 import { Text, UnstyledButton } from "@knitui/components";
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
-import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
+import { type CalendarSize, cellFontVariant, pickerCellVariant } from "../cell-metrics";
 import { controlA11yProps } from "../internal/a11y";
-import { webCursor } from "../internal/web-cursor";
 
 /** PickerControl size — the kit's shared control size scale. */
 type PickerControlSize = CalendarSize;
@@ -20,84 +25,33 @@ type PickerControlSize = CalendarSize;
 // `height` to `"100%"` to fill a constrained calendar height — an unconstrained
 // parent resolves that percentage to "auto" and the cell would otherwise
 // collapse to its label's line-height (the same floor `Day` carries).
-const pickerCellVariant = {
-  xxs: {
-    height: CELL_WIDTH.xxs,
-    minHeight: CELL_WIDTH.xxs,
-    width: Math.round((CELL_WIDTH.xxs * 7) / 3),
-  },
-  xs: {
-    height: CELL_WIDTH.xs,
-    minHeight: CELL_WIDTH.xs,
-    width: Math.round((CELL_WIDTH.xs * 7) / 3),
-  },
-  sm: {
-    height: CELL_WIDTH.sm,
-    minHeight: CELL_WIDTH.sm,
-    width: Math.round((CELL_WIDTH.sm * 7) / 3),
-  },
-  md: {
-    height: CELL_WIDTH.md,
-    minHeight: CELL_WIDTH.md,
-    width: Math.round((CELL_WIDTH.md * 7) / 3),
-  },
-  lg: {
-    height: CELL_WIDTH.lg,
-    minHeight: CELL_WIDTH.lg,
-    width: Math.round((CELL_WIDTH.lg * 7) / 3),
-  },
-  xl: {
-    height: CELL_WIDTH.xl,
-    minHeight: CELL_WIDTH.xl,
-    width: Math.round((CELL_WIDTH.xl * 7) / 3),
-  },
-  xxl: {
-    height: CELL_WIDTH.xxl,
-    minHeight: CELL_WIDTH.xxl,
-    width: Math.round((CELL_WIDTH.xxl * 7) / 3),
-  },
-} as const;
-
-const pickerFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 const PickerControlContext = createStyledContext<{ size: PickerControlSize }>({ size: "md" });
 
 /**
  * The month/year cell — the `Day` analogue for the year & decade levels — an
  * `UnstyledButton`-based control composed via `styled`. Accent comes from the
  * active theme's palette ramp via the `theme` prop (no Mantine `color` prop): a
- * selected control fills with `$color9`/`$color1` text; in-range controls take a
- * `$color4` tint with the range edges rounded by the `firstInRange`/`lastInRange`
+ * selected control fills with `color9`/`color1` text; in-range controls take a
+ * `color4` tint with the range edges rounded by the `firstInRange`/`lastInRange`
  * corner variants (the `inRange` base squares all four corners, the edge variants
  * round their own two — so a single control range gets all four back). States use
- * `hoverStyle`/`pressStyle` + a `disabled` variant, never a runtime hover flag.
+ * `hover:`/`press:` clauses + a `disabled` variant, never a runtime hover flag.
  *
- * Variant precedence relies on Tamagui applying active variants in declaration
- * order (later wins): `inRange` is declared before `firstInRange`/`lastInRange`
- * so the edges win on radius, and before `selected` so a selected endpoint wins
- * on background. Mantine precedence (selected over in-range, all suppressed when
+ * Variant precedence: Tamagui v3 applies active variants in PROP order (later
+ * wins), not declaration order: the wrapper passes `inRange` before
+ * `firstInRange`/`lastInRange` (the edges win on radius) and `selected` last. Mantine precedence (selected over in-range, all suppressed when
  * disabled) is applied in the component by gating the boolean flags.
  */
 const PickerControlFrame = styled(UnstyledButton.Frame, {
-  name: "PickerControl",
+  displayName: "PickerControl",
   context: PickerControlContext,
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 0,
   borderColor: "transparent",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
     size: pickerCellVariant,
@@ -115,29 +69,25 @@ const PickerControlFrame = styled(UnstyledButton.Frame, {
     /** Control within a selected range — tinted background, squared corners. */
     inRange: {
       true: {
-        backgroundColor: "$color4",
+        backgroundColor: "color4 hover:color5 press:color5",
         borderRadius: 0,
-        hoverStyle: { backgroundColor: "$color5" },
-        pressStyle: { backgroundColor: "$color5" },
       },
     },
 
     /** First control of a range — round the inline-start corners. */
     firstInRange: {
-      true: { borderTopLeftRadius: "$sm", borderBottomLeftRadius: "$sm" },
+      true: { borderTopLeftRadius: "sm", borderBottomLeftRadius: "sm" },
     },
 
     /** Last control of a range — round the inline-end corners. */
     lastInRange: {
-      true: { borderTopRightRadius: "$sm", borderBottomRightRadius: "$sm" },
+      true: { borderTopRightRadius: "sm", borderBottomRightRadius: "sm" },
     },
 
     /** Selected control — solid accent fill. */
     selected: {
       true: {
-        backgroundColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
       },
     },
 
@@ -146,9 +96,8 @@ const PickerControlFrame = styled(UnstyledButton.Frame, {
       true: {
         opacity: 0.5,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -160,22 +109,22 @@ const PickerControlFrame = styled(UnstyledButton.Frame, {
  * The control label — shares `size` via context, colour set per state.
  *
  * Colour is expressed as boolean VARIANTS, never a per-render dynamic `color`
- * style prop: the idle label is the neutral `$color`, and on the solid accent
- * fill a `selected` label flips to the contrast `$color1`. Keeping colour in
+ * style prop: the idle label is the neutral `color`, and on the solid accent
+ * fill a `selected` label flips to the contrast `color1`. Keeping colour in
  * variants — not a runtime ternary — keeps the cell compiler-safe (no dynamic
  * style prop for the optimiser to fold into the whole cell; mirrors `DayLabel`).
  */
 const PickerControlLabel = styled(Text, {
-  name: "PickerControlLabel",
+  displayName: "PickerControlLabel",
   context: PickerControlContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
   variants: {
-    size: pickerFontVariant,
+    size: cellFontVariant,
 
     /** Selected control — contrast text on the solid accent fill. */
     selected: {
-      true: { color: "$color1" },
+      true: { color: "color1" },
     },
   } as const,
 
@@ -183,6 +132,13 @@ const PickerControlLabel = styled(Text, {
 });
 
 type PickerControlFrameProps = GetProps<typeof PickerControlFrame>;
+
+/**
+ * `type="button"` — a runtime-only `<button>` attribute outside Tamagui's style
+ * types, spread from one frozen module constant (no excess-prop check, no
+ * per-render object).
+ */
+const BUTTON_TYPE: { type: string } = Object.freeze({ type: "button" });
 
 export interface PickerControlProps extends Omit<
   PickerControlFrameProps,
@@ -221,7 +177,8 @@ export interface PickerControlProps extends Omit<
  * a11y: it is a button (`role="button"`); `aria-label` (via `...rest`),
  * `aria-selected` and `aria-disabled` are exposed for screen readers.
  */
-const PickerControlComponent = PickerControlFrame.styleable<PickerControlProps>(
+const PickerControlComponent = styleable<PickerControlProps>(
+  PickerControlFrame,
   function PickerControl(props, ref) {
     const {
       children,
@@ -247,18 +204,16 @@ const PickerControlComponent = PickerControlFrame.styleable<PickerControlProps>(
     const content = children;
     const isTextContent = typeof content === "string" || typeof content === "number";
 
-    // `type` is a runtime-only `<button>` attribute outside Tamagui's style types;
-    // narrow via a precise local object (spread → no excess-prop check).
-    const elementProps: { type: string } = { type: "button" };
-
     return (
       <PickerControlFrame
         ref={ref}
         size={size}
-        selected={isSelected}
+        // v3 applies variants in PROP ORDER (later wins): inRange squares the
+        // corners, the edges round theirs after it, `selected` wins last.
         inRange={isInRange}
         firstInRange={isFirstInRange}
         lastInRange={isLastInRange}
+        selected={isSelected}
         disabled={disabled}
         fullWidth={fullWidth}
         role="button"
@@ -274,7 +229,7 @@ const PickerControlComponent = PickerControlFrame.styleable<PickerControlProps>(
           disabled,
         })}
         render="button"
-        {...elementProps}
+        {...BUTTON_TYPE}
         {...rest}
       >
         {isTextContent ? (

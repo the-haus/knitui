@@ -107,7 +107,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side, at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Badge key={variant} {...args} variant={variant}>
           {variant}
@@ -120,7 +120,7 @@ export const Variants: Story = {
 /** The seven token sizes, from xxs to xxl, using the default light variant. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Badge key={size} {...args} size={size}>
           {size}
@@ -136,7 +136,7 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Badge key={shadow} {...args} shadow={shadow}>
           {shadow}
@@ -158,7 +158,7 @@ export const WithSections: Story = {
 /** Circle mode — equal width and height for a single glyph or short number. */
 export const Circle: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Badge key={size} {...args} size={size} circle>
           {size === "xxs" || size === "xs" || size === "sm" ? "1" : size === "md" ? "42" : "99+"}
@@ -171,7 +171,7 @@ export const Circle: Story = {
 /** The dot variant prepends a colored indicator dot — no leftSection needed. */
 export const DotVariant: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Badge key={size} {...args} variant="dot" size={size}>
           {size}
@@ -184,7 +184,7 @@ export const DotVariant: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <Badge key={theme} {...args} theme={theme}>
           {theme}
@@ -197,9 +197,9 @@ export const Themed: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Badge key={size} variant={variant} size={size}>
               {variant}
@@ -214,18 +214,18 @@ export const Matrix: Story = {
 /**
  * The `gradient` variant fills the badge with a linear gradient. With no
  * `gradient` prop it follows the theme ramp; otherwise it accepts a two-color
- * shorthand, `$colorN` tokens, or a multi-step `stops` list. Text renders white.
+ * shorthand, `colorN` names, or a multi-step `stops` list. Text renders white.
  */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Badge {...args} variant="gradient">
         Themed
       </Badge>
       <Badge {...args} variant="gradient" gradient={{ from: "#4f46e5", to: "#ec4899", deg: 60 }}>
         Shorthand
       </Badge>
-      <Badge {...args} variant="gradient" gradient={{ from: "$blue9", to: "$teal9" }}>
+      <Badge {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
         Tokens
       </Badge>
       <Badge
@@ -249,7 +249,7 @@ export const Gradient: Story = {
 /** A set of curated multi-color gradient presets. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <Badge key={name} {...args} variant="gradient" gradient={gradient}>
           {name}
@@ -262,7 +262,7 @@ export const GradientPresets: Story = {
 /** The themed gradient (no `gradient` prop) derives its ramp from the active theme. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "orange", "pink", "teal"] as const).map((theme) => (
         <Badge key={theme} {...args} variant="gradient" theme={theme}>
           {theme}
@@ -275,7 +275,7 @@ export const GradientThemed: Story = {
 /** The Sunset gradient across the full token size scale. */
 export const GradientSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Badge
           key={size}
@@ -296,8 +296,8 @@ export const Styles: Story = {
   args: {
     children: "Badge",
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      text: { color: "$blue11", fontWeight: "700" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      text: { color: "blue11", fontWeight: "700" },
     },
   },
 };

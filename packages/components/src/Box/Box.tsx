@@ -16,13 +16,13 @@ import { shadowVariant } from "../internal/style-props";
  *
  * `shadow` is the one named VARIANT carried here rather than per-component: the
  * Mantine-style elevation prop (`shadow="md"`, the shared `shadowVariant` ladder
- * xxs→xxl, theme-aware `$dropShadowColor`). Because every kit component is
+ * xxs→xxl, theme-aware `dropShadowColor`). Because every kit component is
  * `styled(Box, …)`, declaring it once means they ALL accept `shadow` — it stays
  * opt-in (no shadow unless set). A component may still re-declare `shadow` (e.g.
  * `Drawer` pins `defaultVariants: { shadow: "xl" }`); a local redefinition wins.
  */
 export const Box = styled(View, {
-  name: "Box",
+  displayName: "Box",
   variants: {
     shadow: shadowVariant,
   } as const,

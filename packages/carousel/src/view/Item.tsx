@@ -46,7 +46,10 @@ function ItemInner<T>({
   const slideStyle = useSlideStyle();
 
   return (
-    <Animated.View style={[SLIDE_BASE, slideDimension(vertical, pageSize), animatedStyle]}>
+    <Animated.View
+      pointerEvents="box-none"
+      style={[SLIDE_BASE, slideDimension(vertical, pageSize), animatedStyle]}
+    >
       <SlideBox {...slideStyle}>
         {slideContent(item, index, progress, renderItem, renderPlaceholder)}
       </SlideBox>

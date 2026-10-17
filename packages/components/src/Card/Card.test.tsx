@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Card } from "./Card";
 
@@ -57,6 +58,55 @@ describe("Card", () => {
       </Card>,
     );
     expect(ref.current).not.toBeNull();
+  });
+
+  it("bleeds Sections by the resolved card padding, cancelling the outer edges", () => {
+    render(
+      <Card padding="md">
+        <Card.Section testID="first">a</Card.Section>
+        <Card.Section testID="mid">b</Card.Section>
+        <Card.Section testID="last" withBorder inheritPadding>
+          c
+        </Card.Section>
+      </Card>,
+    );
+    expect(screen.getByTestId("first")).toHaveStyle({
+      marginLeft: "-12px",
+      marginRight: "-12px",
+      marginTop: "-12px",
+      marginBottom: "0px",
+    });
+    expect(screen.getByTestId("mid")).toHaveStyle({ marginTop: "0px", marginBottom: "0px" });
+    const last = screen.getByTestId("last");
+    expect(last).toHaveStyle({ marginBottom: "-12px" });
+    // inheritPadding re-insets the content on the bleed axis (logical shorthand).
+    expect(cssRulesOf(last).join("\n")).toContain("padding-inline: 12px");
+    expect(last).toHaveStyle({ borderTopWidth: "1px", borderBottomWidth: "1px" });
+    expect(cssRulesOf(last).join("\n")).toContain("border-color: var(--color5)");
+  });
+
+  it("puts Section dividers on the inline edges in a horizontal card", () => {
+    render(
+      <Card orientation="horizontal" testID="card">
+        <Card.Section testID="s" withBorder>
+          x
+        </Card.Section>
+      </Card>,
+    );
+    expect(screen.getByTestId("card")).toHaveStyle({ flexDirection: "row" });
+    expect(screen.getByTestId("s")).toHaveStyle({
+      borderLeftWidth: "1px",
+      borderRightWidth: "1px",
+    });
+    expect(cssRulesOf(screen.getByTestId("s")).join("\n")).not.toMatch(/border-top-width/);
+  });
+
+  it("is a raised color2 surface with lg padding by default", () => {
+    render(<Card testID="card">x</Card>);
+    expect(screen.getByTestId("card")).toHaveStyle({ flexDirection: "column" });
+    const rules = cssRulesOf(screen.getByTestId("card")).join("\n");
+    expect(rules).toContain("background-color: var(--color2)");
+    expect(rules).toContain("padding: var(--t-space-lg)");
   });
 
   it("renders with the horizontal orientation", () => {
@@ -119,24 +169,26 @@ describe("Card module load (KIT-04)", () => {
   afterEach(() => jest.dontMock("@knitui/core"));
 
   it("imports before the Tamagui config is registered", () => {
-    // Stand in for "no config yet": every token read throws, as Tamagui's own
-    // `getTokenValue` does before `createTamagui` runs (e.g. an SSR chunk that
-    // evaluates ahead of the config).
-    const getTokenValue = jest.fn(() => {
+    // Stand in for "no config yet": every token read throws (e.g. an SSR chunk
+    // that evaluates ahead of the config). The default padding must be resolved
+    // lazily, on render, never while the module loads.
+    const resolveToken = jest.fn(() => {
       throw new Error("Missing tamagui config");
     });
     jest.isolateModules(() => {
       jest.doMock("@knitui/core", () => ({
         ...jest.requireActual("@knitui/core"),
-        getTokenValue,
+        resolveToken,
       }));
       expect(() => require("./Card")).not.toThrow();
     });
-    expect(getTokenValue).not.toHaveBeenCalled();
+    expect(resolveToken).not.toHaveBeenCalled();
   });
 
   it("resolves the default padding on render for a section outside any Card", () => {
     render(<Card.Section testID="loose">Loose section</Card.Section>);
     expect(screen.getByText("Loose section")).toBeInTheDocument();
+    // lg = 16px default card padding → bleeds by -16px.
+    expect(screen.getByTestId("loose")).toHaveStyle({ marginLeft: "-16px", marginRight: "-16px" });
   });
 });

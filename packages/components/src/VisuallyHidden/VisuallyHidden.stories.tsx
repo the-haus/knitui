@@ -36,7 +36,7 @@ export const Playground: Story = {};
 /** Demonstrates that content is present in the DOM even though it is invisible; inspect the element to confirm. */
 export const HiddenFromSight: Story = {
   render: (args) => (
-    <Box gap="$md" alignItems="center">
+    <Box gap="md" alignItems="center">
       <Text>The paragraph below contains hidden text — visible only to assistive technology.</Text>
       <Text>
         Welcome{" "}
@@ -55,11 +55,11 @@ export const HiddenFromSight: Story = {
 /** An icon-only button pattern: the visible icon is accompanied by a VisuallyHidden label for screen readers. */
 export const IconButtonLabel: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box flexDirection="row" gap="md" alignItems="center">
       <Box
         borderWidth={1}
-        borderRadius="$sm"
-        padding="$sm"
+        borderRadius="sm"
+        padding="sm"
         flexDirection="row"
         alignItems="center"
         role="button"
@@ -70,8 +70,8 @@ export const IconButtonLabel: Story = {
       </Box>
       <Box
         borderWidth={1}
-        borderRadius="$sm"
-        padding="$sm"
+        borderRadius="sm"
+        padding="sm"
         flexDirection="row"
         alignItems="center"
         role="button"
@@ -90,14 +90,14 @@ export const IconButtonLabel: Story = {
 /** Forwarding an id attribute so the hidden text can be referenced via aria-labelledby or aria-describedby. */
 export const WithId: Story = {
   render: (args) => (
-    <Box gap="$md" alignItems="center">
+    <Box gap="md" alignItems="center">
       <VisuallyHidden {...args} id="sr-description" />
       <Box
         role="group"
         aria-describedby="sr-description"
         borderWidth={1}
-        padding="$md"
-        borderRadius="$sm"
+        padding="md"
+        borderRadius="sm"
       >
         <Text>This box is described by a hidden element (id="sr-description").</Text>
       </Box>
@@ -112,7 +112,7 @@ export const WithId: Story = {
 /** Renders correctly with no children — useful for conditional label patterns that may produce no text. */
 export const EmptyChildren: Story = {
   render: () => (
-    <Box gap="$md" alignItems="center">
+    <Box gap="md" alignItems="center">
       <Text>The VisuallyHidden below has no children and renders without errors.</Text>
       <VisuallyHidden />
     </Box>
@@ -122,18 +122,18 @@ export const EmptyChildren: Story = {
 /** Multiple hidden labels used together — each independently available to assistive technology. */
 export const MultipleLabels: Story = {
   render: (args) => (
-    <Box gap="$md">
-      <Box flexDirection="row" alignItems="center" gap="$sm">
+    <Box gap="md">
+      <Box flexDirection="row" alignItems="center" gap="sm">
         <Text>⭐</Text>
         <VisuallyHidden {...args}>Favourite item</VisuallyHidden>
         <Text>Item A</Text>
       </Box>
-      <Box flexDirection="row" alignItems="center" gap="$sm">
+      <Box flexDirection="row" alignItems="center" gap="sm">
         <Text>🔒</Text>
         <VisuallyHidden>Locked item</VisuallyHidden>
         <Text>Item B</Text>
       </Box>
-      <Box flexDirection="row" alignItems="center" gap="$sm">
+      <Box flexDirection="row" alignItems="center" gap="sm">
         <Text>✓</Text>
         <VisuallyHidden>Completed item</VisuallyHidden>
         <Text>Item C</Text>

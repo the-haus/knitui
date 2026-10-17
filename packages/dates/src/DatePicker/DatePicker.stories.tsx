@@ -30,9 +30,9 @@ export const Default: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <DatePicker value={value} onChange={setValue} defaultDate="2026-06-15" />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -45,9 +45,9 @@ export const Range: Story = {
   render: () => {
     const [value, setValue] = React.useState<DatesRangeValue<DateStringValue>>([null, null]);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <DatePicker type="range" value={value} onChange={setValue} defaultDate="2026-06-15" />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           {value[0] ?? "—"} → {value[1] ?? "—"}
         </Text>
       </Box>
@@ -60,9 +60,9 @@ export const Multiple: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue[]>([]);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <DatePicker type="multiple" value={value} onChange={setValue} defaultDate="2026-06-15" />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           {value.length ? value.join(", ") : "none"}
         </Text>
       </Box>

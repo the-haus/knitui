@@ -49,7 +49,7 @@ export const Default: Story = {
 /** `12h` mode with AM/PM. */
 export const TwelveHour: Story = {
   render: () => (
-    <Box gap="$xs">
+    <Box gap="xs">
       <TimeValue value="09:05:00" format="12h" />
       <TimeValue value="13:30:00" format="12h" />
       <TimeValue value="00:00:00" format="12h" />
@@ -60,7 +60,7 @@ export const TwelveHour: Story = {
 /** Seconds appended in both modes. */
 export const WithSeconds: Story = {
   render: () => (
-    <Box gap="$xs">
+    <Box gap="xs">
       <TimeValue value="13:30:45" withSeconds />
       <TimeValue value="13:30:45" format="12h" withSeconds />
     </Box>
@@ -83,9 +83,9 @@ export const FromDate: Story = {
  */
 export const Styled: Story = {
   render: () => (
-    <Box gap="$xs" theme="red">
-      <TimeValue value="13:30:00" fontSize="$xl" fontWeight="700" />
-      <Text fontSize="$sm">themed via the surrounding theme</Text>
+    <Box gap="xs" theme="red">
+      <TimeValue value="13:30:00" fontSize="xl" fontWeight="700" />
+      <Text fontSize="sm">themed via the surrounding theme</Text>
     </Box>
   ),
 };

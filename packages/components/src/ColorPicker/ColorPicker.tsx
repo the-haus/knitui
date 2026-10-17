@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, getTokenValue, isWeb, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, isWeb, resolveToken, styled, withStaticProperties } from "@knitui/core";
 import {
   clampMovePosition,
   type MovePosition,
@@ -44,9 +44,6 @@ type PickerGeometry = {
   width: number;
 };
 
-type SizeToken = `$${ColorPickerSize}`;
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
-
 const SWATCH_GAP_PX = 4;
 const MIN_SWATCH_SIZE = 16;
 
@@ -62,10 +59,10 @@ const WIDTH_MULTIPLIER = 6;
 const SATURATION_MULTIPLIER = 3;
 
 const resolveSquareSide = (size: ColorPickerSize): number => {
-  const value = getTokenValue(squareSizeVariant[size].height as TokenValueInput, "size");
-  return typeof value === "number"
-    ? value
-    : getTokenValue(controlMetrics.md.height as TokenValueInput, "size");
+  const value = resolveToken(squareSizeVariant[size].height, "size");
+  if (typeof value === "number") return value;
+  const fallback = resolveToken(controlMetrics.md.height, "size");
+  return typeof fallback === "number" ? fallback : 40;
 };
 
 const getPickerGeometry = (size: ColorPickerSize): PickerGeometry => {
@@ -75,8 +72,6 @@ const getPickerGeometry = (size: ColorPickerSize): PickerGeometry => {
     saturationHeight: side * SATURATION_MULTIPLIER,
   };
 };
-
-const toSizeToken = (size: ColorPickerSize): SizeToken => `$${size}`;
 
 // The drag handle is a small fixed dot with its OWN scale — NOT the `$size`
 // control/icon scale (`squareSizeVariant` made it 40px at md). The hue/alpha
@@ -107,17 +102,48 @@ const sliderTrackVariant = {
 
 const getThumbOffset = (size: ColorPickerSize): number => Math.round(THUMB_SIZE[size] / 2);
 
-/** Percentage offset narrowed to the exact Box style-prop type (no `any`). */
-const pct = (n: number): BoxProps["left"] => `${n * 100}%` as BoxProps["left"];
+/**
+ * Places a thumb at a fractional position, centred on it. The position changes on
+ * EVERY pointermove of a drag, so it rides inline `style` rather than style props:
+ * a continuously changing style prop would make v3 inject one atomic CSS rule per
+ * value on web. Web centres with a translate (exact for any rendered size);
+ * native with static negative margins of half the thumb (built once per size).
+ */
+const NATIVE_THUMB_MARGINS = Object.fromEntries(
+  (Object.keys(THUMB_SIZE) as ColorPickerSize[]).map((key) => [
+    key,
+    { marginLeft: -getThumbOffset(key), marginTop: -getThumbOffset(key) },
+  ]),
+) as Record<ColorPickerSize, { marginLeft: number; marginTop: number }>;
+const thumbPlacement = (size: ColorPickerSize, x: number, y: number, backgroundColor: string) =>
+  isWeb
+    ? {
+        style: { left: pct(x), top: pct(y), backgroundColor, transform: "translate(-50%, -50%)" },
+      }
+    : { ...NATIVE_THUMB_MARGINS[size], style: { left: pct(x), top: pct(y), backgroundColor } };
+
+/** An absolutely positioned layer filling its frame. */
+const FILL = { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 } as const;
+const WHITE_GRADIENT = { backgroundImage: "linear-gradient(90deg, #fff, transparent)" } as const;
+const BLACK_GRADIENT = { backgroundImage: "linear-gradient(0deg, #000, transparent)" } as const;
+const HUE_OVERLAYS = [
+  {
+    backgroundImage:
+      "linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(170,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))",
+  },
+] as const;
+
+/** A fractional offset as a CSS percentage (inline `style` value). */
+const pct = (n: number): `${number}%` => `${n * 100}%`;
 
 /* -------------------------------------------------------------------------- */
 /* Styled parts                                                               */
 /* -------------------------------------------------------------------------- */
 
 const PickerWrapper = styled(Box, {
-  name: "ColorPicker",
+  displayName: "ColorPicker",
   flexDirection: "column",
-  gap: "$sm",
+  gap: "sm",
 
   variants: {
     fullWidth: { true: { width: "100%" } },
@@ -125,9 +151,9 @@ const PickerWrapper = styled(Box, {
 });
 
 const SaturationFrame = styled(Box, {
-  name: "ColorPickerSaturation",
+  displayName: "ColorPickerSaturation",
   position: "relative",
-  borderRadius: "$sm",
+  borderRadius: "sm",
   overflow: "hidden",
   userSelect: "none",
   ...webCursor("crosshair"),
@@ -135,7 +161,7 @@ const SaturationFrame = styled(Box, {
 });
 
 const SliderFrame = styled(Box, {
-  name: "ColorPickerSlider",
+  displayName: "ColorPickerSlider",
   position: "relative",
   borderRadius: 9999,
   overflow: "hidden",
@@ -149,13 +175,13 @@ const SliderFrame = styled(Box, {
 });
 
 const ThumbDot = styled(Box, {
-  name: "ColorPickerThumb",
+  displayName: "ColorPickerThumb",
   position: "absolute",
   borderRadius: 9999,
   borderWidth: 2,
-  borderColor: "$white",
+  borderColor: "white",
   pointerEvents: "none",
-  boxShadow: "0px 1px 2px 0px $dropShadowColor",
+  boxShadow: "0px 1px 2px 0px dropShadowColor",
 
   variants: {
     size: thumbSizeVariant,
@@ -163,10 +189,10 @@ const ThumbDot = styled(Box, {
 });
 
 const SwatchRow = styled(Box, {
-  name: "ColorPickerSwatches",
+  displayName: "ColorPickerSwatches",
   flexDirection: "row",
   flexWrap: "wrap",
-  gap: "$xxs",
+  gap: "xxs",
 });
 
 /* -------------------------------------------------------------------------- */
@@ -176,8 +202,8 @@ const SwatchRow = styled(Box, {
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the
  * ColorPicker part surface. Each key maps to the props of the part it targets, so
- * `styles={{ saturation: { borderRadius: "$lg" } }}` is sugar for
- * `<ColorPicker.Saturation borderRadius="$lg" />`.
+ * `styles={{ saturation: { borderRadius: "lg" } }}` is sugar for
+ * `<ColorPicker.Saturation borderRadius="lg" />`.
  */
 export interface ColorPickerStyles {
   /** Props for the outer wrapper (`ColorPicker.Frame` → `PickerWrapper`). */
@@ -327,18 +353,14 @@ function ColorPickerSaturation(props: ColorPickerSaturationProps) {
     }
   };
 
-  const hueBase: BoxProps["backgroundColor"] =
-    `hsl(${value.h}, 100%, 50%)` as BoxProps["backgroundColor"];
-  const whiteGrad = { backgroundImage: "linear-gradient(90deg, #fff, transparent)" };
-  const blackGrad = { backgroundImage: "linear-gradient(0deg, #000, transparent)" };
+  const hueStyle = React.useMemo(
+    () => ({ backgroundColor: `hsl(${value.h}, 100%, 50%)` }),
+    [value.h],
+  );
   const focusProps: Pick<GetProps<typeof SaturationFrame>, "onKeyDown" | "tabIndex"> = {
     tabIndex: focusable ? 0 : -1,
     onKeyDown: handleKeyDown,
   };
-  const thumbWebStyle: GetProps<typeof ThumbDot>["style"] = isWeb
-    ? { transform: "translate(-50%, -50%)" }
-    : undefined;
-  const thumbOffset = isWeb ? undefined : -getThumbOffset(size);
 
   return (
     <SaturationFrame
@@ -350,22 +372,18 @@ function ColorPickerSaturation(props: ColorPickerSaturationProps) {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuetext={convertHsvaTo("rgba", value)}
-      {...(rootProps as GetProps<typeof SaturationFrame>)}
+      {...rootProps}
       {...focusProps}
       // `saturation` slot sugar is the LOWEST precedence; explicit props win.
       {...s.merge("saturation", rest)}
     >
-      <Box position="absolute" top={0} left={0} right={0} bottom={0} backgroundColor={hueBase} />
-      <Box position="absolute" top={0} left={0} right={0} bottom={0} {...whiteGrad} />
-      <Box position="absolute" top={0} left={0} right={0} bottom={0} {...blackGrad} />
+      {/* Drag-driven colours ride inline `style` (see `thumbPlacement`). */}
+      <Box {...FILL} style={hueStyle} />
+      <Box {...FILL} {...WHITE_GRADIENT} />
+      <Box {...FILL} {...BLACK_GRADIENT} />
       <ThumbDot
         size={size}
-        left={pct(position.x)}
-        top={pct(position.y)}
-        marginLeft={thumbOffset}
-        marginTop={thumbOffset}
-        style={thumbWebStyle}
-        backgroundColor={color as BoxProps["backgroundColor"]}
+        {...thumbPlacement(size, position.x, position.y, color)}
         // `thumb` slot under the deprecated `thumbProps` alias.
         {...s.merge("thumb", thumbProps)}
       />
@@ -382,9 +400,8 @@ interface ColorSliderEngineProps {
   maxValue: number;
   round: boolean;
   baseColor: BoxProps["backgroundColor"];
-  overlays: {
-    backgroundImage: BoxProps["backgroundImage"];
-  }[];
+  /** CSS `background-image` layers (web-only, inline `style`). */
+  overlays: readonly { readonly backgroundImage: string }[];
   thumbColor: string;
   size: ColorPickerSize;
   focusable: boolean;
@@ -452,10 +469,6 @@ function ColorSlider(props: ColorSliderEngineProps) {
     tabIndex: focusable ? 0 : -1,
     onKeyDown: handleKeyDown,
   };
-  const thumbWebStyle: GetProps<typeof ThumbDot>["style"] = isWeb
-    ? { transform: "translate(-50%, -50%)" }
-    : undefined;
-  const thumbOffset = isWeb ? undefined : -getThumbOffset(size);
 
   return (
     <SliderFrame
@@ -467,22 +480,18 @@ function ColorSlider(props: ColorSliderEngineProps) {
       aria-valuenow={Math.round(value)}
       aria-valuemin={0}
       aria-valuemax={maxValue}
-      {...(rootProps as GetProps<typeof SliderFrame>)}
+      {...rootProps}
       {...focusProps}
       // slot sugar (`hueSlider`/`alphaSlider`) UNDER explicit frame props.
       {...s.merge(slot, frameProps)}
     >
       {overlays.map((overlay, index) => (
-        <Box key={index} position="absolute" top={0} left={0} right={0} bottom={0} {...overlay} />
+        // Gradients are web-only CSS; on native the track shows its base colour.
+        <Box key={index} {...FILL} {...(isWeb ? { style: overlay } : null)} />
       ))}
       <ThumbDot
         size={size}
-        left={pct(position.x)}
-        top="50%"
-        marginLeft={thumbOffset}
-        marginTop={thumbOffset}
-        style={thumbWebStyle}
-        backgroundColor={thumbColor as BoxProps["backgroundColor"]}
+        {...thumbPlacement(size, position.x, 0.5, thumbColor)}
         {...s.merge("thumb", thumbProps)}
       />
     </SliderFrame>
@@ -506,13 +515,8 @@ function ColorPickerHueSlider(props: ColorPickerHueSliderProps) {
       value={ctx.parsed.h}
       maxValue={360}
       round
-      baseColor="$color3"
-      overlays={[
-        {
-          backgroundImage:
-            "linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(170,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))",
-        },
-      ]}
+      baseColor="color3"
+      overlays={HUE_OVERLAYS}
       thumbColor={`hsl(${ctx.parsed.h}, 100%, 50%)`}
       size={ctx.size}
       focusable={ctx.focusable}
@@ -540,17 +544,17 @@ function ColorPickerAlphaSlider(props: ColorPickerAlphaSliderProps) {
   // The gradient overlay and the thumb want the SAME hex; converting twice ran the
   // HSVA→hex math twice per drag frame.
   const hex = convertHsvaTo("hex", ctx.parsed);
+  const overlays = React.useMemo(
+    () => [{ backgroundImage: `linear-gradient(90deg, transparent, ${hex})` }],
+    [hex],
+  );
   return (
     <ColorSlider
       value={ctx.parsed.a}
       maxValue={1}
       round={false}
       baseColor="#ffffff"
-      overlays={[
-        {
-          backgroundImage: `linear-gradient(90deg, transparent, ${hex})`,
-        },
-      ]}
+      overlays={overlays}
       thumbColor={hex}
       size={ctx.size}
       focusable={ctx.focusable}
@@ -577,12 +581,7 @@ function ColorPickerPreview(props: ColorPickerPreviewProps) {
   const ctx = useColorPickerContext();
   const s = slotStyles<ColorPickerStyles>(ctx.styles, COLOR_PICKER_SLOT_KEYS, "ColorPicker");
   return (
-    <ColorSwatch
-      color={ctx.value}
-      size={toSizeToken(ctx.size)}
-      radius="$sm"
-      {...s.merge("preview", props)}
-    />
+    <ColorSwatch color={ctx.value} size={ctx.size} radius="sm" {...s.merge("preview", props)} />
   );
 }
 
@@ -625,7 +624,7 @@ function ColorPickerSwatch(props: ColorPickerSwatchProps) {
     <ColorSwatch
       color={color}
       size={swatchSize}
-      radius="$sm"
+      radius="sm"
       style={webCursorStyle("pointer")}
       aria-label={color}
       role="button"
@@ -876,7 +875,7 @@ const ColorPickerRoot = React.forwardRef<
     <ColorPickerContext.Provider value={ctx}>
       <PickerWrapper
         ref={ref}
-        width={fullWidth ? undefined : geometry.width}
+        {...(fullWidth ? null : { width: geometry.width })}
         fullWidth={fullWidth}
         {...s.merge("root", rest)}
       >
@@ -926,8 +925,8 @@ const ColorPickerComponent = React.forwardRef<
       {withPicker ? (
         <>
           <ColorPickerSaturation />
-          <Box flexDirection="row" alignItems="center" gap="$sm">
-            <Box flex={1} flexDirection="column" gap="$xs">
+          <Box flexDirection="row" alignItems="center" gap="sm">
+            <Box flex={1} flexDirection="column" gap="xs">
               <ColorPickerHueSlider />
               <ColorPickerAlphaSliderConditional />
             </Box>

@@ -95,7 +95,7 @@ export const CaseSensitive: Story = {
 /** Whole-word mode — only standalone words match, not substrings. */
 export const WholeWord: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Highlight {...args} wholeWord={false}>
         {"highlighting is easy to use because highlight is smart"}
       </Highlight>
@@ -134,7 +134,7 @@ export const Styles: Story = {
     children: "Save changes or discard changes before leaving",
     highlight: "changes",
     styles: {
-      mark: { backgroundColor: "$blue3", color: "$red9", fontWeight: "700" },
+      mark: { backgroundColor: "blue3", color: "red9", fontWeight: "700" },
     },
   },
 };
@@ -142,7 +142,7 @@ export const Styles: Story = {
 /** Accent-insensitive matching treats accented and plain characters as equal. */
 export const AccentInsensitive: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Highlight {...args} accentInsensitive={false}>
         {"résumé review — search for resume"}
       </Highlight>

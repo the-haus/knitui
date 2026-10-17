@@ -2,11 +2,21 @@ import { createTokens } from "@tamagui/core";
 
 import { radius, size, spacing } from "./scales";
 
+/**
+ * The kit's design tokens. v3 rules (see docs/v3/conventions.md §2):
+ *
+ * - No `true` keys (v3 reserves `true` for "the component's default"; the kit's
+ *   defaults come from `controlMetrics`, which already default to `md`).
+ * - No `transparent` colour token: v3's `createTamagui` rejects CSS keywords as
+ *   token names, and the keyword itself is valid everywhere.
+ * - A STRING is a token lookup and a NUMBER is a raw value: `p="md"` vs `p={12}`.
+ *   The bare-numeric keys (`space.0`, `zIndex.1`…`5`) are therefore only reached
+ *   by the string spelling (`zIndex="3"` → 300); `zIndex={3}` is a raw 3.
+ */
 export const tokens = createTokens({
   color: {
     white: "#ffffff",
     black: "#000000",
-    transparent: "rgba(0,0,0,0)",
   },
   space: {
     0: 0,
@@ -17,7 +27,6 @@ export const tokens = createTokens({
     lg: spacing.lg,
     xl: spacing.xl,
     xxl: spacing.xxl,
-    true: spacing.sm,
   },
   size: {
     0: 0,
@@ -28,7 +37,6 @@ export const tokens = createTokens({
     lg: size.lg,
     xl: size.xl,
     xxl: size.xxl,
-    true: size.sm,
   },
   radius: {
     0: 0,
@@ -39,7 +47,6 @@ export const tokens = createTokens({
     lg: radius.lg,
     xl: radius.xl,
     xxl: radius.xxl,
-    true: radius.sm,
   },
   zIndex: { 0: 0, 1: 100, 2: 200, 3: 300, 4: 400, 5: 500 },
 });

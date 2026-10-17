@@ -19,18 +19,11 @@ export { getStories, humanize, type Meta, renderStory, type StoryObj };
  * docs site can style errors its own way); this is the demo's skin for it.
  */
 const storyErrorFallback = (error: Error, label: string): ReactNode => (
-  <Box
-    borderWidth={1}
-    borderColor="$red7"
-    backgroundColor="$red2"
-    borderRadius="$sm"
-    p="$sm"
-    gap="$xs"
-  >
-    <Text c="$red11" fontWeight="600" fz={13}>
+  <Box borderWidth={1} borderColor="red7" backgroundColor="red2" borderRadius="sm" p="sm" gap="xs">
+    <Text c="red11" fontWeight="600" fz={13}>
       {label} failed to render
     </Text>
-    <Text c="$red10" fz={12}>
+    <Text c="red10" fz={12}>
       {error.message}
     </Text>
   </Box>
@@ -65,15 +58,17 @@ export function StoryTab({
   return (
     <UnstyledButton
       onPress={onPress}
-      px="$sm"
-      py="$xxs"
-      borderRadius="$sm"
+      px="sm"
+      py="xxs"
+      borderRadius="sm"
       borderWidth={1}
-      borderColor={active ? "$color7" : "$color4"}
-      backgroundColor={active ? "$color5" : "transparent"}
-      pressStyle={{ backgroundColor: active ? "$color5" : "$color3" }}
+      borderColor={active ? "color7" : "color4"}
+      backgroundColor={{
+        default: active ? "color5" : "transparent",
+        press: active ? "color5" : "color3",
+      }}
     >
-      <Text c={active ? "$color12" : "$color11"} fz={12} fontWeight={active ? "600" : "400"}>
+      <Text c={active ? "color12" : "color11"} fz={12} fontWeight={active ? "600" : "400"}>
         {label}
       </Text>
     </UnstyledButton>
@@ -95,8 +90,8 @@ const RenderedStory = memo(function RenderedStory({
   name: string;
 }) {
   return (
-    <Stack gap="$sm">
-      <Text c="$color11" fz={13} fontWeight="600">
+    <Stack gap="sm">
+      <Text c="color11" fz={13} fontWeight="600">
         {humanize(name)}
       </Text>
       <StoryErrorBoundary label={humanize(name)}>
@@ -144,14 +139,14 @@ export function StorySection({ mod, title }: { mod: StoryModule; title: string }
   const mounted = useProgressiveCount(stories.length);
 
   return (
-    <Stack gap="$lg">
+    <Stack gap="lg">
       <Title order={3}>{title}</Title>
       <Separator />
       {stories.slice(0, mounted).map(([name, story]) => (
         <RenderedStory key={name} meta={meta} story={story} name={name} />
       ))}
       {mounted < stories.length ? (
-        <Text c="$color10" fz={12}>
+        <Text c="color10" fz={12}>
           Loading {stories.length - mounted} more…
         </Text>
       ) : null}

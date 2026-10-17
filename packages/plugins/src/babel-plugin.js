@@ -1,66 +1,47 @@
-// @knitui/plugins/babel-plugin — the Tamagui compiler, pre-configured for the kit.
+// @knitui/plugins/babel-plugin — DEPRECATED in v3.
 //
-// The Tamagui compiler is an OPTIONAL build-time optimizer: it flattens the
-// kit's `styled()` components into static styles for faster runtime. Drop this
-// into your babel config and you install ZERO Tamagui packages yourself —
-// `@tamagui/babel-plugin` ships as a dependency of `@knitui/plugins`, and the kit's
-// config + component list are baked in.
+// Tamagui v3 has no babel plugin (`@tamagui/babel-plugin` stops at 2.x). Native
+// compilation moved into Metro: use `@knitui/plugins/metro` (which wraps
+// `@tamagui/cli/metro`'s `withTamagui`) in `metro.config.js` and drop this entry
+// from `babel.config.js`:
 //
-//   // babel.config.js
-//   module.exports = {
-//     presets: ["babel-preset-expo"],
-//     plugins: [
-//       require("@knitui/plugins/babel-plugin"),
-//       "react-native-reanimated/plugin", // must stay LAST
-//     ],
-//   };
+//   // metro.config.js
+//   const { getDefaultConfig } = require("expo/metro-config");
+//   const withKnitui = require("@knitui/plugins/metro");
+//   module.exports = withKnitui(getDefaultConfig(__dirname));
 //
-// Need to tweak options? Use `.withOptions`:
-//   require("@knitui/plugins/babel-plugin").withOptions({ logTimings: false })
+// This entry is kept so an existing `babel.config.js` keeps building: it is a
+// valid NO-OP babel plugin that prints a one-time warning.
 
-/** Packages the compiler scans for kit components to optimize. */
-const DEFAULT_COMPONENTS = ["@knitui/components", "@knitui/core"];
+let warned = false;
 
-// The kit's packages ship their TypeScript source (see the "lib-ship not viable"
-// constraint), so the Tamagui static loader can't `require()` them during its
-// extraction pass — their barrels use ESM directory imports and chain back into
-// `@knitui/core`'s `.ts` source, which Node can't load. That made the loader emit
-//   [tamagui] skipped loading 2 module, see: .../errors#warning-001
-// once per transformed batch. These packages are intentionally bundle-unloadable,
-// so register them with Tamagui's own ignore list to silence the noise. (Metro
-// resolves the kit from `source` at runtime, so nothing here affects the app.)
-if (!process.env.TAMAGUI_IGNORE_BUNDLE_ERRORS) {
-  process.env.TAMAGUI_IGNORE_BUNDLE_ERRORS = DEFAULT_COMPONENTS.join(",");
+const warn = () => {
+  if (warned || process.env.KNITUI_SILENCE_BABEL_PLUGIN_WARNING) return;
+  warned = true;
+  console.warn(
+    "[@knitui/plugins] `@knitui/plugins/babel-plugin` is deprecated and does nothing on " +
+      "Tamagui v3 (there is no v3 babel plugin). Remove it from babel.config.js and " +
+      "compile through Metro instead: `withKnitui(config)` from `@knitui/plugins/metro`.",
+  );
+};
+
+/** A babel plugin that does nothing (beyond the deprecation warning). */
+function knituiNoopBabelPlugin() {
+  warn();
+  return { name: "knitui-deprecated-noop" };
 }
 
-/** @typedef {{ config?: string, components?: string[], logTimings?: boolean, disableExtraction?: boolean, [option: string]: unknown }} KnituiCompilerOptions */
-
-/** @typedef {[plugin: string, options: KnituiCompilerOptions]} BabelPluginEntry */
+/** @typedef {[plugin: typeof knituiNoopBabelPlugin, options: Record<string, unknown>]} BabelPluginEntry */
 
 /**
- * Build a configured `[plugin, options]` babel entry, with optional overrides.
- *
- * @param {Partial<KnituiCompilerOptions>} [overrides]
+ * @deprecated Kept for source compatibility; options are ignored.
+ * @param {Record<string, unknown>} [overrides]
  * @returns {BabelPluginEntry}
  */
 function withOptions(overrides = {}) {
-  return [
-    require.resolve("@tamagui/babel-plugin"),
-    {
-      // The kit's design-system config — resolved from this package, so the
-      // consumer never references an internal path.
-      config: require.resolve("@knitui/core/config"),
-      components: DEFAULT_COMPONENTS,
-      logTimings: true,
-      // Extraction off in dev keeps fast-refresh snappy; on for production.
-      disableExtraction: process.env.NODE_ENV === "development",
-      ...overrides,
-    },
-  ];
+  return [knituiNoopBabelPlugin, { ...overrides }];
 }
 
-// Default export is a ready-to-use babel plugin entry (the `[plugin, options]`
-// array). `.withOptions` is attached for the override case.
 /** @type {BabelPluginEntry & { withOptions: typeof withOptions }} */
 const knituiBabelPlugin = Object.assign(withOptions(), { withOptions });
 

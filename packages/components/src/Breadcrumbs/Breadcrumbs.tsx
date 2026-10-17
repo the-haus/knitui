@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
 import { renderTextChild } from "../internal/render-text-child";
@@ -16,7 +16,8 @@ import { Text } from "../Text";
  * via the theme ramp. Renders a semantic `<nav aria-label="Breadcrumb">`.
  */
 const BreadcrumbsFrame = styled(Box, {
-  name: "Breadcrumbs",
+  displayName: "Breadcrumbs",
+  render: "nav",
   flexDirection: "row",
   alignItems: "center",
   flexWrap: "wrap",
@@ -24,21 +25,21 @@ const BreadcrumbsFrame = styled(Box, {
 
 /** A string/number crumb wrapped as text. */
 const BreadcrumbLabel = styled(Text, {
-  name: "Breadcrumb",
+  displayName: "Breadcrumb",
 });
 
 /** The interleaved separator — dimmed and non-selectable. */
 const BreadcrumbSeparator = styled(Text, {
-  name: "BreadcrumbsSeparator",
-  color: "$color",
+  displayName: "BreadcrumbsSeparator",
+  color: "color",
   opacity: 0.6,
   userSelect: "none",
 });
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ label: { color: "$red9" } }}` is
- * sugar for `<Breadcrumbs.Label color="$red9" />`. The `separator` slot is the
+ * of the styled part it targets, so `styles={{ label: { color: "red9" } }}` is
+ * sugar for `<Breadcrumbs.Label color="red9" />`. The `separator` slot is the
  * canonical home for separator styling; the legacy `separatorMargin` prop merges
  * OVER it (the "explicit beats sugar" rule).
  */
@@ -68,7 +69,7 @@ export interface BreadcrumbsProps extends BreadcrumbsFrameProps {
   separator?: React.ReactNode;
   /**
    * Inline spacing around each separator. Token, CSS value or number.
-   * @default '$xs'
+   * @default 'xs'
    * @deprecated Prefer `styles={{ separator: { marginHorizontal } }}`. This prop
    *   still wins over the `separator` slot for backward compatibility.
    */
@@ -77,12 +78,13 @@ export interface BreadcrumbsProps extends BreadcrumbsFrameProps {
   styles?: SlotStyles<BreadcrumbsStyles>;
 }
 
-const BreadcrumbsComponent = BreadcrumbsFrame.styleable<BreadcrumbsProps>(
+const BreadcrumbsComponent = styleable<BreadcrumbsProps>(
+  BreadcrumbsFrame,
   function Breadcrumbs(props, ref) {
     const {
       children,
       separator = "/",
-      separatorMargin = "$xs",
+      separatorMargin = "xs",
       "aria-label": ariaLabel = "Breadcrumb",
       styles,
       ...rest
@@ -107,7 +109,7 @@ const BreadcrumbsComponent = BreadcrumbsFrame.styleable<BreadcrumbsProps>(
     };
 
     return (
-      <BreadcrumbsFrame ref={ref} {...s.get("root")} {...rest} render="nav" {...navProps}>
+      <BreadcrumbsFrame ref={ref} {...s.get("root")} {...rest} {...navProps}>
         {items.map((child, index) => (
           <React.Fragment key={index}>
             {renderTextChild(child, LabelWrapper)}

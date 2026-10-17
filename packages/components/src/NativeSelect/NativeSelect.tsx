@@ -1,6 +1,7 @@
 import * as React from "react";
 
-import { isWeb, registerFocusable, styled, type TamaguiElement, useWebRef } from "@knitui/core";
+import { registerFocusable, styled, type TamaguiElement, useWebRef } from "@knitui/core";
+import { useCallbackRef } from "@knitui/hooks";
 
 import { Combobox } from "../Combobox";
 import {
@@ -52,32 +53,22 @@ type WebSelectChangeEvent = React.ChangeEvent<HTMLSelectElement>;
 type NativeSelectControlProps = Omit<NativeSelectProps, "label" | "description" | "withAsterisk">;
 
 const SelectInput = styled(Text, {
-  name: "NativeSelectInput",
+  displayName: "NativeSelectInput",
   render: "select",
   flex: 1,
   minWidth: 0,
   height: "100%",
+  // The wrapper (`InputChrome`) owns border, background and the focus border, so
+  // the host only resets the UA chrome (no condition clauses needed: nothing else
+  // sets these under focus).
   outlineWidth: 0,
+  outlineStyle: "none",
   borderWidth: 0,
   borderColor: "transparent",
   backgroundColor: "transparent",
   boxShadow: "none",
-  color: "$color",
-  fontFamily: "$body",
-
-  focusStyle: {
-    outlineWidth: 0,
-    borderWidth: 0,
-    borderColor: "transparent",
-    boxShadow: "none",
-  },
-
-  focusVisibleStyle: {
-    outlineWidth: 0,
-    borderWidth: 0,
-    borderColor: "transparent",
-    boxShadow: "none",
-  },
+  color: "color",
+  fontFamily: "body",
 
   variants: {
     size: inputHostSizeVariant,
@@ -87,6 +78,9 @@ const SelectInput = styled(Text, {
     size: "md",
   },
 });
+
+/** Drops the UA select arrow (the kit renders its own chevron section). */
+const APPEARANCE_NONE = { appearance: "none" } as const;
 
 function NativeSelectOption({ data }: { data: ComboboxParsedItem }) {
   if (isComboboxGroup(data)) {
@@ -174,20 +168,20 @@ const NativeSelectControl = React.forwardRef<NativeSelectRef, NativeSelectContro
       };
     }, [disabled, inputId, ref]);
 
-    const handleFocus = (event: React.FocusEvent<HTMLSelectElement>) => {
+    const handleFocus = useCallbackRef((event: React.FocusEvent<HTMLSelectElement>) => {
       setFocused(true);
       onFocus?.(event);
-    };
+    });
 
-    const handleBlur = (event: React.FocusEvent<HTMLSelectElement>) => {
+    const handleBlur = useCallbackRef((event: React.FocusEvent<HTMLSelectElement>) => {
       setFocused(false);
       onBlur?.(event);
-    };
+    });
 
-    const handleChange = (event: WebSelectChangeEvent) => {
+    const handleChange = useCallbackRef((event: WebSelectChangeEvent) => {
       onChangeText?.(event.target.value);
       onChange?.(event);
-    };
+    });
 
     const options = getParsedComboboxData(data).map((item, index) => (
       <NativeSelectOption key={isComboboxGroup(item) ? `group-${index}` : item.value} data={item} />
@@ -204,13 +198,11 @@ const NativeSelectControl = React.forwardRef<NativeSelectRef, NativeSelectContro
       onInput,
       onKeyDown,
       onChange: onChangeText || onChange ? handleChange : undefined,
-      style,
       ...rest,
+      // This entry is web-only (`.native.tsx` is the RN sibling).
+      style:
+        style && typeof style === "object" ? { ...APPEARANCE_NONE, ...style } : APPEARANCE_NONE,
     };
-
-    const mergedStyle = isWeb
-      ? { appearance: "none" as const, ...(typeof style === "object" ? style : {}) }
-      : style;
 
     return (
       <InputChrome
@@ -245,8 +237,6 @@ const NativeSelectControl = React.forwardRef<NativeSelectRef, NativeSelectContro
       >
         <SelectInput
           ref={composedRef as React.Ref<TamaguiElement>}
-          flex={1}
-          minWidth={0}
           size={effectiveSize}
           {...getInputSectionInsets({
             leftSection,
@@ -260,7 +250,6 @@ const NativeSelectControl = React.forwardRef<NativeSelectRef, NativeSelectContro
             __defaultRightSection: true,
           })}
           {...selectHostProps}
-          style={mergedStyle}
         >
           {children ?? options}
         </SelectInput>

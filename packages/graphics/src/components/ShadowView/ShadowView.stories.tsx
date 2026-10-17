@@ -41,7 +41,9 @@ const meta = {
         ...args.style,
       }}
     >
-      <Text style={{ fontWeight: "600", color: "#0f172a" }}>{children ?? "ShadowView"}</Text>
+      <Text fontWeight="600" color="#0f172a">
+        {children ?? "ShadowView"}
+      </Text>
     </ShadowView>
   ),
 } satisfies Meta<typeof ShadowView>;

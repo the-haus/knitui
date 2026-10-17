@@ -1,8 +1,7 @@
 import type { ReactElement } from "react";
 import type { SharedValue } from "react-native-reanimated";
 
-import type { ViewStyle } from "@knitui/core";
-
+import type { LayoutStyle } from "../style";
 import type { RenderItem } from "../types";
 
 /**
@@ -12,8 +11,13 @@ import type { RenderItem } from "../types";
  * content branch — is identical and lives here.
  */
 
-/** Every slide is stacked at the origin and placed purely by its transform. */
-export const SLIDE_BASE: ViewStyle = { position: "absolute", pointerEvents: "box-none" };
+/**
+ * Every slide is stacked at the origin and placed purely by its transform. The
+ * slide host is `box-none` too, but as the `pointerEvents` PROP on both hosts:
+ * as a style key it reached the DOM verbatim on web (`pointer-events: box-none`,
+ * invalid CSS, silently `auto`).
+ */
+export const SLIDE_BASE: LayoutStyle = { position: "absolute" };
 
 /**
  * Main-axis dimension for a slide; the cross axis stretches to the container.
@@ -26,7 +30,7 @@ export const SLIDE_BASE: ViewStyle = { position: "absolute", pointerEvents: "box
  * is purely visual: the snap offsets and active-index math (multiples of `size`)
  * are unaffected. When `pageSize` equals the viewport it is a no-op.
  */
-export function slideDimension(vertical: boolean, pageSize: number): ViewStyle {
+export function slideDimension(vertical: boolean, pageSize: number): LayoutStyle {
   return vertical
     ? { left: 0, right: 0, height: pageSize, top: "50%", marginTop: -pageSize / 2 }
     : { top: 0, bottom: 0, width: pageSize, left: "50%", marginLeft: -pageSize / 2 };

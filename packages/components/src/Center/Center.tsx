@@ -1,4 +1,4 @@
-import { type GetProps, styled } from "@knitui/core";
+import { type GetProps, styleable, styled } from "@knitui/core";
 
 import { Box } from "../Box";
 import { renderTextChild } from "../internal/render-text-child";
@@ -9,7 +9,7 @@ import { Text } from "../Text";
  * to `inline-flex` so it sits inline with surrounding text.
  */
 const CenterFrame = styled(Box, {
-  name: "Center",
+  displayName: "Center",
   alignItems: "center",
   justifyContent: "center",
   variants: {
@@ -23,7 +23,7 @@ const CenterFrame = styled(Box, {
 
 export interface CenterProps extends GetProps<typeof CenterFrame> {}
 
-export const Center = CenterFrame.styleable<CenterProps>(function Center(props, ref) {
+export const Center = styleable<CenterProps>(CenterFrame, function Center(props, ref) {
   const { children, ...rest } = props;
 
   return (

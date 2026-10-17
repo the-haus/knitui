@@ -16,7 +16,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Anchor is link text built on `Text`. It renders an `<a>` (`role="link"`), inherits the full `Text` surface (`size`, `truncate`, `lineClamp`, `inline`, `inherit`) and adds `underline`, which controls WHEN the underline shows. The default link color is the theme accent ramp (`$color11`); recolor via the `theme` prop, never a `color` prop.',
+          'Anchor is link text built on `Text`. It renders an `<a>` (`role="link"`), inherits the full `Text` surface (`size`, `truncate`, `lineClamp`, `inline`, `inherit`) and adds `underline`, which controls WHEN the underline shows. The default link color is the theme accent ramp (`color11`); recolor via the `theme` prop, never a `color` prop.',
       },
     },
   },
@@ -59,7 +59,7 @@ export const Default: Story = {};
 /** Each `underline` value, hover to see the difference. */
 export const Underline: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$sm" alignItems="flex-start">
+    <Box flexDirection="column" gap="sm" alignItems="flex-start">
       {UNDERLINES.map((underline) => (
         <Anchor key={underline} {...args} underline={underline}>
           underline: {underline}
@@ -72,7 +72,7 @@ export const Underline: Story = {
 /** The full seven-step text size scale. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$sm" alignItems="flex-start">
+    <Box flexDirection="column" gap="sm" alignItems="flex-start">
       {SIZES.map((size) => (
         <Anchor key={size} {...args} size={size}>
           size: {size}
@@ -105,7 +105,7 @@ export const Truncated: Story = {
 /** The accent ramp follows the active theme — same link, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$sm" alignItems="flex-start">
+    <Box flexDirection="column" gap="sm" alignItems="flex-start">
       {(["blue", "red", "green", "pink"] as const).map((theme) => (
         <Anchor key={theme} {...args} theme={theme}>
           {theme}

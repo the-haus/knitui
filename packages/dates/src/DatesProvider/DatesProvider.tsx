@@ -9,7 +9,7 @@
 // gold-standard checklist points are N/A here by design: there is no styled
 // Frame or leaf part (#5), shared `createStyledContext` size axis (#2), derived
 // `cell-metrics` sizing (#3), theme-ramp colors (#4), marker slots (#6), per-slot
-// `styles` sugar (#7), date bounds (#10), interaction styling (#12), `.styleable`
+// `styles` sugar (#7), date bounds (#10), interaction styling (#12), `styleable()`
 // wrapper (#13), `withStaticProperties` parts (#14), or compiler-safe style
 // pitfall (#15). What DOES apply — and is honored — is: documented provenance +
 // cross-platform stance (#1), correct settings-context propagation with

@@ -1,0 +1,11 @@
+transition-tuple · 11 · transition={{ preset: "quick", opacity: "lazy" }}
+transition-tuple · 12 · transition="bouncy"
+transition-animate-only · 13 · transition={{ preset: "bouncy", properties: "opacity" }}
+transition-animate-only · 14 · transition={{ preset: "ease-out", duration: 250, properties: "transform" }}
+transition-none · 15 · transition="none"
+transition-none · 16 · transition="none"
+transition-manual · 17 · animateOnly is not an array literal of strings
+transition-animate-only · 18 · transition={{ preset: "quick", opacity: "lazy", properties: "opacity" }}
+transition-animate-only · 4 · transition: { preset: "quick", properties: "opacity, transform" }
+transition-manual · 23 · tuple transition in a plain object
+transition-manual · 23 · animateOnly reference (PropertyAssignment)

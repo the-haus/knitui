@@ -12,7 +12,7 @@ import { GraphicsProvider } from "./GraphicsProvider";
 function ReadyBadge() {
   const ready = useGraphicsReady();
   return (
-    <Text fontSize={13} style={{ color: ready ? "#16a34a" : "#b45309" }}>
+    <Text fontSize={13} color={ready ? "#16a34a" : "#b45309"}>
       Skia runtime: <Text fontWeight="700">{ready ? "ready" : "loading…"}</Text>
     </Text>
   );

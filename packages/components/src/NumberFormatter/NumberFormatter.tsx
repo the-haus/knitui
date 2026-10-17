@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { type GetProps, styled } from "@knitui/core";
+import { type GetProps, styleable, styled } from "@knitui/core";
 
 import { Text } from "../Text";
 
 const NumberFormatterFrame = styled(Text, {
-  name: "NumberFormatter",
+  displayName: "NumberFormatter",
 });
 
 type NumberFormatterFrameProps = Omit<GetProps<typeof NumberFormatterFrame>, "children">;
@@ -135,7 +135,8 @@ function formatValue(props: NumberFormatterProps): string {
  * Mantine's `NumberFormatter` API (which wraps `react-number-format`); this
  * implementation is self-contained so there is no extra dependency.
  */
-export const NumberFormatter = NumberFormatterFrame.styleable<NumberFormatterProps>(
+export const NumberFormatter = styleable<NumberFormatterProps>(
+  NumberFormatterFrame,
   function NumberFormatter(props, ref) {
     const {
       value,

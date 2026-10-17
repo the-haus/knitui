@@ -117,21 +117,21 @@ export type {
  * one shows real content immediately instead of a blank frame.
  */
 const VirtualListFrame = styled(Box, {
-  name: "VirtualList",
+  displayName: "VirtualList",
   position: "relative",
   overflow: "hidden",
 });
 
 /** The total-size spacer that holds the absolutely-positioned rows. */
 const VirtualListContent = styled(Box, {
-  name: "VirtualListContent",
+  displayName: "VirtualListContent",
   position: "relative",
   width: "100%",
 });
 
 /** One absolutely-positioned row wrapper (measured via `onLayout`). */
 const VirtualListItem = styled(Box, {
-  name: "VirtualListItem",
+  displayName: "VirtualListItem",
   position: "absolute",
   left: 0,
   right: 0,
@@ -235,8 +235,16 @@ const RowInner = <T,>({
     },
     [item, index, getItemType, onMeasure],
   );
+  // Per-row geometry rides INLINE `style`, not the `top` style prop: on v3 web a
+  // style prop compiles to an atomic CSS rule per distinct value, so every row
+  // offset (and every re-measure that shifts it) would inject a new rule.
+  const slotStyle = itemProps.style;
+  const style = React.useMemo(
+    () => (slotStyle ? [slotStyle, { top }] : { top }),
+    [slotStyle, top],
+  ) as BoxProps["style"];
   return (
-    <VirtualListItem top={top} onLayout={handleLayout} {...itemProps}>
+    <VirtualListItem onLayout={handleLayout} {...itemProps} style={style}>
       <RowContent<T> item={item} index={index} renderItem={renderItem} extraData={extraData} />
       {isLast ? null : separator}
     </VirtualListItem>
@@ -804,7 +812,11 @@ function VirtualListInner<T>(
         {isEmpty ? (
           ListEmptyComponent
         ) : (
-          <VirtualListContent height={spacerHeight} {...contentSlot}>
+          // The spacer's height follows the measured total — inline, like the rows.
+          <VirtualListContent
+            {...contentSlot}
+            style={[contentSlot?.style, { height: spacerHeight }]}
+          >
             {ListHeaderComponent != null && (
               <Box position="absolute" top={0} left={0} right={0} onLayout={handleHeaderLayout}>
                 {ListHeaderComponent}
@@ -814,9 +826,9 @@ function VirtualListInner<T>(
             {ListFooterComponent != null && (
               <Box
                 position="absolute"
-                top={headerH + contentTotal}
                 left={0}
                 right={0}
+                style={{ top: headerH + contentTotal }}
                 onLayout={handleFooterLayout}
               >
                 {ListFooterComponent}

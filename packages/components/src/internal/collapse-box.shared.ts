@@ -14,7 +14,7 @@ export type CollapseAxis = "height" | "width";
  * The two platforms animate that target differently:
  *
  * - **Web** (`collapse-box.tsx`) stays on Tamagui's animation driver — it spreads
- *   the kit's `transition` + `animateOnly` onto the `Frame`, exactly as the
+ *   a v3 `transition` (scoped via `properties`) onto the `Frame`, exactly as the
  *   components did inline before. No custom CSS; web behaviour is unchanged.
  * - **Native** (`collapse-box.native.tsx`) drives reanimated `useAnimatedStyle` +
  *   `withTiming` off the UI thread, because Tamagui's reanimated driver animates

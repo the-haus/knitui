@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, isWeb, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, isWeb, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useMove, useUncontrolled } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
@@ -34,7 +34,7 @@ const DEFAULT_SIZE: SliderSize = "md";
 /** Default main-axis length of a vertical slider (px). */
 const VERTICAL_LENGTH = 160;
 // A slider is a THIN track with a moderate round thumb — neither belongs on the
-// `$size` (16–64) control/icon scale (which made both ≈40px at md). The thumb's
+// `size` token (control/icon) scale (which made both ≈40px at md). The thumb's
 // position/margins and the track's centring offset are computed in JS layout math
 // (e.g. `marginLeft: -knob.px / 2`), which needs the raw pixel NUMBER — a style
 // variant object can't be read as a number. So these stay as local geometry maps,
@@ -44,14 +44,12 @@ const SLIDER_TRACK = { xxs: 3, xs: 4, sm: 5, md: 6, lg: 8, xl: 10, xxl: 12 } as 
 const SLIDER_THUMB = { xxs: 12, xs: 14, sm: 16, md: 20, lg: 24, xl: 28, xxl: 32 } as const;
 
 interface SliderDimension {
-  value: BoxProps["width"];
   px: number;
 }
 
-const resolveTrackSize = (size: SliderSize | number): SliderDimension =>
-  typeof size === "number"
-    ? { value: size, px: size }
-    : { value: SLIDER_TRACK[size], px: SLIDER_TRACK[size] };
+const resolveTrackSize = (size: SliderSize | number): SliderDimension => ({
+  px: typeof size === "number" ? size : SLIDER_TRACK[size],
+});
 
 const resolveThumbSize = (
   size: SliderSize | number,
@@ -62,13 +60,9 @@ const resolveThumbSize = (
     // thumb geometry needs a concrete pixel number, so parse numeric strings
     // (e.g. `"28"` / `"28px"`) and ignore anything non-numeric.
     const px = typeof thumbSize === "number" ? thumbSize : parseFloat(thumbSize);
-    if (!Number.isNaN(px)) {
-      return { value: px, px };
-    }
+    if (!Number.isNaN(px)) return { px };
   }
-  return typeof size === "number"
-    ? { value: size + 12, px: size + 12 }
-    : { value: SLIDER_THUMB[size], px: SLIDER_THUMB[size] };
+  return { px: typeof size === "number" ? size + 12 : SLIDER_THUMB[size] };
 };
 
 /* -------------------------------------------------------------------------- */
@@ -125,6 +119,100 @@ const valueToPct = (value: number, min: number, max: number): number =>
 
 const pct = (n: number): BoxProps["width"] => `${n}%` as BoxProps["width"];
 
+/*
+ * VALUE-DRIVEN GEOMETRY goes through the inline `style` prop, not style props.
+ * The thumb offset and the bar extent change on every drag frame; as v3 style
+ * props each distinct percentage would mint (and inject) a new atomic CSS rule
+ * on web — hundreds of rules for one drag across a fine `step`. `style` writes
+ * the element's inline style directly (web) / the RN style (native) with no
+ * class churn. SIZE-driven geometry (track thickness, thumb diameter, centring
+ * margins) stays on style props: it has a handful of values, memoised below.
+ */
+type InlineGeometry = Record<string, string | number>;
+
+/** Merge a caller `style` (from the `thumb`/`bar` slot) over the value geometry. */
+const withUserStyle = (geometry: InlineGeometry, user: unknown): InlineGeometry =>
+  user && typeof user === "object" && !Array.isArray(user)
+    ? { ...geometry, ...(user as InlineGeometry) }
+    : geometry;
+
+/** The bar's extent along the track, as inline geometry. */
+const fillGeometry = (
+  vertical: boolean,
+  inverted: boolean,
+  position: number,
+  startPct: number | null,
+): InlineGeometry => {
+  if (startPct !== null) {
+    const lo = Math.min(startPct, position);
+    const span = Math.abs(position - startPct);
+    return vertical
+      ? { left: 0, right: 0, bottom: `${lo}%`, height: `${span}%` }
+      : { top: 0, bottom: 0, left: `${lo}%`, width: `${span}%` };
+  }
+  if (vertical) {
+    return inverted
+      ? { left: 0, right: 0, top: 0, height: `${100 - position}%` }
+      : { left: 0, right: 0, bottom: 0, height: `${position}%` };
+  }
+  return inverted
+    ? { top: 0, bottom: 0, right: 0, width: `${100 - position}%` }
+    : { top: 0, bottom: 0, left: 0, width: `${position}%` };
+};
+
+/** The thumb's offset along the track, as inline geometry. */
+const thumbGeometry = (vertical: boolean, position: number): InlineGeometry =>
+  vertical ? { bottom: `${position}%` } : { left: `${position}%` };
+
+/**
+ * Size-driven layout for one slider (track thickness + centring, thumb diameter +
+ * centring, root padding, hit-area box). Memoised per (axis, track px, thumb px)
+ * so a drag frame reuses the same prop objects.
+ */
+const useSliderLayout = (vertical: boolean, trackPx: number, knobPx: number) =>
+  React.useMemo(
+    () => ({
+      root: vertical
+        ? { paddingVertical: 0, paddingHorizontal: knobPx / 2 }
+        : { paddingVertical: knobPx / 2, paddingHorizontal: 0 },
+      container: vertical
+        ? { height: VERTICAL_LENGTH, width: knobPx }
+        : { height: knobPx, width: "100%" as const },
+      track: (vertical
+        ? { top: 0, bottom: 0, left: "50%", width: trackPx, marginLeft: -trackPx / 2 }
+        : { left: 0, right: 0, top: "50%", height: trackPx, marginTop: -trackPx / 2 }) as Partial<
+        GetProps<typeof SliderTrack>
+      >,
+      thumb: (vertical
+        ? {
+            width: knobPx,
+            height: knobPx,
+            left: "50%",
+            marginLeft: -knobPx / 2,
+            marginBottom: -knobPx / 2,
+          }
+        : {
+            width: knobPx,
+            height: knobPx,
+            top: "50%",
+            marginLeft: -knobPx / 2,
+            marginTop: -knobPx / 2,
+          }) as Partial<GetProps<typeof SliderThumb>>,
+    }),
+    [vertical, trackPx, knobPx],
+  );
+
+/** Stable `{ onHoverIn, onHoverOut }` toggling a boolean state. */
+const useHoverHandlers = (setHovered: (value: boolean) => void) =>
+  React.useMemo(
+    () =>
+      hoverProps({
+        onHoverIn: () => setHovered(true),
+        onHoverOut: () => setHovered(false),
+      }),
+    [setHovered],
+  );
+
 type SliderAriaRangeProps = {
   role: "slider";
   "aria-valuemin"?: number;
@@ -163,7 +251,7 @@ const sliderAriaRangeProps = (
 /* -------------------------------------------------------------------------- */
 
 const SliderRoot = styled(Box, {
-  name: "Slider",
+  displayName: "Slider",
   position: "relative",
   userSelect: "none",
 
@@ -182,7 +270,7 @@ const SliderRoot = styled(Box, {
 
 /** The pointer hit-area; carries the `useMove` ref. */
 const SliderTrackContainer = styled(Box, {
-  name: "SliderTrackContainer",
+  displayName: "SliderTrackContainer",
   position: "relative",
   ...webCursor("pointer"),
 
@@ -200,73 +288,69 @@ const SliderTrackContainer = styled(Box, {
  * shared `sliderTrackVariant` (which only sets `height`) can't express the
  * vertical axis, so the local number map is the geometry source here. */
 /*
- * RAMP NOTE (`$colorN` steps below are MIRRORED, i.e. `13 - n`)
+ * RAMP NOTE (`colorN` steps below are MIRRORED, i.e. `13 - n`)
  * ------------------------------------------------------------
- * `SliderTrack` and `SliderThumb` collide by NAME with two entries in Tamagui's
- * (deprecated) `defaultComponentThemes`, both templated `inverse`. Until
- * `core/config/themes.ts` set `componentThemes: false` those frames — and every
- * descendant, so `SliderBar` and `SliderLabelBubble` too — rendered inside a
- * `<scheme>_SliderTrack` / `<scheme>_SliderThumb` theme whose ENTIRE `$color1…
- * $color12` ramp was reversed. The steps here are therefore written pre-mirrored
- * (`$color3` → `$color10`, `$color9` → `$color4`, `$color1` → `$color12`, …) so
- * the slider keeps its shipped appearance now that the ramp is no longer flipped
- * under it. See the changeset: un-mirroring these is a deliberate design change,
- * not a cleanup.
+ * `SliderTrack` and `SliderThumb` used to collide by NAME with two `inverse`
+ * entries in Tamagui v2's `defaultComponentThemes`, so those frames (and every
+ * descendant: `SliderBar`, `SliderLabelBubble`) rendered under a reversed
+ * `color1…color12` ramp. The steps here are written pre-mirrored (`color3` →
+ * `color10`, `color9` → `color4`, `color1` → `color12`, …) so the slider keeps
+ * its shipped appearance. Un-mirroring them is a design change, not a cleanup.
  */
 const SliderTrack = styled(Box, {
-  name: "SliderTrack",
+  displayName: "SliderTrack",
   position: "absolute",
-  backgroundColor: "$color10",
+  backgroundColor: "color10",
   variants: { radius: radiusVariant } as const,
   defaultVariants: { radius: "xl" },
 });
 
 /** The filled portion of the track. */
 const SliderBar = styled(Box, {
-  name: "SliderBar",
+  displayName: "SliderBar",
   position: "absolute",
-  backgroundColor: "$color4",
+  backgroundColor: "color4",
   variants: { radius: radiusVariant } as const,
   defaultVariants: { radius: "xl" },
 });
 
 const SliderThumb = styled(Box, {
-  name: "SliderThumb",
+  displayName: "SliderThumb",
   position: "absolute",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "$color12",
+  backgroundColor: "color12",
   borderWidth: 2,
-  borderColor: "$color4",
+  borderColor: "color4 hover:color3",
   borderRadius: 9999,
   ...webCursor("pointer"),
-  hoverStyle: { borderColor: "$color3" },
+
   ...focusRingStyle,
 });
 
 const SliderMarkDot = styled(Box, {
-  name: "SliderMarkDot",
+  displayName: "SliderMarkDot",
   position: "absolute",
   width: 6,
   height: 6,
   borderRadius: 9999,
   borderWidth: 2,
-  borderColor: "$color3",
-  backgroundColor: "$background",
+  borderColor: "color3",
+  backgroundColor: "background",
   pointerEvents: "none",
 
   variants: {
     filled: {
-      true: { borderColor: "$color9" },
+      true: { borderColor: "color9" },
     },
   } as const,
 });
 
 const SliderMarkLabel = styled(Text, {
-  name: "SliderMarkLabel",
+  displayName: "SliderMarkLabel",
   position: "absolute",
-  fontSize: "$xs",
-  color: "$color11",
+  fontSize: "xs",
+  color: "color11",
   textAlign: "center",
   pointerEvents: "none",
   userSelect: "none",
@@ -286,7 +370,7 @@ const LABEL_ANCHOR_HALF = 100;
  * extra width invisible and inert.
  */
 const SliderLabelAnchor = styled(Box, {
-  name: "SliderLabelAnchor",
+  displayName: "SliderLabelAnchor",
   position: "absolute",
   bottom: "100%",
   left: "50%",
@@ -298,15 +382,15 @@ const SliderLabelAnchor = styled(Box, {
 });
 
 const SliderLabelBubble = styled(Text, {
-  name: "SliderLabelBubble",
+  displayName: "SliderLabelBubble",
   paddingHorizontal: 6,
   paddingVertical: 2,
-  borderRadius: "$sm",
+  borderRadius: "sm",
   // MIRRORED steps — this renders inside `SliderThumb`, which used to invert the
   // whole ramp under it. See the RAMP NOTE above `SliderTrack`.
-  backgroundColor: "$color4",
-  color: "$color12",
-  fontSize: "$xs",
+  backgroundColor: "color4",
+  color: "color12",
+  fontSize: "xs",
   pointerEvents: "none",
   // Force a single line cross-platform. Safe here (unlike inside the thumb)
   // because the anchor is wide, so RNW's implied `maxWidth: 100%` never bites.
@@ -320,8 +404,8 @@ const SliderLabelBubble = styled(Text, {
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the Slider
  * part surface. Each key maps to the props of the part it targets, so
- * `styles={{ thumb: { backgroundColor: "$red9" } }}` is sugar for
- * `<Slider.Thumb backgroundColor="$red9" />`. Shared by `Slider` and `RangeSlider`.
+ * `styles={{ thumb: { backgroundColor: "red9" } }}` is sugar for
+ * `<Slider.Thumb backgroundColor="red9" />`. Shared by `Slider` and `RangeSlider`.
  */
 export interface SliderStyles {
   /** Props for the outer relative root (`Slider.Root`). */
@@ -475,7 +559,7 @@ interface SliderSharedProps {
   max?: number;
   /** Step between values. @default 1 */
   step?: number;
-  /** Track/thumb size — a `$size` scale key (`xxs`–`xxl`) or a px number. @default 'md' */
+  /** Track/thumb size — a size key (`xxs`–`xxl`) or a px number. @default 'md' */
   size?: SliderSize | number;
   /** Border radius of the track/bar. @default 'xl' */
   radius?: string | number;
@@ -573,14 +657,15 @@ export interface SliderProps
 /**
  * `Slider` — capture a single numeric value within a range by dragging a thumb.
  * Mirrors Mantine's `Slider` public API, built on our cross-platform `useMove`
- * (web pointer events + native gesture responder). Accent comes from the theme
- * ramp (filled bar `$color9`); recolor via the `theme` prop, never a `color` prop.
+ * (web pointer events + native gesture responder; native positions come from
+ * `pageX`/`pageY` minus the measured track origin). Accent comes from the theme
+ * ramp; recolor via the `theme` prop, never a `color` prop.
  *
  * Supports `domain`, `precision`, `startPointValue`, `thumbValueText`, and
  * `thumbProps`/`hiddenInputProps` passthrough. Still deferred (documented):
  * `labelTransitionProps` — wants the `Transition` component wired into the bubble.
  */
-const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props, ref) {
+const SliderComponent = styleable<SliderProps>(SliderRoot, function Slider(props, ref) {
   const {
     min = 0,
     max = 100,
@@ -654,6 +739,9 @@ const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props,
   };
 
   // Latest value mirror so `onChangeEnd` (fired from the move hook) is current.
+  // `onMove` writes it too: the release handler runs `onChange` then `onScrubEnd`
+  // synchronously, BEFORE React re-renders, so the render-time mirror alone would
+  // hand `onChangeEnd` the previous frame's value.
   const currentRef = React.useRef(current);
   currentRef.current = current;
 
@@ -661,14 +749,16 @@ const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props,
     const s = stateRef.current;
     if (s.disabled) return;
     const pos = s.orientation === "vertical" ? 1 - position.y : position.x;
-    s.setValue(posToValue(pos, s));
+    const next = posToValue(pos, s);
+    currentRef.current = next;
+    s.setValue(next);
   }, []);
 
   const { ref: moveRef, rootProps } = useMove(onMove, {
     onScrubStart: () => setActive(true),
     onScrubEnd: () => {
       setActive(false);
-      onChangeEnd?.(currentRef.current);
+      if (!stateRef.current.disabled) onChangeEnd?.(currentRef.current);
     },
   });
 
@@ -676,50 +766,53 @@ const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props,
   const knob = resolveThumbSize(size, thumbSize);
   const vertical = orientation === "vertical";
   const position = valueToPct(current, dMin, dMax);
+  const layout = useSliderLayout(vertical, trackSize.px, knob.px);
 
-  const stepValue = (delta: number, commit: boolean): void => {
-    if (disabled) return;
-    const next = applyPrecision(
-      clamp(roundToStep(current + delta, dMin, step), dMin, dMax),
-      precision,
-    );
-    setValue(next);
-    if (commit) onChangeEnd?.(next);
-  };
+  // Latest props for the (stable) key handler — a drag re-renders every frame,
+  // so the handler (and the focus-prop object around it) must not churn.
+  const keyStateRef = React.useRef({ current, dMin, dMax, step, precision, disabled, onChangeEnd });
+  keyStateRef.current = { current, dMin, dMax, step, precision, disabled, onChangeEnd };
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLElement>): void => {
-    switch (event.key) {
-      case "ArrowRight":
-      case "ArrowUp":
-        event.preventDefault();
-        stepValue(step, true);
-        break;
-      case "ArrowLeft":
-      case "ArrowDown":
-        event.preventDefault();
-        stepValue(-step, true);
-        break;
-      case "PageUp":
-        event.preventDefault();
-        stepValue(step * 10, true);
-        break;
-      case "PageDown":
-        event.preventDefault();
-        stepValue(-step * 10, true);
-        break;
-      case "Home":
-        event.preventDefault();
-        setValue(dMin);
-        onChangeEnd?.(dMin);
-        break;
-      case "End":
-        event.preventDefault();
-        setValue(dMax);
-        onChangeEnd?.(dMax);
-        break;
-      default:
-    }
-  };
+  const onKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLElement>): void => {
+      const k = keyStateRef.current;
+      if (k.disabled) return;
+      let next: number;
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowUp":
+          next = k.current + k.step;
+          break;
+        case "ArrowLeft":
+        case "ArrowDown":
+          next = k.current - k.step;
+          break;
+        case "PageUp":
+          next = k.current + k.step * 10;
+          break;
+        case "PageDown":
+          next = k.current - k.step * 10;
+          break;
+        case "Home":
+          next = k.dMin;
+          break;
+        case "End":
+          next = k.dMax;
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+      const snapped =
+        event.key === "Home" || event.key === "End"
+          ? next
+          : applyPrecision(clamp(roundToStep(next, k.dMin, k.step), k.dMin, k.dMax), k.precision);
+      k.current = snapped;
+      setValue(snapped);
+      k.onChangeEnd?.(snapped);
+    },
+    [setValue],
+  );
 
   const showLabel = !disabled && (labelAlwaysOn || active || (showLabelOnHover && hovered));
   const labelNode = renderLabel(label, scale(current));
@@ -736,66 +829,42 @@ const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props,
       ? valueToPct(startPointValue, dMin, dMax)
       : null;
 
-  // Track-fill geometry (cross-platform percentages).
-  const fill: Partial<BoxProps> =
-    startPct !== null
-      ? (() => {
-          const lo = Math.min(startPct, position);
-          const span = Math.abs(position - startPct);
-          return vertical
-            ? { left: 0, right: 0, bottom: pct(lo), height: pct(span) }
-            : { top: 0, bottom: 0, left: pct(lo), width: pct(span) };
-        })()
-      : vertical
-        ? inverted
-          ? { left: 0, right: 0, top: 0, height: pct(100 - position) }
-          : { left: 0, right: 0, bottom: 0, height: pct(position) }
-        : inverted
-          ? { top: 0, bottom: 0, right: 0, width: pct(100 - position) }
-          : { top: 0, bottom: 0, left: 0, width: pct(position) };
-
-  const trackBase: Partial<BoxProps> = vertical
-    ? { top: 0, bottom: 0, left: "50%", width: trackSize.value, marginLeft: -trackSize.px / 2 }
-    : { left: 0, right: 0, top: "50%", height: trackSize.value, marginTop: -trackSize.px / 2 };
-
-  const thumbPos: Partial<BoxProps> = vertical
-    ? { bottom: pct(position), left: "50%", marginLeft: -knob.px / 2, marginBottom: -knob.px / 2 }
-    : { left: pct(position), top: "50%", marginLeft: -knob.px / 2, marginTop: -knob.px / 2 };
-
   // `tabIndex`/`onKeyDown` are web focus props outside Tamagui's typed surface;
   // narrow via an `object` local (no `any`), as `AngleSlider` does.
-  const focusProps: object = { tabIndex: disabled ? -1 : 0, onKeyDown };
+  const focusProps: object = React.useMemo(
+    () => ({ tabIndex: disabled ? -1 : 0, onKeyDown }),
+    [disabled, onKeyDown],
+  );
   // Deprecated `thumbProps` merged OVER the `thumb` slot sugar ("explicit beats sugar").
   const extraThumb = s.merge("thumb", thumbProps);
-  const hoverHandlers = hoverProps({
-    onHoverIn: () => setHovered(true),
-    onHoverOut: () => setHovered(false),
-  });
+  const barSlot = s.get("bar");
+  const hoverHandlers = useHoverHandlers(setHovered);
   return (
     <SliderRoot
       ref={ref}
       orientation={orientation}
       disabled={disabled}
-      paddingVertical={vertical ? 0 : knob.px / 2}
-      paddingHorizontal={vertical ? knob.px / 2 : 0}
+      {...layout.root}
       {...s.get("root")}
       {...rest}
     >
       <SliderTrackContainer
         ref={moveRef}
         orientation={orientation}
-        height={vertical ? VERTICAL_LENGTH : knob.value}
-        width={vertical ? knob.value : "100%"}
+        {...layout.container}
         {...s.get("trackContainer")}
-        {...(rootProps as GetProps<typeof SliderTrackContainer>)}
+        {...rootProps}
         {...(hoverHandlers as GetProps<typeof SliderTrackContainer>)}
       >
-        <SliderTrack
-          radius={radius}
-          {...s.get("track")}
-          {...(trackBase as GetProps<typeof SliderTrack>)}
-        >
-          <SliderBar radius={radius} {...s.get("bar")} {...(fill as GetProps<typeof SliderBar>)} />
+        <SliderTrack radius={radius} {...s.get("track")} {...layout.track}>
+          <SliderBar
+            radius={radius}
+            {...barSlot}
+            style={withUserStyle(
+              fillGeometry(vertical, inverted, position, startPct),
+              barSlot?.style,
+            )}
+          />
         </SliderTrack>
 
         {marks ? (
@@ -813,15 +882,14 @@ const SliderComponent = SliderRoot.styleable<SliderProps>(function Slider(props,
         ) : null}
 
         <SliderThumb
-          width={knob.value}
-          height={knob.value}
+          {...layout.thumb}
           aria-label={thumbLabel}
           aria-orientation={orientation}
           aria-disabled={disabled || undefined}
           {...(ariaRangeProps as GetProps<typeof SliderThumb>)}
-          {...(thumbPos as GetProps<typeof SliderThumb>)}
-          {...(focusProps as GetProps<typeof SliderThumb>)}
+          {...focusProps}
           {...extraThumb}
+          style={withUserStyle(thumbGeometry(vertical, position), extraThumb?.style)}
         >
           {showLabel && labelNode != null ? (
             <SliderLabelAnchor {...s.get("labelAnchor")}>
@@ -918,7 +986,8 @@ export interface RangeSliderProps
  * collision instead of blocking. Shares `Slider`'s `domain`/`precision`/
  * `thumbValueText`/`thumbProps`. Deferred: `labelTransitionProps`.
  */
-const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
+const RangeSliderComponent = styleable<RangeSliderProps>(
+  SliderRoot,
   function RangeSlider(props, ref) {
     const {
       min = 0,
@@ -1012,7 +1081,11 @@ const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
       }
       const idx = activeThumb.current;
       const draft: RangeSliderValue = idx === 0 ? [raw, b] : [a, raw];
-      s.setValue(constrainRange(draft, idx, s.value, s));
+      const next = constrainRange(draft, idx, s.value, s);
+      // Mirror immediately: consecutive move events (and the release's
+      // `onChangeEnd`) can fire before React re-renders.
+      s.value = next;
+      s.setValue(next);
     }, []);
 
     const { ref: moveRef, rootProps } = useMove(onMove, {
@@ -1023,7 +1096,7 @@ const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
       onScrubEnd: () => {
         activeThumb.current = null;
         setActive(false);
-        onChangeEnd?.(stateRef.current.value);
+        if (!stateRef.current.disabled) onChangeEnd?.(stateRef.current.value);
       },
     });
 
@@ -1033,78 +1106,82 @@ const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
     const [valA, valB] = current;
     const pctA = valueToPct(valA, dMin, dMax);
     const pctB = valueToPct(valB, dMin, dMax);
+    const layout = useSliderLayout(vertical, trackSize.px, knob.px);
 
-    const stepThumb = (index: 0 | 1, delta: number): void => {
-      if (disabled) return;
-      const [a, b] = current;
-      const target = roundToStep((index === 0 ? a : b) + delta, dMin, step);
-      const draft: RangeSliderValue = index === 0 ? [target, b] : [a, target];
-      const next = constrainRange(draft, index, current, {
-        min: dMin,
-        max: dMax,
-        minRange,
-        maxRange,
-        pushOnOverlap,
-        precision,
-      });
-      setValue(next);
-      onChangeEnd?.(next);
-    };
+    const onChangeEndRef = React.useRef(onChangeEnd);
+    onChangeEndRef.current = onChangeEnd;
 
-    const makeKeyDown =
-      (index: 0 | 1) =>
-      (event: React.KeyboardEvent<HTMLElement>): void => {
-        switch (event.key) {
-          case "ArrowRight":
-          case "ArrowUp":
-            event.preventDefault();
-            stepThumb(index, step);
-            break;
-          case "ArrowLeft":
-          case "ArrowDown":
-            event.preventDefault();
-            stepThumb(index, -step);
-            break;
-          case "PageUp":
-            event.preventDefault();
-            stepThumb(index, step * 10);
-            break;
-          case "PageDown":
-            event.preventDefault();
-            stepThumb(index, -step * 10);
-            break;
-          default:
-        }
+    // One stable key handler per thumb; they read the latest state through
+    // `stateRef`, so a drag frame does not rebuild them.
+    const keyHandlers = React.useMemo(() => {
+      const stepThumb = (index: 0 | 1, delta: number): void => {
+        const st = stateRef.current;
+        if (st.disabled) return;
+        const [a, b] = st.value;
+        const target = roundToStep((index === 0 ? a : b) + delta, st.min, st.step);
+        const draft: RangeSliderValue = index === 0 ? [target, b] : [a, target];
+        const next = constrainRange(draft, index, st.value, st);
+        st.value = next;
+        st.setValue(next);
+        onChangeEndRef.current?.(next);
       };
+      const make =
+        (index: 0 | 1) =>
+        (event: React.KeyboardEvent<HTMLElement>): void => {
+          const st = stateRef.current;
+          const [a, b] = st.value;
+          const own = index === 0 ? a : b;
+          let delta: number;
+          switch (event.key) {
+            case "ArrowRight":
+            case "ArrowUp":
+              delta = st.step;
+              break;
+            case "ArrowLeft":
+            case "ArrowDown":
+              delta = -st.step;
+              break;
+            case "PageUp":
+              delta = st.step * 10;
+              break;
+            case "PageDown":
+              delta = -st.step * 10;
+              break;
+            case "Home":
+              delta = st.min - own;
+              break;
+            case "End":
+              delta = st.max - own;
+              break;
+            default:
+              return;
+          }
+          event.preventDefault();
+          stepThumb(index, delta);
+        };
+      return [make(0), make(1)] as const;
+    }, []);
+
+    const thumbFocus = React.useMemo(
+      () =>
+        [
+          { tabIndex: disabled ? -1 : 0, onKeyDown: keyHandlers[0] },
+          { tabIndex: disabled ? -1 : 0, onKeyDown: keyHandlers[1] },
+        ] as const,
+      [disabled, keyHandlers],
+    );
 
     const showLabel = !disabled && (labelAlwaysOn || active || (showLabelOnHover && hovered));
 
-    const trackBase: Partial<BoxProps> = vertical
-      ? { top: 0, bottom: 0, left: "50%", width: trackSize.value, marginLeft: -trackSize.px / 2 }
-      : { left: 0, right: 0, top: "50%", height: trackSize.value, marginTop: -trackSize.px / 2 };
-
-    const fill: Partial<BoxProps> = vertical
-      ? { left: 0, right: 0, bottom: pct(pctA), height: pct(pctB - pctA) }
-      : { top: 0, bottom: 0, left: pct(pctA), width: pct(pctB - pctA) };
-
-    const hoverHandlers = hoverProps({
-      onHoverIn: () => setHovered(true),
-      onHoverOut: () => setHovered(false),
-    });
+    const hoverHandlers = useHoverHandlers(setHovered);
 
     // Deprecated `thumbProps` merged OVER the `thumb` slot sugar ("explicit beats sugar").
     const extraThumb = s.merge("thumb", thumbProps);
+    const barSlot = s.get("bar");
 
     const renderThumb = (index: 0 | 1, val: number, position: number): React.ReactNode => {
-      const thumbPos: Partial<BoxProps> = vertical
-        ? {
-            bottom: pct(position),
-            left: "50%",
-            marginLeft: -knob.px / 2,
-            marginBottom: -knob.px / 2,
-          }
-        : { left: pct(position), top: "50%", marginLeft: -knob.px / 2, marginTop: -knob.px / 2 };
-      const focusProps: object = { tabIndex: disabled ? -1 : 0, onKeyDown: makeKeyDown(index) };
+      // `tabIndex`/`onKeyDown` are web focus props outside Tamagui's typed surface.
+      const focusProps: object = thumbFocus[index];
       const labelNode = renderLabel(label, scale(val));
       const ariaRangeProps = sliderAriaRangeProps(
         dMin,
@@ -1114,15 +1191,15 @@ const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
       );
       return (
         <SliderThumb
-          width={knob.value}
-          height={knob.value}
+          key={index}
+          {...layout.thumb}
           aria-label={thumbLabel}
           aria-orientation={orientation}
           aria-disabled={disabled || undefined}
           {...(ariaRangeProps as GetProps<typeof SliderThumb>)}
-          {...(thumbPos as GetProps<typeof SliderThumb>)}
-          {...(focusProps as GetProps<typeof SliderThumb>)}
+          {...focusProps}
           {...extraThumb}
+          style={withUserStyle(thumbGeometry(vertical, position), extraThumb?.style)}
         >
           {showLabel && labelNode != null ? (
             <SliderLabelAnchor {...s.get("labelAnchor")}>
@@ -1138,29 +1215,28 @@ const RangeSliderComponent = SliderRoot.styleable<RangeSliderProps>(
         ref={ref}
         orientation={orientation}
         disabled={disabled}
-        paddingVertical={vertical ? 0 : knob.px / 2}
-        paddingHorizontal={vertical ? knob.px / 2 : 0}
+        {...layout.root}
         {...s.get("root")}
         {...rest}
       >
         <SliderTrackContainer
           ref={moveRef}
           orientation={orientation}
-          height={vertical ? VERTICAL_LENGTH : knob.value}
-          width={vertical ? knob.value : "100%"}
+          {...layout.container}
           {...s.get("trackContainer")}
-          {...(rootProps as GetProps<typeof SliderTrackContainer>)}
+          {...rootProps}
           {...(hoverHandlers as GetProps<typeof SliderTrackContainer>)}
         >
-          <SliderTrack
-            radius={radius}
-            {...s.get("track")}
-            {...(trackBase as GetProps<typeof SliderTrack>)}
-          >
+          <SliderTrack radius={radius} {...s.get("track")} {...layout.track}>
             <SliderBar
               radius={radius}
-              {...s.get("bar")}
-              {...(fill as GetProps<typeof SliderBar>)}
+              {...barSlot}
+              style={withUserStyle(
+                vertical
+                  ? { left: 0, right: 0, bottom: `${pctA}%`, height: `${pctB - pctA}%` }
+                  : { top: 0, bottom: 0, left: `${pctA}%`, width: `${pctB - pctA}%` },
+                barSlot?.style,
+              )}
             />
           </SliderTrack>
 

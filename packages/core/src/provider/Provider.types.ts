@@ -21,7 +21,7 @@ export interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "de
   config?: TamaguiProviderProps["config"];
   /**
    * Fill for the full-screen background the provider paints behind every route.
-   * Defaults to the theme's `$background`.
+   * Defaults to the theme's `background`.
    *
    * Pass `"transparent"` when the host already paints the page background
    * itself — a web page with its own CSS background (gradients, washes, a

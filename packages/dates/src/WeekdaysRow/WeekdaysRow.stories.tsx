@@ -87,16 +87,16 @@ export const FullWidth: Story = {
 
 /** Per-slot `styles` sugar — recolour the weekday labels via the `weekday` slot. */
 export const StyledSlots: Story = {
-  render: () => <WeekdaysRow styles={{ weekday: { color: "$blue9", fontWeight: "700" } }} />,
+  render: () => <WeekdaysRow styles={{ weekday: { color: "blue9", fontWeight: "700" } }} />,
 };
 
 /** Every size token. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["xs", "sm", "md", "lg"] as const).map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <WeekdaysRow size={size} />

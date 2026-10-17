@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { AspectRatio } from "./AspectRatio";
 
@@ -15,13 +16,31 @@ describe("AspectRatio", () => {
     expect(screen.getByText("Inside")).toBeInTheDocument();
   });
 
-  it("renders with a custom ratio without throwing", () => {
+  it("maps a custom ratio onto aspect-ratio", () => {
     render(
-      <AspectRatio ratio={16 / 9}>
+      <AspectRatio ratio={16 / 9} testID="ar">
         <span>Widescreen</span>
       </AspectRatio>,
     );
     expect(screen.getByText("Widescreen")).toBeInTheDocument();
+    expect(cssRulesOf(screen.getByTestId("ar")).join("\n")).toMatch(/aspect-ratio: 1\.77777/);
+  });
+
+  it("is square, stretched and clipped by default", () => {
+    render(<AspectRatio testID="ar" />);
+    const rules = cssRulesOf(screen.getByTestId("ar")).join("\n");
+    expect(rules).toMatch(/aspect-ratio: 1[;}]/);
+    expect(screen.getByTestId("ar")).toHaveStyle({ alignSelf: "stretch", overflow: "hidden" });
+  });
+
+  it("takes a per-breakpoint ratio clause", () => {
+    render(<AspectRatio testID="ar" ratio={{ default: 1, md: 2 }} />);
+    const rules = cssRulesOf(screen.getByTestId("ar")).join("\n");
+    expect(rules).toMatch(/@media[^{]*\{[^}]*aspect-ratio: 2/);
+  });
+
+  it("is a flattenable styled() component", () => {
+    expect(AspectRatio.staticConfig.neverFlatten).toBeFalsy();
   });
 
   it("forwards a ref", () => {

@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { restingCss } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Alert } from "./Alert";
 
@@ -89,7 +90,7 @@ describe("Alert", () => {
   // role/text/state effect under jsdom; assert it renders without crashing.
   it("accepts a radius prop", () => {
     render(
-      <Alert radius="$xl" title="Rounded">
+      <Alert radius="xl" title="Rounded">
         Body
       </Alert>,
     );
@@ -197,5 +198,46 @@ describe("Alert", () => {
     );
     expect(screen.getByLabelText("Explicit label")).toBeInTheDocument();
     expect(screen.queryByLabelText("Slot label")).not.toBeInTheDocument();
+  });
+
+  const resting = restingCss;
+
+  it("resolves the variant fill and its title/message foregrounds", () => {
+    render(
+      <Alert variant="filled" title="T">
+        Body
+      </Alert>,
+    );
+    expect(resting(screen.getByRole("alert"))).toMatch(/background-color: var\(--color9\)/);
+    expect(resting(screen.getByText("T"))).toMatch(/color: var\(--color1\)/);
+    expect(resting(screen.getByText("Body"))).toMatch(/color: var\(--color1\)/);
+  });
+
+  it("defaults to the light fill", () => {
+    render(<Alert>Body</Alert>);
+    expect(resting(screen.getByRole("alert"))).toMatch(/background-color: var\(--color4\)/);
+  });
+
+  it("resolves size metrics, a radius token and the shadow ladder", () => {
+    render(
+      <Alert size="lg" radius="xl" shadow="md">
+        Body
+      </Alert>,
+    );
+    const rules = resting(screen.getByRole("alert"));
+    expect(rules).toMatch(/padding-inline: var\(--t-space-lg\)/);
+    expect(rules).toMatch(/border-radius: var\(--t-radius-xl\)/);
+    expect(rules).toMatch(/box-shadow: .*var\(--dropShadowColor\)/);
+  });
+
+  it("does not leak styled frame names onto the DOM", () => {
+    render(
+      <Alert title="T" icon={<span>i</span>}>
+        Body
+      </Alert>,
+    );
+    const alert = screen.getByRole("alert");
+    expect(alert).not.toHaveAttribute("name");
+    expect(alert.querySelector("[name]")).toBeNull();
   });
 });

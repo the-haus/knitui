@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { type GetRef } from "@knitui/core";
 
+import { baseValue, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Switch } from "./Switch";
 
@@ -153,5 +154,68 @@ describe("Switch", () => {
   it("exposes Indicator and TrackLabel statics", () => {
     expect(Switch.Indicator).toBeDefined();
     expect(Switch.TrackLabel).toBeDefined();
+  });
+
+  describe("v3 style resolution (web CSS)", () => {
+    it("swaps the track fill on toggle and reports aria-checked", () => {
+      render(<Switch aria-label="s" />);
+      const track = screen.getByRole("switch");
+      expect(track).toHaveAttribute("aria-checked", "false");
+      expect(baseValue(track, "background-color")).toBe("var(--color5)");
+      fireEvent.click(track);
+      expect(track).toHaveAttribute("aria-checked", "true");
+      expect(baseValue(track, "background-color")).toBe("var(--color9)");
+    });
+
+    it("slides the thumb with a transform transition and a white knob", () => {
+      render(<Switch aria-label="s" defaultChecked />);
+      const thumb = screen.getByRole("switch").firstElementChild!;
+      expect(thumb.getAttribute("style") ?? "").toMatch(/transform 150ms/);
+      expect(baseValue(thumb, "position")).toBe("absolute");
+      expect(baseValue(thumb, "background-color")).toBe("var(--c-white)");
+      // static per-size centring (sm thumb is 20px)
+      expect(baseValue(thumb, "--t-y")).toBe("-10px");
+      expect(screen.getByRole("switch").getAttribute("style") ?? "").toMatch(
+        /background-color 150ms/,
+      );
+    });
+
+    it.each([
+      ["xs", "12px"],
+      ["md", "28px"],
+      ["xxl", "52px"],
+    ] as const)("size=%s sizes the track height and the thumb", (size, thumbPx) => {
+      render(<Switch aria-label="s" size={size} />);
+      const track = screen.getByRole("switch");
+      expect(baseValue(track, "height")).toBe(`var(--t-size-${size})`);
+      expect(baseValue(track.firstElementChild!, "width")).toBe(thumbPx);
+    });
+
+    it("rings the focusable track", () => {
+      render(<Switch aria-label="s" />);
+      const track = screen.getByRole("switch");
+      expect(track).toHaveAttribute("tabindex", "0");
+      expect(hasFocusRing(track)).toBe(true);
+    });
+
+    it("blocks pointer events while disabled and dims the row", () => {
+      render(<Switch aria-label="s" disabled />);
+      const track = screen.getByRole("switch");
+      expect(track).toHaveAttribute("aria-disabled", "true");
+      expect(baseValue(track, "pointer-events")).toBe("none");
+    });
+
+    it("renders the on/off track label for the current state", () => {
+      render(<Switch aria-label="s" onLabel="ON" offLabel="OFF" />);
+      expect(screen.getByText("OFF")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("switch"));
+      expect(screen.getByText("ON")).toBeInTheDocument();
+      expect(baseValue(screen.getByText("ON"), "color")).toBe("var(--color1)");
+    });
+
+    it("does not leak a `name` attribute onto the host", () => {
+      render(<Switch aria-label="n" />);
+      expect(screen.getByRole("switch")).not.toHaveAttribute("name");
+    });
   });
 });

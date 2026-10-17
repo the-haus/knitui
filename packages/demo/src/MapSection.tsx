@@ -33,10 +33,10 @@ export function MapSection({ mod, title }: { mod: Record<string, unknown>; title
   const active = stories.find(([name]) => name === activeName) ?? stories[0];
 
   return (
-    <Flex direction="column" flex={1} gap="$sm">
+    <Flex direction="column" flex={1} gap="sm">
       <Title order={3}>{title}</Title>
       {active ? (
-        <Box flex={1} borderRadius="$md" overflow="hidden" borderWidth={1} borderColor="$color4">
+        <Box flex={1} borderRadius="md" overflow="hidden" borderWidth={1} borderColor="color4">
           {/* `key` remounts on story switch: a story's `render` may call hooks,
               so each selection must be its own component instance — otherwise
               switching changes the hook order and React throws. */}
@@ -45,7 +45,7 @@ export function MapSection({ mod, title }: { mod: Record<string, unknown>; title
           </StoryErrorBoundary>
         </Box>
       ) : null}
-      <Box flexDirection="row" flexWrap="wrap" gap="$xs">
+      <Box flexDirection="row" flexWrap="wrap" gap="xs">
         {stories.map(([name]) => (
           <StoryTab
             key={name}

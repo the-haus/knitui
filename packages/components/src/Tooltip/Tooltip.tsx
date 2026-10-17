@@ -3,6 +3,8 @@ import * as React from "react";
 import {
   type GetProps,
   isWeb,
+  type LayoutChangeEvent,
+  styleable,
   styled,
   type TamaguiElement,
   Theme,
@@ -31,7 +33,7 @@ import {
 import { type FloatingOffset } from "../internal/floating-offset";
 import { type MotionPresetName } from "../internal/motion";
 import { useOverlayChrome } from "../internal/overlay-chrome";
-import { radiusVariant, shadowVariant } from "../internal/style-props";
+import { type RadiusValue, radiusVariant, shadowVariant } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
 import { Portal, useOverlayHost } from "../Portal";
 import { Text } from "../Text";
@@ -69,29 +71,29 @@ export interface TooltipEvents {
 /* -------------------------------------------------------------------------- */
 
 /*
- * RAMP NOTE (`$colorN` steps below are MIRRORED, i.e. `13 - n`)
+ * RAMP NOTE (`colorN` steps below are MIRRORED, i.e. `13 - n`)
  * ------------------------------------------------------------
- * `name: "Tooltip"` collides with an `inverse`-templated entry in Tamagui's
+ * The v2 `name: "Tooltip"` collided with an `inverse`-templated entry in Tamagui's
  * (deprecated) `defaultComponentThemes`. Until `core/config/themes.ts` set
  * `componentThemes: false`, this frame — and `TooltipText` inside it — resolved
- * against a `<scheme>_Tooltip` theme whose whole `$color1…$color12` ramp was
- * reversed, so the authored `$color9` fill actually painted step 4 and the
- * authored `$color1` label actually painted step 12. The steps are written
+ * against a `<scheme>_Tooltip` theme whose whole `color1…color12` ramp was
+ * reversed, so the authored `color9` fill actually painted step 4 and the
+ * authored `color1` label actually painted step 12. The steps are written
  * pre-mirrored here so the tooltip keeps its shipped light-chip appearance now
  * that nothing flips the ramp under it. Restoring the canonical filled pairing
- * (`$color9` fill + `$color1` label) is a deliberate design change — see the
+ * (`color9` fill + `color1` label) is a deliberate design change — see the
  * changeset.
  */
 const TooltipLabelFrame = styled(Box, {
-  name: "Tooltip",
+  displayName: "Tooltip",
   // `fixed` is web-only viewport positioning; React Native supports only
   // `absolute`/`relative`/`static`. Pick the platform-correct value (mirrors
   // Popover.Dropdown) so the label isn't laid out in normal flow on native.
   position: isWeb ? ("fixed" as const) : ("absolute" as const),
-  backgroundColor: "$color4",
-  paddingVertical: "$xxs",
-  paddingHorizontal: "$xs",
-  borderRadius: "$sm",
+  backgroundColor: "color4",
+  paddingVertical: "xxs",
+  paddingHorizontal: "xs",
+  borderRadius: "sm",
   role: "tooltip",
 
   variants: {
@@ -107,10 +109,10 @@ const TooltipLabelFrame = styled(Box, {
 });
 
 const TooltipText = styled(Text, {
-  name: "TooltipText",
+  displayName: "TooltipText",
   // MIRRORED step — renders inside `TooltipLabelFrame`. See the RAMP NOTE above.
-  color: "$color12",
-  fontSize: "$sm",
+  color: "color12",
+  fontSize: "sm",
 });
 
 /* -------------------------------------------------------------------------- */
@@ -118,8 +120,14 @@ const TooltipText = styled(Text, {
 /* -------------------------------------------------------------------------- */
 
 // `position` is the Tooltip's floating Placement, which collides with Box's CSS
-// `position` style keyword — drop the inherited one (same fix as Indicator/Dialog).
-type LabelFrameProps = Omit<GetProps<typeof TooltipLabelFrame>, "children" | "position">;
+// `position` style keyword, and `offset` is the floating gutter, which collides
+// with v3's `offset` style prop — drop both inherited ones (same fix as
+// Indicator/Dialog). `radius` is re-declared as a plain value (not the variant's
+// flat clause program) because it also feeds the arrow middleware's px corner.
+type LabelFrameProps = Omit<
+  GetProps<typeof TooltipLabelFrame>,
+  "children" | "position" | "offset" | "radius"
+>;
 
 /** Props the `label`/`text` slots may carry (the inner `Tooltip.Text` element). */
 export type TooltipTextStyle = GetProps<typeof TooltipText>;
@@ -189,6 +197,8 @@ export interface TooltipProps extends LabelFrameProps {
   inline?: boolean;
   /** Allow the label to wrap onto multiple lines. @default false */
   multiline?: boolean;
+  /** Label corner radius — a radius/size key, px number or CSS length. @default 'sm' */
+  radius?: RadiusValue;
   /**
    * Elevation — drop shadow for the label, from the shared `shadowVariant`
    * ladder (`xxs`→`xxl`). Opt-in; no shadow by default.
@@ -357,7 +367,8 @@ function TooltipTarget({ children, refProp: refPropOverride }: TooltipTargetProp
   const refProp = refPropOverride ?? ctx.refProp;
 
   // Merge the floating reference setter with any ref the child already declares.
-  const childRef = (children as { ref?: React.Ref<TamaguiElement> }).ref;
+  // React 19 carries `ref` as a regular prop; the removed `element.ref` getter warns.
+  const childRef = (children.props as { ref?: React.Ref<TamaguiElement> }).ref;
   const mergedRef = useMergedRef<TamaguiElement>(ctx.setReferenceRef, childRef);
 
   const child = children as React.ReactElement<InteractionProps>;
@@ -380,7 +391,7 @@ function TooltipTarget({ children, refProp: refPropOverride }: TooltipTargetProp
   );
 }
 
-const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(props, ref) {
+const TooltipBase = styleable<TooltipProps>(TooltipLabelFrame, function Tooltip(props, ref) {
   const {
     label,
     children,
@@ -452,7 +463,7 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
             position: arrowPosition,
             offset: arrowOffset,
             padding: arrowOffset,
-            // The label frame's default radius is `$sm` (see TooltipFrame).
+            // The label frame's default radius is `sm` (see TooltipLabelFrame).
             cornerRadius: resolveRadiusPx(radius),
           }),
         ]
@@ -497,6 +508,11 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
       onPositionChange?.(placement);
     }
   }, [placement, onPositionChange]);
+
+  const onNativeLayout = React.useCallback(
+    (e: LayoutChangeEvent) => update(e.nativeEvent.layout),
+    [update],
+  );
 
   // Native re-measure: `autoUpdate` is a no-op on native (see `Floating.native`),
   // so coords are only computed on demand. Recompute when the tooltip opens, once
@@ -581,14 +597,14 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
         <TooltipLabelFrame
           ref={floatingRef}
           id={tooltipId}
-          top={y}
-          left={x}
           radius={radius}
           shadow={shadow}
           multiline={multiline}
-          // `display:none` only once fully exited while kept mounted.
-          display={t.hidden ? ("none" as const) : undefined}
-          onLayout={isWeb ? undefined : (e) => update(e.nativeEvent.layout)}
+          // `display:none` only once fully exited while kept mounted. A
+          // conditional spread, never `display={undefined}` (v3 clears on it).
+          {...(t.hidden ? { display: "none" as const } : null)}
+          // Native re-measure on layout; web positions through `autoUpdate`.
+          {...(isWeb ? null : { onLayout: onNativeLayout })}
           zIndex={zIndex}
           pointerEvents="none"
           {...t.animation}
@@ -596,7 +612,9 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
           {...labelRest}
           // Engine style wins last (opacity/transform); slot/consumer styles merge
           // underneath (slot < consumer < transition).
-          style={[dropdownSlot?.style, labelRest.style, transitionStyle]}
+          // `top`/`left` track the floating engine continuously: inline style (a
+          // style prop injects one CSS rule per value on v3 web).
+          style={[dropdownSlot?.style, labelRest.style, { top: y, left: x }, transitionStyle]}
         >
           {/* `label` is the conventional text slot; `text` is the specific
                 alias and layers OVER it ("explicit beats sugar"). */}
@@ -604,8 +622,11 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
             {label}
           </TooltipText>
           {withArrow ? (
-            // Shared cross-platform arrow; `background="$color9"` matches the label
-            // fill and `borderWidth={0}` keeps it solid/borderless. `size` keeps the
+            // Shared cross-platform arrow; `background="color4"` matches the label
+            // fill (the frame's MIRRORED `color4`, see the RAMP NOTE — it used to
+            // read `color9`, a leftover from the flipped component theme, which
+            // painted a darker arrow than the chip) and `borderWidth={0}` keeps it
+            // solid/borderless. `size` keeps the
             // historical doubled convention so a default centered arrow is unchanged;
             // FloatingArrow rounds only the OUTWARD corner (closer to Mantine than the
             // old all-corners radius).
@@ -615,7 +636,7 @@ const TooltipBase = TooltipLabelFrame.styleable<TooltipProps>(function Tooltip(p
               offset={arrowOffset}
               position={arrowPosition}
               radius={arrowRadius}
-              background="$color9"
+              background="color4"
               borderWidth={0}
               arrowX={middlewareData.arrow?.x}
               arrowY={middlewareData.arrow?.y}

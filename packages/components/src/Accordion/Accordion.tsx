@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { DURATIONS, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { DURATIONS, type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useId, useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 import { IconChevronDown } from "@knitui/icons/IconChevronDown";
 
@@ -11,7 +11,6 @@ import { ControlIconProvider } from "../internal/ControlIconProvider";
 import { useReducedTransition } from "../internal/motion";
 import {
   controlFontVariant,
-  controlVariant,
   focusRingStyle,
   radiusVariant,
   type SizeKey,
@@ -113,7 +112,7 @@ const AccordionSlotStylesContext = React.createContext<SlotStyles<AccordionStyle
 /* -------------------------------------------------------------------------- */
 
 const AccordionRoot = styled(Box, {
-  name: "Accordion",
+  displayName: "Accordion",
   flexDirection: "column",
 
   variants: {
@@ -121,12 +120,12 @@ const AccordionRoot = styled(Box, {
       default: {},
       contained: {
         borderWidth: 1,
-        borderColor: "$borderColor",
-        borderRadius: "$md",
+        borderColor: "borderColor",
+        borderRadius: "md",
         overflow: "hidden",
       },
-      filled: { backgroundColor: "$color2", borderRadius: "$md", overflow: "hidden" },
-      separated: { gap: "$xs" },
+      filled: { backgroundColor: "color2", borderRadius: "md", overflow: "hidden" },
+      separated: { gap: "xs" },
     },
     radius: radiusVariant,
   } as const,
@@ -134,19 +133,19 @@ const AccordionRoot = styled(Box, {
 });
 
 const AccordionItemFrame = styled(Box, {
-  name: "AccordionItem",
+  displayName: "AccordionItem",
   flexDirection: "column",
   overflow: "hidden",
 
   variants: {
     variant: {
-      default: { borderBottomWidth: 1, borderBottomColor: "$borderColor" },
-      contained: { borderBottomWidth: 1, borderBottomColor: "$borderColor" },
+      default: { borderBottomWidth: 1, borderBottomColor: "borderColor" },
+      contained: { borderBottomWidth: 1, borderBottomColor: "borderColor" },
       filled: {},
       separated: {
         borderWidth: 1,
-        borderColor: "$borderColor",
-        borderRadius: "$sm",
+        borderColor: "borderColor",
+        borderRadius: "sm",
         overflow: "hidden",
       },
     },
@@ -155,11 +154,27 @@ const AccordionItemFrame = styled(Box, {
   defaultVariants: { variant: "default" },
 });
 
+/**
+ * Header metrics per size: the control row's `paddingHorizontal` + `gap`, with
+ * its height as a `minHeight` (a header grows with a wrapped label). Built at
+ * module scope as literal bodies — no `height` key at all, rather than an
+ * explicit `height: undefined`.
+ */
+const CONTROL_SIZES = {
+  xxs: { paddingHorizontal: M.xxs.paddingHorizontal, minHeight: M.xxs.height, gap: M.xxs.gap },
+  xs: { paddingHorizontal: M.xs.paddingHorizontal, minHeight: M.xs.height, gap: M.xs.gap },
+  sm: { paddingHorizontal: M.sm.paddingHorizontal, minHeight: M.sm.height, gap: M.sm.gap },
+  md: { paddingHorizontal: M.md.paddingHorizontal, minHeight: M.md.height, gap: M.md.gap },
+  lg: { paddingHorizontal: M.lg.paddingHorizontal, minHeight: M.lg.height, gap: M.lg.gap },
+  xl: { paddingHorizontal: M.xl.paddingHorizontal, minHeight: M.xl.height, gap: M.xl.gap },
+  xxl: { paddingHorizontal: M.xxl.paddingHorizontal, minHeight: M.xxl.height, gap: M.xxl.gap },
+} as const;
+
 const AccordionControlFrame = styled(Box, {
-  name: "AccordionControl",
+  displayName: "AccordionControl",
   flexDirection: "row",
   alignItems: "center",
-  paddingVertical: "$sm",
+  paddingVertical: "sm",
   ...webCursor("pointer"),
   userSelect: "none",
 
@@ -167,31 +182,19 @@ const AccordionControlFrame = styled(Box, {
     // Header `paddingHorizontal` + `minHeight` + `gap` derive from the shared
     // `controlMetrics` row so a larger `size` accordion gets a taller, roomier
     // header that matches a control of the same key.
-    size: {
-      xxs: { ...controlVariant.xxs, height: undefined, minHeight: M.xxs.height, gap: M.xxs.gap },
-      xs: { ...controlVariant.xs, height: undefined, minHeight: M.xs.height, gap: M.xs.gap },
-      sm: { ...controlVariant.sm, height: undefined, minHeight: M.sm.height, gap: M.sm.gap },
-      md: { ...controlVariant.md, height: undefined, minHeight: M.md.height, gap: M.md.gap },
-      lg: { ...controlVariant.lg, height: undefined, minHeight: M.lg.height, gap: M.lg.gap },
-      xl: { ...controlVariant.xl, height: undefined, minHeight: M.xl.height, gap: M.xl.gap },
-      xxl: { ...controlVariant.xxl, height: undefined, minHeight: M.xxl.height, gap: M.xxl.gap },
-    },
+    size: CONTROL_SIZES,
     variant: {
       default: {
-        hoverStyle: { backgroundColor: "$color2" },
-        pressStyle: { backgroundColor: "$color3" },
+        backgroundColor: "hover:color2 press:color3",
       },
       contained: {
-        hoverStyle: { backgroundColor: "$color2" },
-        pressStyle: { backgroundColor: "$color3" },
+        backgroundColor: "hover:color2 press:color3",
       },
       filled: {
-        hoverStyle: { backgroundColor: "$color3" },
-        pressStyle: { backgroundColor: "$color4" },
+        backgroundColor: "hover:color3 press:color4",
       },
       separated: {
-        hoverStyle: { backgroundColor: "$color2" },
-        pressStyle: { backgroundColor: "$color3" },
+        backgroundColor: "hover:color2 press:color3",
       },
     },
     disabled: {
@@ -204,7 +207,7 @@ const AccordionControlFrame = styled(Box, {
 });
 
 const AccordionChevronIcon = styled(Box, {
-  name: "AccordionChevronIcon",
+  displayName: "AccordionChevronIcon",
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
@@ -217,23 +220,23 @@ export interface AccordionChevronProps {
 
 /**
  * Standalone default chevron — usable as `Accordion.Chevron` (Mantine parity).
- * Renders the `@knitui/icons` down chevron, colored to the control text (`$color`)
+ * Renders the `@knitui/icons` down chevron, colored to the control text (`color`)
  * via `ControlIconProvider` so it tracks the active theme cross-platform. The
  * size flows straight to the icon (it is already a px value, not a size key).
  */
 function AccordionChevron({ size = 14 }: AccordionChevronProps): React.ReactElement {
   return (
-    <ControlIconProvider color="$color">
+    <ControlIconProvider color="color">
       <IconChevronDown size={size} />
     </ControlIconProvider>
   );
 }
 
 const AccordionLabel = styled(Text, {
-  name: "AccordionLabel",
+  displayName: "AccordionLabel",
   flex: 1,
   fontWeight: "500",
-  color: "$color",
+  color: "color",
   userSelect: "none",
 
   variants: {
@@ -247,9 +250,9 @@ const AccordionLabel = styled(Text, {
 });
 
 const AccordionPanelFrame = styled(Box, {
-  name: "AccordionPanel",
-  paddingHorizontal: "$md",
-  paddingVertical: "$sm",
+  displayName: "AccordionPanel",
+  paddingHorizontal: "md",
+  paddingVertical: "sm",
 });
 
 /**
@@ -302,7 +305,8 @@ export interface AccordionItemProps extends Omit<GetProps<typeof AccordionItemFr
   children?: React.ReactNode;
 }
 
-const AccordionItem = AccordionItemFrame.styleable<AccordionItemProps>(
+const AccordionItem = styleable<AccordionItemProps>(
+  AccordionItemFrame,
   function AccordionItem(props, ref) {
     const { value, children, ...rest } = props;
     const ctx = React.useContext(AccordionContext);
@@ -345,7 +349,8 @@ export interface AccordionControlProps extends Omit<
   children?: React.ReactNode;
 }
 
-const AccordionControl = AccordionControlFrame.styleable<AccordionControlProps>(
+const AccordionControl = styleable<AccordionControlProps>(
+  AccordionControlFrame,
   function AccordionControl(props, ref) {
     const { icon, disabled, children, ...rest } = props;
     const ctx = React.useContext(AccordionContext);
@@ -410,10 +415,10 @@ const AccordionControl = AccordionControlFrame.styleable<AccordionControlProps>(
       >
         {ctx.chevronPosition === "left" ? chevron : null}
         {/* A leading `@knitui/icons` icon auto-sizes to the header `size` and takes
-            the control text color (`$color`), matching the label beside it. */}
+            the control text color (`color`), matching the label beside it. */}
         {icon ? (
           <Box>
-            <ControlIconProvider size={ctx.size} color="$color">
+            <ControlIconProvider size={ctx.size} color="color">
               {icon}
             </ControlIconProvider>
           </Box>
@@ -447,7 +452,8 @@ export interface AccordionPanelProps extends GetProps<typeof AccordionPanelFrame
   children?: React.ReactNode;
 }
 
-const AccordionPanel = AccordionPanelFrame.styleable<AccordionPanelProps>(
+const AccordionPanel = styleable<AccordionPanelProps>(
+  AccordionPanelFrame,
   function AccordionPanel(props, ref) {
     const { children, ...rest } = props;
     const ctx = React.useContext(AccordionContext);
@@ -481,7 +487,9 @@ const AccordionPanel = AccordionPanelFrame.styleable<AccordionPanelProps>(
 
 export interface AccordionProps<Multiple extends boolean = false> extends Omit<
   GetProps<typeof AccordionRoot>,
-  "variant" | "onChange"
+  // `transitionDuration` / `transitionTimingFunction` are v3 style props (CSS
+  // transition longhands); here they are the panel's own collapse timing.
+  "variant" | "onChange" | "radius" | "transitionDuration" | "transitionTimingFunction"
 > {
   /** Allow multiple items open simultaneously. @default false */
   multiple?: Multiple;
@@ -641,8 +649,8 @@ function AccordionComponent<Multiple extends boolean = false>(
           // `root` slot sugar sits UNDER the controlled + explicit per-part props.
           {...rootSlot}
           variant={variant}
-          radius={typeof radius === "string" ? radius : undefined}
-          borderRadius={typeof radius === "number" ? radius : undefined}
+          // `radiusVariant` takes a radius key or a raw number alike.
+          radius={radius as GetProps<typeof AccordionRoot>["radius"]}
           {...(rest as GetProps<typeof AccordionRoot>)}
         >
           {children}

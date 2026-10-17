@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Blockquote, type BlockquoteSize } from "./Blockquote";
 
@@ -61,8 +62,37 @@ describe("Blockquote", () => {
       </>,
     );
 
-    expect(screen.getByText("token icon")).toBeInTheDocument();
-    expect(screen.getByText("numeric icon")).toBeInTheDocument();
+    const tokenBadge = screen.getByText("token icon").parentElement!;
+    const numericBadge = screen.getByText("numeric icon").parentElement!;
+    // token: badge from the `size` scale, offset by half the RESOLVED px (xxs = 18)
+    expect(cssRulesOf(tokenBadge).join("\n")).toContain("width: var(--t-size-xxs)");
+    // (v3 composes x/y through `translate: var(--t-x) var(--t-y)`)
+    expect(cssRulesOf(tokenBadge).join("\n")).toMatch(/--t-x: -9px[^]*--t-y: -9px/);
+    // number: raw px badge, offset by half of it
+    expect(numericBadge).toHaveStyle({ width: "72px", height: "72px" });
+    expect(cssRulesOf(numericBadge).join("\n")).toContain("--t-x: -36px");
+  });
+
+  it("pins the badge to the top-left corner", () => {
+    render(<Blockquote icon={<span>pin</span>}>q</Blockquote>);
+    expect(screen.getByText("pin").parentElement).toHaveStyle({
+      position: "absolute",
+      top: "0px",
+      left: "0px",
+    });
+  });
+
+  it("scales padding and cite through the shared size context", () => {
+    render(
+      <Blockquote size="xs" cite="Author">
+        Body
+      </Blockquote>,
+    );
+    const cite = screen.getByText("Author");
+    expect(cssRulesOf(cite).join("\n")).toContain("font-size: var(--f-size-xs)");
+    expect(cssRulesOf(screen.getByText("Body")).join("\n")).toContain(
+      "font-size: var(--f-size-xs)",
+    );
   });
 
   it("renders a non-string cite node as-is", () => {

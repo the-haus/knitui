@@ -38,17 +38,17 @@ type Story = StoryObj<ComponentProps<typeof Center>>;
 export const Playground: Story = {
   args: {
     children: <Text>Center</Text>,
-    width: "$xxl",
-    height: "$xxl",
-    backgroundColor: "$color3",
-    borderRadius: "$md",
+    width: "xxl",
+    height: "xxl",
+    backgroundColor: "color3",
+    borderRadius: "md",
   },
 };
 
 /** Default block centering — content is centered on both axes inside a fixed container. */
 export const Default: Story = {
   render: (args) => (
-    <Center {...args} width="$xxl" height="$xxl" backgroundColor="$color3" borderRadius="$md">
+    <Center {...args} width="xxl" height="xxl" backgroundColor="color3" borderRadius="md">
       <Text>Center</Text>
     </Center>
   ),
@@ -59,7 +59,7 @@ export const Inline: Story = {
   render: (args) => (
     <Text>
       Before{" "}
-      <Center {...args} inline padding="$xs" backgroundColor="$color3" borderRadius="$sm">
+      <Center {...args} inline padding="xs" backgroundColor="color3" borderRadius="sm">
         <Text>inline</Text>
       </Center>{" "}
       after
@@ -72,16 +72,16 @@ export const NestedChildren: Story = {
   render: (args) => (
     <Center
       {...args}
-      minWidth="$xxl"
-      minHeight="$xxl"
-      padding="$lg"
-      backgroundColor="$color3"
-      borderRadius="$md"
+      minWidth="xxl"
+      minHeight="xxl"
+      padding="lg"
+      backgroundColor="color3"
+      borderRadius="md"
     >
-      <Box gap="$xs" alignItems="center">
-        <Text fontSize="$sm">⭐</Text>
+      <Box gap="xs" alignItems="center">
+        <Text fontSize="sm">⭐</Text>
         <Text fontWeight="bold">Title</Text>
-        <Text color="$color10">Subtitle text</Text>
+        <Text color="color10">Subtitle text</Text>
       </Box>
     </Center>
   ),
@@ -90,15 +90,15 @@ export const NestedChildren: Story = {
 /** Multiple Center containers side by side — each cell centers its own content. */
 export const MultipleContainers: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
-      {(["$blue8", "$green8", "$red8", "$yellow8"] as const).map((color, i) => (
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
+      {(["blue8", "accent8", "red8", "color8"] as const).map((color, i) => (
         <Center
           key={color}
           {...args}
-          width="$xxl"
-          height="$xxl"
+          width="xxl"
+          height="xxl"
           backgroundColor={color}
-          borderRadius="$md"
+          borderRadius="md"
         >
           <Text color="white" fontWeight="bold">
             {i + 1}
@@ -112,18 +112,18 @@ export const MultipleContainers: Story = {
 /** Full-width centering pattern — stretch to the parent and center a card inside. */
 export const FullWidth: Story = {
   render: (args) => (
-    <Center {...args} width="100%" minHeight="$xxl" padding="$xl" backgroundColor="$color2">
+    <Center {...args} width="100%" minHeight="xxl" padding="xl" backgroundColor="color2">
       <Box
-        padding="$lg"
-        backgroundColor="$color1"
-        borderRadius="$md"
+        padding="lg"
+        backgroundColor="color1"
+        borderRadius="md"
         shadow="sm"
         alignItems="center"
-        gap="$sm"
+        gap="sm"
       >
-        <Text fontSize="$sm">⭐</Text>
+        <Text fontSize="sm">⭐</Text>
         <Text fontWeight="bold">Card title</Text>
-        <Text color="$color10">Centered card content</Text>
+        <Text color="color10">Centered card content</Text>
       </Box>
     </Center>
   ),

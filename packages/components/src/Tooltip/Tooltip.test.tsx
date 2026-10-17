@@ -2,7 +2,8 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen, waitForElementToBeRemoved } from "../test-utils";
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
+import { act, fireEvent, render, screen, waitForElementToBeRemoved } from "../test-utils";
 import { Tooltip } from "./Tooltip";
 
 describe("Tooltip", () => {
@@ -209,5 +210,147 @@ describe("Tooltip", () => {
     fireEvent.mouseEnter(screen.getByText("Composed target"));
     expect(onMouseEnter).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Handler label")).toBeInTheDocument();
+  });
+
+  describe("v3 timing, lifecycle and styling", () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("waits openDelay before opening and closeDelay before closing", () => {
+      jest.useFakeTimers();
+      render(
+        <Tooltip label="Delayed" openDelay={300} closeDelay={200} transitionProps={{ duration: 0 }}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      const target = screen.getByText("Target");
+      fireEvent.mouseEnter(target);
+      act(() => {
+        jest.advanceTimersByTime(299);
+      });
+      expect(screen.queryByText("Delayed")).not.toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(screen.getByRole("tooltip")).toHaveTextContent("Delayed");
+
+      fireEvent.mouseLeave(target);
+      act(() => {
+        jest.advanceTimersByTime(199);
+      });
+      expect(screen.getByText("Delayed")).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(screen.queryByText("Delayed")).not.toBeInTheDocument();
+    });
+
+    it("cancels a pending open when the pointer leaves first", () => {
+      jest.useFakeTimers();
+      render(
+        <Tooltip label="Never" openDelay={300}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      fireEvent.mouseEnter(screen.getByText("Target"));
+      fireEvent.mouseLeave(screen.getByText("Target"));
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(screen.queryByText("Never")).not.toBeInTheDocument();
+    });
+
+    it("holds the label through its exit transition, then unmounts it", () => {
+      jest.useFakeTimers();
+      const { rerender } = render(
+        <Tooltip label="Exit" opened transitionProps={{ duration: 150 }}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      rerender(
+        <Tooltip label="Exit" opened={false} transitionProps={{ duration: 150 }}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      expect(screen.getByText("Exit")).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.queryByText("Exit")).not.toBeInTheDocument();
+    });
+
+    it("opens on focus when events.focus is set", () => {
+      render(
+        <Tooltip label="Focus label" events={{ hover: false, focus: true, touch: false }}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      fireEvent.focus(screen.getByText("Target"));
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    });
+
+    it("keeps a closed label mounted but display:none with keepMounted", () => {
+      render(
+        <Tooltip
+          label="Kept"
+          keepMounted
+          transitionProps={{ duration: 0 }}
+          styles={{ dropdown: { testID: "kept" } }}
+        >
+          <button>Target</button>
+        </Tooltip>,
+      );
+      expect(cssRulesOf(screen.getByTestId("kept")).join("\n")).toMatch(/display:\s*none/);
+    });
+
+    // Regression (v3): explicit `prop={undefined}` clears base styles, so the
+    // label keeps its base radius + padding when no overrides are passed.
+    it("keeps the label frame's base radius when no radius is passed", () => {
+      render(
+        <Tooltip label="Base" opened styles={{ dropdown: { testID: "label" } }}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      const css = cssRulesOf(screen.getByTestId("label")).join("\n");
+      expect(css).toMatch(/border-radius:\s*var\(--t-radius-sm\)/);
+      expect(css).not.toMatch(/display:\s*none/);
+    });
+
+    it("paints the arrow with the label's fill colour", () => {
+      render(
+        <Tooltip label="Arrow" opened withArrow styles={{ dropdown: { testID: "label" } }}>
+          <button>Target</button>
+        </Tooltip>,
+      );
+      const label = screen.getByTestId("label");
+      const fill = /background-color:\s*([^;]+)/.exec(cssRulesOf(label).join("\n"))?.[1];
+      expect(fill).toBe("var(--color4)");
+      const arrow = label.lastElementChild as HTMLElement;
+      const arrowCss = [arrow, ...Array.from(arrow.querySelectorAll("*"))]
+        .map((el) => cssRulesOf(el).join("\n") + (el.getAttribute("style") ?? ""))
+        .join("\n");
+      expect(arrowCss).toContain("var(--color4)");
+      expect(arrowCss).not.toContain("var(--color9)");
+    });
+  });
+});
+
+/** `name` attributes on the page that came from a styled() config (v3 forwards unknown options). */
+const leakedNames = (prefix: string) =>
+  Array.from(document.querySelectorAll("[name]"))
+    .map((el) => el.getAttribute("name") ?? "")
+    .filter((n) => n.startsWith(prefix));
+
+describe("Tooltip DOM attributes", () => {
+  // v3 has no `name` styled() option: it becomes a default prop and lands in the
+  // DOM (and in FormData). Frames use `displayName`; nothing may leak.
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(
+      <Tooltip label="L" opened withArrow>
+        <button>t</button>
+      </Tooltip>,
+    );
+    expect(leakedNames("Tooltip")).toEqual([]);
   });
 });

@@ -85,7 +85,7 @@ export const Playground: Story = {
 /** Each container variant. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
         <Accordion key={variant} {...args} variant={variant} defaultValue="apples">
           <Items />
@@ -101,7 +101,7 @@ export const Variants: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
         <Accordion key={shadow} {...args} shadow={shadow} variant="contained" defaultValue="apples">
           <Items />
@@ -192,7 +192,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string | null>("apples");
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Accordion
           {...args}
           value={value}
@@ -200,7 +200,7 @@ export const Controlled: Story = {
         >
           <Items />
         </Accordion>
-        <Text fontSize={12} color="$color11">
+        <Text fontSize={12} color="color11">
           open: {value ?? "—"}
         </Text>
       </Box>
@@ -211,7 +211,7 @@ export const Controlled: Story = {
 /** Representative `size` keys — controls scale the header height and label font. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
         <Accordion key={size} {...args} size={size} defaultValue="apples">
           <Items />
@@ -228,9 +228,9 @@ export const Styles: Story = {
     <Accordion
       {...args}
       styles={{
-        control: { backgroundColor: "$blue3" },
-        label: { color: "$blue11", fontWeight: "700" },
-        panel: { backgroundColor: "$blue2" },
+        control: { backgroundColor: "blue3" },
+        label: { color: "blue11", fontWeight: "700" },
+        panel: { backgroundColor: "blue2" },
       }}
     >
       <Items />

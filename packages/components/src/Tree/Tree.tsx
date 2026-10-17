@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 import { type KeyboardActionProps, useKeyboardActions } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -45,6 +45,8 @@ export interface RenderTreeNodePayload {
     role: "treeitem";
     "aria-selected": boolean;
     "aria-expanded": boolean | undefined;
+    /** 1-based nesting depth (WAI-ARIA tree pattern). */
+    "aria-level": number;
     "data-value": string;
     "data-selected": boolean | undefined;
   } & KeyboardActionProps;
@@ -57,7 +59,9 @@ export type RenderNode = (payload: RenderTreeNodePayload) => React.ReactNode;
 /* -------------------------------------------------------------------------- */
 
 const TreeRoot = styled(Box, {
-  name: "Tree",
+  displayName: "Tree",
+  role: "tree",
+  render: "ul",
   flexDirection: "column",
   // Reset the browser's native <ul> chrome (block margin + 40px inline-start
   // indent). Markers are gone already because the flex display isn't list-item;
@@ -67,27 +71,28 @@ const TreeRoot = styled(Box, {
 });
 
 const TreeNodeItem = styled(Box, {
-  name: "TreeNodeItem",
+  displayName: "TreeNodeItem",
+  render: "li",
   flexDirection: "column",
 });
 
 const TreeNodeRow = styled(Box, {
-  name: "TreeNode",
+  displayName: "TreeNode",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$xs",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$xs",
-  borderRadius: "$xs",
+  gap: "xs",
+  paddingVertical: "xs",
+  paddingHorizontal: "xs",
+  borderRadius: "xs",
   ...webCursor("pointer"),
   userSelect: "none",
-  hoverStyle: { backgroundColor: "$color3" },
-  pressStyle: { backgroundColor: "$color4" },
+  backgroundColor: "hover:color3 press:color4",
+
   ...focusRingStyle,
 
   variants: {
     selected: {
-      true: { backgroundColor: "$color4" },
+      true: { backgroundColor: "color4" },
     },
     disabled: {
       true: { opacity: 0.4, pointerEvents: "none" },
@@ -97,11 +102,11 @@ const TreeNodeRow = styled(Box, {
 
 /** Fixed-width slot so labels line up whether or not a node has a chevron. */
 const TreeChevron = styled(Text, {
-  name: "TreeChevron",
-  width: "$xxs",
-  fontSize: "$xxs",
+  displayName: "TreeChevron",
+  width: "xxs",
+  fontSize: "xxs",
   textAlign: "center",
-  color: "$color",
+  color: "color",
   userSelect: "none",
   rotate: "0deg",
 
@@ -114,21 +119,23 @@ const TreeChevron = styled(Text, {
 });
 
 const TreeLabel = styled(Text, {
-  name: "TreeLabel",
-  fontSize: "$sm",
-  color: "$color",
+  displayName: "TreeLabel",
+  fontSize: "sm",
+  color: "color",
   userSelect: "none",
   flexShrink: 1,
 
   variants: {
     selected: {
-      true: { color: "$color11", fontWeight: "600" },
+      true: { color: "color11", fontWeight: "600" },
     },
   } as const,
 });
 
 const TreeSubtree = styled(Box, {
-  name: "TreeSubtree",
+  displayName: "TreeSubtree",
+  role: "group",
+  render: "ul",
   flexDirection: "column",
   // Reset native <ul> chrome; `paddingLeft={levelOffset}` at render re-applies
   // only our own inline-start indent.
@@ -137,7 +144,7 @@ const TreeSubtree = styled(Box, {
 
   variants: {
     withLines: {
-      true: { borderLeftWidth: 1, borderLeftColor: "$color5" },
+      true: { borderLeftWidth: 1, borderLeftColor: "color5" },
     },
   } as const,
 });
@@ -157,7 +164,7 @@ export type TreeSubtreeProps = GetProps<typeof TreeSubtree>;
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the Tree
  * part surface. Each key maps to the props of the part it targets, so
- * `styles={{ row: { bg: "$color3" } }}` is sugar for `<Tree.Row bg="$color3" />`.
+ * `styles={{ row: { bg: "color3" } }}` is sugar for `<Tree.Row bg="color3" />`.
  */
 export interface TreeStyles {
   /** Props for the tree root (`Tree.Root` → `<ul role="tree">`). */
@@ -261,6 +268,7 @@ const TreeNode = React.memo(function TreeNode(props: TreeNodePartProps) {
     role: "treeitem",
     "aria-selected": selected,
     "aria-expanded": hasChildren ? expanded : undefined,
+    "aria-level": level,
     "data-value": node.value,
     "data-selected": selected || undefined,
     ...focusProps,
@@ -289,17 +297,11 @@ const TreeNode = React.memo(function TreeNode(props: TreeNodePartProps) {
     );
 
   return (
-    <TreeNodeItem render="li" {...s.get("node")} {...rest}>
+    <TreeNodeItem {...s.get("node")} {...rest}>
       {row}
       {hasChildren ? (
         <Collapse in={expanded}>
-          <TreeSubtree
-            {...s.get("subtree")}
-            withLines={withLines}
-            paddingLeft={levelOffset}
-            role="group"
-            render="ul"
-          >
+          <TreeSubtree {...s.get("subtree")} withLines={withLines} paddingLeft={levelOffset}>
             {node.children!.map((child) => (
               <TreeNode key={child.value} node={child} level={level + 1} />
             ))}
@@ -317,7 +319,7 @@ const TreeNode = React.memo(function TreeNode(props: TreeNodePartProps) {
 export interface TreeRootProps extends Omit<GetProps<typeof TreeRoot>, "children"> {
   /** `Tree.Node`s (or any custom composition). */
   children?: React.ReactNode;
-  /** Horizontal indent added per nesting level. @default "$lg" */
+  /** Horizontal indent added per nesting level. @default "lg" */
   levelOffset?: TreeLevelOffset;
   /** Expand/collapse a node with children when its row is pressed. @default true */
   expandOnClick?: boolean;
@@ -333,10 +335,10 @@ export interface TreeRootProps extends Omit<GetProps<typeof TreeRoot>, "children
   styles?: SlotStyles<TreeStyles>;
 }
 
-const TreeRootComponent = TreeRoot.styleable<TreeRootProps>(function TreeRootInner(props, ref) {
+const TreeRootComponent = styleable<TreeRootProps>(TreeRoot, function TreeRootInner(props, ref) {
   const {
     children,
-    levelOffset = "$lg",
+    levelOffset = "lg",
     expandOnClick = true,
     selectOnClick = false,
     tree,
@@ -369,14 +371,7 @@ const TreeRootComponent = TreeRoot.styleable<TreeRootProps>(function TreeRootInn
 
   return (
     <TreeContext.Provider value={ctx}>
-      <TreeRoot
-        ref={ref}
-        {...s.get("root")}
-        {...rest}
-        role="tree"
-        aria-multiselectable={controller.multiple}
-        render="ul"
-      >
+      <TreeRoot ref={ref} {...s.get("root")} {...rest} aria-multiselectable={controller.multiple}>
         {children}
       </TreeRoot>
     </TreeContext.Provider>
@@ -390,7 +385,7 @@ const TreeRootComponent = TreeRoot.styleable<TreeRootProps>(function TreeRootInn
 export interface TreeProps extends Omit<GetProps<typeof TreeRoot>, "children"> {
   /** Hierarchical data used to render the tree. */
   data: TreeNodeData[];
-  /** Horizontal indent added per nesting level. @default "$lg" */
+  /** Horizontal indent added per nesting level. @default "lg" */
   levelOffset?: TreeLevelOffset;
   /** Expand/collapse a node with children when its row is pressed. @default true */
   expandOnClick?: boolean;
@@ -444,10 +439,10 @@ export interface TreeProps extends Omit<GetProps<typeof TreeRoot>, "children"> {
  * DOM arrow-key / range keyboard navigation, async `onLoadChildren` loading,
  * React-19 `Activity` `keepMounted`.
  */
-const TreeComponent = TreeRoot.styleable<TreeProps>(function Tree(props, ref) {
+const TreeComponent = styleable<TreeProps>(TreeRoot, function Tree(props, ref) {
   const {
     data,
-    levelOffset = "$lg",
+    levelOffset = "lg",
     expandOnClick = true,
     selectOnClick = false,
     tree,

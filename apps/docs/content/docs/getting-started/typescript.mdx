@@ -7,8 +7,12 @@ export const meta = {
 # TypeScript
 
 The kit is written in TypeScript and types are part of the API: token props are
-unions, not `string`, so `p="$md"` autocompletes and `p="$medium"` is a compile
+unions, not `string`, so `p="md"` autocompletes and `p="medium"` is a compile
 error.
+
+The kit's config sets Tamagui's `allowedStyleValues: "somewhat-strict-web"`, so a
+leftover v2 spelling such as `p="$md"` is a type error too — after an upgrade,
+`tsc` is the list of what is left to migrate.
 
 ## The augmentation
 
@@ -24,7 +28,7 @@ eagerly evaluate the Tamagui config at module load, which is a known SSR
 module-eval hazard. That is why it is `export type`.
 
 You do not normally write this import yourself; it is reachable from
-`@knitui/core`'s own declarations. If your editor stops offering `$md` and starts
+`@knitui/core`'s own declarations. If your editor stops offering `md` and starts
 accepting any string, something has broken the resolution of `@knitui/core`'s
 types — check that your `paths`/`moduleResolution` let it resolve, and that you
 are not shadowing it with a stale build.
@@ -33,12 +37,33 @@ are not shadowing it with a stale build.
 
 | Surface | Type |
 | --- | --- |
-| Space / size / radius / font props | `"$xxs" \| "$xs" \| … \| "$xxl"` plus numbers |
-| Colour props | theme tokens (`$color1`…`$color12`, `$background`, `$borderColor`, …) |
+| Space / size / radius / font props | `"xxs" \| "xs" \| … \| "xxl"` plus numbers, as flat values |
+| Colour props | theme tokens (`color1`…`color12`, `background`, `borderColor`, …) |
 | `theme` | the registered theme names |
 | `size` | `SizeKey` — `xxs` … `xxl` |
 | `variant` | the component's own variant union |
 | `styles` | `SlotStyles<XStyles>` — keys checked against that component's slots |
+
+## Flat values
+
+Every style prop is typed as a **flat value**: the token union, or a clause
+string (`"color2 hover:color3"`), or the object form
+(`{ default: "color2", hover: "color3" }`). The type is exported as
+`FlatStyleValue` from `@knitui/core`.
+
+TypeScript completes the token union and each bare modifier prefix (`hover:`,
+`gtMd:`, `dark:`), but not every combination of the two — that union would be far
+too large — so a misspelled payload inside a clause string is not always caught.
+Use the object form when you want every part checked.
+
+Two typing caveats in Tamagui 3.0.x:
+
+- Only **colour** props accept theme keys and config variable names in their
+  types. `outlineColor="focus-visible:focusRingColor"` type-checks;
+  `outlineWidth="focusRingWidth"` does not, so write the number
+  (`FOCUS_RING_VARIABLES.focusRingWidth`, exported by `@knitui/core`).
+- Variant props are flat values too, so `size="sm gtMd:lg"` is valid on every kit
+  component.
 
 ## Shorthands
 
@@ -46,7 +71,7 @@ The kit registers shorthand props (`p`, `px`, `mx`, `bg`, `c`, `br`, `maw`, …)
 They are typed exactly like their long forms:
 
 ```tsx
-<Box p="$md" px="$lg" bg="$color2" br="$sm" maw={480} />
+<Box p="md" px="lg" bg="color2" br="sm" maw={480} />
 ```
 
 ## Refs
@@ -62,6 +87,27 @@ const ref = useRef<TamaguiElement>(null);
 
 Use a real DOM type only where the thing genuinely is a DOM node on the web
 (`FileButton`'s hidden `<input>`, web-only event handlers).
+
+## Typing your own components
+
+`styleable()` from `@knitui/core` takes the full public props as its generic, and
+`GetProps<typeof X>` returns exactly that type:
+
+```tsx
+import { styleable, type GetProps } from "@knitui/core";
+
+interface ChipProps extends GetProps<typeof ChipFrame> {
+  onToggle?: () => void;
+}
+
+export const Chip = styleable<ChipProps>(ChipFrame, function Chip(props, ref) {
+  const { onToggle, ...rest } = props;
+  return <ChipFrame ref={ref} onPress={onToggle} {...rest} />;
+});
+```
+
+The ref element defaults to `TamaguiElement`; pass a second generic for other
+hosts (`styleable<P, R>(Frame, …)`). See [styled()](/docs/foundations/styled).
 
 ## Generic components
 

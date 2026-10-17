@@ -21,7 +21,7 @@
 // `styled(ScrollArea)` wrapper: wrapping it re-types `ScrollArea`'s
 // `shadowColor?: string` own-prop as a theme-token value, which collides with the
 // inherited `string` (the documented ScrollArea shadowColor trap). For the same
-// reason this root is a plain function rather than `.styleable`.
+// reason this root is a plain function rather than `styleable()`.
 // ───────────────────────────────────────────────────────────────────────────
 import { ScrollArea, type ScrollAreaProps, SimpleGrid, Stack } from "@knitui/components";
 import {
@@ -60,15 +60,15 @@ const TimePresetsContext = createStyledContext<{ size: CalendarSize }>({ size: "
 
 /** The grid wrapping a flat `string[]` of preset cells (web `role="list"`). */
 const TimePresetsGrid = styled(SimpleGrid, {
-  name: "TimePresetsGrid",
+  displayName: "TimePresetsGrid",
   context: TimePresetsContext,
 });
 
 /** The stack wrapping the labelled groups (web `role="list"`). */
 const TimePresetsGroups = styled(Stack, {
-  name: "TimePresetsGroups",
+  displayName: "TimePresetsGroups",
   context: TimePresetsContext,
-  gap: "$sm",
+  gap: "sm",
 });
 
 // ── 7. Per-slot `styles` sugar + per-item passthrough ───────────────────────────

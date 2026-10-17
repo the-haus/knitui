@@ -74,7 +74,7 @@ export const Playground: Story = {
 /** Every visual variant side by side, each with a legend and placeholder content. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-start">
       {VARIANTS.map((variant) => (
         <Fieldset key={variant} {...args} variant={variant} legend={variant}>
           <Text>Content for {variant}</Text>
@@ -87,7 +87,7 @@ export const Variants: Story = {
 /** Each elevation level from the shared shadow ladder. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
         <Fieldset key={shadow} {...args} shadow={shadow} legend={shadow}>
           <Text>Elevation {shadow}</Text>
@@ -119,7 +119,7 @@ export const Disabled: Story = {
     legend: "Disabled group",
     disabled: true,
     children: (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Text>These controls are all disabled</Text>
         <Text>They cannot be interacted with</Text>
       </Box>
@@ -160,7 +160,7 @@ export const Nested: Story = {
   args: {
     legend: "Billing information",
     children: (
-      <Box gap="$md">
+      <Box gap="md">
         <Fieldset legend="Card details" variant="filled">
           <Text>Card number, expiry, CVV</Text>
         </Fieldset>
@@ -178,8 +178,8 @@ export const Styles: Story = {
     legend: "Custom styled group",
     children: <Text>The frame and legend are restyled via the styles map</Text>,
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      legend: { color: "$red9", fontWeight: "700" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      legend: { color: "red9", fontWeight: "700" },
     },
   },
 };

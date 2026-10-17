@@ -66,7 +66,7 @@ const meta = {
     },
     radius: {
       control: "text",
-      description: "Theme radius token (e.g. `$sm`) or any CSS value.",
+      description: "Theme radius token (e.g. `sm`) or any CSS value.",
     },
     shadow: {
       control: "select",
@@ -106,7 +106,7 @@ export const Playground: Story = {};
 /** Every visual variant stacked. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {VARIANTS.map((variant) => (
         <Alert key={variant} {...args} variant={variant} title={variant}>
           The {variant} variant of the alert panel.
@@ -119,7 +119,7 @@ export const Variants: Story = {
 /** Every size on the full token scale. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
         <Alert key={size} {...args} size={size} title={`Size ${size}`} withCloseButton>
           Token-driven alert metrics for {size}.
@@ -154,13 +154,13 @@ export const WithCloseButton: Story = {
 
 /** Rounded corners via the `radius` prop. */
 export const Radius: Story = {
-  args: { radius: "$xl", title: "Rounded", children: "Extra-large corner radius." },
+  args: { radius: "xl", title: "Rounded", children: "Extra-large corner radius." },
 };
 
 /** The palette ramp follows the active theme — same alert, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <Alert key={theme} {...args} theme={theme} variant="light" title={theme}>
           The {theme} accent.
@@ -186,11 +186,11 @@ export const CompoundParts: Story = {
 /**
  * The `gradient` variant fills the panel with a linear gradient. With no
  * `gradient` prop it follows the theme ramp; otherwise it accepts a two-color
- * shorthand, `$colorN` tokens, or a multi-step `stops` list. Text renders white.
+ * shorthand, `colorN` names, or a multi-step `stops` list. Text renders white.
  */
 export const Gradient: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Alert {...args} variant="gradient" title="Themed">
         Derives its ramp from the active theme.
       </Alert>
@@ -202,13 +202,8 @@ export const Gradient: Story = {
       >
         A two-color `from`/`to` gradient at 60°.
       </Alert>
-      <Alert
-        {...args}
-        variant="gradient"
-        gradient={{ from: "$blue9", to: "$teal9" }}
-        title="Tokens"
-      >
-        Built from `$colorN` theme tokens.
+      <Alert {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }} title="Tokens">
+        Built from `colorN` theme names.
       </Alert>
       <Alert
         {...args}
@@ -232,7 +227,7 @@ export const Gradient: Story = {
 /** A set of curated multi-color gradient presets. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <Alert key={name} {...args} variant="gradient" gradient={gradient} title={name}>
           The {name} preset.
@@ -245,7 +240,7 @@ export const GradientPresets: Story = {
 /** The themed gradient (no `gradient` prop) derives its ramp from the active theme. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {(["blue", "red", "green", "orange", "pink", "teal"] as const).map((theme) => (
         <Alert key={theme} {...args} variant="gradient" theme={theme} title={theme}>
           The {theme} themed gradient.
@@ -258,7 +253,7 @@ export const GradientThemed: Story = {
 /** The same two-color gradient swept across a range of angles. */
 export const GradientAngles: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {[0, 45, 90, 135].map((deg) => (
         <Alert
           key={deg}
@@ -277,7 +272,7 @@ export const GradientAngles: Story = {
 /** Optional elevation via the `shadow` prop — the shared ladder from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SHADOWS.map((shadow) => (
         <Alert key={shadow} {...args} shadow={shadow} title={`Shadow ${shadow}`}>
           Elevation {shadow} from the shared shadow ladder.
@@ -293,8 +288,8 @@ export const Styles: Story = {
     title: "Per-slot styles",
     children: "The title and message are styled independently.",
     styles: {
-      title: { color: "$red9", fontWeight: "700" },
-      message: { color: "$blue11" },
+      title: { color: "red9", fontWeight: "700" },
+      message: { color: "blue11" },
     },
   },
 };

@@ -53,12 +53,12 @@ export const Playground: Story = {
       <Box
         width={320}
         height={200}
-        backgroundColor="$background"
-        borderRadius="$md"
+        backgroundColor="background"
+        borderRadius="md"
         overflow="hidden"
         position="relative"
       >
-        <Text padding="$md">Content beneath the overlay.</Text>
+        <Text padding="md">Content beneath the overlay.</Text>
         <Story />
       </Box>
     ),
@@ -73,12 +73,12 @@ export const Hidden: Story = {
       <Box
         width={320}
         height={160}
-        backgroundColor="$background"
-        borderRadius="$md"
+        backgroundColor="background"
+        borderRadius="md"
         overflow="hidden"
         position="relative"
       >
-        <Text padding="$md">No overlay rendered — visible is false.</Text>
+        <Text padding="md">No overlay rendered — visible is false.</Text>
         <Story />
       </Box>
     ),
@@ -91,16 +91,16 @@ export const Controlled: Story = {
   render: () => {
     const [visible, setVisible] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Box
           width={320}
           height={180}
-          backgroundColor="$background"
-          borderRadius="$md"
+          backgroundColor="background"
+          borderRadius="md"
           overflow="hidden"
           position="relative"
         >
-          <Text padding="$md">Content beneath the overlay.</Text>
+          <Text padding="md">Content beneath the overlay.</Text>
           <LoadingOverlay visible={visible} />
         </Box>
         <Button onPress={() => setVisible((v) => !v)}>
@@ -114,18 +114,18 @@ export const Controlled: Story = {
 /** All three loader types — oval (spinning ring), dots, and bars — side by side. */
 export const LoaderTypes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {LOADER_TYPES.map((type) => (
         <Box
           key={type}
           width={140}
           height={120}
-          backgroundColor="$background"
-          borderRadius="$md"
+          backgroundColor="background"
+          borderRadius="md"
           overflow="hidden"
           position="relative"
         >
-          <Text padding="$sm" fontSize="$sm" color="$color11">
+          <Text padding="sm" fontSize="sm" color="color11">
             {type}
           </Text>
           <LoadingOverlay {...args} visible loaderProps={{ type }} />
@@ -138,18 +138,18 @@ export const LoaderTypes: Story = {
 /** The full loader size scale swept across a fixed container. */
 export const LoaderSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {LOADER_SIZES.map((size) => (
         <Box
           key={size}
           width={120}
           height={120}
-          backgroundColor="$background"
-          borderRadius="$md"
+          backgroundColor="background"
+          borderRadius="md"
           overflow="hidden"
           position="relative"
         >
-          <Text padding="$sm" fontSize="$sm" color="$color11">
+          <Text padding="sm" fontSize="sm" color="color11">
             {size}
           </Text>
           <LoadingOverlay {...args} visible loaderProps={{ size }} />
@@ -162,18 +162,18 @@ export const LoaderSizes: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Box
           key={shadow}
           width={120}
           height={120}
-          backgroundColor="$background"
-          borderRadius="$md"
+          backgroundColor="background"
+          borderRadius="md"
           overflow="hidden"
           position="relative"
         >
-          <Text padding="$sm" fontSize="$sm" color="$color11">
+          <Text padding="sm" fontSize="sm" color="color11">
             {shadow}
           </Text>
           <LoadingOverlay {...args} visible shadow={shadow} loaderProps={{ size: "lg" }} />
@@ -195,12 +195,12 @@ export const DarkScrim: Story = {
       <Box
         width={320}
         height={200}
-        backgroundColor="$background"
-        borderRadius="$md"
+        backgroundColor="background"
+        borderRadius="md"
         overflow="hidden"
         position="relative"
       >
-        <Text padding="$md">Content beneath a dark scrim.</Text>
+        <Text padding="md">Content beneath a dark scrim.</Text>
         <Story />
       </Box>
     ),
@@ -219,12 +219,12 @@ export const BlurredScrim: Story = {
       <Box
         width={320}
         height={200}
-        backgroundColor="$background"
-        borderRadius="$md"
+        backgroundColor="background"
+        borderRadius="md"
         overflow="hidden"
         position="relative"
       >
-        <Box padding="$md" gap="$xs">
+        <Box padding="md" gap="xs">
           <Text fontWeight="700">Article title</Text>
           <Text>Some underlying content that gets blurred behind the scrim.</Text>
         </Box>
@@ -239,7 +239,7 @@ export const Styles: Story = {
   args: {
     visible: true,
     styles: {
-      overlay: { backgroundColor: "$blue3", backgroundOpacity: 0.8 },
+      overlay: { backgroundColor: "blue3", backgroundOpacity: 0.8 },
       loader: { type: "bars", size: "lg" },
     },
   },
@@ -248,12 +248,12 @@ export const Styles: Story = {
       <Box
         width={320}
         height={200}
-        backgroundColor="$background"
-        borderRadius="$md"
+        backgroundColor="background"
+        borderRadius="md"
         overflow="hidden"
         position="relative"
       >
-        <Text padding="$md">Content beneath the overlay.</Text>
+        <Text padding="md">Content beneath the overlay.</Text>
         <Story />
       </Box>
     ),
@@ -263,18 +263,18 @@ export const Styles: Story = {
 /** Themed loader — the loader accent follows the active theme color ramp. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {(["blue", "red", "green"] as const).map((theme) => (
         <Box
           key={theme}
           width={140}
           height={120}
-          backgroundColor="$background"
-          borderRadius="$md"
+          backgroundColor="background"
+          borderRadius="md"
           overflow="hidden"
           position="relative"
         >
-          <Text padding="$sm" fontSize="$sm" color="$color11">
+          <Text padding="sm" fontSize="sm" color="color11">
             {theme}
           </Text>
           <LoadingOverlay {...args} visible theme={theme} loaderProps={{ size: "lg" }} />

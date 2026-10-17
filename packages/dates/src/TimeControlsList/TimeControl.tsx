@@ -3,62 +3,51 @@ import * as React from "react";
 import { Text, UnstyledButton } from "@knitui/components";
 import { createStyledContext, type GetProps, styled, type TamaguiElement } from "@knitui/core";
 
-import { type CalendarSize, CELL_FONT } from "../cell-metrics";
+import { type CalendarSize, cellFontVariant } from "../cell-metrics";
 import { controlA11yProps } from "../internal/a11y";
 import { hasPreventDefault } from "../internal/has-prevent-default";
-import { webCursor } from "../internal/web-cursor";
 import { padTime } from "../utils";
-
-const controlFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
 
 const TimeControlContext = createStyledContext<{ size: CalendarSize }>({ size: "sm" });
 
 /**
  * A single selectable time-cell in a `TimeControlsList` dropdown column. Accent
  * comes from the active theme's palette ramp via the `theme` prop (no Mantine
- * `color` prop): the active control fills with `$color9`/`$color1` text — the
+ * `color` prop): the active control fills with `color9`/`color1` text — the
  * same convention as `PickerControl`/`TimeGridControl`. States use
- * `hoverStyle`/`pressStyle`, never a runtime hover flag.
+ * `hover:`/`press:` clauses, never a runtime hover flag.
  */
 const TimeControlFrame = styled(UnstyledButton.Frame, {
-  name: "TimeControl",
+  displayName: "TimeControl",
   context: TimeControlContext,
   alignItems: "center",
   justifyContent: "center",
-  borderRadius: "$sm",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderRadius: "sm",
+  paddingVertical: "xs",
+  paddingHorizontal: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
     /** Active option — solid accent fill. */
     active: {
       true: {
-        backgroundColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
       },
     },
   } as const,
 });
 
 const TimeControlLabel = styled(Text, {
-  name: "TimeControlLabel",
+  displayName: "TimeControlLabel",
   context: TimeControlContext,
   userSelect: "none",
+  color: "color",
   variants: {
-    size: controlFontVariant,
+    size: cellFontVariant,
+
+    /** On the active accent fill, the label flips to the contrast colour. */
+    active: { true: { color: "color1" } },
   } as const,
 
   defaultVariants: { size: "sm" },
@@ -114,7 +103,7 @@ function TimeControlImpl<Value extends number | string>(
       render="button"
       {...others}
     >
-      <TimeControlLabel size={size} color={active ? "$color1" : "$color"}>
+      <TimeControlLabel size={size} active={active}>
         {label}
       </TimeControlLabel>
     </TimeControlFrame>

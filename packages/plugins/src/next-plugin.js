@@ -1,6 +1,7 @@
 // @knitui/plugins/next-plugin — Next.js config wrapper, pre-configured for the kit.
 //
-// Wraps `@tamagui/next-plugin`'s `withTamagui` with the kit's design-system
+// Wraps `@tamagui/next-plugin` (v3: the webpack adapter — keep `next build
+// --webpack`, Turbopack is not supported by it) `withTamagui` with the kit's design-system
 // `config` and component list baked in. This is the build-time half of the
 // Next integration: the Tamagui compiler flattens the kit's `styled()`
 // components into atomic CSS and injects it through Next's own CSS pipeline,
@@ -31,8 +32,7 @@
 // `@tamagui/next-plugin` is an optional dependency (only Next apps pull this
 // path); native/Vite apps never import it.
 
-/** Packages the compiler scans for kit components to optimize. */
-const DEFAULT_COMPONENTS = ["@knitui/components", "@knitui/core"];
+const { DEFAULT_COMPONENTS, KNIT_CONFIG, ignoredStaticEvaluationModules } = require("./components");
 
 /**
  * Kit packages whose public entry is a big re-export barrel. Next rewrites
@@ -72,14 +72,15 @@ function withKnitui(nextConfig = {}, overrides = {}) {
   const plugin = withTamaguiPlugin({
     // The kit's design-system config, resolved from this package so the
     // consumer never references an internal path.
-    config: require.resolve("@knitui/core/config"),
+    config: require.resolve(KNIT_CONFIG),
     components: DEFAULT_COMPONENTS,
     // App Router: emit `"use client"`-safe output and skip the legacy pages glue.
     appDir: true,
     // Extraction off in dev keeps fast-refresh snappy; on for production so the
-    // shipped bundle is flattened to atomic CSS. Mirrors `@knitui/plugins/babel-plugin`.
+    // shipped bundle is flattened to atomic CSS.
     disableExtraction: process.env.NODE_ENV === "development",
     ...overrides,
+    dangerouslyIgnoreStaticEvaluationModules: ignoredStaticEvaluationModules(overrides),
   });
 
   return plugin(withKnituiWebpack(withKnituiExperimental(nextConfig)));

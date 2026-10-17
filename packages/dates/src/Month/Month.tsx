@@ -22,17 +22,24 @@ import { useMemo } from "react";
 import dayjs from "dayjs";
 
 import { Box, Text } from "@knitui/components";
+import { hoverProps } from "@knitui/components/control-system";
 import {
   createStyledContext,
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 import { useCallbackRef } from "@knitui/hooks";
 
-import { type CalendarSize, CELL_FONT, CELL_SPACING, CELL_WIDTH } from "../cell-metrics";
+import {
+  type CalendarSize,
+  CELL_SPACING,
+  cellFontVariant,
+  cellWidthVariant,
+} from "../cell-metrics";
 import { useDatesContext } from "../DatesProvider";
 import { Day, type DayProps, type RenderDay } from "../Day";
 import { areCellPropsEqual } from "../internal/are-cell-props-equal";
@@ -198,12 +205,9 @@ const MonthDayCell = React.memo(function MonthDayCell({
   onDayKeyDown,
   getDayRef,
 }: MonthDayCellProps) {
-  // Tamagui hover handlers are not part `Day`'s public prop type; attach them via
-  // a precisely-typed object spread, the kit's pattern for web-only affordances
-  // (see `@knitui/components` `hoverProps`). Native ignores it.
-  const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
-    onHoverIn: (event) => onDayMouseEnter(event, date),
-  };
+  // Range hover preview. `hoverProps` maps to `onMouseEnter` on web (v3 wires no
+  // listener for `onHoverIn` alone) and keeps `onHoverIn` on native.
+  const hoverHandlers = hoverProps({ onHoverIn: (event) => onDayMouseEnter(event, date) });
 
   return (
     <MonthCell role="cell" fullWidth={fullWidth} {...cellProps}>
@@ -276,31 +280,11 @@ const MonthContext = createStyledContext<{ size: MonthSize }>({ size: "md" });
 // The week-number column matches `Day`'s square `CELL_WIDTH` ladder so it lines
 // up with the day grid; its label tracks the same `CELL_FONT` ladder. Raw ladder
 // values (resolve at module-load) — never `getTokenValue`, which needs live config.
-const weekNumberWidthVariant = {
-  xxs: { width: CELL_WIDTH.xxs },
-  xs: { width: CELL_WIDTH.xs },
-  sm: { width: CELL_WIDTH.sm },
-  md: { width: CELL_WIDTH.md },
-  lg: { width: CELL_WIDTH.lg },
-  xl: { width: CELL_WIDTH.xl },
-  xxl: { width: CELL_WIDTH.xxl },
-} as const;
-
-const weekNumberFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 // ── 5. Styled parts ───────────────────────────────────────────────────────────
 
 /** The grid container — a column of week rows (web `role="grid"`). */
 const MonthFrame = styled(Box, {
-  name: "Month",
+  displayName: "Month",
   context: MonthContext,
   flexDirection: "column",
 
@@ -320,7 +304,7 @@ const MonthFrame = styled(Box, {
 
 /** A single week row (web `role="row"`). */
 const MonthRow = styled(Box, {
-  name: "MonthRow",
+  displayName: "MonthRow",
   context: MonthContext,
   flexDirection: "row",
 
@@ -346,7 +330,7 @@ const MonthRow = styled(Box, {
  * per-render `flexGrow` spread — so the optimiser has nothing dynamic to fold).
  */
 const MonthCell = styled(Box, {
-  name: "MonthCell",
+  displayName: "MonthCell",
   context: MonthContext,
   alignItems: "center",
   justifyContent: "center",
@@ -361,27 +345,27 @@ const MonthCell = styled(Box, {
 
 /** The leading week-number cell (web `role="rowheader"`). */
 const MonthWeekNumber = styled(Box, {
-  name: "MonthWeekNumber",
+  displayName: "MonthWeekNumber",
   context: MonthContext,
   alignItems: "center",
   justifyContent: "center",
 
   variants: {
-    size: weekNumberWidthVariant,
+    size: cellWidthVariant,
   } as const,
 
   defaultVariants: { size: "md" },
 });
 
-/** The week-number label — muted accent text (`$color11`). */
+/** The week-number label — muted accent text (`color11`). */
 const MonthWeekNumberLabel = styled(Text, {
-  name: "MonthWeekNumberLabel",
+  displayName: "MonthWeekNumberLabel",
   context: MonthContext,
-  color: "$color11",
+  color: "color11",
   userSelect: "none",
 
   variants: {
-    size: weekNumberFontVariant,
+    size: cellFontVariant,
   } as const,
 
   defaultVariants: { size: "md" },
@@ -543,7 +527,7 @@ export interface MonthProps extends MonthFrameProps, MonthSettings {
  * would be the ideal child of `role="grid"`, but the cross-platform `Role` type
  * has no `gridcell` member — only `cell` — so we use the portable value.)
  */
-const MonthComponent = MonthFrame.styleable<MonthProps>(function Month(props, ref) {
+const MonthComponent = styleable<MonthProps>(MonthFrame, function Month(props, ref) {
   const {
     __stopPropagation,
     __preventFocus,

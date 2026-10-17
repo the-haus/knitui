@@ -5,6 +5,7 @@ import { Box } from "@knitui/components";
 
 import { itemProgress, rawIndex } from "../engine";
 import { sanitizeAnimationStyle } from "../layouts";
+import { toHostStyle } from "../style";
 import { SlideBox, useSlideStyle } from "./chrome";
 import { SLIDE_BASE, slideContent, slideDimension } from "./Item.shared";
 import type { ItemProps } from "./Item.types";
@@ -56,7 +57,11 @@ function ItemInner<T>({
   const slideStyle = useSlideStyle();
 
   return (
-    <Box ref={ref as never} style={[SLIDE_BASE, slideDimension(vertical, pageSize), initialStyle]}>
+    <Box
+      ref={ref as never}
+      pointerEvents="box-none"
+      style={[SLIDE_BASE, slideDimension(vertical, pageSize), toHostStyle(initialStyle)]}
+    >
       <SlideBox {...slideStyle}>
         {slideContent(item, index, progress, renderItem, renderPlaceholder)}
       </SlideBox>

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, getTokenValue, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, resolveToken, styleable, styled, withStaticProperties } from "@knitui/core";
 
 import { Box } from "../Box";
 import { controlMetrics } from "../internal/control-metrics";
@@ -21,21 +21,20 @@ import { UnstyledButtonFrame } from "../UnstyledButton";
 /* -------------------------------------------------------------------------- */
 
 type BurgerSize = SizeKey;
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
 
 const DEFAULT_SIZE: BurgerSize = "md";
 
 /**
  * Resolve the square side to pixels for the burger line animation geometry. The
  * `BurgerIcon` frame sizes itself off `squareSizeVariantFallthrough` (the
- * shared `$size`-token square); this resolves the SAME canonical
+ * shared `size`-token square); this resolves the SAME canonical
  * `controlMetrics[key].height` token so the animated bars line up with the
  * rendered square instead of a parallel px table. A `number` is raw pixels.
  */
 const resolveSquareSide = (size: BurgerSize | number | undefined): number => {
   if (typeof size === "number") return size;
   const heightToken = controlMetrics[size ?? DEFAULT_SIZE].height;
-  const value = getTokenValue(heightToken as TokenValueInput, "size");
+  const value = resolveToken(heightToken, "size");
   return typeof value === "number" ? value : 0;
 };
 
@@ -50,23 +49,21 @@ const resolveSquareSide = (size: BurgerSize | number | undefined): number => {
  * variant are all inherited from `UnstyledButtonFrame`.
  */
 const BurgerRoot = styled(UnstyledButtonFrame, {
-  name: "Burger",
+  displayName: "Burger",
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
-  gap: "$xs",
-  padding: "$xxs",
+  gap: "xs",
+  padding: "xxs",
 });
 
 const BurgerIcon = styled(Box, {
-  name: "BurgerIcon",
+  displayName: "BurgerIcon",
   position: "relative",
   justifyContent: "center",
 
   variants: {
-    size: {
-      ...squareSizeVariantFallthrough,
-    },
+    size: squareSizeVariantFallthrough,
   } as const,
 
   defaultVariants: { size: DEFAULT_SIZE },
@@ -74,16 +71,16 @@ const BurgerIcon = styled(Box, {
 
 /** A single bar of the burger. Three of these stack to form the icon. */
 const BurgerLine = styled(Box, {
-  name: "BurgerLine",
+  displayName: "BurgerLine",
   position: "absolute",
   left: 0,
-  borderRadius: "$xxs",
-  backgroundColor: "$color12",
+  borderRadius: "xxs",
+  backgroundColor: "color12",
 });
 
 const BurgerText = styled(Text, {
-  name: "BurgerText",
-  color: "$color12",
+  displayName: "BurgerText",
+  color: "color12",
   userSelect: "none",
 });
 
@@ -93,8 +90,8 @@ const BurgerText = styled(Text, {
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ line: { backgroundColor: "$red9" } }}`
- * is sugar for `<Burger.Line backgroundColor="$red9" />`. The `line` slot applies
+ * of the styled part it targets, so `styles={{ line: { backgroundColor: "red9" } }}`
+ * is sugar for `<Burger.Line backgroundColor="red9" />`. The `line` slot applies
  * to all three bars; `text` applies to text children rendered via `Burger.Text`.
  */
 export interface BurgerStyles {
@@ -115,10 +112,17 @@ const BURGER_SLOT_KEYS = [
   "text",
 ] as const satisfies readonly (keyof BurgerStyles)[];
 
-export interface BurgerProps extends Omit<GetProps<typeof BurgerRoot>, "size" | "color"> {
+/**
+ * `transitionDuration` / `transitionTimingFunction` are Burger's own (Mantine)
+ * props in ms / CSS easing — they shadow v3's same-named CSS style props.
+ */
+export interface BurgerProps extends Omit<
+  GetProps<typeof BurgerRoot>,
+  "size" | "color" | "transitionDuration" | "transitionTimingFunction"
+> {
   /** Controls burger width/height. Token size key or number (px). @default 'md' */
   size?: BurgerSize | number;
-  /** Color of the burger lines. Theme color token or any CSS color. @default '$color12' */
+  /** Color of the burger lines. Theme color name or any CSS color. @default 'color12' */
   color?: GetProps<typeof BurgerLine>["backgroundColor"];
   /** Height of the lines; derived from `size` by default. */
   lineSize?: string | number;
@@ -136,7 +140,7 @@ export interface BurgerProps extends Omit<GetProps<typeof BurgerRoot>, "size" | 
   styles?: SlotStyles<BurgerStyles>;
 }
 
-const BurgerComponent = BurgerRoot.styleable<BurgerProps>(function Burger(props, ref) {
+const BurgerComponent = styleable<BurgerProps>(BurgerRoot, function Burger(props, ref) {
   const {
     size = DEFAULT_SIZE,
     color,
@@ -169,6 +173,11 @@ const BurgerComponent = BurgerRoot.styleable<BurgerProps>(function Burger(props,
     timedTransition(transitionDuration, transitionTimingFunction),
   );
   const rootTransition = useReducedTransition("fast");
+
+  // Only an explicit `color` overrides the line colour: v3 treats an explicit
+  // `backgroundColor={undefined}` as "clear the base `color12`" (and the `line`
+  // slot's colour with it), so the prop is spread conditionally.
+  const lineColor = color != null ? { backgroundColor: color } : null;
 
   const buttonProps: {
     type: "button";
@@ -204,7 +213,7 @@ const BurgerComponent = BurgerRoot.styleable<BurgerProps>(function Burger(props,
           top={center - offset}
           y={opened ? offset : 0}
           rotate={opened ? "45deg" : "0deg"}
-          backgroundColor={color}
+          {...lineColor}
           {...lineTransition}
         />
         {/* Middle line — fades out when opened */}
@@ -214,7 +223,7 @@ const BurgerComponent = BurgerRoot.styleable<BurgerProps>(function Burger(props,
           height={thickness}
           top={center}
           opacity={opened ? 0 : 1}
-          backgroundColor={color}
+          {...lineColor}
           {...lineTransition}
         />
         {/* Bottom line */}
@@ -225,7 +234,7 @@ const BurgerComponent = BurgerRoot.styleable<BurgerProps>(function Burger(props,
           top={center + offset}
           y={opened ? -offset : 0}
           rotate={opened ? "-45deg" : "0deg"}
-          backgroundColor={color}
+          {...lineColor}
           {...lineTransition}
         />
       </BurgerIcon>

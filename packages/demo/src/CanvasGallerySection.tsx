@@ -39,9 +39,9 @@ export function CanvasGallerySection({
   const active = stories.find(([name]) => name === activeName) ?? stories[0];
 
   return (
-    <Flex direction="column" gap="$sm">
+    <Flex direction="column" gap="sm">
       <Title order={3}>{title}</Title>
-      <Box flexDirection="row" flexWrap="wrap" gap="$xs">
+      <Box flexDirection="row" flexWrap="wrap" gap="xs">
         {stories.map(([name]) => (
           <StoryTab
             key={name}

@@ -30,8 +30,8 @@ no-op. Each component page lists its slots.
 ## The rules
 
 1. **Slot styles are props, not CSS.** The object is spread onto the matching
-   styled part, so anything that part accepts works — tokens, variants, pseudo
-   states (`hoverStyle`, `pressStyle`).
+   styled part, so anything that part accepts works — tokens, variants, and flat
+   condition values (`{ bg: "color3 hover:color4" }`, `{ opacity: "1 disabled:0.5" }`).
 2. **Explicit props win.** If you set `styles={{ label: { color: "red" } }}` and
    the component also computes a label colour from `variant`, your value wins.
 3. **Slots are stable API.** They are covered by the same guardrail tests as the
@@ -55,7 +55,7 @@ they are exposed as static members:
   <Menu.Dropdown>
     <Menu.Label>Actions</Menu.Label>
     <Menu.Item onPress={rename}>Rename</Menu.Item>
-    <Menu.Item color="$red10" onPress={remove}>Delete</Menu.Item>
+    <Menu.Item color="red10" onPress={remove}>Delete</Menu.Item>
   </Menu.Dropdown>
 </Menu>
 ```

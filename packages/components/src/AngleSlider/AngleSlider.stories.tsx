@@ -35,7 +35,8 @@ const meta = {
     size: {
       control: "select",
       options: SIZES,
-      description: "Diameter token from the $size scale. Numeric px values are also supported.",
+      description:
+        "Diameter key from the `size` token scale. Numeric px values are also supported.",
     },
     step: {
       control: { type: "number", min: 1, max: 45, step: 1 },
@@ -77,11 +78,11 @@ export const Playground: Story = {};
 /** Full token size scale, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SIZES.map((size) => (
-        <Box key={size} alignItems="center" gap="$xs">
+        <Box key={size} alignItems="center" gap="xs">
           <AngleSlider {...args} size={size} aria-label={`angle ${size}`} />
-          <Text fontSize="$xs" color="$color10">
+          <Text fontSize="xs" color="color10">
             {size}
           </Text>
         </Box>
@@ -96,11 +97,11 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} alignItems="center" gap="$xs">
+        <Box key={shadow} alignItems="center" gap="xs">
           <AngleSlider {...args} size="lg" shadow={shadow} aria-label={`angle ${shadow}`} />
-          <Text fontSize="$xs" color="$color10">
+          <Text fontSize="xs" color="color10">
             {shadow}
           </Text>
         </Box>
@@ -159,7 +160,7 @@ export const CustomLabel: Story = {
     size: 80,
     defaultValue: 90,
     formatLabel: (v) => (
-      <Text fontSize="$xs" fontWeight="700">
+      <Text fontSize="xs" fontWeight="700">
         {v}°
       </Text>
     ),
@@ -171,17 +172,17 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState(0);
     return (
-      <Box flexDirection="row" gap="$lg" alignItems="center">
+      <Box flexDirection="row" gap="lg" alignItems="center">
         <AngleSlider {...args} value={value} onChange={setValue} aria-label="controlled angle" />
-        <Box gap="$xs">
+        <Box gap="xs">
           <Text fontWeight="700">{value}°</Text>
-          <Box flexDirection="row" gap="$sm">
+          <Box flexDirection="row" gap="sm">
             {[0, 90, 180, 270].map((preset) => (
               <Text
                 key={preset}
                 onPress={() => setValue(preset)}
-                color="$color10"
-                fontSize="$sm"
+                color="color10"
+                fontSize="sm"
                 style={{ cursor: "pointer" }}
               >
                 {preset}°
@@ -205,9 +206,9 @@ export const Styles: Story = {
     size: 100,
     defaultValue: 45,
     styles: {
-      frame: { backgroundColor: "$blue3" },
-      thumbKnob: { backgroundColor: "$red9" },
-      label: { color: "$blue11", fontWeight: "700" },
+      frame: { backgroundColor: "blue3" },
+      thumbKnob: { backgroundColor: "red9" },
+      label: { color: "blue11", fontWeight: "700" },
     },
   },
 };

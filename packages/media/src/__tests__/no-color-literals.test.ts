@@ -4,8 +4,8 @@ import { join } from "node:path";
 /**
  * THE OVER-MEDIA COLOR GUARDRAIL.
  *
- * Media chrome must take its color from theme tokens — `$colorN` on normal
- * surfaces, the `$media*` over-video tokens for the player scrim/controls (see
+ * Media chrome must take its color from theme tokens — `colorN` on normal
+ * surfaces, the `media*` over-video tokens for the player scrim/controls (see
  * `@knitui/core` `themes.ts` → `OVER_MEDIA`). Hardcoded `rgba()` / hex / `"white"`
  * literals are exactly the drift this plan removed (the old `ON_DARK = "white"` +
  * scattered `rgba(0,0,0,…)` scrims), so a reintroduced literal must fail loudly.

@@ -1,6 +1,6 @@
 export const meta = {
   title: "Vite",
-  description: "Running Knit UI in a Vite + react-native-web app.",
+  description: "Running Knit UI in a Vite + react-native-web app with the Tamagui v3 compiler, including reanimated interop and Storybook.",
 };
 
 # Vite
@@ -24,13 +24,26 @@ export default defineConfig({
 });
 ```
 
-`knitui()` sets the pieces Vite does not do on its own:
+`knitui()` is Tamagui v3's Vite plugin (`tamaguiPlugin` from `@tamagui/cli/vite`)
+with the kit's config and component list baked in. It sets the pieces Vite does
+not do on its own:
 
 - `process.env.TAMAGUI_TARGET = "web"` and `__DEV__`;
 - react-native platform extensions with `.web.*` preferred, so packages like
   `expo-image` resolve their web build instead of Flow-typed native internals;
 - the `react-native` → `react-native-web` alias for the bare imports that remain;
-- dep-optimizer entries for the packages that ship untranspiled TypeScript.
+- build-time style extraction, re-evaluating the config on save in development.
+
+The plugin is **ESM-only** and has a **Vite 8** peer: keep `"type": "module"` in
+`package.json`, or name the config `vite.config.mts`. Pass compiler options
+through: `knitui({ disableExtraction: true })`. Run a build with
+`TAMAGUI_COMPILER_STATS=verbose` to see what was flattened and what bailed.
+
+<Callout>
+  `TAMAGUI_IGNORE_BUNDLE_ERRORS` is a Tamagui v2 variable; v3 does not read it.
+  When a module cannot be evaluated the compiler skips it quietly and falls back
+  to runtime styling. `DEBUG=tamagui` lists what it skipped.
+</Callout>
 
 ## Mount
 

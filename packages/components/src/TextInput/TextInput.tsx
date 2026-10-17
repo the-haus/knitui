@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { styleable } from "@knitui/core";
+
 import { InputBase, type InputBaseProps } from "../InputBase";
 
 /**
@@ -19,6 +21,6 @@ export type TextInputRef = React.ComponentRef<typeof InputBase>;
  * React Native `TextInput` on native. Accent/theme comes from the Tamagui `theme`
  * prop + palette ramp — never a Mantine `color` prop.
  */
-export const TextInput = InputBase.styleable<TextInputProps>(function TextInput(props, ref) {
+export const TextInput = styleable<TextInputProps>(InputBase, function TextInput(props, ref) {
   return <InputBase ref={ref} {...props} />;
 });

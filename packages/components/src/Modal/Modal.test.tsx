@@ -2,8 +2,14 @@ import * as React from "react";
 
 import { type GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen, waitForElementToBeRemoved } from "../test-utils";
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
+import { fireEvent, render, screen, waitFor } from "../test-utils";
 import { Modal } from "./Modal";
+
+/** Every CSS rule that targets `el` (v3 emits hashed atomic classes). */
+const css = (el: Element) => cssRulesOf(el).join("\n");
+/** The modal's full-cover positioning layer (the dialog's parent; scrim first). */
+const layerOf = (dialog: HTMLElement) => dialog.parentElement as HTMLElement;
 
 describe("Modal", () => {
   it("does not render content when closed", () => {
@@ -35,17 +41,34 @@ describe("Modal", () => {
   });
 
   // Regression: named `size` keys must resolve to a real px width cap. They used
-  // to fall through to an invalid `maxWidth: "md"` (className `_maw-md`), so the
-  // panel had no cap and stretched to full width.
-  it("applies a px max-width cap for named sizes", () => {
+  // to fall through to an invalid `maxWidth: "md"`, so the panel had no cap and
+  // stretched to full width. On v3 the cap was also WIPED by an explicit
+  // `maxWidth={undefined}` at the call site (explicit undefined clears a variant).
+  it.each([
+    ["xs", "320px"],
+    ["sm", "380px"],
+    ["md", "440px"],
+    ["lg", "620px"],
+    ["xl", "780px"],
+  ] as const)("applies a px max-width cap for size=%s", (size, px) => {
     render(
-      <Modal opened onClose={() => {}} title="Sized" size="sm">
+      <Modal opened onClose={() => {}} title="Sized" size={size}>
         Content
       </Modal>,
     );
-    const className = screen.getByRole("dialog").className;
-    expect(className).toMatch(/_maw-380px\b/);
-    expect(className).not.toMatch(/_maw-sm\b/);
+    const rules = css(screen.getByRole("dialog"));
+    expect(rules).toContain(`max-width: ${px};`);
+    // …and keeps the base `maxHeight: 100%` (not cleared by a native-only override).
+    expect(rules).toContain("max-height: 100%;");
+  });
+
+  it("passes a raw size through as the max-width", () => {
+    render(
+      <Modal opened onClose={() => {}} title="Raw" size={512}>
+        Content
+      </Modal>,
+    );
+    expect(css(screen.getByRole("dialog"))).toContain("max-width: 512px;");
   });
 
   it("forwards refs to the dialog content frame", () => {
@@ -136,12 +159,43 @@ describe("Modal", () => {
         Content
       </Modal>,
     );
-    const className = screen.getByRole("dialog").className;
-    expect(className).toMatch(/_flexGrow-1\b/);
-    expect(className).toMatch(/_alignSelf-stretch\b/);
+    const dialog = screen.getByRole("dialog");
+    const rules = css(dialog);
+    expect(rules).toMatch(/\{flex: 1\b/);
+    expect(rules).toContain("align-self: stretch;");
     // maxWidth resolved to 100%, not the `md` size cap (440px).
-    expect(className).toMatch(/_maw-100/);
-    expect(className).not.toMatch(/_maw-440\b/);
+    expect(rules).toContain("max-width: 100%;");
+    expect(rules).not.toContain("max-width: 440px;");
+    // …and the layer drops its viewport offsets and stretches the cross axis.
+    const layer = css(layerOf(dialog));
+    expect(layer).toContain("align-items: stretch;");
+    expect(layer).not.toContain("var(--t-space-xl)");
+  });
+
+  it("offsets the panel from the viewport edges by default (xl) and via x/yOffset", () => {
+    const { rerender } = render(
+      <Modal opened onClose={() => {}} title="Offsets">
+        Content
+      </Modal>,
+    );
+    expect(css(layerOf(screen.getByRole("dialog")))).toContain("padding-block: var(--t-space-xl);");
+    rerender(
+      <Modal opened onClose={() => {}} title="Offsets" yOffset={24} xOffset="sm">
+        Content
+      </Modal>,
+    );
+    const layer = css(layerOf(screen.getByRole("dialog")));
+    expect(layer).toContain("padding-block: 24px;");
+    expect(layer).toContain("padding-inline: var(--t-space-sm);");
+  });
+
+  it("centres the panel vertically when centered", () => {
+    render(
+      <Modal opened centered onClose={() => {}} title="Centered">
+        Content
+      </Modal>,
+    );
+    expect(css(layerOf(screen.getByRole("dialog")))).toContain("justify-content: center;");
   });
 
   // Regression: the teleport host is `pointer-events: none`, so the modal's
@@ -149,17 +203,116 @@ describe("Modal", () => {
   // interactive) and the scrim must be clickable (`auto`); otherwise every click
   // inside (close button, overlay scrim) is dropped and the modal can't dismiss.
   it("makes the portal layer interactive while opened", () => {
-    const { baseElement } = render(
+    render(
       <Modal opened onClose={() => {}} title="Interactive">
         Content
       </Modal>,
     );
-    const layer = baseElement.querySelector<HTMLElement>(".is_ModalBaseInner");
-    expect(layer).not.toBeNull();
-    expect(layer?.className).toContain("_pos-fixed");
-    expect(layer?.className).toContain("_pe-boxnone");
-    const overlay = baseElement.querySelector<HTMLElement>(".is_Overlay");
-    expect(overlay?.className).toContain("_pointerEvents-auto");
+    const layer = layerOf(screen.getByRole("dialog"));
+    const layerCss = css(layer);
+    expect(layerCss).toContain("position: fixed;");
+    expect(layerCss).toContain("z-index: 200;");
+    expect(layerCss).toContain("pointer-events: none;");
+    expect(layerCss).toMatch(/>\* \{pointer-events: auto;\}/);
+    const overlay = layer.firstElementChild as HTMLElement;
+    expect(css(overlay)).toContain("pointer-events: auto;");
+  });
+
+  it("closes on a scrim click unless closeOnClickOutside is false", () => {
+    const onClose = jest.fn();
+    const { rerender } = render(
+      <Modal opened onClose={onClose} title="Scrim">
+        Content
+      </Modal>,
+    );
+    fireEvent.click(layerOf(screen.getByRole("dialog")).firstElementChild as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    rerender(
+      <Modal opened onClose={onClose} title="Scrim" closeOnClickOutside={false}>
+        Content
+      </Modal>,
+    );
+    fireEvent.click(layerOf(screen.getByRole("dialog")).firstElementChild as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits the scrim when withOverlay is false", () => {
+    render(
+      <Modal opened withOverlay={false} onClose={() => {}} title="No scrim">
+        Content
+      </Modal>,
+    );
+    const layer = layerOf(screen.getByRole("dialog"));
+    expect(layer.firstElementChild).toBe(screen.getByRole("dialog"));
+  });
+
+  it("closes on Escape unless closeOnEscape is false", () => {
+    const onClose = jest.fn();
+    const { rerender } = render(
+      <Modal opened onClose={onClose} title="Esc">
+        Content
+      </Modal>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    rerender(
+      <Modal opened onClose={onClose} closeOnEscape={false} title="Esc">
+        Content
+      </Modal>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("locks body scroll while opened and restores it on close", () => {
+    document.body.style.overflow = "auto";
+    const { rerender } = render(
+      <Modal opened onClose={() => {}} animation={false} title="Lock">
+        Content
+      </Modal>,
+    );
+    expect(document.body.style.overflow).toBe("hidden");
+    rerender(
+      <Modal opened={false} onClose={() => {}} animation={false} title="Lock">
+        Content
+      </Modal>,
+    );
+    expect(document.body.style.overflow).toBe("auto");
+    document.body.style.overflow = "";
+  });
+
+  it("teleports the layer to the root portal host, away from its render site", () => {
+    render(
+      <div data-testid="site">
+        <Modal opened onClose={() => {}} title="Portal">
+          Content
+        </Modal>
+      </div>,
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(screen.getByTestId("site").contains(dialog)).toBe(false);
+    expect(document.body.contains(dialog)).toBe(true);
+  });
+
+  it("renders in place when withinPortal is false", () => {
+    render(
+      <div data-testid="site">
+        <Modal opened withinPortal={false} onClose={() => {}} title="Inline">
+          Content
+        </Modal>
+      </div>,
+    );
+    expect(screen.getByTestId("site").contains(screen.getByRole("dialog"))).toBe(true);
+  });
+
+  it("marks the dialog as modal and labels it by the title", () => {
+    render(
+      <Modal opened onClose={() => {}} title="Labelled">
+        Content
+      </Modal>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Labelled" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
   });
 
   it("renders a mixed text + element body without nesting the element in a Text", () => {
@@ -179,18 +332,23 @@ describe("Modal", () => {
   // the viewport scrolls instead of clipping against the frame's `overflow:
   // hidden`. The header sits outside it and stays pinned.
   it("wraps the body in a scrollable viewport", () => {
-    const { baseElement } = render(
-      <Modal opened onClose={() => {}} title="Scrolls">
+    render(
+      <Modal
+        opened
+        onClose={() => {}}
+        title="Scrolls"
+        styles={{ header: { testID: "hdr" }, body: { testID: "bdy" } }}
+      >
         Body content
       </Modal>,
     );
-    const content = screen.getByRole("dialog");
-    const scrollArea = content.querySelector<HTMLElement>(".is_ScrollArea");
-    expect(scrollArea).not.toBeNull();
-    // The body lives inside the scroller; the header does not.
-    expect(scrollArea?.textContent).toContain("Body content");
-    const header = baseElement.querySelector<HTMLElement>(".is_ModalHeader");
-    expect(header?.closest(".is_ScrollArea")).toBeNull();
+    // The ScrollArea viewport is the scrolling `role="group"` element.
+    const viewport = screen.getByTestId("bdy").closest('[role="group"]') as HTMLElement;
+    expect(viewport).not.toBeNull();
+    expect(viewport.style.overflowY).toBe("scroll");
+    expect(screen.getByRole("dialog").contains(viewport)).toBe(true);
+    // The header is pinned outside the scroller.
+    expect(viewport.contains(screen.getByTestId("hdr"))).toBe(false);
   });
 
   it("distributes the styles map onto its slots", () => {
@@ -232,7 +390,7 @@ describe("Modal", () => {
 
   // AnimatePresence holds the layer in the tree through its EXIT animation so the
   // panel + scrim fade out before unmounting, rather than the prior instant drop.
-  it("holds the content in the tree through its exit animation", () => {
+  it("holds the content in the tree through its exit animation", async () => {
     const { rerender } = render(
       <Modal opened onClose={() => {}} title="Exit">
         exit body
@@ -245,9 +403,28 @@ describe("Modal", () => {
       </Modal>,
     );
     expect(screen.getByText("exit body")).toBeInTheDocument();
+    // Let the exit settle inside act (AnimatePresence's removal is a state update).
+    await waitFor(() => expect(screen.queryByText("exit body")).not.toBeInTheDocument());
   });
 
-  it("removes immediately on close when animation is disabled", async () => {
+  it("unmounts once the exit animation completes", async () => {
+    const { rerender } = render(
+      <Modal opened onClose={() => {}} title="Exit">
+        exit body
+      </Modal>,
+    );
+    rerender(
+      <Modal opened={false} onClose={() => {}} title="Exit">
+        exit body
+      </Modal>,
+    );
+    // Held while exiting (the v3 driver tags the subtree `t_exiting`)…
+    expect(screen.getByRole("dialog").className).toContain("t_exiting");
+    // …then removed by AnimatePresence when the exit settles.
+    await waitFor(() => expect(screen.queryByText("exit body")).not.toBeInTheDocument());
+  });
+
+  it("removes immediately on close when animation is disabled", () => {
     const { rerender } = render(
       <Modal opened onClose={() => {}} animation={false} title="NoAnim">
         no-anim body
@@ -259,7 +436,23 @@ describe("Modal", () => {
         no-anim body
       </Modal>,
     );
-    await waitForElementToBeRemoved(() => screen.queryByText("no-anim body"));
+    // No exit clauses → AnimatePresence has nothing to wait for: gone in the same commit.
+    expect(screen.queryByText("no-anim body")).not.toBeInTheDocument();
+  });
+
+  it("keepMounted keeps the layer in the tree and hides it with display:none", () => {
+    const { rerender } = render(
+      <Modal opened keepMounted onClose={() => {}} title="Kept">
+        kept body
+      </Modal>,
+    );
+    rerender(
+      <Modal opened={false} keepMounted onClose={() => {}} title="Kept">
+        kept body
+      </Modal>,
+    );
+    const dialog = screen.getByText("kept body").closest('[role="dialog"]') as HTMLElement;
+    expect(css(layerOf(dialog))).toContain("display: none;");
   });
 
   // Regression: the Escape/scroll-lock/return-focus effects used to key on the
@@ -288,7 +481,7 @@ describe("Modal", () => {
     trigger.remove();
   });
 
-  it("returns focus to the trigger element when closed", async () => {
+  it("returns focus to the trigger element when closed", () => {
     const trigger = document.createElement("button");
     document.body.appendChild(trigger);
     trigger.focus();
@@ -305,7 +498,7 @@ describe("Modal", () => {
         Body
       </Modal>,
     );
-    await waitForElementToBeRemoved(() => screen.queryByText("Body"));
+    expect(screen.queryByText("Body")).not.toBeInTheDocument();
     expect(document.activeElement).toBe(trigger);
     trigger.remove();
   });
@@ -324,5 +517,54 @@ describe("Modal", () => {
 
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves focus where it was when trapFocus is false", () => {
+    const trigger = document.createElement("button");
+    document.body.appendChild(trigger);
+    trigger.focus();
+    render(
+      <Modal opened trapFocus={false} onClose={() => {}} title="Free">
+        Body
+      </Modal>,
+    );
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it("dragToDismiss swaps the static scrim for the drag-driven one (never two)", () => {
+    render(
+      <Modal
+        opened
+        dragToDismiss
+        onClose={() => {}}
+        title="Drag"
+        styles={{ overlay: { testID: "scrim" } }}
+      >
+        Body
+      </Modal>,
+    );
+    expect(screen.getAllByTestId("scrim")).toHaveLength(1);
+    // The panel still sits in a centring column (drag host re-creates the layer flex).
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+});
+
+/** `name` attributes on the page that came from a styled() config (v3 forwards unknown options). */
+const leakedNames = (prefix: string) =>
+  Array.from(document.querySelectorAll("[name]"))
+    .map((el) => el.getAttribute("name") ?? "")
+    .filter((n) => n.startsWith(prefix));
+
+describe("Modal DOM attributes", () => {
+  // v3 has no `name` styled() option: it becomes a default prop and lands in the
+  // DOM (and in FormData). Frames use `displayName`; nothing may leak.
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(
+      <Modal opened onClose={() => {}} title="T">
+        body
+      </Modal>,
+    );
+    expect(leakedNames("Modal")).toEqual([]);
   });
 });

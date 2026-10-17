@@ -1,6 +1,13 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
+import { useKeyboardActions } from "@knitui/hooks";
 import { IconCheck } from "@knitui/icons/IconCheck";
 
 import { Box } from "../Box";
@@ -101,11 +108,11 @@ const StepperStylesContext = React.createContext<SlotStyles<StepperStyles> | und
 /* -------------------------------------------------------------------------- */
 
 const StepFrame = styled(Box, {
-  name: "StepperStep",
+  displayName: "StepperStep",
   context: StepperContext,
   flexDirection: "row",
   alignItems: "center",
-  gap: "$sm",
+  gap: "sm",
 
   variants: {
     orientation: {
@@ -129,12 +136,12 @@ const StepFrame = styled(Box, {
 });
 
 const StepBubble = styled(Box, {
-  name: "StepperBubble",
+  displayName: "StepperBubble",
   context: StepperContext,
   alignItems: "center",
   justifyContent: "center",
   borderWidth: BUBBLE_BORDER_WIDTH,
-  borderColor: "$color4",
+  borderColor: "color4",
   backgroundColor: "transparent",
   borderRadius: CIRCULAR_RADIUS,
 
@@ -143,9 +150,16 @@ const StepBubble = styled(Box, {
       ...squareSizeVariant,
     },
     state: {
-      stepInactive: { borderColor: "$color5", backgroundColor: "$color2" },
-      stepProgress: { borderColor: "$color9", backgroundColor: "transparent" },
-      stepCompleted: { borderColor: "$color9", backgroundColor: "$color9" },
+      stepInactive: { borderColor: "color5", backgroundColor: "color2" },
+      stepProgress: { borderColor: "color9", backgroundColor: "transparent" },
+      stepCompleted: { borderColor: "color9", backgroundColor: "color9" },
+    },
+    // The `"timeline"` variant's bullet: a filled dot once the step is reached
+    // (progress OR completed), an open ring before it. Declared after `state`
+    // so it overrides the stepper colours.
+    dot: {
+      reached: { borderColor: "color9", backgroundColor: "color9" },
+      pending: { borderColor: "color5", backgroundColor: "background" },
     },
     radius: radiusVariant,
   } as const,
@@ -154,7 +168,7 @@ const StepBubble = styled(Box, {
 });
 
 const StepBubbleText = styled(Text, {
-  name: "StepperBubbleText",
+  displayName: "StepperBubbleText",
   context: StepperContext,
   fontWeight: "600",
   userSelect: "none",
@@ -164,9 +178,9 @@ const StepBubbleText = styled(Text, {
       ...controlFontVariant,
     },
     state: {
-      stepInactive: { color: "$color11" },
-      stepProgress: { color: "$color11" },
-      stepCompleted: { color: "$color1" },
+      stepInactive: { color: "color11" },
+      stepProgress: { color: "color11" },
+      stepCompleted: { color: "color1" },
     },
   } as const,
 
@@ -174,7 +188,7 @@ const StepBubbleText = styled(Text, {
 });
 
 const StepBody = styled(Box, {
-  name: "StepperBody",
+  displayName: "StepperBody",
   context: StepperContext,
   flexDirection: "column",
   variants: {
@@ -187,10 +201,10 @@ const StepBody = styled(Box, {
 });
 
 const StepLabel = styled(Text, {
-  name: "StepperLabel",
+  displayName: "StepperLabel",
   context: StepperContext,
   fontWeight: "600",
-  color: "$color12",
+  color: "color12",
   variants: {
     size: {
       ...controlFontVariant,
@@ -200,9 +214,9 @@ const StepLabel = styled(Text, {
 });
 
 const StepDescription = styled(Text, {
-  name: "StepperDescription",
+  displayName: "StepperDescription",
   context: StepperContext,
-  color: "$color11",
+  color: "color11",
   variants: {
     size: {
       ...controlFontVariant,
@@ -217,9 +231,9 @@ const StepDescription = styled(Text, {
  * `Timeline.Item` content) instead of in the active-step content panel.
  */
 const StepContent = styled(Text, {
-  name: "StepperContent",
+  displayName: "StepperContent",
   context: StepperContext,
-  color: "$color11",
+  color: "color11",
   variants: {
     size: {
       ...controlFontVariant,
@@ -234,8 +248,8 @@ const StepContent = styled(Text, {
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ label: { color: "$red9" } }}` is
- * sugar for `<Stepper.Step.Label color="$red9" />`. Declared on `Stepper` and
+ * of the styled part it targets, so `styles={{ label: { color: "red9" } }}` is
+ * sugar for `<Stepper.Step.Label color="red9" />`. Declared on `Stepper` and
  * threaded to every `Stepper.Step` (and the connector/steps row) via
  * `StepperStylesContext`.
  */
@@ -328,11 +342,11 @@ function resolveBubbleIconSize(
   size: StepperSize,
 ): SizeKey | number {
   if (typeof iconSize === "number") return Math.round(iconSize * 0.6);
-  if (typeof iconSize === "string") return iconSize;
+  if (typeof iconSize === "string") return iconSize as SizeKey;
   return size;
 }
 
-const StepperStep = StepFrame.styleable<StepperStepProps>(function StepperStep(props, ref) {
+const StepperStep = styleable<StepperStepProps>(StepFrame, function StepperStep(props, ref) {
   const {
     label,
     description,
@@ -364,31 +378,25 @@ const StepperStep = StepFrame.styleable<StepperStepProps>(function StepperStep(p
   // children pick up the slot sugar; element children pass through untouched.
   const ContentWrapper = useSlotTextWrapper(StepContent, s.get("content"));
 
-  const bubbleSizeProps: Pick<GetProps<typeof StepBubble>, "size"> | undefined =
-    iconSize == null ? undefined : { size: iconSize };
+  // In the timeline variant the bubble is a filled dot: solid `color9` once the
+  // step is reached (progress OR completed), an open `background` ring before
+  // it — the former `Timeline` bullet (the bubble's `dot` variant).
+  const dot = timeline ? (state === "stepInactive" ? "pending" : "reached") : undefined;
 
-  // In the timeline variant the bubble is a filled dot: solid `$color9` once the
-  // step is reached (progress OR completed), an open `$background` ring before
-  // it. This mirrors the former `Timeline` bullet and overrides the `state`
-  // variant's stepper colours.
-  const timelineBubbleColors: Pick<
-    GetProps<typeof StepBubble>,
-    "backgroundColor" | "borderColor"
-  > = timeline
-    ? {
-        backgroundColor: state === "stepInactive" ? "$background" : "$color9",
-        borderColor: state === "stepInactive" ? "$color5" : "$color9",
-      }
-    : {};
+  // A clickable step is a `role="button"` box: make it focusable + Enter/Space
+  // activatable on web (accessibility actions on native).
+  const onPress = rest.onPress;
+  const activate = React.useCallback(() => onPress?.(undefined), [onPress]);
+  const keyboardProps = useKeyboardActions({ onActivate: activate }, { disabled: !allowStepClick });
 
   // Icon size for any `@knitui/icons` content in the bubble (default check or a
   // consumer-supplied step icon), scaled off the bubble diameter so it grows
   // with `size`/`iconSize`.
   const bubbleIconSize = resolveBubbleIconSize(iconSize, size);
-  // Bubble foreground: the completed bubble is a FILLED `$color9` circle, so its
-  // glyph takes the contrast `$color1`; the inactive/progress bubbles are
-  // open/light, so their glyph takes the muted `$color11` (matching the index text).
-  const bubbleIconColor = state === "stepCompleted" ? "$color1" : "$color11";
+  // Bubble foreground: the completed bubble is a FILLED `color9` circle, so its
+  // glyph takes the contrast `color1`; the inactive/progress bubbles are
+  // open/light, so their glyph takes the muted `color11` (matching the index text).
+  const bubbleIconColor = state === "stepCompleted" ? "color1" : "color11";
 
   // Resolve the render-function form (`StepFragmentComponent`) of each fragment with
   // the step's 0-based index; plain nodes (and `undefined`) pass through unchanged so
@@ -427,11 +435,15 @@ const StepperStep = StepFrame.styleable<StepperStepProps>(function StepperStep(p
       clickable={!!allowStepClick}
       role={allowStepClick ? "button" : undefined}
       aria-current={active ? "step" : undefined}
-      tabIndex={allowStepClick ? 0 : undefined}
+      {...(allowStepClick ? keyboardProps : null)}
     >
       {withIcon ? (
         <StepBubble
-          {...s.merge("bubble", { state, radius, ...bubbleSizeProps, ...timelineBubbleColors })}
+          {...s.get("bubble")}
+          state={state}
+          dot={dot}
+          radius={radius}
+          {...(iconSize == null ? null : { size: iconSize })}
         >
           {loading ? (
             <Loader size="xs" type="oval" />
@@ -479,21 +491,21 @@ function StepperCompleted(_props: StepperCompletedProps): React.ReactElement | n
 /* -------------------------------------------------------------------------- */
 
 const StepConnector = styled(Box, {
-  name: "StepperConnector",
-  backgroundColor: "$color4",
+  displayName: "StepperConnector",
+  backgroundColor: "color4",
   variants: {
     orientation: {
       // Cross-axis thickness (`height` horizontal / `width` vertical) is injected
       // at render time from the size-scaled `CONNECTOR_THICKNESS` ladder.
       horizontal: {
         flex: 1,
-        marginHorizontal: "$xs",
+        marginHorizontal: "xs",
         alignSelf: "center",
       },
-      vertical: { marginVertical: "$xs" },
+      vertical: { marginVertical: "xs" },
     },
     active: {
-      true: { backgroundColor: "$color9" },
+      true: { backgroundColor: "color9" },
     },
   } as const,
   defaultVariants: { orientation: "horizontal" },
@@ -510,16 +522,16 @@ function getVerticalConnectorMarginLeft(
   switch (size) {
     case "xxs":
     case "xs":
-      return "$xs";
+      return "xs";
     case "sm":
-      return "$sm";
+      return "sm";
     case "md":
-      return "$md";
+      return "md";
     case "lg":
     case "xl":
-      return "$lg";
+      return "lg";
     case "xxl":
-      return "$xl";
+      return "xl";
   }
 }
 
@@ -528,17 +540,17 @@ function getVerticalConnectorMarginLeft(
 /* -------------------------------------------------------------------------- */
 
 const StepperRootFrame = styled(Box, {
-  name: "Stepper",
+  displayName: "Stepper",
   flexDirection: "column",
-  gap: "$md",
+  gap: "md",
 });
 
 const StepperSteps = styled(Box, {
-  name: "StepperSteps",
+  displayName: "StepperSteps",
   variants: {
     orientation: {
       horizontal: { flexDirection: "row", alignItems: "flex-start" },
-      vertical: { flexDirection: "column", gap: "$sm" },
+      vertical: { flexDirection: "column", gap: "sm" },
     },
   } as const,
   defaultVariants: { orientation: "horizontal" },
@@ -583,7 +595,7 @@ export interface StepperProps extends StepperRootFrameProps {
   reverseActive?: boolean;
   /** Override the step-bubble diameter (independent of `size`). */
   iconSize?: GetProps<typeof StepBubble>["size"];
-  /** Padding around the active step's content. @default '$md' */
+  /** Padding around the active step's content. @default 'md' */
   contentPadding?: GetProps<typeof Box>["padding"];
   /** Wrap the horizontal steps row when it overflows. Ignored when vertical. @default true */
   wrap?: boolean;
@@ -602,7 +614,7 @@ export interface StepperProps extends StepperRootFrameProps {
   styles?: SlotStyles<StepperStyles>;
 }
 
-const StepperRoot = StepperRootFrame.styleable<StepperProps>(function Stepper(props, ref) {
+const StepperRoot = styleable<StepperProps>(StepperRootFrame, function Stepper(props, ref) {
   const {
     active,
     onStepClick,
@@ -618,7 +630,7 @@ const StepperRoot = StepperRootFrame.styleable<StepperProps>(function Stepper(pr
     allowNextStepsSelect = true,
     reverseActive = false,
     iconSize,
-    contentPadding = "$md",
+    contentPadding = "md",
     wrap = true,
     keepMounted = false,
     styles,
@@ -683,7 +695,7 @@ const StepperRoot = StepperRootFrame.styleable<StepperProps>(function Stepper(pr
       // connectors are always solid filled bars.
       const lineVariant = (timeline && child.props.lineVariant) || "solid";
       const dashed = lineVariant !== "solid";
-      const lineColor = connectorActive ? "$color9" : "$color4";
+      const lineColor = connectorActive ? "color9" : "color4";
 
       // A dashed/dotted line is drawn as a border (a filled box can't be dashed),
       // so swap the filled bar for a zero-thickness box with a styled border on
@@ -706,19 +718,23 @@ const StepperRoot = StepperRootFrame.styleable<StepperProps>(function Stepper(pr
               borderColor: lineColor,
             };
 
+      // Cross-axis thickness scales off `size`: `height` for the horizontal
+      // line, `width` for the vertical one (whose length stays `sm`). Only the
+      // axis that applies is named — an explicit `undefined` would clear the
+      // connector slot's own value.
+      const axisProps: GetProps<typeof StepConnector> =
+        orientation === "vertical"
+          ? { height: "sm", width: connectorThickness, marginLeft: verticalConnectorMarginLeft }
+          : { height: connectorThickness };
+
       rendered.push(
         <StepConnector
           key={`connector-${index}`}
-          {...s.merge("connector", {
-            orientation,
-            active: connectorActive,
-            // Cross-axis thickness scales off `size`: `height` for the horizontal
-            // line, `width` for the vertical one (whose length stays `$sm`).
-            height: orientation === "vertical" ? "$sm" : connectorThickness,
-            width: orientation === "vertical" ? connectorThickness : undefined,
-            marginLeft: orientation === "vertical" ? verticalConnectorMarginLeft : undefined,
-            ...dashedProps,
-          })}
+          {...s.get("connector")}
+          orientation={orientation}
+          active={connectorActive}
+          {...axisProps}
+          {...dashedProps}
         />,
       );
     }

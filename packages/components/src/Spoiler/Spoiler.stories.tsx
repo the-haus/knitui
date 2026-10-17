@@ -101,13 +101,13 @@ export const DefaultExpanded: Story = {
 /** Elevation shadow ladder applied via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
-          <Spoiler {...args} shadow={shadow} padding="$md" maxHeight={80}>
+          <Spoiler {...args} shadow={shadow} padding="md" maxHeight={80}>
             {LOREM}
           </Spoiler>
         </Box>
@@ -121,7 +121,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [expanded, setExpanded] = React.useState(false);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <Text>External state: {expanded ? "expanded" : "collapsed"}</Text>
         <Spoiler {...args} expanded={expanded} onExpandedChange={setExpanded} />
       </Box>
@@ -155,9 +155,9 @@ export const CustomLabels: Story = {
 /** Multiple independent Spoilers side by side, each with a different maxHeight. */
 export const MultipleInstances: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {([60, 100, 140] as const).map((maxHeight) => (
-        <Box key={maxHeight} gap="$xs">
+        <Box key={maxHeight} gap="xs">
           <Text fontWeight="700">maxHeight={maxHeight}px</Text>
           <Spoiler {...args} maxHeight={maxHeight} />
         </Box>
@@ -179,8 +179,8 @@ export const Styles: Story = {
     maxHeight: 80,
     children: LOREM,
     styles: {
-      region: { backgroundColor: "$blue3" },
-      control: { color: "$red9", fontWeight: "700" },
+      region: { backgroundColor: "blue3" },
+      control: { color: "red9", fontWeight: "700" },
     },
   },
 };

@@ -2,12 +2,13 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Skeleton, SkeletonGroup } from "./Skeleton";
 
 describe("Skeleton", () => {
   it("renders a busy placeholder by default", () => {
-    const { container } = render(<Skeleton width={100} height="$xs" />);
+    const { container } = render(<Skeleton width={100} height="xs" />);
     expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
   });
 
@@ -42,12 +43,12 @@ describe("Skeleton", () => {
 
   it("forwards a ref to the underlying element", () => {
     const ref = React.createRef<GetRef<typeof Skeleton>>();
-    render(<Skeleton ref={ref} width="$lg" height="$lg" />);
+    render(<Skeleton ref={ref} width="lg" height="lg" />);
     expect(ref.current).not.toBeNull();
   });
 
   it("renders as a circle without throwing", () => {
-    const { container } = render(<Skeleton circle height="$lg" />);
+    const { container } = render(<Skeleton circle height="lg" />);
     expect(container.firstChild).toBeTruthy();
   });
 
@@ -57,14 +58,14 @@ describe("Skeleton", () => {
     // the animated style has a valid host (a plain Tamagui frame would crash with
     // `Invalid value passed to shareableViewDescriptors`). On web it surfaces as an
     // infinite `animation*` inline style on the same `aria-busy` element.
-    const { container } = render(<Skeleton width={120} height="$xs" />);
+    const { container } = render(<Skeleton width={120} height="xs" />);
     const frame = container.querySelector('[aria-busy="true"]') as HTMLElement;
     expect(frame.style.animationIterationCount).toBe("infinite");
     expect(frame.style.animationName).toContain("pulse");
   });
 
   it("does not animate when animate is false", () => {
-    const { container } = render(<Skeleton animate={false} width={120} height="$xs" />);
+    const { container } = render(<Skeleton animate={false} width={120} height="xs" />);
     const frame = container.querySelector('[aria-busy="true"]') as HTMLElement;
     expect(frame.style.animationName).toBe("");
   });
@@ -74,9 +75,9 @@ describe("SkeletonGroup", () => {
   const silhouette = (props: React.ComponentProps<typeof SkeletonGroup> = { children: null }) =>
     render(
       <SkeletonGroup {...props}>
-        <Skeleton width={120} height="$xs" />
-        <Skeleton width={80} height="$xs" />
-        <Skeleton circle height="$lg" />
+        <Skeleton width={120} height="xs" />
+        <Skeleton width={80} height="xs" />
+        <Skeleton circle height="lg" />
       </SkeletonGroup>,
     );
 
@@ -135,5 +136,53 @@ describe("SkeletonGroup", () => {
       </SkeletonGroup>,
     );
     expect(container.querySelector('[data-testid="group"]')).toBeInTheDocument();
+  });
+});
+
+describe("Skeleton v3 style resolution (web CSS)", () => {
+  it("paints a color4 block with the default sm radius", () => {
+    render(<Skeleton testID="s" height={20} />);
+    const el = screen.getByTestId("s");
+    expect(baseValue(el, "background-color")).toBe("var(--color4)");
+    expect(baseValue(el, "border-radius")).toBe("var(--t-radius-sm)");
+    expect(baseValue(el, "height")).toBe("20px");
+    // No explicit `width={undefined}` claim: no width rule at all.
+    expect(baseValue(el, "width")).toBeUndefined();
+  });
+
+  it("radius accepts a key or px", () => {
+    render(
+      <>
+        <Skeleton testID="k" radius="xl" />
+        <Skeleton testID="n" radius={0} />
+      </>,
+    );
+    expect(baseValue(screen.getByTestId("k"), "border-radius")).toBe("var(--t-radius-xl)");
+    expect(baseValue(screen.getByTestId("n"), "border-radius")).toBe("0px");
+  });
+
+  it("circle rounds fully and mirrors height onto width", () => {
+    render(<Skeleton testID="c" circle height={40} />);
+    const el = screen.getByTestId("c");
+    expect(baseValue(el, "border-radius")).toBe("9999px");
+    expect(baseValue(el, "width")).toBe("40px");
+  });
+
+  it("pulses on a compositor keyframe loop", () => {
+    render(<Skeleton testID="s" />);
+    const el = screen.getByTestId("s");
+    expect(el.style.animationName).toBe("knitui-loop-pulse-0_45");
+    expect(el.style.animationDirection).toBe("alternate");
+  });
+
+  it("keeps its children invisible (opacity 0) while the placeholder shows", () => {
+    render(
+      <Skeleton>
+        <span>content</span>
+      </Skeleton>,
+    );
+    const wrapper = screen.getByText("content").parentElement!;
+    expect(baseValue(wrapper, "opacity")).toBe("0");
+    expect(wrapper).toHaveAttribute("aria-hidden", "true");
   });
 });

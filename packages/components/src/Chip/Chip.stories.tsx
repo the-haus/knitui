@@ -65,15 +65,15 @@ export const Playground: Story = {};
 /** Every visual variant side by side, unchecked and checked. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md">
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box gap="md">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {VARIANTS.map((variant) => (
           <Chip key={variant} {...args} variant={variant}>
             {variant}
           </Chip>
         ))}
       </Box>
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {VARIANTS.map((variant) => (
           <Chip key={variant} {...args} variant={variant} defaultChecked>
             {variant} (on)
@@ -87,7 +87,7 @@ export const Variants: Story = {
 /** Full seven-step size scale. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Chip key={size} {...args} size={size}>
           {size}
@@ -103,7 +103,7 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Chip key={shadow} {...args} shadow={shadow}>
           {shadow}
@@ -116,7 +116,7 @@ export const Shadows: Story = {
 /** Accent themes use Tamagui `theme`, not a public color prop. */
 export const Themes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink", "gray"] as const).map((theme) => (
         <Chip key={theme} {...args} theme={theme} defaultChecked>
           {theme}
@@ -129,7 +129,7 @@ export const Themes: Story = {
 /** Disabled state — reduced opacity and no interaction. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Chip key={variant} {...args} variant={variant} disabled>
           {variant}
@@ -158,7 +158,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [on, setOn] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Chip {...args} checked={on} onChange={setOn}>
           {on ? "On" : "Off"}
         </Chip>
@@ -173,9 +173,9 @@ export const GroupSingleSelect: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("react");
     return (
-      <Box gap="$sm" alignItems="flex-start">
+      <Box gap="sm" alignItems="flex-start">
         <Chip.Group value={value} onChange={(v) => setValue(v as string)}>
-          <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+          <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
             {["react", "vue", "svelte", "solid"].map((label) => (
               <Chip key={label} {...args} value={label}>
                 {label}
@@ -194,9 +194,9 @@ export const GroupMultiSelect: Story = {
   render: (args) => {
     const [values, setValues] = React.useState<string[]>(["ts"]);
     return (
-      <Box gap="$sm" alignItems="flex-start">
+      <Box gap="sm" alignItems="flex-start">
         <Chip.Group multiple value={values} onChange={(v) => setValues(v as string[])}>
-          <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+          <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
             {["ts", "js", "rust", "go", "python"].map((label) => (
               <Chip key={label} {...args} value={label}>
                 {label}
@@ -213,9 +213,9 @@ export const GroupMultiSelect: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Chip key={size} variant={variant} size={size}>
               {variant} {size}
@@ -235,9 +235,9 @@ export const Styles: Story = {
     size: "sm",
     defaultChecked: true,
     styles: {
-      root: { borderColor: "$blue7", borderWidth: 2 },
-      label: { color: "$blue9", fontWeight: "700" },
-      icon: { color: "$blue9" },
+      root: { borderColor: "blue7", borderWidth: 2 },
+      label: { color: "blue9", fontWeight: "700" },
+      icon: { color: "blue9" },
     },
   },
 };

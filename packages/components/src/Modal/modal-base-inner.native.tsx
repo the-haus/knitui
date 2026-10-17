@@ -16,10 +16,11 @@ import { type GetProps, styled } from "@knitui/core";
  * The keyboard default is baked in here (not passed by the shared `ModalBase`),
  * so the web build stays a plain `Box` that never sees the native-only prop.
  * `styled()` over the keyboard-avoiding view keeps the kit's token-aware style
- * props (`paddingVertical="$xl"`, `alignItems`, …) working.
+ * props (`paddingVertical="xl"`, `alignItems`, …) working.
  */
 const Frame = styled(KeyboardAvoidingView, {
-  name: "ModalBaseInner",
+  // A raw RN parent takes no theme `name` in v3's `StyledOptions`.
+  displayName: "ModalBaseInner",
   top: 0,
   left: 0,
   right: 0,

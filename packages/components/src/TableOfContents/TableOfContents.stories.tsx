@@ -10,7 +10,7 @@ import { TableOfContents } from "./TableOfContents";
 const VARIANTS = ["filled", "light", "none"] as const;
 const SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 const SHADOWS = ["xs", "sm", "md", "lg", "xl"] as const;
-const DEPTH_OFFSETS = ["$xxs", "$xs", "$sm", "$md", "$lg", "$xl", "$xxl"] as const;
+const DEPTH_OFFSETS = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 
 const SAMPLE_DATA = [
   { value: "Introduction", depth: 1 },
@@ -46,7 +46,7 @@ const meta = {
     variant: "light",
     size: "md",
     defaultActive: 0,
-    depthOffset: "$lg",
+    depthOffset: "lg",
     minDepthToOffset: 1,
   },
   argTypes: {
@@ -90,10 +90,10 @@ export const Playground: Story = {};
 /** All three visual variants of the active-item highlight, side by side. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$xs">
-          <Text fontWeight="600" size="xs" color="$color10">
+        <Box key={variant} gap="xs">
+          <Text fontWeight="600" size="xs" color="color10">
             {variant}
           </Text>
           <TableOfContents {...args} variant={variant} defaultActive={0} width={200} />
@@ -106,10 +106,10 @@ export const Variants: Story = {
 /** The seven sizes from xxs to xxl, all using the same data. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SIZES.map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontWeight="600" size="xs" color="$color10">
+        <Box key={size} gap="xs">
+          <Text fontWeight="600" size="xs" color="color10">
             {size}
           </Text>
           <TableOfContents {...args} size={size} defaultActive={0} data={FLAT_DATA} width={160} />
@@ -122,10 +122,10 @@ export const Sizes: Story = {
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontWeight="600" size="xs" color="$color10">
+        <Box key={shadow} gap="xs">
+          <Text fontWeight="600" size="xs" color="color10">
             {shadow}
           </Text>
           <TableOfContents
@@ -146,8 +146,8 @@ export const Controlled: Story = {
   render: (args) => {
     const [active, setActive] = React.useState(0);
     return (
-      <Box gap="$md" alignItems="flex-start">
-        <Text color="$color11" size="sm">
+      <Box gap="md" alignItems="flex-start">
+        <Text color="color11" size="sm">
           Active index: <Text fontWeight="600">{active}</Text>
         </Text>
         <TableOfContents {...args} active={active} onChange={setActive} width={260} />
@@ -167,7 +167,7 @@ export const DeepNesting: Story = {
       { value: "Chapter 2", depth: 1 },
       { value: "Section 2.1", depth: 2 },
     ],
-    depthOffset: "$xl",
+    depthOffset: "xl",
     minDepthToOffset: 1,
     defaultActive: 2,
     width: 280,
@@ -191,7 +191,7 @@ export const CustomControlProps: Story = {
     width: 260,
     getControlProps: ({ data: item }) => ({
       children: (
-        <Text size="sm" color="$color11">
+        <Text size="sm" color="color11">
           <Text>⭐ </Text>
           {item.value}
         </Text>
@@ -203,16 +203,16 @@ export const CustomControlProps: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$sm">
-          <Text fontWeight="700" size="xs" color="$color10">
+        <Box key={variant} gap="sm">
+          <Text fontWeight="700" size="xs" color="color10">
             variant="{variant}"
           </Text>
-          <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+          <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
             {SIZES.map((size) => (
-              <Box key={size} gap="$xs">
-                <Text size="xxs" color="$color9">
+              <Box key={size} gap="xs">
+                <Text size="xxs" color="color9">
                   size="{size}"
                 </Text>
                 <TableOfContents
@@ -238,8 +238,8 @@ export const Styles: Story = {
     defaultActive: 1,
     width: 260,
     styles: {
-      control: { borderColor: "$blue7", borderWidth: 2 },
-      text: { color: "$red9", fontWeight: "700" },
+      control: { borderColor: "blue7", borderWidth: 2 },
+      text: { color: "red9", fontWeight: "700" },
     },
   },
 };
@@ -247,10 +247,10 @@ export const Styles: Story = {
 /** Accent color comes from Tamagui theme, not a public color prop. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {(["blue", "green", "red"] as const).map((theme) => (
-        <Box key={theme} gap="$xs">
-          <Text fontWeight="600" size="xs" color="$color10">
+        <Box key={theme} gap="xs">
+          <Text fontWeight="600" size="xs" color="color10">
             theme="{theme}"
           </Text>
           <TableOfContents

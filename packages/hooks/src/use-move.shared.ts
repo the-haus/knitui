@@ -1,7 +1,16 @@
 import type { RefObject } from "react";
-import type { GestureResponderEvent, LayoutChangeEvent } from "react-native";
 
-import type { TamaguiElement } from "@knitui/core";
+import type { LayoutChangeEvent, TamaguiElement } from "@knitui/core";
+
+/**
+ * Responder event payload — the page coordinates the move hooks read. Structural
+ * (like core's `LayoutChangeEvent`) so `rootProps` spreads onto Tamagui v3 frames,
+ * whose responder event (readonly touch lists, wider `currentTarget`) RN's
+ * `GestureResponderEvent` does not accept.
+ */
+export interface GestureResponderEvent {
+  nativeEvent: { readonly pageX: number; readonly pageY: number };
+}
 
 export interface MovePosition {
   x: number;

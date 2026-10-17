@@ -94,7 +94,7 @@ const TimeControlsListContext = createStyledContext<{ size: CalendarSize }>({ si
 
 /** The inner column of controls (web `role="list"`). */
 const TimeControlsListColumn = styled(Box, {
-  name: "TimeControlsListColumn",
+  displayName: "TimeControlsListColumn",
   context: TimeControlsListContext,
   gap: CELL_SPACING,
   paddingHorizontal: CELL_SPACING,

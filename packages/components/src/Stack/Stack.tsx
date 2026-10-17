@@ -5,12 +5,12 @@ import { alignVariant, justifyVariant } from "../internal/style-props";
 
 /**
  * Vertical flex stack — mirrors Mantine's `Stack`. `gap`/`align`/`justify`
- * carry Mantine's names; `gap` takes a Tamagui space token (`"$md"`).
+ * carry Mantine's names; `gap` takes a bare space token (`gap="md"`) or a number.
  */
 export const Stack = styled(Box, {
-  name: "Stack",
+  displayName: "Stack",
   flexDirection: "column",
-  gap: "$md",
+  gap: "md",
   variants: {
     align: alignVariant,
     justify: justifyVariant,

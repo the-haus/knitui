@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue, declarationsUnder, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { CloseButton } from "./CloseButton";
 
@@ -45,7 +46,7 @@ describe("CloseButton", () => {
   );
 
   it("supports overriding the default glyph size", () => {
-    render(<CloseButton iconSize="$xl" />);
+    render(<CloseButton iconSize="xl" />);
     expect(document.querySelector(".tabler-icon-x")).toBeInTheDocument();
   });
 
@@ -71,5 +72,31 @@ describe("CloseButton", () => {
     expect(button.tagName).toBe("BUTTON");
     button.focus();
     expect(button).toHaveFocus();
+  });
+});
+
+describe("CloseButton v3 style resolution (web CSS)", () => {
+  it("defaults to the subtle ladder on a focusable <button>", () => {
+    render(<CloseButton />);
+    const el = screen.getByRole("button", { name: "Close" });
+    expect(el.tagName).toBe("BUTTON");
+    expect(baseValue(el, "background-color")).toBe("transparent");
+    expect(declarationsUnder(el, ":hover")).toContain("background-color: var(--color4)");
+    expect(declarationsUnder(el, ":active")).toContain("background-color: var(--color5)");
+    expect(hasFocusRing(el)).toBe(true);
+  });
+
+  it("follows variant and size", () => {
+    render(<CloseButton variant="filled" size="lg" />);
+    const el = screen.getByRole("button", { name: "Close" });
+    expect(baseValue(el, "background-color")).toBe("var(--color9)");
+    expect(baseValue(el, "width")).toBe("var(--t-size-lg)");
+  });
+
+  it("marks disabled for assistive tech and blocks pointer events", () => {
+    render(<CloseButton disabled />);
+    const el = screen.getByRole("button", { name: "Close" });
+    expect(el).toHaveAttribute("aria-disabled", "true");
+    expect(baseValue(el, "pointer-events")).toBe("none");
   });
 });

@@ -201,9 +201,9 @@ export interface ScrollAreaOwnProps {
   refreshing?: boolean;
 
   /**
-   * Spinner colour — a theme token (`"$color10"`) or any concrete colour. iOS
+   * Spinner colour — a theme token (`"color10"`) or any concrete colour. iOS
    * paints it as `tintColor`, Android as the spinner `colors`.
-   * @default "$color10"
+   * @default "color10"
    */
   refreshColor?: string;
 

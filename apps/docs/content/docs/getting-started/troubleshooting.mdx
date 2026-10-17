@@ -1,7 +1,7 @@
 export const meta = {
   title: "Troubleshooting",
   description:
-    "Symptom-indexed fixes for the failures that actually happen when integrating Knit UI: duplicate React Native copies, reanimated instances, Skia load order, portal layers and keyboard handling.",
+    "Symptom-indexed fixes for the failures that actually happen when integrating Knit UI: duplicate React Native copies, reanimated instances, Skia load order, portal layers, keyboard handling and Tamagui v3 upgrade leftovers.",
 };
 
 # Troubleshooting
@@ -122,15 +122,79 @@ optimizeDeps: {
 }
 ```
 
-## Tamagui: "skipped loading N modules"
+## Tamagui: a component is not being flattened
 
-The static compiler could not `require()` a source-shipped package while
-building its config. It is a warning, not an error — extraction just falls back
-to runtime styling for those modules. To silence it:
+With Tamagui v2 this showed up as the warning *"skipped loading N modules"*, and
+`TAMAGUI_IGNORE_BUNDLE_ERRORS=1` silenced it. **v3 no longer reads that
+variable**: component discovery fails quietly and the module just falls back to
+runtime styling, which is always correct, only slower.
+
+To see what the compiler skipped and why:
 
 ```bash
-TAMAGUI_IGNORE_BUNDLE_ERRORS=1
+DEBUG=tamagui npx expo start -c          # "component discovery skipped …"
+TAMAGUI_COMPILER_STATS=verbose vite build # flatten / bail counts per module
 ```
+
+Behaviour components (`styleable()`) never flatten by design; see
+[Bundler setup](/docs/getting-started/bundler-setup#extraction-and-what-it-can-and-cannot-flatten).
+
+## Native styles do not change after editing the theme config
+
+Metro does not invalidate its transform cache for config edits. Restart with a
+cleared cache: `npx expo start -c` (or delete `node_modules/.cache/tamagui`).
+
+## `NO_INSETS_ERROR` at startup
+
+`SafeAreaProvider` (from `react-native-safe-area-context`) is mounted **inside**
+`Provider`. Tamagui v3's provider can read safe-area context to publish the inset
+tokens, so the safe-area provider has to be the outer one:
+
+```tsx
+<SafeAreaProvider>
+  <Provider>{/* app */}</Provider>
+</SafeAreaProvider>
+```
+
+## React warns that it "does not recognize the `hoverStyle` prop"
+
+A Tamagui v2 condition object (`hoverStyle`, `pressStyle`, `focusStyle`,
+`focusVisibleStyle`, `enterStyle`, `exitStyle`, `disabledStyle`) reached v3, which
+has no runtime path for it and forwards it to the DOM. Move the condition into the
+value it changes:
+
+```tsx
+// before
+<Box bg="color2" hoverStyle={{ bg: "color3" }} />
+// after
+<Box bg="color2 hover:color3" />
+```
+
+A `hoverStyle` returned from a helper and spread in survives any codemod — grep
+for it. When you convert such a helper, have it return the **whole** program
+(`bg: "color2 hover:color3"`): a caller's own `bg` next to the spread now replaces
+the hover clause as well. See
+[Upgrading to Knit UI 1.0](/docs/guides/upgrading-to-v1).
+
+## A token renders as nothing, or as literal text
+
+- **A leftover `$`.** `p="$md"` is not a v3 token. TypeScript flags it in style
+  props; a custom prop that forwards a token is not checked, so grep for `="$`.
+- **Your code detects tokens by their first character.** `value[0] === "$"` was
+  how v2 code told a token from a raw colour; with bare names it is always false,
+  so tokens get passed through as literals (blank icons, missing colours). Ask the
+  config instead: `resolveToken(value, "color", { theme }) ?? value` from
+  `@knitui/core`.
+- **A space inside one colour.** A space separates clauses, so
+  `rgba(0, 0, 0, 0.5)` splits into garbage; write `rgba(0,0,0,0.5)`.
+- **`undefined` inside a template literal.** `` py={`${compact ? undefined : "sm"}`} ``
+  renders the string `"undefined"`. Keep it an expression:
+  `py={compact ? undefined : "sm"}`.
+
+## Passing `undefined` does not reset a prop to "off"
+
+In v3 an explicit `undefined` counts as **absent**, so the default applies. Pass
+`null` to switch a default off.
 
 ## Next.js: styles arrive a frame late
 

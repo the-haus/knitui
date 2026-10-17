@@ -39,7 +39,7 @@ does not.
 ```tsx
 <Box>            {/* column */}
 <Group>          {/* row, gap, wraps */}
-<Stack gap="$md">{/* column, gap */}
+<Stack gap="md">{/* column, gap */}
 ```
 
 ## Gap, not margins
@@ -48,7 +48,7 @@ Prefer `gap` on the parent to margins on children. It composes, it collapses
 correctly when a child is conditional, and it is a token.
 
 ```tsx
-<Stack gap="$md">
+<Stack gap="md">
   <TextInput label="Email" />
   {showPassword ? <PasswordInput label="Password" /> : null}
   <Button>Continue</Button>
@@ -72,12 +72,16 @@ rows and keeps a mounted pool, which is what you want past a few hundred items.
 
 ## Responsive layout
 
-Every style prop takes breakpoint objects, and `useMedia()` gives you the same
-information in JS:
+Every style prop takes media clauses in its value, and `useMedia()` gives you the
+same information in JS:
 
 ```tsx
-<SimpleGrid cols={{ xxs: 1, sm: 2, lg: 3 }} gap="$md" />
+<Stack flexDirection="column gtSm:row" gap="sm gtMd:lg" />
+<SimpleGrid minColWidth={240} spacing="md" />   // columns follow the width
 ```
+
+`SimpleGrid`'s `cols` is a plain number; for a column count that follows the
+viewport use `minColWidth`, or pick `cols` from `useMedia()`.
 
 See [Responsive](/docs/foundations/responsive).
 

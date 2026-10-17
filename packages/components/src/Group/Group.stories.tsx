@@ -23,7 +23,7 @@ const meta = {
     },
   },
   args: {
-    gap: "$md",
+    gap: "md",
     align: "center",
     justify: "flex-start",
     wrap: "wrap",
@@ -33,7 +33,7 @@ const meta = {
   argTypes: {
     gap: {
       control: "select",
-      options: ["$xs", "$sm", "$md", "$lg", "$xl"],
+      options: ["xs", "sm", "md", "lg", "xl"],
       description: "Space between children — a Tamagui spacing token.",
     },
     align: {
@@ -95,14 +95,14 @@ export const Default: Story = {
 /** All `justify` values side by side — shows how main-axis alignment behaves. */
 export const JustifyVariants: Story = {
   render: (args) => (
-    <Box gap="$lg" width={500}>
+    <Box gap="lg" width={500}>
       {(["flex-start", "center", "flex-end", "space-between", "space-around"] as const).map(
         (justify) => (
-          <Box key={justify} gap="$xs">
-            <Text fontSize="$sm" color="$colorSubtitle">
+          <Box key={justify} gap="xs">
+            <Text fontSize="sm" color="color11">
               {justify}
             </Text>
-            <Box borderWidth={1} borderColor="$borderColor" borderRadius="$sm" padding="$sm">
+            <Box borderWidth={1} borderColor="borderColor" borderRadius="sm" padding="sm">
               <Group {...args} justify={justify} wrap="nowrap">
                 <Button variant="default" size="sm">
                   Alpha
@@ -125,9 +125,9 @@ export const JustifyVariants: Story = {
 /** `grow` makes every child share the row equally — useful for full-width button rows. */
 export const Grow: Story = {
   render: (args) => (
-    <Box gap="$lg" width={480}>
-      <Box gap="$xs">
-        <Text fontSize="$sm" color="$colorSubtitle">
+    <Box gap="lg" width={480}>
+      <Box gap="xs">
+        <Text fontSize="sm" color="color11">
           grow (default preventGrowOverflow)
         </Text>
         <Group {...args} grow>
@@ -137,8 +137,8 @@ export const Grow: Story = {
         </Group>
       </Box>
 
-      <Box gap="$xs">
-        <Text fontSize="$sm" color="$colorSubtitle">
+      <Box gap="xs">
+        <Text fontSize="sm" color="color11">
           grow + preventGrowOverflow=false
         </Text>
         <Group {...args} grow preventGrowOverflow={false}>
@@ -155,7 +155,7 @@ export const Grow: Story = {
 export const MixedContent: Story = {
   render: (args) => (
     <Group {...args} align="center">
-      <Text fontSize="$xl">⭐</Text>
+      <Text fontSize="xl">⭐</Text>
       <Text fontWeight="bold">Featured</Text>
       <Button variant="light" size="sm">
         View details
@@ -170,8 +170,8 @@ export const MixedContent: Story = {
 /** `wrap="nowrap"` keeps children on a single line even when space is tight. */
 export const NoWrap: Story = {
   render: (args) => (
-    <Box width={320} borderWidth={1} borderColor="$borderColor" padding="$sm" borderRadius="$sm">
-      <Group {...args} wrap="nowrap" gap="$sm">
+    <Box width={320} borderWidth={1} borderColor="borderColor" padding="sm" borderRadius="sm">
+      <Group {...args} wrap="nowrap" gap="sm">
         <Button variant="default">Action 1</Button>
         <Button variant="default">Action 2</Button>
         <Button variant="default">Action 3</Button>
@@ -181,13 +181,13 @@ export const NoWrap: Story = {
   ),
 };
 
-/** Different gap sizes — from tight `$xs` to spacious `$xl`. */
+/** Different gap sizes — from tight `xs` to spacious `xl`. */
 export const GapSizes: Story = {
   render: (args) => (
-    <Box gap="$lg">
-      {(["$xs", "$sm", "$md", "$lg", "$xl"] as const).map((gap) => (
-        <Box key={gap} flexDirection="row" alignItems="center" gap="$md">
-          <Text fontSize="$sm" color="$colorSubtitle" width={30}>
+    <Box gap="lg">
+      {(["xs", "sm", "md", "lg", "xl"] as const).map((gap) => (
+        <Box key={gap} flexDirection="row" alignItems="center" gap="md">
+          <Text fontSize="sm" color="color11" width={30}>
             {gap}
           </Text>
           <Group {...args} gap={gap}>

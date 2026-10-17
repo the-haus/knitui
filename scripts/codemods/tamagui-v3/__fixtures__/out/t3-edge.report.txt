@@ -1,0 +1,18 @@
+condition-variant-risk · 30 · <Button>: hoverStyle sets "color", which may be a variant of <Button>
+condition-unsupported-value · 31 · backgroundColor: base already holds a clause program; merge by hand
+condition-unsupported-value · 32 · enterStyle.transition (per-state transition)
+condition-dynamic · 33 · hoverStyle spreads extra
+condition-unsupported-value · 34 · hoverStyle.opacity is undefined (v2 "no override"); drop it or pick a real value
+condition-unsupported-value · 35 · hoverStyle.bg is an empty string
+condition-duplicate-target · 6 · hoverStyle: backgroundColor + bg both set backgroundColor
+condition-merged · 12 · styled-base: hoverStyle → opacity
+condition-merged · 13 · styled-base: pressStyle → opacity
+condition-nested · 22 · hoverStyle.pressStyle
+condition-merged · 21 · variant-body: pressStyle → x, rotate
+token-literal · 4 · $color1
+token-literal · 5 · $color2
+token-literal · 6 · $color3
+token-literal · 30 · $blue9
+token-literal · 30 · $blue10
+token-compound · 31 · "$color1 sm:$color2"
+token-literal · 33 · $color3

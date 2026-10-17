@@ -6,7 +6,7 @@ import { Box } from "../Box";
 import { Text } from "../Text";
 import { Spacer } from "./Spacer";
 
-const SIZE_TOKENS = ["$xxs", "$xs", "$sm", "$md", "$lg", "$xl", "$xxl"] as const;
+const SIZE_TOKENS = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 
 const meta = {
   title: "Layout/Spacer",
@@ -21,19 +21,19 @@ const meta = {
     },
   },
   args: {
-    w: "$md",
-    h: "$md",
+    w: "md",
+    h: "md",
   },
   argTypes: {
     w: {
       control: "select",
       options: SIZE_TOKENS,
-      description: "Width of the spacer from the $size scale (also sets `miw` by default).",
+      description: "Width of the spacer from the `size` token scale (also sets `miw` by default).",
     },
     h: {
       control: "select",
       options: SIZE_TOKENS,
-      description: "Height of the spacer from the $size scale (also sets `mih` by default).",
+      description: "Height of the spacer from the `size` token scale (also sets `mih` by default).",
     },
     miw: {
       control: "select",
@@ -56,12 +56,12 @@ type Story = StoryObj<ComponentProps<typeof Spacer>>;
 export const Playground: Story = {
   render: (args) => (
     <Box flexDirection="row" alignItems="center">
-      <Box backgroundColor="$blue8" padding="$sm">
-        <Text color="$color">Block A</Text>
+      <Box backgroundColor="blue8" padding="sm">
+        <Text color="color">Block A</Text>
       </Box>
-      <Spacer {...args} backgroundColor="$yellow4" />
-      <Box backgroundColor="$blue8" padding="$sm">
-        <Text color="$color">Block B</Text>
+      <Spacer {...args} backgroundColor="accent4" />
+      <Box backgroundColor="blue8" padding="sm">
+        <Text color="color">Block B</Text>
       </Box>
     </Box>
   ),
@@ -71,12 +71,12 @@ export const Playground: Story = {
 export const Horizontal: Story = {
   render: () => (
     <Box flexDirection="row" alignItems="center">
-      <Box backgroundColor="$blue8" padding="$sm" borderRadius="$sm">
-        <Text color="$color">Left</Text>
+      <Box backgroundColor="blue8" padding="sm" borderRadius="sm">
+        <Text color="color">Left</Text>
       </Box>
-      <Spacer w="$md" />
-      <Box backgroundColor="$green8" padding="$sm" borderRadius="$sm">
-        <Text color="$color">Right</Text>
+      <Spacer w="md" />
+      <Box backgroundColor="accent8" padding="sm" borderRadius="sm">
+        <Text color="color">Right</Text>
       </Box>
     </Box>
   ),
@@ -86,29 +86,29 @@ export const Horizontal: Story = {
 export const Vertical: Story = {
   render: () => (
     <Box flexDirection="column">
-      <Box backgroundColor="$blue8" padding="$sm" borderRadius="$sm">
-        <Text color="$color">Top</Text>
+      <Box backgroundColor="blue8" padding="sm" borderRadius="sm">
+        <Text color="color">Top</Text>
       </Box>
-      <Spacer h="$md" />
-      <Box backgroundColor="$green8" padding="$sm" borderRadius="$sm">
-        <Text color="$color">Bottom</Text>
+      <Spacer h="md" />
+      <Box backgroundColor="accent8" padding="sm" borderRadius="sm">
+        <Text color="color">Bottom</Text>
       </Box>
     </Box>
   ),
 };
 
-/** Multiple spacer sizes using Tamagui $size tokens — shows how spacing scales across a row. */
+/** Multiple spacer sizes using `size` tokens — shows how spacing scales across a row. */
 export const SpacerSizes: Story = {
   render: () => (
-    <Box flexDirection="column" gap="$lg">
+    <Box flexDirection="column" gap="lg">
       {SIZE_TOKENS.map((size) => (
         <Box key={size} flexDirection="row" alignItems="center">
-          <Box backgroundColor="$gray6" padding="$xs" borderRadius="$sm" width={80}>
-            <Text fontSize="$sm">{`w=${size}`}</Text>
+          <Box backgroundColor="color6" padding="xs" borderRadius="sm" width={80}>
+            <Text fontSize="sm">{`w=${size}`}</Text>
           </Box>
-          <Spacer w={size} backgroundColor="$yellow4" h="$sm" />
-          <Box backgroundColor="$gray6" padding="$xs" borderRadius="$sm">
-            <Text fontSize="$sm">end</Text>
+          <Spacer w={size} backgroundColor="accent4" h="sm" />
+          <Box backgroundColor="color6" padding="xs" borderRadius="sm">
+            <Text fontSize="sm">end</Text>
           </Box>
         </Box>
       ))}
@@ -123,19 +123,19 @@ export const FlexGrow: Story = {
       flexDirection="row"
       alignItems="center"
       width={400}
-      backgroundColor="$gray3"
-      padding="$sm"
-      borderRadius="$sm"
+      backgroundColor="color3"
+      padding="sm"
+      borderRadius="sm"
     >
-      <Box backgroundColor="$blue8" padding="$sm" borderRadius="$sm">
-        <Text color="$color">Logo</Text>
+      <Box backgroundColor="blue8" padding="sm" borderRadius="sm">
+        <Text color="color">Logo</Text>
       </Box>
       <Spacer flex={1} />
-      <Box flexDirection="row" gap="$sm">
-        <Box backgroundColor="$gray6" padding="$sm" borderRadius="$sm">
+      <Box flexDirection="row" gap="sm">
+        <Box backgroundColor="color6" padding="sm" borderRadius="sm">
           <Text>Nav 1</Text>
         </Box>
-        <Box backgroundColor="$gray6" padding="$sm" borderRadius="$sm">
+        <Box backgroundColor="color6" padding="sm" borderRadius="sm">
           <Text>Nav 2</Text>
         </Box>
       </Box>
@@ -146,26 +146,20 @@ export const FlexGrow: Story = {
 /** Minimum size guarantee — the spacer resists collapsing even inside a flex container that tries to shrink it. */
 export const MinimumSize: Story = {
   render: () => (
-    <Box flexDirection="column" gap="$md">
-      <Text fontSize="$sm" color="$color">
-        Both spacers have miw=$xxl / mih=$xxl. Even inside a narrow parent they hold their minimum
+    <Box flexDirection="column" gap="md">
+      <Text fontSize="sm" color="color">
+        Both spacers have miw=xxl / mih=xxl. Even inside a narrow parent they hold their minimum
         dimensions.
       </Text>
-      <Box
-        flexDirection="row"
-        width={120}
-        backgroundColor="$gray3"
-        padding="$xs"
-        borderRadius="$sm"
-      >
-        <Box backgroundColor="$blue8" padding="$xs" borderRadius="$sm">
-          <Text color="$color" fontSize="$xs">
+      <Box flexDirection="row" width={120} backgroundColor="color3" padding="xs" borderRadius="sm">
+        <Box backgroundColor="blue8" padding="xs" borderRadius="sm">
+          <Text color="color" fontSize="xs">
             A
           </Text>
         </Box>
-        <Spacer w="$xxl" miw="$xxl" backgroundColor="$yellow4" h="$sm" />
-        <Box backgroundColor="$green8" padding="$xs" borderRadius="$sm">
-          <Text color="$color" fontSize="$xs">
+        <Spacer w="xxl" miw="xxl" backgroundColor="accent4" h="sm" />
+        <Box backgroundColor="accent8" padding="xs" borderRadius="sm">
+          <Text color="color" fontSize="xs">
             B
           </Text>
         </Box>

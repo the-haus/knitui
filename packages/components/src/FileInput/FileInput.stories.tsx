@@ -72,7 +72,7 @@ export const Playground: Story = {};
 /** The five sizes, from xs to xl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {SIZES.map((size) => (
         <FileInput key={size} {...args} size={size} placeholder={`Size: ${size}`} />
       ))}
@@ -83,7 +83,7 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation ladder, from `xs` to `xl`. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$xl">
+    <Box flexDirection="column" gap="xl">
       {SHADOWS.map((shadow) => (
         <FileInput key={shadow} {...args} shadow={shadow} placeholder={`Shadow: ${shadow}`} />
       ))}
@@ -153,7 +153,7 @@ export const CustomValueComponent: Story = {
       if (!value) return null;
       const files = Array.isArray(value) ? value : [value];
       return (
-        <Box flexDirection="row" gap="$xs" alignItems="center">
+        <Box flexDirection="row" gap="xs" alignItems="center">
           <Text>📄</Text>
           <Text>{files.map((f) => f.name).join(", ")}</Text>
           <Text opacity={0.5}>
@@ -177,7 +177,7 @@ export const Controlled: Story = {
     };
 
     return (
-      <Box flexDirection="column" gap="$md" width={320}>
+      <Box flexDirection="column" gap="md" width={320}>
         <FileInput
           {...args}
           value={value}
@@ -187,7 +187,7 @@ export const Controlled: Story = {
           clearable
           label="Controlled file input"
         />
-        <Box flexDirection="row" gap="$sm">
+        <Box flexDirection="row" gap="sm">
           <Text>
             Selected:{" "}
             {value
@@ -211,9 +211,9 @@ export const Styles: Story = {
     label: "Attachment",
     placeholder: "Pick a file",
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      label: { color: "$red9", fontWeight: "700" },
-      placeholder: { color: "$blue9" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      label: { color: "red9", fontWeight: "700" },
+      placeholder: { color: "blue9" },
     },
   },
 };

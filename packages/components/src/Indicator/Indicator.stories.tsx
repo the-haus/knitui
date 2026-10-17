@@ -25,10 +25,10 @@ const POSITIONS: IndicatorPosition[] = [
 /** A simple avatar-like target used across stories. */
 const Avatar = () => (
   <Box
-    width="$xl"
-    height="$xl"
+    width="xl"
+    height="xl"
     borderRadius={999}
-    backgroundColor="$color5"
+    backgroundColor="color5"
     alignItems="center"
     justifyContent="center"
   >
@@ -110,13 +110,13 @@ export const Playground: Story = {
 /** All nine anchor positions around the same target element. */
 export const Positions: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {POSITIONS.map((position) => (
-        <Box key={position} alignItems="center" gap="$xs">
+        <Box key={position} alignItems="center" gap="xs">
           <Indicator {...args} position={position}>
             <Avatar />
           </Indicator>
-          <Text fontSize="$xxs" color="$color10">
+          <Text fontSize="xxs" color="color10">
             {position}
           </Text>
         </Box>
@@ -125,16 +125,16 @@ export const Positions: Story = {
   ),
 };
 
-/** The seven named sizes resolve against the `$size` token scale. */
+/** The seven named sizes resolve against the `size` token scale. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SIZES.map((size) => (
-        <Box key={size} alignItems="center" gap="$xs">
+        <Box key={size} alignItems="center" gap="xs">
           <Indicator {...args} size={size}>
             <Avatar />
           </Indicator>
-          <Text fontSize="$xxs" color="$color10">
+          <Text fontSize="xxs" color="color10">
             {size}
           </Text>
         </Box>
@@ -146,7 +146,7 @@ export const Sizes: Story = {
 /** Dot turns into a pill badge when a `label` is provided. */
 export const WithLabel: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       <Indicator {...args} label={3}>
         <Avatar />
       </Indicator>
@@ -163,7 +163,7 @@ export const WithLabel: Story = {
 /** Values exceeding `maxValue` are clamped and rendered as `{maxValue}+`. */
 export const MaxValue: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       <Indicator {...args} label={5} maxValue={99}>
         <Avatar />
       </Indicator>
@@ -180,7 +180,7 @@ export const MaxValue: Story = {
 /** `disabled` hides the dot while still rendering children. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       <Indicator {...args} label={4} disabled={false}>
         <Avatar />
       </Indicator>
@@ -201,7 +201,7 @@ export const Disabled: Story = {
 export const Processing: Story = {
   args: { processing: true },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       <Indicator {...args}>
         <Avatar />
       </Indicator>
@@ -210,11 +210,11 @@ export const Processing: Story = {
         <Avatar />
       </Indicator>
       {SIZES.map((size) => (
-        <Box key={size} alignItems="center" gap="$xs">
+        <Box key={size} alignItems="center" gap="xs">
           <Indicator {...args} size={size}>
             <Avatar />
           </Indicator>
-          <Text fontSize="$xxs" color="$color10">
+          <Text fontSize="xxs" color="color10">
             {size}
           </Text>
         </Box>
@@ -227,7 +227,7 @@ export const Processing: Story = {
 export const WithBorder: Story = {
   args: { withBorder: true, size: "xs" },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       <Indicator {...args} withBorder={false}>
         <Avatar />
       </Indicator>
@@ -244,20 +244,20 @@ export const WithBorder: Story = {
 /** `showZero` controls whether a zero label is rendered or suppressed. */
 export const ShowZero: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
-      <Box alignItems="center" gap="$xs">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
+      <Box alignItems="center" gap="xs">
         <Indicator {...args} label={0} showZero>
           <Avatar />
         </Indicator>
-        <Text fontSize="$xxs" color="$color10">
+        <Text fontSize="xxs" color="color10">
           showZero=true
         </Text>
       </Box>
-      <Box alignItems="center" gap="$xs">
+      <Box alignItems="center" gap="xs">
         <Indicator {...args} label={0} showZero={false}>
           <Avatar />
         </Indicator>
-        <Text fontSize="$xxs" color="$color10">
+        <Text fontSize="xxs" color="color10">
           showZero=false
         </Text>
       </Box>
@@ -268,13 +268,13 @@ export const ShowZero: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} alignItems="center" gap="$xs">
+        <Box key={shadow} alignItems="center" gap="xs">
           <Indicator {...args} shadow={shadow} label={shadow}>
             <Avatar />
           </Indicator>
-          <Text fontSize="$xxs" color="$color10">
+          <Text fontSize="xxs" color="color10">
             {shadow}
           </Text>
         </Box>
@@ -290,8 +290,8 @@ export const Styles: Story = {
       {...args}
       label={5}
       styles={{
-        dot: { backgroundColor: "$blue9" },
-        label: { color: "$red9", fontWeight: "700" },
+        dot: { backgroundColor: "blue9" },
+        label: { color: "red9", fontWeight: "700" },
       }}
     >
       <Avatar />
@@ -302,13 +302,13 @@ export const Styles: Story = {
 /** The palette ramp follows the active `theme` — same component, different accent color. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
-        <Box key={theme} alignItems="center" gap="$xs">
+        <Box key={theme} alignItems="center" gap="xs">
           <Indicator {...args} theme={theme} label={theme[0].toUpperCase()}>
             <Avatar />
           </Indicator>
-          <Text fontSize="$xxs" color="$color10">
+          <Text fontSize="xxs" color="color10">
             {theme}
           </Text>
         </Box>

@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Checkbox } from "./Checkbox";
 
@@ -187,6 +188,132 @@ describe("Checkbox", () => {
       const card = screen.getByRole("checkbox");
       fireEvent.click(card);
       expect(onChange).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe("v3 style resolution (web CSS)", () => {
+    it.each([
+      ["filled", "var(--color9)", "var(--color9)"],
+      ["outline", "transparent", "var(--color9)"],
+    ] as const)("checked variant=%s paints fill %s / border %s", (variant, bg, border) => {
+      render(<Checkbox aria-label="c" variant={variant} defaultChecked />);
+      const box = screen.getByRole("checkbox");
+      expect(baseValue(box, "background-color")).toBe(bg);
+      expect(baseValue(box, "border-color")).toBe(border);
+    });
+
+    it("unchecked paints the empty-target tone and the error tone", () => {
+      render(
+        <>
+          <Checkbox aria-label="off" />
+          <Checkbox aria-label="err" error="Required" />
+          <Checkbox aria-label="err-off" error="Required" withErrorStyles={false} />
+        </>,
+      );
+      const off = screen.getByRole("checkbox", { name: "off" });
+      expect(baseValue(off, "background-color")).toBe("var(--color3)");
+      expect(baseValue(off, "border-color")).toBe("var(--color6)");
+      const err = screen.getByRole("checkbox", { name: "err" });
+      expect(baseValue(err, "border-color")).toBe("var(--red8)");
+      expect(baseValue(screen.getByRole("checkbox", { name: "err-off" }), "border-color")).toBe(
+        "var(--color6)",
+      );
+    });
+
+    it("colours the glyph per variant and swaps it for a dash when indeterminate", () => {
+      render(
+        <>
+          <Checkbox aria-label="f" defaultChecked />
+          <Checkbox aria-label="o" variant="outline" defaultChecked />
+          <Checkbox aria-label="i" indeterminate />
+        </>,
+      );
+      const glyph = (name: string) => screen.getByRole("checkbox", { name }).querySelector("svg");
+      expect(glyph("f")).toHaveAttribute("stroke", "var(--color1)");
+      expect(glyph("o")).toHaveAttribute("stroke", "var(--color9)");
+      expect(glyph("i")).toHaveClass("tabler-icon-minus");
+      expect(screen.getByRole("checkbox", { name: "i" })).toHaveAttribute("aria-checked", "mixed");
+    });
+
+    it("eases only the box colours between checked states", () => {
+      render(<Checkbox aria-label="t" />);
+      const box = screen.getByRole("checkbox");
+      expect(box.getAttribute("style") ?? "").toMatch(/background-color 150ms/);
+      expect(box.getAttribute("style") ?? "").toMatch(/border-color 150ms/);
+      fireEvent.click(box);
+      expect(baseValue(box, "background-color")).toBe("var(--color9)");
+    });
+
+    it("rings the focusable box, not the presentational Indicator", () => {
+      render(
+        <>
+          <Checkbox aria-label="focus" />
+          <Checkbox.Indicator testID="ind" />
+        </>,
+      );
+      const box = screen.getByRole("checkbox");
+      expect(box).toHaveAttribute("tabindex", "0");
+      expect(hasFocusRing(box)).toBe(true);
+      expect(hasFocusRing(screen.getByTestId("ind"))).toBe(false);
+    });
+
+    it("dims a disabled Indicator through its variant (no explicit undefined)", () => {
+      render(
+        <>
+          <Checkbox.Indicator testID="on" disabled />
+          <Checkbox.Indicator testID="off" />
+        </>,
+      );
+      expect(baseValue(screen.getByTestId("on"), "opacity")).toBe("0.6");
+      expect(baseValue(screen.getByTestId("off"), "opacity")).toBeUndefined();
+    });
+
+    it.each(["xs", "md", "xl"] as const)("size=%s maps the square to the size token", (size) => {
+      render(<Checkbox aria-label="s" size={size} />);
+      const box = screen.getByRole("checkbox");
+      expect(baseValue(box, "width")).toBe(`var(--t-size-${size})`);
+      expect(baseValue(box, "height")).toBe(`var(--t-size-${size})`);
+    });
+
+    it("does not leak a `name` attribute onto the host", () => {
+      render(<Checkbox aria-label="n" />);
+      expect(screen.getByRole("checkbox")).not.toHaveAttribute("name");
+    });
+  });
+
+  describe("Checkbox.Card (v3)", () => {
+    it("is focusable, ringed and reports aria-checked", () => {
+      render(<Checkbox.Card aria-label="card">Body</Checkbox.Card>);
+      const card = screen.getByRole("checkbox", { name: "card" });
+      expect(card).toHaveAttribute("tabindex", "0");
+      expect(hasFocusRing(card)).toBe(true);
+      expect(card).toHaveAttribute("aria-checked", "false");
+      fireEvent.click(card);
+      expect(card).toHaveAttribute("aria-checked", "true");
+      expect(baseValue(card, "border-color")).toBe("var(--color9)");
+    });
+
+    it("dims and blocks a disabled card", () => {
+      const onChange = jest.fn();
+      render(
+        <Checkbox.Card aria-label="card" disabled onChange={onChange}>
+          Body
+        </Checkbox.Card>,
+      );
+      const card = screen.getByRole("checkbox", { name: "card" });
+      expect(card).toHaveAttribute("aria-disabled", "true");
+      expect(baseValue(card, "opacity")).toBe("0.6");
+      fireEvent.click(card);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("drives a nested Indicator from the card's checked state", () => {
+      render(
+        <Checkbox.Card aria-label="card" defaultChecked>
+          <Checkbox.Indicator testID="ind" />
+        </Checkbox.Card>,
+      );
+      expect(baseValue(screen.getByTestId("ind"), "background-color")).toBe("var(--color9)");
     });
   });
 });

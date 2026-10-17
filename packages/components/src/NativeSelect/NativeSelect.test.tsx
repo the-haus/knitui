@@ -2,7 +2,8 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen } from "../test-utils";
+import { effectiveBaseValue, paddingX } from "../__tests__/css-rules.test.helper";
+import { act, fireEvent, render, screen } from "../test-utils";
 import { NativeSelect } from "./NativeSelect";
 
 const data = ["Red", "Green", "Blue"];
@@ -17,10 +18,13 @@ describe("NativeSelect", () => {
 
   it("drops the host inset beside its sections (the chevron is always one)", () => {
     const { rerender } = render(<NativeSelect data={["React", "Vue"]} />);
-    expect(screen.getByRole("combobox")).toHaveClass("_pl-t-space-md", "_pr-0px");
+    expect(paddingX(screen.getByRole("combobox"))).toEqual({
+      left: "var(--t-space-md)",
+      right: "0px",
+    });
 
     rerender(<NativeSelect data={["React", "Vue"]} leftSection={<span>L</span>} />);
-    expect(screen.getByRole("combobox")).toHaveClass("_pl-0px", "_pr-0px");
+    expect(paddingX(screen.getByRole("combobox"))).toEqual({ left: "0px", right: "0px" });
   });
 
   it("renders option labels", () => {
@@ -78,5 +82,37 @@ describe("NativeSelect", () => {
     const ref = React.createRef<GetRef<typeof NativeSelect>>();
     render(<NativeSelect data={data} ref={ref} />);
     expect(ref.current).not.toBeNull();
+  });
+
+  it("keeps the UA chrome off the <select> and never leaks a `name` attribute", () => {
+    render(<NativeSelect data={data} />);
+    const select = screen.getByRole("combobox");
+    expect(select).not.toHaveAttribute("name");
+    expect(select.style.appearance).toBe("none");
+    expect(effectiveBaseValue(select, "outlineStyle")).toBe("none");
+  });
+
+  it("forwards a real `name` and merges a consumer style over appearance:none", () => {
+    render(<NativeSelect data={data} name="color" style={{ letterSpacing: "1px" }} />);
+    const select = screen.getByRole("combobox");
+    expect(select).toHaveAttribute("name", "color");
+    expect(select.style.appearance).toBe("none");
+    expect(select.style.letterSpacing).toBe("1px");
+  });
+
+  it("lights the wrapper border while the select has focus", () => {
+    render(<NativeSelect data={data} />);
+    const select = screen.getByRole("combobox");
+    const root = select.parentElement as HTMLElement;
+    expect(effectiveBaseValue(root, "borderColor", ["border"])).toBe("var(--borderColor)");
+    act(() => select.focus());
+    expect(effectiveBaseValue(root, "borderColor", ["border"])).toBe("var(--focusRingColor)");
+  });
+
+  it("controls the selected value", () => {
+    const { rerender } = render(<NativeSelect data={data} value="Green" onChange={() => {}} />);
+    expect(screen.getByRole("combobox")).toHaveValue("Green");
+    rerender(<NativeSelect data={data} value="Blue" onChange={() => {}} />);
+    expect(screen.getByRole("combobox")).toHaveValue("Blue");
   });
 });

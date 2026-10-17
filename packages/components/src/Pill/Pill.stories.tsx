@@ -39,7 +39,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Pill is a small rounded label, optionally with a remove button. Use `Pill.Group` to lay out multiple pills and inherit `size`/`disabled`. The `contrast` variant uses the active theme's solid accent (`$color9`); colour comes from the `theme` prop + palette ramp.",
+          "Pill is a small rounded label, optionally with a remove button. Use `Pill.Group` to lay out multiple pills and inherit `size`/`disabled`. The `contrast` variant uses the active theme's solid accent (`color9`); colour comes from the `theme` prop + palette ramp.",
       },
     },
   },
@@ -95,7 +95,7 @@ export const Playground: Story = {};
 /** Both visual variants side by side at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Pill key={variant} {...args} variant={variant}>
           {variant}
@@ -108,7 +108,7 @@ export const Variants: Story = {
 /** All seven sizes from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Pill key={size} {...args} size={size}>
           {size}
@@ -121,7 +121,7 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the pill. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Pill key={shadow} {...args} shadow={shadow}>
           {shadow}
@@ -143,7 +143,7 @@ export const WithRemoveButton: Story = {
 /** Disabled state — reduced opacity, pointer events off. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Pill {...args} disabled>
         Disabled
       </Pill>
@@ -157,7 +157,7 @@ export const Disabled: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <Pill key={theme} {...args} theme={theme} variant="contrast">
           {theme}
@@ -173,14 +173,14 @@ export const Themed: Story = {
  */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Pill {...args} variant="gradient">
         Tag
       </Pill>
       <Pill {...args} variant="gradient" gradient={{ from: "#4f46e5", to: "#ec4899", deg: 60 }}>
         Tag
       </Pill>
-      <Pill {...args} variant="gradient" gradient={{ from: "$blue9", to: "$teal9" }}>
+      <Pill {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
         Tag
       </Pill>
       <Pill
@@ -206,7 +206,7 @@ export const Gradient: Story = {
 /** Curated gradient presets for the gradient variant. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <Pill key={name} {...args} variant="gradient" gradient={gradient}>
           {name}
@@ -216,10 +216,10 @@ export const GradientPresets: Story = {
   ),
 };
 
-/** Themed gradient (no `gradient` prop) — the `$color5`→`$color9` ramp follows the active theme. */
+/** Themed gradient (no `gradient` prop) — the `color5`→`color9` ramp follows the active theme. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "orange", "pink", "teal"] as const).map((theme) => (
         <Pill key={theme} {...args} variant="gradient" theme={theme}>
           {theme}
@@ -232,7 +232,7 @@ export const GradientThemed: Story = {
 /** `Pill.Group` lays out pills in a wrapping row and propagates `size`/`disabled` to children. */
 export const Group: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Pill.Group size="sm">
         <Pill {...args}>React</Pill>
         <Pill {...args}>TypeScript</Pill>
@@ -256,7 +256,7 @@ export const RemovableTags: Story = {
   render: (args) => {
     const [tags, setTags] = React.useState(["Design", "Engineering", "Product", "Marketing"]);
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Pill.Group size="md">
           {tags.map((tag) => (
             <Pill
@@ -271,7 +271,7 @@ export const RemovableTags: Story = {
           ))}
         </Pill.Group>
         {tags.length === 0 && (
-          <Text size="xs" color="$color11">
+          <Text size="xs" color="color11">
             All tags removed. Refresh to reset.
           </Text>
         )}
@@ -287,8 +287,8 @@ export const Styles: Story = {
     withRemoveButton: true,
     removeButtonProps: { "aria-label": "remove" },
     styles: {
-      label: { color: "$blue9", fontWeight: "700" },
-      removeButton: { backgroundColor: "$red3" },
+      label: { color: "blue9", fontWeight: "700" },
+      removeButton: { backgroundColor: "red3" },
     },
   },
 };
@@ -296,9 +296,9 @@ export const Styles: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Pill key={size} variant={variant} size={size}>
               {variant} {size}

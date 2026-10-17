@@ -31,15 +31,22 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 import { useUncontrolled } from "@knitui/hooks";
 
-import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
+import {
+  type CalendarSize,
+  CELL_FONT,
+  cellFontVariant,
+  cellMinWidthVariant,
+  cellSquareVariant,
+  iconFontVariant,
+} from "../cell-metrics";
 import { useDatesContext } from "../DatesProvider";
 import { controlA11yProps } from "../internal/a11y";
-import { webCursor } from "../internal/web-cursor";
 import type { DateStringValue } from "../types";
 import { isAfterMinDate, isBeforeMaxDate, toDateString } from "../utils";
 
@@ -55,39 +62,6 @@ const MiniCalendarContext = createStyledContext<{ size: CalendarSize }>({ size: 
 // retuning a ladder moves every grid component together. The raw values resolve
 // at module-load — NOT `getTokenValue`, which needs the live config.
 
-/** Square prev/next control size per `size`, from the shared `CELL_WIDTH` ladder. */
-const controlSquareVariant = {
-  xxs: { width: CELL_WIDTH.xxs, height: CELL_WIDTH.xxs },
-  xs: { width: CELL_WIDTH.xs, height: CELL_WIDTH.xs },
-  sm: { width: CELL_WIDTH.sm, height: CELL_WIDTH.sm },
-  md: { width: CELL_WIDTH.md, height: CELL_WIDTH.md },
-  lg: { width: CELL_WIDTH.lg, height: CELL_WIDTH.lg },
-  xl: { width: CELL_WIDTH.xl, height: CELL_WIDTH.xl },
-  xxl: { width: CELL_WIDTH.xxl, height: CELL_WIDTH.xxl },
-} as const;
-
-/** Day-cell minimum width per `size` (taller than wide — two stacked labels). */
-const dayWidthVariant = {
-  xxs: { minWidth: CELL_WIDTH.xxs },
-  xs: { minWidth: CELL_WIDTH.xs },
-  sm: { minWidth: CELL_WIDTH.sm },
-  md: { minWidth: CELL_WIDTH.md },
-  lg: { minWidth: CELL_WIDTH.lg },
-  xl: { minWidth: CELL_WIDTH.xl },
-  xxl: { minWidth: CELL_WIDTH.xxl },
-} as const;
-
-/** Day-number font per `size` (the shared cell-label ladder). */
-const dayNumberFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 /** Month-label font per `size` (≈ 72% of the day-number font). */
 const monthFontVariant = {
   xxs: { fontSize: Math.round(CELL_FONT.xxs * 0.72) },
@@ -99,51 +73,37 @@ const monthFontVariant = {
   xxl: { fontSize: Math.round(CELL_FONT.xxl * 0.72) },
 } as const;
 
-/** Chevron glyph font per `size` (≈ 55% of the control size). */
-const chevronFontVariant = {
-  xxs: { fontSize: Math.round(CELL_WIDTH.xxs * 0.55) },
-  xs: { fontSize: Math.round(CELL_WIDTH.xs * 0.55) },
-  sm: { fontSize: Math.round(CELL_WIDTH.sm * 0.55) },
-  md: { fontSize: Math.round(CELL_WIDTH.md * 0.55) },
-  lg: { fontSize: Math.round(CELL_WIDTH.lg * 0.55) },
-  xl: { fontSize: Math.round(CELL_WIDTH.xl * 0.55) },
-  xxl: { fontSize: Math.round(CELL_WIDTH.xxl * 0.55) },
-} as const;
-
 // ── Styled parts ────────────────────────────────────────────────────────────
 
 /** The root row: prev control · day strip · next control. */
 const MiniCalendarFrame = styled(Box, {
-  name: "MiniCalendar",
+  displayName: "MiniCalendar",
   context: MiniCalendarContext,
   flexDirection: "row",
   alignItems: "center",
-  gap: "$xs",
+  gap: "xs",
 });
 
 /** Prev/next square control — chevron button. */
 const MiniCalendarControl = styled(UnstyledButton.Frame, {
-  name: "MiniCalendarControl",
+  displayName: "MiniCalendarControl",
   context: MiniCalendarContext,
   alignItems: "center",
   justifyContent: "center",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
-    size: controlSquareVariant,
+    size: cellSquareVariant,
 
     /** Disabled control — dimmed, non-interactive (Mantine parity: 0.3). */
     disabled: {
       true: {
         opacity: 0.3,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -153,17 +113,17 @@ const MiniCalendarControl = styled(UnstyledButton.Frame, {
 
 /** The horizontal day strip wrapping the day buttons. */
 const MiniCalendarDays = styled(Box, {
-  name: "MiniCalendarDays",
+  displayName: "MiniCalendarDays",
   context: MiniCalendarContext,
   flexDirection: "row",
   alignItems: "stretch",
-  gap: "$xxs",
+  gap: "xxs",
 });
 
 /**
  * A single day button — month label stacked over the day-of-month number.
  *
- * 12. Interaction lives in real Tamagui pseudo-state (`hoverStyle`/`pressStyle`)
+ * 12. Interaction lives in real Tamagui pseudo-state (`hover:`/`press:` clauses)
  *     and a `disabled` variant (Mantine parity: 0.3 + non-interactive), never a
  *     runtime `onHoverIn` state machine.
  * 15. The selected look is a boolean `selected` VARIANT (accent fill via the
@@ -171,29 +131,25 @@ const MiniCalendarDays = styled(Box, {
  *     the compiler can never extract a hide value onto the cell.
  */
 const MiniCalendarDay = styled(UnstyledButton.Frame, {
-  name: "MiniCalendarDay",
+  displayName: "MiniCalendarDay",
   context: MiniCalendarContext,
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   gap: 2,
-  paddingVertical: "$xs",
-  paddingHorizontal: "$xxs",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  paddingVertical: "xs",
+  paddingHorizontal: "xxs",
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
-    size: dayWidthVariant,
+    size: cellMinWidthVariant,
 
-    /** Selected day — solid accent fill (the active theme's `$color9`). */
+    /** Selected day — solid accent fill (the active theme's `color9`). */
     selected: {
       true: {
-        backgroundColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
       },
     },
 
@@ -202,9 +158,8 @@ const MiniCalendarDay = styled(UnstyledButton.Frame, {
       true: {
         opacity: 0.3,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -216,7 +171,7 @@ const MiniCalendarDay = styled(UnstyledButton.Frame, {
  * The small month label rendered above every day's number (Mantine parity:
  * `.dayMonth` is always present, never toggled per-day). It's the regular
  * foreground dimmed to `opacity: 0.65` (NOT an accent-tinted label), so it uses
- * the neutral `$color` ramp here — `$color11` would paint it in the active
+ * the neutral `color` ramp here — `color11` would paint it in the active
  * theme's accent and is what made the label read as "differently coloured".
  *
  * 15. The 0.65 dim is a CONSTANT baked into the style, and the selected-state
@@ -227,42 +182,42 @@ const MiniCalendarDay = styled(UnstyledButton.Frame, {
  *     blanking the WHOLE cell (number included).
  */
 const MiniCalendarDayMonth = styled(Text, {
-  name: "MiniCalendarDayMonth",
+  displayName: "MiniCalendarDayMonth",
   context: MiniCalendarContext,
   userSelect: "none",
   opacity: 0.65,
-  color: "$color",
+  color: "color",
   variants: {
     size: monthFontVariant,
 
     /** On a selected day's accent fill, the label flips to the contrast color. */
-    selected: { true: { color: "$color1" } },
+    selected: { true: { color: "color1" } },
   } as const,
   defaultVariants: { size: "md" },
 });
 
 /** The day-of-month number. */
 const MiniCalendarDayNumber = styled(Text, {
-  name: "MiniCalendarDayNumber",
+  displayName: "MiniCalendarDayNumber",
   context: MiniCalendarContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
   variants: {
-    size: dayNumberFontVariant,
+    size: cellFontVariant,
 
     /** On a selected day's accent fill, the number flips to the contrast color. */
-    selected: { true: { color: "$color1" } },
+    selected: { true: { color: "color1" } },
   } as const,
   defaultVariants: { size: "md" },
 });
 
 /** The default chevron glyph — shares `size` via context. */
 const MiniCalendarChevron = styled(Text, {
-  name: "MiniCalendarChevron",
+  displayName: "MiniCalendarChevron",
   context: MiniCalendarContext,
   userSelect: "none",
-  color: "$color",
-  variants: { size: chevronFontVariant } as const,
+  color: "color",
+  variants: { size: iconFontVariant } as const,
   defaultVariants: { size: "md" },
 });
 
@@ -378,10 +333,10 @@ export interface MiniCalendarProps extends MiniCalendarFrameProps {
  * uncontrolled via `useUncontrolled`); each day shows its month label above the
  * day number. Accent on the selected day comes from the active Tamagui theme.
  * Built from `Box` / `Text` / `UnstyledButton`; forwards its ref + style props to
- * the root via `.styleable`.
+ * the root via `styleable()`.
  *
  * Per-slot style sugar mirrors `@mantine/dates`' `styles`:
- * `styles={{ day: { borderRadius: "$lg" } }}` spreads onto the matching part;
+ * `styles={{ day: { borderRadius: "lg" } }}` spreads onto the matching part;
  * precedence is fixed (`defaults < styles[slot] < explicit props`).
  *
  * @example
@@ -391,7 +346,8 @@ export interface MiniCalendarProps extends MiniCalendarFrameProps {
  *   onChange={setValue}
  * />
  */
-const MiniCalendarComponent = MiniCalendarFrame.styleable<MiniCalendarProps>(
+const MiniCalendarComponent = styleable<MiniCalendarProps>(
+  MiniCalendarFrame,
   function MiniCalendar(props, ref) {
     const {
       date,

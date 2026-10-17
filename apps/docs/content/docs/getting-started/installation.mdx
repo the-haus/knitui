@@ -19,6 +19,10 @@ choose once.
   gesture and animation primitives — from `@knitui/core`.
 </Callout>
 
+Upgrading an app from Knit UI 0.x? Read
+[Upgrading to Knit UI 1.0](/docs/guides/upgrading-to-v1) — 1.0 moves to Tamagui
+v3, and the styling syntax changed.
+
 ## What you need first
 
 | Requirement | Version |
@@ -92,16 +96,6 @@ needs to know that, which is the one job of `@knitui/plugins`.
 <Tabs group="framework" label="Framework">
 <Tab label="Expo">
 
-```js title="babel.config.js"
-module.exports = (api) => {
-  api.cache(true);
-  return {
-    presets: ["babel-preset-expo"],
-    plugins: [require("@knitui/plugins/babel-plugin")],
-  };
-};
-```
-
 ```js title="metro.config.js"
 const { getDefaultConfig } = require("expo/metro-config");
 const { withKnitui } = require("@knitui/plugins/metro");
@@ -109,7 +103,13 @@ const { withKnitui } = require("@knitui/plugins/metro");
 module.exports = withKnitui(getDefaultConfig(__dirname));
 ```
 
-Restart with a cleared cache the first time: `npx expo start --clear`.
+That is the whole native setup: on Tamagui v3 the compiler runs inside Metro, so
+`babel.config.js` stays the stock `babel-preset-expo` — there is no babel plugin
+to add.
+
+Restart with a cleared cache the first time, and after any change to the theme
+config: `npx expo start --clear`. Metro does not invalidate its transform cache
+when the config changes.
 
 </Tab>
 <Tab label="Next.js">
@@ -158,19 +158,13 @@ export default defineConfig({
 });
 ```
 
-`knitui()` sets the platform target, prefers `.web.*` files, aliases
-`react-native` → `react-native-web`, and pre-bundles the packages that ship
-untranspiled TypeScript.
+`knitui()` is Tamagui v3's Vite compiler (`@tamagui/cli/vite`) with the kit's
+config baked in: it sets the platform target, prefers `.web.*` files, aliases
+`react-native` → `react-native-web` and extracts styles at build time. It is
+ESM-only and needs Vite 8, so keep `"type": "module"` (or a `.mjs`/`.mts` config).
 
 </Tab>
 <Tab label="React Native CLI">
-
-```js title="babel.config.js"
-module.exports = {
-  presets: ["module:@react-native/babel-preset"],
-  plugins: [require("@knitui/plugins/babel-plugin")],
-};
-```
 
 ```js title="metro.config.js"
 const { getDefaultConfig } = require("@react-native/metro-config");
@@ -179,7 +173,9 @@ const { withKnitui } = require("@knitui/plugins/metro");
 module.exports = withKnitui(getDefaultConfig(__dirname));
 ```
 
-Restart Metro with `npm start -- --reset-cache` the first time.
+Keep `babel.config.js` on the stock `@react-native/babel-preset`; the v3 compiler
+runs inside Metro. Restart Metro with `npm start -- --reset-cache` the first time
+and after config changes.
 
 </Tab>
 </Tabs>
@@ -286,6 +282,10 @@ so you don't add one — and the portal host that `Modal`, `Drawer`, `Popover` a
   second portal host and overlays start rendering into the wrong layer.
 </Callout>
 
+Using `react-native-safe-area-context`? Its `SafeAreaProvider` goes **outside**
+`Provider`. Tamagui v3's provider can read safe-area context to publish inset
+tokens, and the inverted order throws `NO_INSETS_ERROR` at startup.
+
 Deeper per-framework detail — dev builds, static export, Storybook, the pitfalls
 specific to each: [Expo](/docs/getting-started/expo) ·
 [Next.js](/docs/getting-started/nextjs) · [Vite](/docs/getting-started/vite).
@@ -299,7 +299,7 @@ import { Button, Card, Group, Text, TextInput } from "@knitui/components";
 
 export function SignIn() {
   return (
-    <Card padding="lg" gap="$md">
+    <Card padding="lg" gap="md">
       <Text fontWeight="600">Sign in</Text>
       <TextInput label="Email" placeholder="you@example.com" />
       <Group>
@@ -371,7 +371,7 @@ Which package needs which peer, straight from each `package.json`:
 | `"Another instance of Reanimated was detected"` | [Two copies of reanimated](/docs/getting-started/troubleshooting#another-instance-of-reanimated-was-detected) |
 | Styles land a frame late on Next.js | [`NextTamaguiProvider` missing or too deep](/docs/getting-started/troubleshooting#nextjs-styles-arrive-a-frame-late) |
 | A modal or dropdown renders behind everything | [More than one `Provider`](/docs/getting-started/troubleshooting#an-overlay-renders-behind-everything-or-not-at-all) |
-| Warning: `Tamagui skipped loading N modules` | [Harmless — src-shipped packages](/docs/getting-started/troubleshooting#tamagui-skipped-loading-n-modules) |
+| `NO_INSETS_ERROR` at startup | [`SafeAreaProvider` inside `Provider`](/docs/getting-started/troubleshooting#no_insets_error-at-startup) |
 | Sliders or sheets don't respond to drags | Something is mounted above `Provider`, so there's no `GestureHandlerRootView` |
 
 Every symptom, with fixes: [Troubleshooting](/docs/getting-started/troubleshooting).

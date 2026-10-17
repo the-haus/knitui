@@ -2,23 +2,26 @@ import * as React from "react";
 
 import {
   type GetProps,
+  styleable,
   styled,
   type TamaguiElement,
-  Theme,
   withStaticProperties,
 } from "@knitui/core";
 import { useId, useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 
-import { Box, type BoxProps } from "../Box";
+import { Box } from "../Box";
 import {
   INLINE_CONTROL_SLOTS,
   InlineControl,
   type InlineControlProps,
   type InlineControlSlots,
 } from "../internal/InlineControl";
+import { useReducedTransition } from "../internal/motion";
 import {
+  FOCUS_RING,
   focusRingStyle,
   radiusVariant,
+  scopeTransition,
   shadowVariant,
   type SizeKey,
   squareSizeVariant,
@@ -59,26 +62,36 @@ const RadioCardContext = React.createContext<RadioCardContextValue | null>(null)
 /* Shared visual: circle box                                                  */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The round box. Colours are a STATIC `tone` variant (resolved per render from
+ * variant + checked + error), so fill and border are compiler-known bodies:
+ *
+ *  tone      fill          border        dot
+ *  off       background    borderColor   —
+ *  filled    color9        color9        color1
+ *  outline   transparent   color9        color9
+ *  error     background    red8          —      (unchecked + `error`; base-theme red key)
+ *
+ * The focus ring is NOT in this base: `Radio.Indicator` reuses the circle and is
+ * not focusable, so the ring is spread only where it is (two-layer contract).
+ */
 const RadioCircle = styled(Box, {
-  name: "Radio",
+  displayName: "Radio",
   borderWidth: 2,
   borderRadius: 999,
   alignItems: "center",
   justifyContent: "center",
   ...webCursor("pointer"),
-  ...focusRingStyle,
 
   variants: {
     size: {
       ...squareSizeVariant,
     },
-    on: {
-      true: {},
-      false: {},
-    },
-    variant: {
-      filled: {},
-      outline: {},
+    tone: {
+      off: { backgroundColor: "background", borderColor: "borderColor" },
+      filled: { backgroundColor: "color9", borderColor: "color9" },
+      outline: { backgroundColor: "transparent", borderColor: "color9" },
+      error: { backgroundColor: "background", borderColor: "red8" },
     },
     radius: radiusVariant,
     disabled: {
@@ -86,8 +99,10 @@ const RadioCircle = styled(Box, {
     },
   } as const,
 
-  defaultVariants: { size: "md", on: false, variant: "filled" },
+  defaultVariants: { size: "md", tone: "off" },
 });
+
+type RadioTone = "off" | "filled" | "outline" | "error";
 
 type RadioAriaProps = {
   role: "radio";
@@ -98,24 +113,15 @@ type RadioAriaProps = {
   "aria-labelledby"?: string;
 };
 
-/** Derive the radio circle and dot colors from variant + checked state. */
-function radioCircleStyle(
-  variant: RadioVariant,
-  on: boolean,
-): { background: BoxProps["backgroundColor"]; border: BoxProps["borderColor"] } {
-  if (!on) {
-    return { background: "$background", border: "$borderColor" };
-  }
-  if (variant === "outline") {
-    return { background: "transparent", border: "$color9" };
-  }
-  return { background: "$color9", border: "$color9" };
-}
+/** The circle tone for variant + checked + error. */
+const radioTone = (variant: RadioVariant, on: boolean, error: boolean): RadioTone =>
+  on ? variant : error ? "error" : "off";
 
-function radioDotColor(variant: RadioVariant, on: boolean): BoxProps["backgroundColor"] {
-  if (!on) return "transparent";
-  return variant === "outline" ? "$color9" : "$color1";
-}
+/** Dot colour per checked variant. */
+const DOT_COLOR = { filled: "color1", outline: "color9" } as const;
+
+/** Only the circle colours ease between checked states. */
+const CIRCLE_TRANSITION_PROPERTIES = ["backgroundColor", "borderColor"] as const;
 
 /* -------------------------------------------------------------------------- */
 /* Slot map                                                                   */
@@ -130,8 +136,8 @@ function radioDotColor(variant: RadioVariant, on: boolean): BoxProps["background
  * parity with the other toggles — both spread onto the same glyph.
  */
 export interface RadioStyles extends InlineControlSlots {
-  /** Props for the round `RadioCircle` box. */
-  circle: Partial<GetProps<typeof RadioCircle>>;
+  /** Props for the round `RadioCircle` box (size / tone stay owned by the Radio). */
+  circle: Partial<Omit<GetProps<typeof RadioCircle>, "size" | "tone">>;
   /** Props for the inner glyph / dot (`Radio.icon`). */
   dot: Partial<RadioIconProps>;
   /** Alias of `dot` — props for the inner glyph (`Radio.icon`). */
@@ -151,7 +157,7 @@ const RADIO_SLOTS = [
 
 export interface RadioProps
   extends
-    Omit<GetProps<typeof RadioCircle>, "size" | "on" | "variant" | "onChange">,
+    Omit<GetProps<typeof RadioCircle>, "size" | "tone" | "onChange" | "role">,
     Pick<InlineControlProps, "label" | "description" | "error" | "labelPosition"> {
   /** Visual style. @default 'filled' */
   variant?: RadioVariant;
@@ -190,7 +196,7 @@ export interface RadioProps
   styles?: SlotStyles<RadioStyles>;
 }
 
-const RadioComponent = RadioCircle.styleable<RadioProps>(function Radio(props, ref) {
+const RadioComponent = styleable<RadioProps>(RadioCircle, function Radio(props, ref) {
   const {
     variant = "filled",
     size: sizeProp,
@@ -208,7 +214,6 @@ const RadioComponent = RadioCircle.styleable<RadioProps>(function Radio(props, r
     rootRef,
     icon: Icon = RadioIcon,
     iconColor,
-    role: _role,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledBy,
     "aria-describedby": ariaDescribedByProp,
@@ -255,34 +260,34 @@ const RadioComponent = RadioCircle.styleable<RadioProps>(function Radio(props, r
   }, [resolvedDisabled, isChecked, inGroup, group, value, setSelfChecked]);
 
   const focusProps = useKeyboardActions({ onActivate: toggle }, { disabled: resolvedDisabled });
+  const fade = useReducedTransition("fast");
 
   // Own slots applied to the visual parts; chrome slots forwarded to InlineControl.
   const s = slotStyles<RadioStyles>(styles, RADIO_SLOTS, "Radio");
-  const dotProps: Partial<RadioIconProps> = { ...s.get("dot"), ...s.get("icon") };
+  const dotSlot = s.get("dot");
+  const iconSlot = s.get("icon");
 
-  const { background, border } = radioCircleStyle(variant, isChecked);
-  const dotColor = radioDotColor(variant, isChecked);
-
-  const circle = (
+  // No `<Theme name="red">` wrapper for the error state: switching the tree shape
+  // would remount the (focused) circle. The `error` tone reads base-theme red.
+  const visual = (
     <RadioCircle
       ref={ref}
       size={size}
-      on={isChecked}
-      variant={variant}
+      tone={radioTone(variant, isChecked, !!error)}
       disabled={resolvedDisabled}
-      backgroundColor={background}
-      borderColor={!isChecked && error ? "$color8" : border}
       onPress={toggle}
+      {...scopeTransition(fade, CIRCLE_TRANSITION_PROPERTIES)}
       {...ariaProps}
       {...focusProps}
+      {...FOCUS_RING}
       {...s.get("circle")}
       {...rest}
     >
-      {isChecked ? <Icon size={size} color={iconColor ?? dotColor} {...dotProps} /> : null}
+      {isChecked ? (
+        <Icon size={size} color={iconColor ?? DOT_COLOR[variant]} {...dotSlot} {...iconSlot} />
+      ) : null}
     </RadioCircle>
   );
-
-  const visual = !isChecked && error ? <Theme name="red">{circle}</Theme> : circle;
 
   return (
     <InlineControl
@@ -307,18 +312,22 @@ const RadioComponent = RadioCircle.styleable<RadioProps>(function Radio(props, r
 /* Radio.Group                                                                */
 /* -------------------------------------------------------------------------- */
 
-const GroupFrame = styled(Box, { name: "RadioGroup", flexDirection: "column", gap: "$xs" });
+const GroupFrame = styled(Box, { displayName: "RadioGroup", flexDirection: "column", gap: "xs" });
 const GroupItems = styled(Box, {
-  name: "RadioGroupItems",
+  displayName: "RadioGroupItems",
   role: "radiogroup",
   flexDirection: "row",
   flexWrap: "wrap",
-  gap: "$md",
+  gap: "md",
 });
-const GroupLabel = styled(Text, { name: "RadioGroupLabel", fontWeight: "600", color: "$color" });
+const GroupLabel = styled(Text, {
+  displayName: "RadioGroupLabel",
+  fontWeight: "600",
+  color: "color",
+});
 const GroupDescription = styled(Text, {
-  name: "RadioGroupDescription",
-  color: "$color",
+  displayName: "RadioGroupDescription",
+  color: "color",
   opacity: 0.65,
 });
 
@@ -345,7 +354,7 @@ export interface RadioGroupProps extends Omit<GetProps<typeof GroupFrame>, "onCh
   name?: string;
 }
 
-const RadioGroup = GroupFrame.styleable<RadioGroupProps>(function RadioGroup(props, ref) {
+const RadioGroup = styleable<RadioGroupProps>(GroupFrame, function RadioGroup(props, ref) {
   const {
     children,
     value,
@@ -409,7 +418,7 @@ const RadioGroup = GroupFrame.styleable<RadioGroupProps>(function RadioGroup(pro
 
 export interface RadioIndicatorProps extends Omit<
   GetProps<typeof RadioCircle>,
-  "size" | "on" | "variant"
+  "size" | "tone" | "disabled"
 > {
   /** Checked state. */
   checked?: boolean;
@@ -425,7 +434,8 @@ export interface RadioIndicatorProps extends Omit<
   iconColor?: TextProps["color"];
 }
 
-const RadioIndicator = RadioCircle.styleable<RadioIndicatorProps>(
+const RadioIndicator = styleable<RadioIndicatorProps>(
+  RadioCircle,
   function RadioIndicator(props, ref) {
     const {
       checked,
@@ -438,21 +448,16 @@ const RadioIndicator = RadioCircle.styleable<RadioIndicatorProps>(
     } = props;
     const cardCtx = React.useContext(RadioCardContext);
     const isChecked = typeof checked === "boolean" ? checked : (cardCtx?.checked ?? false);
-    const { background, border } = radioCircleStyle(variant, isChecked);
-    const dotColor = radioDotColor(variant, isChecked);
 
     return (
       <RadioCircle
         ref={ref}
         size={size}
-        on={isChecked}
-        variant={variant}
-        disabled={disabled}
-        backgroundColor={background}
-        borderColor={border}
+        tone={radioTone(variant, isChecked, false)}
+        disabled={!!disabled}
         {...rest}
       >
-        {isChecked ? <Icon size={size} color={iconColor ?? dotColor} /> : null}
+        {isChecked ? <Icon size={size} color={iconColor ?? DOT_COLOR[variant]} /> : null}
       </RadioCircle>
     );
   },
@@ -463,16 +468,16 @@ const RadioIndicator = RadioCircle.styleable<RadioIndicatorProps>(
 /* -------------------------------------------------------------------------- */
 
 const RadioCardFrame = styled(Box, {
-  name: "RadioCard",
-  backgroundColor: "$background",
+  displayName: "RadioCard",
+  backgroundColor: "background hover:color2 press:color3",
   ...webCursor("pointer"),
-  borderRadius: "$sm",
+  borderRadius: "sm",
   borderWidth: 1,
-  borderColor: "$borderColor",
+  borderColor: "borderColor",
 
   variants: {
     checked: {
-      true: { borderColor: "$color9", borderWidth: 2 },
+      true: { borderColor: "color9", borderWidth: 2 },
     },
     disabled: {
       true: { opacity: 0.6, pointerEvents: "none" },
@@ -480,14 +485,12 @@ const RadioCardFrame = styled(Box, {
     shadow: shadowVariant,
   } as const,
 
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
   ...focusRingStyle,
 });
 
 export interface RadioCardProps extends Omit<
   GetProps<typeof RadioCardFrame>,
-  "checked" | "onChange"
+  "checked" | "disabled" | "onChange" | "role"
 > {
   /** Controlled checked state. */
   checked?: boolean;
@@ -503,60 +506,63 @@ export interface RadioCardProps extends Omit<
   children?: React.ReactNode;
 }
 
-const RadioCardComponent = RadioCardFrame.styleable<RadioCardProps>(function RadioCard(props, ref) {
-  const {
-    checked,
-    defaultChecked,
-    onChange,
-    value,
-    disabled,
-    children,
-    role: _role,
-    "aria-label": ariaLabel,
-    ...rest
-  } = props;
+const RadioCardComponent = styleable<RadioCardProps>(
+  RadioCardFrame,
+  function RadioCard(props, ref) {
+    const {
+      checked,
+      defaultChecked,
+      onChange,
+      value,
+      disabled,
+      children,
+      "aria-label": ariaLabel,
+      ...rest
+    } = props;
 
-  const group = React.useContext(RadioGroupContext);
-  const inGroup = group !== null && value !== undefined;
-  const [selfChecked, setSelfChecked] = useUncontrolled<boolean>({
-    value: inGroup ? group!.value === value : checked,
-    defaultValue: defaultChecked,
-    finalValue: false,
-    onChange,
-  });
-  const isChecked = inGroup ? group!.value === value : selfChecked;
-  const isDisabled = !!(disabled || (inGroup && group!.disabled));
+    const group = React.useContext(RadioGroupContext);
+    const inGroup = group !== null && value !== undefined;
+    const [selfChecked, setSelfChecked] = useUncontrolled<boolean>({
+      value: inGroup ? group!.value === value : checked,
+      defaultValue: defaultChecked,
+      finalValue: false,
+      onChange,
+    });
+    const isChecked = inGroup ? group!.value === value : selfChecked;
+    const isDisabled = !!(disabled || (inGroup && group!.disabled));
 
-  const handlePress = React.useCallback(() => {
-    if (isDisabled || isChecked) return;
-    if (inGroup) {
-      group!.onChange(value!);
-    } else {
-      setSelfChecked(true);
-    }
-  }, [isDisabled, isChecked, inGroup, group, value, setSelfChecked]);
+    const handlePress = React.useCallback(() => {
+      if (isDisabled || isChecked) return;
+      if (inGroup) {
+        group!.onChange(value!);
+      } else {
+        setSelfChecked(true);
+      }
+    }, [isDisabled, isChecked, inGroup, group, value, setSelfChecked]);
 
-  const focusProps = useKeyboardActions({ onActivate: handlePress }, { disabled: isDisabled });
+    const focusProps = useKeyboardActions({ onActivate: handlePress }, { disabled: isDisabled });
+    const cardContext = React.useMemo(() => ({ checked: isChecked }), [isChecked]);
 
-  return (
-    <RadioCardContext.Provider value={{ checked: isChecked }}>
-      <RadioCardFrame
-        ref={ref}
-        checked={isChecked}
-        disabled={isDisabled}
-        onPress={handlePress}
-        role="radio"
-        aria-checked={isChecked}
-        aria-disabled={isDisabled || undefined}
-        aria-label={ariaLabel}
-        {...focusProps}
-        {...rest}
-      >
-        {children}
-      </RadioCardFrame>
-    </RadioCardContext.Provider>
-  );
-});
+    return (
+      <RadioCardContext.Provider value={cardContext}>
+        <RadioCardFrame
+          ref={ref}
+          checked={isChecked}
+          disabled={isDisabled}
+          onPress={handlePress}
+          role="radio"
+          aria-checked={isChecked}
+          aria-disabled={isDisabled || undefined}
+          aria-label={ariaLabel}
+          {...focusProps}
+          {...rest}
+        >
+          {children}
+        </RadioCardFrame>
+      </RadioCardContext.Provider>
+    );
+  },
+);
 
 /* -------------------------------------------------------------------------- */
 /* Exports                                                                    */

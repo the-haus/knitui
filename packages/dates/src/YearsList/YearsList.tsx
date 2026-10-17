@@ -24,11 +24,13 @@ import { useMemo } from "react";
 import dayjs from "dayjs";
 
 import { Box } from "@knitui/components";
+import { hoverProps } from "@knitui/components/control-system";
 import {
   createStyledContext,
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -70,7 +72,7 @@ const YearsListContext = createStyledContext<{ size: CalendarSize }>({ size: "md
 
 /** The grid container — a column of year rows (web `role="grid"`). */
 const YearsListFrame = styled(Box, {
-  name: "YearsList",
+  displayName: "YearsList",
   context: YearsListContext,
   flexDirection: "column",
 
@@ -89,7 +91,7 @@ const YearsListFrame = styled(Box, {
 
 /** A single year row (web `role="row"`). */
 const YearsListRow = styled(Box, {
-  name: "YearsListRow",
+  displayName: "YearsListRow",
   context: YearsListContext,
   flexDirection: "row",
 
@@ -114,7 +116,7 @@ const YearsListRow = styled(Box, {
  * per-render `flexGrow` spread — so the optimiser has nothing dynamic to fold).
  */
 const YearsListCell = styled(Box, {
-  name: "YearsListCell",
+  displayName: "YearsListCell",
   context: YearsListContext,
   alignItems: "center",
   justifyContent: "center",
@@ -205,12 +207,8 @@ const YearsListControlCell = React.memo(function YearsListControlCell({
   onControlKeyDown,
   getControlRef,
 }: YearsListControlCellProps) {
-  // Tamagui hover handlers are not part of `PickerControl`'s public prop type;
-  // attach them via a precisely-typed object spread, the kit's pattern for web-only
-  // affordances (see `Month`). Native never fires it.
-  const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
-    onHoverIn: (event) => onControlMouseEnter(event, year),
-  };
+  // Range hover preview (see `Month`): `onMouseEnter` on web, `onHoverIn` on native.
+  const hoverHandlers = hoverProps({ onHoverIn: (event) => onControlMouseEnter(event, year) });
 
   return (
     <YearsListCell role="cell" fullWidth={fullWidth} {...cellProps}>
@@ -339,148 +337,151 @@ export interface YearsListProps extends YearsListFrameProps, YearsListSettings {
  * wrapping a `role="button"` control. (ARIA's `gridcell` would be the ideal child
  * of `role="grid"`, but the cross-platform `Role` type has no `gridcell` member.)
  */
-const YearsListComponent = YearsListFrame.styleable<YearsListProps>(function YearsList(props, ref) {
-  const {
-    decade,
-    yearsListFormat = "YYYY",
-    locale,
-    minDate,
-    maxDate,
-    getYearControlProps,
-    __getControlRef,
-    __onControlKeyDown,
-    __onControlClick,
-    __onControlMouseEnter,
-    __preventFocus,
-    __stopPropagation,
-    withCellSpacing = true,
-    fullWidth = false,
-    size = "md",
-    styles,
-    ...rest
-  } = props;
+const YearsListComponent = styleable<YearsListProps>(
+  YearsListFrame,
+  function YearsList(props, ref) {
+    const {
+      decade,
+      yearsListFormat = "YYYY",
+      locale,
+      minDate,
+      maxDate,
+      getYearControlProps,
+      __getControlRef,
+      __onControlKeyDown,
+      __onControlClick,
+      __onControlMouseEnter,
+      __preventFocus,
+      __stopPropagation,
+      withCellSpacing = true,
+      fullWidth = false,
+      size = "md",
+      styles,
+      ...rest
+    } = props;
 
-  // `__stopPropagation` is accepted for Mantine API parity; the cross-platform
-  // Escape handling lives at the picker/popover layer, so it is a no-op here
-  // (the same reservation `CalendarHeader`/`Month` make for it).
-  void __stopPropagation;
+    // `__stopPropagation` is accepted for Mantine API parity; the cross-platform
+    // Escape handling lives at the picker/popover layer, so it is a no-op here
+    // (the same reservation `CalendarHeader`/`Month` make for it).
+    void __stopPropagation;
 
-  const ctx = useDatesContext();
+    const ctx = useDatesContext();
 
-  const minDateString = minDate == null ? undefined : toDateString(minDate);
-  const maxDateString = maxDate == null ? undefined : toDateString(maxDate);
+    const minDateString = minDate == null ? undefined : toDateString(minDate);
+    const maxDateString = maxDate == null ? undefined : toDateString(maxDate);
 
-  // 7. Typed per-slot accessor (dev-warns unknown keys against the known set).
-  const s = slotStyles<YearsListStyles>(styles, YEARS_LIST_SLOT_KEYS, "YearsList");
+    // 7. Typed per-slot accessor (dev-warns unknown keys against the known set).
+    const s = slotStyles<YearsListStyles>(styles, YEARS_LIST_SLOT_KEYS, "YearsList");
 
-  const resolvedLocale = ctx.getLocale(locale);
+    const resolvedLocale = ctx.getLocale(locale);
 
-  // The 10 cells' grid, bounds and LABELS depend only on the decade, the locale,
-  // the format and the min/max bounds — never on the selection — yet they were
-  // rebuilt every render, each cell paying a `dayjs(year).locale(…).format(…)`
-  // (parse + locale clone + locale-table format) for a label fixed for the decade.
-  const yearsInfo = useMemo(() => {
-    const grid = getYearsData(decade);
-    return {
-      grid,
-      cells: grid.map((row) =>
-        row.map((year) => ({
-          year,
-          disabled: isYearDisabled({ year, minDate: minDateString, maxDate: maxDateString }),
-          label: dayjs(year).locale(resolvedLocale).format(yearsListFormat),
-        })),
-      ),
-    };
-  }, [decade, minDateString, maxDateString, resolvedLocale, yearsListFormat]);
+    // The 10 cells' grid, bounds and LABELS depend only on the decade, the locale,
+    // the format and the min/max bounds — never on the selection — yet they were
+    // rebuilt every render, each cell paying a `dayjs(year).locale(…).format(…)`
+    // (parse + locale clone + locale-table format) for a label fixed for the decade.
+    const yearsInfo = useMemo(() => {
+      const grid = getYearsData(decade);
+      return {
+        grid,
+        cells: grid.map((row) =>
+          row.map((year) => ({
+            year,
+            disabled: isYearDisabled({ year, minDate: minDateString, maxDate: maxDateString }),
+            label: dayjs(year).locale(resolvedLocale).format(yearsListFormat),
+          })),
+        ),
+      };
+    }, [decade, minDateString, maxDateString, resolvedLocale, yearsListFormat]);
 
-  // ONE per-render cache shared by `getYearInTabOrder` (which consults the getter
-  // twice per year) and the cell loop below (a third time). Not memoized across
-  // renders — the getter closes over live selection state.
-  const resolveControlProps = memoizeByDate(getYearControlProps);
+    // ONE per-render cache shared by `getYearInTabOrder` (which consults the getter
+    // twice per year) and the cell loop below (a third time). Not memoized across
+    // renders — the getter closes over live selection state.
+    const resolveControlProps = memoizeByDate(getYearControlProps);
 
-  const yearInTabOrder = getYearInTabOrder({
-    years: yearsInfo.grid,
-    minDate: minDateString,
-    maxDate: maxDateString,
-    getYearControlProps: resolveControlProps,
-  });
+    const yearInTabOrder = getYearInTabOrder({
+      years: yearsInfo.grid,
+      minDate: minDateString,
+      maxDate: maxDateString,
+      getYearControlProps: resolveControlProps,
+    });
 
-  const cellGap = withCellSpacing ? CELL_SPACING : 0;
+    const cellGap = withCellSpacing ? CELL_SPACING : 0;
 
-  // The cell memo can only bail out if every function prop it receives keeps a
-  // stable identity. All four of these arrive freshly built each render (the level
-  // group builds them per decade, `YearPicker` per render), so they are wrapped once
-  // here rather than being stabilised at each of their many call sites.
-  const onControlMouseEnter = useCallbackRef(__onControlMouseEnter);
-  const onControlClick = useCallbackRef(__onControlClick);
-  const onControlKeyDown = useCallbackRef(__onControlKeyDown);
-  const getControlRef = useCallbackRef(__getControlRef);
+    // The cell memo can only bail out if every function prop it receives keeps a
+    // stable identity. All four of these arrive freshly built each render (the level
+    // group builds them per decade, `YearPicker` per render), so they are wrapped once
+    // here rather than being stabilised at each of their many call sites.
+    const onControlMouseEnter = useCallbackRef(__onControlMouseEnter);
+    const onControlClick = useCallbackRef(__onControlClick);
+    const onControlKeyDown = useCallbackRef(__onControlKeyDown);
+    const getControlRef = useCallbackRef(__getControlRef);
 
-  const cellSlotProps = s.get("cell");
+    const cellSlotProps = s.get("cell");
 
-  const rows = yearsInfo.cells.map((yearsRow, rowIndex) => {
-    const cells = yearsRow.map(({ year, disabled: outOfBounds, label }, cellIndex) => {
-      const controlProps = resolveControlProps?.(year);
-      // Both sides come from `getYearsData`'s canonical `YYYY-MM-DD`, so the `YYYY`
-      // prefix compare is exactly the year-granularity `isSame` it replaces.
-      const isYearInTabOrder =
-        yearInTabOrder !== undefined && year.slice(0, 4) === yearInTabOrder.slice(0, 4);
-      const disabled = outOfBounds || controlProps?.disabled;
+    const rows = yearsInfo.cells.map((yearsRow, rowIndex) => {
+      const cells = yearsRow.map(({ year, disabled: outOfBounds, label }, cellIndex) => {
+        const controlProps = resolveControlProps?.(year);
+        // Both sides come from `getYearsData`'s canonical `YYYY-MM-DD`, so the `YYYY`
+        // prefix compare is exactly the year-granularity `isSame` it replaces.
+        const isYearInTabOrder =
+          yearInTabOrder !== undefined && year.slice(0, 4) === yearInTabOrder.slice(0, 4);
+        const disabled = outOfBounds || controlProps?.disabled;
+
+        return (
+          <YearsListControlCell
+            key={year}
+            year={year}
+            label={label}
+            disabled={disabled}
+            rowIndex={rowIndex}
+            cellIndex={cellIndex}
+            tabIndex={__preventFocus || !isYearInTabOrder ? -1 : 0}
+            size={size}
+            fullWidth={fullWidth}
+            preventFocus={__preventFocus}
+            cellProps={cellSlotProps}
+            controlProps={controlProps}
+            mergedControlProps={s.merge("control", controlProps)}
+            onControlMouseEnter={onControlMouseEnter}
+            onControlClick={onControlClick}
+            onControlKeyDown={onControlKeyDown}
+            getControlRef={getControlRef}
+          />
+        );
+      });
 
       return (
-        <YearsListControlCell
-          key={year}
-          year={year}
-          label={label}
-          disabled={disabled}
-          rowIndex={rowIndex}
-          cellIndex={cellIndex}
-          tabIndex={__preventFocus || !isYearInTabOrder ? -1 : 0}
-          size={size}
+        <YearsListRow
+          key={rowIndex}
+          role="row"
+          columnGap={cellGap}
           fullWidth={fullWidth}
-          preventFocus={__preventFocus}
-          cellProps={cellSlotProps}
-          controlProps={controlProps}
-          mergedControlProps={s.merge("control", controlProps)}
-          onControlMouseEnter={onControlMouseEnter}
-          onControlClick={onControlClick}
-          onControlKeyDown={onControlKeyDown}
-          getControlRef={getControlRef}
-        />
+          {...s.get("row")}
+        >
+          {cells}
+        </YearsListRow>
       );
     });
 
     return (
-      <YearsListRow
-        key={rowIndex}
-        role="row"
-        columnGap={cellGap}
+      // The grid CONTAINER roles (`grid`/`row`/`cell`) are WEB-ONLY: React-Native's
+      // `accessibilityRole` has no `grid`/`row`/`gridcell` member (same root cause
+      // as the closed `role="cell"`→`gridcell` question), so there is no native
+      // counterpart to add here. Per-cell native announcement is instead carried
+      // by each `PickerControl`'s own `accessibilityRole`/`accessibilityState`.
+      <YearsListFrame
+        ref={ref}
+        role="grid"
+        rowGap={cellGap}
         fullWidth={fullWidth}
-        {...s.get("row")}
+        {...s.get("root")}
+        {...rest}
       >
-        {cells}
-      </YearsListRow>
+        {rows}
+      </YearsListFrame>
     );
-  });
-
-  return (
-    // The grid CONTAINER roles (`grid`/`row`/`cell`) are WEB-ONLY: React-Native's
-    // `accessibilityRole` has no `grid`/`row`/`gridcell` member (same root cause
-    // as the closed `role="cell"`→`gridcell` question), so there is no native
-    // counterpart to add here. Per-cell native announcement is instead carried
-    // by each `PickerControl`'s own `accessibilityRole`/`accessibilityState`.
-    <YearsListFrame
-      ref={ref}
-      role="grid"
-      rowGap={cellGap}
-      fullWidth={fullWidth}
-      {...s.get("root")}
-      {...rest}
-    >
-      {rows}
-    </YearsListFrame>
-  );
-});
+  },
+);
 
 YearsListComponent.displayName = "@knitui/dates/YearsList";
 

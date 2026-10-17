@@ -75,7 +75,7 @@ export const Playground: Story = {};
 /** Common mask patterns shown side by side for a quick visual comparison. */
 export const CommonMasks: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <MaskInput {...args} mask="(999) 999-9999" label="US phone" placeholder="(555) 000-0000" />
       <MaskInput {...args} mask="99/99/9999" label="Date" placeholder="DD/MM/YYYY" />
       <MaskInput {...args} mask="999-99-9999" label="SSN" placeholder="000-00-0000" />
@@ -93,7 +93,7 @@ export const CommonMasks: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {SHADOWS.map((shadow) => (
         <MaskInput
           {...args}
@@ -145,7 +145,7 @@ export const Controlled: Story = {
     const [raw, setRaw] = React.useState("");
 
     return (
-      <Box gap="$md" width={300}>
+      <Box gap="md" width={300}>
         <MaskInput
           {...args}
           mask="(999) 999-9999"
@@ -170,7 +170,7 @@ export const OnComplete: Story = {
     const [status, setStatus] = React.useState("Incomplete…");
 
     return (
-      <Box gap="$md" width={300}>
+      <Box gap="md" width={300}>
         <MaskInput
           {...args}
           mask="99-99"
@@ -187,7 +187,7 @@ export const OnComplete: Story = {
 /** Array mask — mix literal strings and RegExp tokens for fine-grained control. */
 export const ArrayMask: Story = {
   render: (args) => (
-    <Box gap="$md" width={300}>
+    <Box gap="md" width={300}>
       <MaskInput
         {...args}
         mask={[/[0-9]/, "-", /[A-Z]/, /[A-Z]/]}
@@ -211,8 +211,8 @@ export const Styles: Story = {
     label: "Styled phone",
     alwaysShowMask: true,
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      label: { color: "$blue11" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      label: { color: "blue11" },
     },
   },
 };
@@ -223,7 +223,7 @@ export const ResetRef: Story = {
     const resetRef = React.useRef<() => void>(null);
 
     return (
-      <Box gap="$md" width={300}>
+      <Box gap="md" width={300}>
         <MaskInput
           {...args}
           mask="999-999"
@@ -231,7 +231,7 @@ export const ResetRef: Story = {
           defaultValue="123-456"
           resetRef={resetRef}
         />
-        <Box flexDirection="row" gap="$sm">
+        <Box flexDirection="row" gap="sm">
           <Text
             onPress={() => resetRef.current?.()}
             style={{ textDecorationLine: "underline", cursor: "pointer" }}

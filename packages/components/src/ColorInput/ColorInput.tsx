@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { withStaticProperties } from "@knitui/core";
-import { useDidUpdate, useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useDidUpdate, useUncontrolled } from "@knitui/hooks";
 
 import {
   ColorPicker,
@@ -192,22 +192,38 @@ const ColorInputComponent = React.forwardRef<ColorInputRef, ColorInputProps>(
       }
     }, [format]);
 
-    const handleFocus: React.FocusEventHandler<HTMLInputElement> = (event) => {
+    // Stable handler identities (latest-closure): the field re-renders on every
+    // keystroke, and the memoized `InputBase` must not see fresh props each time.
+    const handleFocus = useCallbackRef((event: React.FocusEvent<HTMLInputElement>) => {
       setDropdownOpened(true);
-      inputProps.onFocus?.(event);
-    };
+      inputProps.onFocus?.(event as never);
+    });
 
-    const handleBlur: React.FocusEventHandler<HTMLInputElement> = (event) => {
+    const handleBlur = useCallbackRef((event: React.FocusEvent<HTMLInputElement>) => {
       if (fixOnBlur && !isColorValid(_value) && _value.trim() !== "") {
         setValue(lastValidValueRef.current);
       }
-      inputProps.onBlur?.(event);
-    };
+      inputProps.onBlur?.(event as never);
+    });
 
-    const handleClick: React.MouseEventHandler<HTMLInputElement> = (event) => {
+    const handleClick = useCallbackRef((event: React.MouseEvent<HTMLInputElement>) => {
       setDropdownOpened(true);
-      inputProps.onClick?.(event);
-    };
+      inputProps.onClick?.(event as never);
+    });
+
+    const handleChangeText = useCallbackRef((text: string) => {
+      setValue(text);
+      if (isColorValid(text) || text.trim() === "") {
+        lastValidValueRef.current = text;
+      }
+      if (isColorValid(text)) {
+        onChangeEnd?.(convertHsvaTo(format, parseColor(text)));
+      }
+    });
+
+    const handleSwatchClick = useCallbackRef(() => {
+      if (closeOnColorSwatchClick) setDropdownOpened(false);
+    });
 
     // Preview swatch scales WITH the field: a step-down from the input size (so a
     // `md` ColorInput gets an `sm` swatch that sits comfortably in the left section),
@@ -218,7 +234,7 @@ const ColorInputComponent = React.forwardRef<ColorInputRef, ColorInputProps>(
         <ColorSwatch
           color={isColorValid(_value) ? _value : "#ffffff"}
           size={toEmbeddedControlSize(size)}
-          radius="$sm"
+          radius="sm"
           {...s.get("preview")}
         />
       ) : undefined);
@@ -268,22 +284,14 @@ const ColorInputComponent = React.forwardRef<ColorInputRef, ColorInputProps>(
             pointer={disallowInput}
             leftSection={previewSwatch}
             leftSectionPointerEvents="none"
-            onChangeText={(text) => {
-              setValue(text);
-              if (isColorValid(text) || text.trim() === "") {
-                lastValidValueRef.current = text;
-              }
-              if (isColorValid(text)) {
-                onChangeEnd?.(convertHsvaTo(format, parseColor(text)));
-              }
-            }}
+            onChangeText={handleChangeText}
             onFocus={handleFocus}
             onBlur={handleBlur}
             onClick={handleClick}
           />
         </Popover.Target>
 
-        <Popover.Dropdown padding="$sm" {...s.get("dropdown")}>
+        <Popover.Dropdown padding="sm" {...s.get("dropdown")}>
           <ColorPicker
             value={_value}
             onChange={setValueTracked}
@@ -297,9 +305,7 @@ const ColorInputComponent = React.forwardRef<ColorInputRef, ColorInputProps>(
             // `picker` slot sugar UNDER the wired behaviour props.
             {...pickerSugar}
             styles={pickerStyles}
-            onColorSwatchClick={() => {
-              if (closeOnColorSwatchClick) setDropdownOpened(false);
-            }}
+            onColorSwatchClick={handleSwatchClick}
           />
         </Popover.Dropdown>
       </Popover>

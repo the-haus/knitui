@@ -13,8 +13,14 @@
  *   own       declared in this package's own src/  -> the main table
  *   system    the kit's cross-component contract (size/variant/theme/styles/…)
  *             -> rendered once from a shared definition
- *   style     declared in @tamagui/* or react-native -> collapsed disclosure
- *   react     HTML/ARIA attributes from @types/react -> collapsed disclosure
+ *   style     declared in @tamagui/*, csstype or react-native -> collapsed disclosure
+ *   react     attributes from @types/react -> collapsed disclosure
+ *
+ * Tamagui v3 declaration sites (3.0.x, all land in `style`):
+ *   @tamagui/web/types/…                 the style surface, `role`, `id`, press/focus events
+ *   @tamagui/react-native-types/src/…    v3's vendored RN view types (`aria-*`, DOM event props)
+ *   csstype/…                            web CSS properties v3 types directly
+ *   packages/core/lib/typescript/…       the kit's configured shorthands (built core types)
  *
  * Descriptions come from JSDoc on the declaration; where a story's `argTypes`
  * carries a better one (they were written for the Storybook controls panel),
@@ -101,7 +107,11 @@ function createProgram(pkg, rootNames) {
  *
  * Tamagui components are callable objects (`withStaticProperties` attaches the
  * compound parts), so the props are the first parameter of the call signature.
- * `React.forwardRef` results and plain function components resolve the same way.
+ * In v3 every kit component is a `TamaguiComponent` — a `styled()` frame or a
+ * `styleable()` behaviour wrapper (v3 `createStyledHOC`), both
+ * `ForwardRefExoticComponent`s — so they resolve the same way as
+ * `React.forwardRef` results and plain function components. (v3's props type no
+ * longer carries `key` / `ref`, so the `react` bucket is usually empty.)
  */
 function propsTypeOf(checker, symbol, location) {
   const type = checker.getTypeOfSymbolAtLocation(symbol, location);
@@ -131,7 +141,13 @@ function classify(declarationPath, propName, pkg) {
     return "own";
   }
   if (normalised.includes("/@types/react/")) return "react";
-  if (normalised.includes("/@tamagui/") || normalised.includes("/react-native")) return "style";
+  if (
+    normalised.includes("/@tamagui/") ||
+    normalised.includes("/csstype/") ||
+    normalised.includes("/react-native")
+  ) {
+    return "style";
+  }
   return "style";
 }
 
@@ -215,11 +231,55 @@ function collapseReactNode(text) {
   return `${before}ReactNode${after}`.trim();
 }
 
+/**
+ * Unwrap Tamagui v3's flat-value wrapper.
+ *
+ * Every variant prop is typed `FlatStyleValue<NonNullable<V>> | undefined` (so it
+ * also takes condition clauses like `size="sm md:lg"`). The table prints the value
+ * set `V`; the clause grammar is explained once on the style-props page. v2's
+ * spread-variant keys (`":number"`, `":string"`) never match in v3; until the
+ * last ones become `styled.dynamic`, they print as the value type they stood for.
+ */
+function unwrapFlatValue(text) {
+  let out = text;
+  for (let guard = 0; guard < 20; guard += 1) {
+    const start = out.indexOf("FlatStyleValue<");
+    if (start === -1) break;
+    let depth = 0;
+    let end = -1;
+    for (let i = start + "FlatStyleValue".length; i < out.length; i += 1) {
+      if (out[i] === "<") depth += 1;
+      else if (out[i] === ">") {
+        depth -= 1;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end === -1) break;
+    let inner = out.slice(start + "FlatStyleValue<".length, end);
+    if (inner.startsWith("NonNullable<") && inner.endsWith(">")) {
+      inner = inner.slice("NonNullable<".length, -1);
+    }
+    inner = inner.replace(/\s*\|\s*undefined$/, "");
+    out = out.slice(0, start) + inner + out.slice(end + 1);
+  }
+  // `":number"` → `number` etc., then de-duplicate the top-level union members
+  // (a naive split is fine: the members we rewrite are never nested).
+  const rewritten = out.replace(/":(number|string|boolean)"/g, "$1");
+  if (rewritten === out || /[<({[]/.test(rewritten)) return rewritten;
+  return [...new Set(rewritten.split(" | "))].join(" | ");
+}
+
 function truncate(text) {
-  const collapsed = collapseReactNode(text.replace(/\s+/g, " "))
+  // Strip import qualifiers FIRST, so the flat-value unwrap and union de-dup see
+  // `number`, not `import("@tamagui/web").number`.
+  const unqualified = text
+    .replace(/\s+/g, " ")
     .replace(/import\("[^"]+"\)\./g, "")
-    .replace(/\bReact\./g, "")
-    .trim();
+    .replace(/\bReact\./g, "");
+  const collapsed = collapseReactNode(unwrapFlatValue(unqualified)).trim();
   return collapsed.length > MAX_TYPE_LENGTH ? `${collapsed.slice(0, MAX_TYPE_LENGTH)}…` : collapsed;
 }
 
@@ -356,8 +416,10 @@ for (const [pkg, entries] of targetsByPackage()) {
         bucket,
         type,
         // Tamagui's `variants` produce prop types the checker can only reduce to
-        // `unknown`; the story's `argTypes.options` (authored for the controls
-        // panel) carries the real value set, so surface it either way.
+        // `unknown` (or, in v3, to an alias such as `BadgeVariant`, and for a
+        // `styled.dynamic<T>` variant to whatever `T` is); the story's
+        // `argTypes.options` (authored for the controls panel) carries the real
+        // value set, so surface it either way.
         options: optionsFor(entry, name),
         required: !(prop.flags & ts.SymbolFlags.Optional),
         description: override[name]?.description ?? descriptions[name] ?? docOf(checker, prop),

@@ -3,8 +3,9 @@ import * as React from "react";
 import {
   createStyledContext,
   type GetProps,
-  getTokenValue,
+  resolveToken,
   type SpaceTokens,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -14,27 +15,20 @@ import { alignVariant, justifyVariant, overflowVariant } from "../internal/style
 
 export type GridColSpan = number | "auto" | "content";
 
-const GUTTER_SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
+/** A space key (`xxs`–`xxl`, or any other space token) or a raw px number. */
+export type GridGutter = SpaceTokens | number;
 
-type GridGutterSize = (typeof GUTTER_SIZES)[number];
-export type GridGutter = GridGutterSize | number;
+const DEFAULT_GUTTER: GridGutter = "md";
 
-const DEFAULT_GUTTER: GridGutterSize = "md";
-
-const isGridGutterSize = (value: string): value is GridGutterSize =>
-  (GUTTER_SIZES as readonly string[]).includes(value);
-
-const toGutterToken = (value: GridGutterSize): SpaceTokens => `$${value}` as SpaceTokens;
-
-const resolveGutterToken = (token: SpaceTokens): number => {
-  const value = getTokenValue(token as Parameters<typeof getTokenValue>[0], "space");
-  return typeof value === "number" ? value : 0;
-};
-
+/**
+ * The gutter in px: a number is raw, a string names a space token (`"md"`). The
+ * column math needs a real number (half-gutter padding + the negative-margin
+ * track), so an unknown name resolves to 0 rather than leaking a string.
+ */
 const resolveGutter = (gutter: GridGutter): number => {
   if (typeof gutter === "number") return gutter;
-  if (isGridGutterSize(gutter)) return resolveGutterToken(toGutterToken(gutter));
-  return resolveGutterToken(gutter);
+  const value = resolveToken(gutter, "space");
+  return typeof value === "number" ? value : 0;
 };
 
 /**
@@ -42,9 +36,12 @@ const resolveGutter = (gutter: GridGutter): number => {
  * fraction of `columns`, inset by half the `gutter`, and optionally `grow` to
  * fill the last row. Read at runtime via `GridContext.useStyledContext()`.
  */
+// The default gutter is resolved lazily on read (a module-load token read throws
+// when this module evaluates before the Tamagui config is registered); `-1` marks
+// "no Grid above, use the default".
 const GridContext = createStyledContext<{ columns: number; gutter: number; grow: boolean }>({
   columns: 12,
-  gutter: resolveGutter(DEFAULT_GUTTER),
+  gutter: -1,
   grow: false,
 });
 
@@ -59,8 +56,7 @@ const GridContext = createStyledContext<{ columns: number; gutter: number; grow:
  * breakpoint primitive in `@knitui/core`. This is a documented limitation, not a TODO.
  */
 const GridFrame = styled(Box, {
-  name: "Grid",
-  context: GridContext,
+  displayName: "Grid",
   flexDirection: "row",
   flexWrap: "wrap",
 
@@ -72,8 +68,7 @@ const GridFrame = styled(Box, {
 });
 
 const GridColFrame = styled(Box, {
-  name: "GridCol",
-  context: GridContext,
+  displayName: "GridCol",
   // flexBasis carries the width (border-box, so padding sits inside the %).
   flexGrow: 0,
   flexShrink: 0,
@@ -108,9 +103,11 @@ type ColLayout = Pick<
   "flexBasis" | "maxWidth" | "flexGrow" | "marginLeft" | "padding" | "alignSelf"
 >;
 
-const GridCol = GridColFrame.styleable<GridColProps>(function GridCol(props, ref) {
+const GridCol = styleable<GridColProps>(GridColFrame, function GridCol(props, ref) {
   const { span = 12, offset = 0, order, align, children, ...rest } = props;
-  const { columns, gutter, grow } = GridContext.useStyledContext();
+  const ctx = GridContext.useStyledContext();
+  const { columns, grow } = ctx;
+  const gutter = ctx.gutter < 0 ? resolveGutter(DEFAULT_GUTTER) : ctx.gutter;
 
   const layout: ColLayout = { padding: gutter / 2 };
 
@@ -146,13 +143,13 @@ const GridCol = GridColFrame.styleable<GridColProps>(function GridCol(props, ref
 export interface GridProps extends GetProps<typeof GridFrame> {
   /** Total columns the grid is divided into. @default 12 */
   columns?: number;
-  /** Space between columns — a space key (`xxs`–`xxl`), `$space` token, or px number. @default "md" */
+  /** Space between columns — a space token (`"xxs"`–`"xxl"`) or a px number. @default "md" */
   gutter?: GridGutter;
   /** Let columns grow to fill the last row. @default false */
   grow?: boolean;
 }
 
-const GridComponent = GridFrame.styleable<GridProps>(function Grid(props, ref) {
+const GridComponent = styleable<GridProps>(GridFrame, function Grid(props, ref) {
   const { columns = 12, gutter = DEFAULT_GUTTER, grow = false, children, ...rest } = props;
   const g = resolveGutter(gutter);
 

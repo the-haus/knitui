@@ -32,6 +32,8 @@ describe("@knitui/components/control-system export surface", () => {
       "VARIANT_FOREGROUND_MUTED",
       "VARIANT_INTERACTION",
       "VARIANT_KEYS",
+      // hover
+      "hoverProps",
     ] as const;
     for (const name of expected) {
       expect(ControlSystem).toHaveProperty(name);

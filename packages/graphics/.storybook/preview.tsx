@@ -6,6 +6,8 @@ import { LoadSkiaWeb } from "@shopify/react-native-skia/lib/module/web";
 import skiaPackageJson from "@shopify/react-native-skia/package.json";
 import type { Decorator, Preview } from "@storybook/react-vite";
 
+import { type ColorScheme, Provider } from "@knitui/core";
+
 // Skia's web loader (and react-native-web) reach for a Node-style `global`.
 // Alias it to `globalThis` so `global.CanvasKit` resolves in the browser. This
 // MUST run before any Skia module evaluates. ES `import` statements hoist above
@@ -56,23 +58,36 @@ const Loading = () => (
   </div>
 );
 
-const withGraphics: Decorator = (Story) => (
-  <GraphicsProvider fallback={<Loading />}>
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 32,
-        minHeight: "100vh",
-        boxSizing: "border-box",
-        background: "#ffffff",
-      }}
-    >
-      <Story />
-    </div>
-  </GraphicsProvider>
-);
+/**
+ * Every story renders inside the design-system `Provider` (the Tamagui config,
+ * theme and portal host the kit's `Box`/`Text` need; without it every story
+ * throws Tamagui's "missing config" error), with `GraphicsProvider` (the Skia
+ * runtime) inside it. The `colorScheme` toolbar global matches the components
+ * Storybook.
+ */
+const withGraphics: Decorator = (Story, context) => {
+  const colorScheme = (context.globals.colorScheme as ColorScheme) ?? "light";
+
+  return (
+    <Provider forceColorScheme={colorScheme}>
+      <GraphicsProvider fallback={<Loading />}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 32,
+            minHeight: "100vh",
+            boxSizing: "border-box",
+            background: colorScheme === "dark" ? "#111113" : "#ffffff",
+          }}
+        >
+          <Story />
+        </div>
+      </GraphicsProvider>
+    </Provider>
+  );
+};
 
 const preview: Preview = {
   decorators: [withGraphics],
@@ -81,6 +96,21 @@ const preview: Preview = {
     controls: {
       matchers: {
         color: /(color|tint|background)$/i,
+      },
+    },
+  },
+  globalTypes: {
+    colorScheme: {
+      description: "Design-system color scheme",
+      defaultValue: "light",
+      toolbar: {
+        title: "Scheme",
+        icon: "circlehollow",
+        items: [
+          { value: "light", title: "Light", icon: "sun" },
+          { value: "dark", title: "Dark", icon: "moon" },
+        ],
+        dynamicTitle: true,
       },
     },
   },

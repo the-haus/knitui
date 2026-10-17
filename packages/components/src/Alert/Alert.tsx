@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -38,7 +44,7 @@ const AlertContext = createStyledContext<{ size: AlertSize; variant: AlertVarian
  * `role="alert"` plus wired `aria-labelledby` / `aria-describedby` for screen readers.
  */
 const AlertFrame = styled(Box, {
-  name: "Alert",
+  displayName: "Alert",
   context: AlertContext,
   flexDirection: "column",
   borderWidth: 1,
@@ -58,13 +64,13 @@ const AlertFrame = styled(Box, {
       ]),
     },
     size: {
-      xxs: { paddingVertical: "$xxs", paddingHorizontal: "$xs", borderRadius: "$xs" },
-      xs: { paddingVertical: "$xs", paddingHorizontal: "$sm", borderRadius: "$xs" },
-      sm: { paddingVertical: "$xs", paddingHorizontal: "$md", borderRadius: "$sm" },
-      md: { paddingVertical: "$sm", paddingHorizontal: "$md", borderRadius: "$sm" },
-      lg: { paddingVertical: "$md", paddingHorizontal: "$lg", borderRadius: "$md" },
-      xl: { paddingVertical: "$lg", paddingHorizontal: "$xl", borderRadius: "$md" },
-      xxl: { paddingVertical: "$xl", paddingHorizontal: "$xxl", borderRadius: "$lg" },
+      xxs: { paddingVertical: "xxs", paddingHorizontal: "xs", borderRadius: "xs" },
+      xs: { paddingVertical: "xs", paddingHorizontal: "sm", borderRadius: "xs" },
+      sm: { paddingVertical: "xs", paddingHorizontal: "md", borderRadius: "sm" },
+      md: { paddingVertical: "sm", paddingHorizontal: "md", borderRadius: "sm" },
+      lg: { paddingVertical: "md", paddingHorizontal: "lg", borderRadius: "md" },
+      xl: { paddingVertical: "lg", paddingHorizontal: "xl", borderRadius: "md" },
+      xxl: { paddingVertical: "xl", paddingHorizontal: "xxl", borderRadius: "lg" },
     },
     radius: radiusVariant,
     // Optional elevation from the shared `shadowVariant` ladder (opt-in; no
@@ -76,66 +82,66 @@ const AlertFrame = styled(Box, {
 });
 
 const AlertWrapper = styled(Box, {
-  name: "AlertWrapper",
+  displayName: "AlertWrapper",
   context: AlertContext,
   flexDirection: "row",
   alignItems: "flex-start",
   variants: {
     size: {
-      xxs: { gap: "$xxs" },
-      xs: { gap: "$xxs" },
-      sm: { gap: "$xs" },
-      md: { gap: "$sm" },
-      lg: { gap: "$md" },
-      xl: { gap: "$lg" },
-      xxl: { gap: "$xl" },
+      xxs: { gap: "xxs" },
+      xs: { gap: "xxs" },
+      sm: { gap: "xs" },
+      md: { gap: "sm" },
+      lg: { gap: "md" },
+      xl: { gap: "lg" },
+      xxl: { gap: "xl" },
     },
   } as const,
 });
 
 const AlertIcon = styled(Box, {
-  name: "AlertIcon",
+  displayName: "AlertIcon",
   alignItems: "center",
   justifyContent: "center",
 });
 
 const AlertBody = styled(Box, {
-  name: "AlertBody",
+  displayName: "AlertBody",
   context: AlertContext,
   flexDirection: "column",
   flex: 1,
   variants: {
     size: {
-      xxs: { gap: "$xxs" },
-      xs: { gap: "$xxs" },
-      sm: { gap: "$xs" },
-      md: { gap: "$xs" },
-      lg: { gap: "$sm" },
-      xl: { gap: "$sm" },
-      xxl: { gap: "$md" },
+      xxs: { gap: "xxs" },
+      xs: { gap: "xxs" },
+      sm: { gap: "xs" },
+      md: { gap: "xs" },
+      lg: { gap: "sm" },
+      xl: { gap: "sm" },
+      xxl: { gap: "md" },
     },
   } as const,
 });
 
 const AlertContent = styled(Box, {
-  name: "AlertContent",
+  displayName: "AlertContent",
   context: AlertContext,
   flexDirection: "column",
   variants: {
     size: {
-      xxs: { gap: "$xxs" },
-      xs: { gap: "$xxs" },
-      sm: { gap: "$xs" },
-      md: { gap: "$xs" },
-      lg: { gap: "$sm" },
-      xl: { gap: "$sm" },
-      xxl: { gap: "$md" },
+      xxs: { gap: "xxs" },
+      xs: { gap: "xxs" },
+      sm: { gap: "xs" },
+      md: { gap: "xs" },
+      lg: { gap: "sm" },
+      xl: { gap: "sm" },
+      xxl: { gap: "md" },
     },
   } as const,
 });
 
 const AlertTitle = styled(Text, {
-  name: "AlertTitle",
+  displayName: "AlertTitle",
   context: AlertContext,
   fontWeight: "700",
   variants: {
@@ -158,7 +164,7 @@ const AlertTitle = styled(Text, {
 });
 
 const AlertMessage = styled(Text, {
-  name: "AlertMessage",
+  displayName: "AlertMessage",
   context: AlertContext,
   variants: {
     // Message uses the MUTED foreground ladder (softer body copy; shared).
@@ -181,8 +187,8 @@ const AlertMessage = styled(Text, {
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ title: { color: "$red9" } }}` is
- * sugar for `<Alert.Title color="$red9" />`.
+ * of the styled part it targets, so `styles={{ title: { color: "red9" } }}` is
+ * sugar for `<Alert.Title color="red9" />`.
  */
 export interface AlertStyles {
   /** Props for the icon column wrapper (`.Icon`). */
@@ -208,7 +214,14 @@ const ALERT_SLOT_KEYS = [
   "closeButton",
 ] as const satisfies readonly (keyof AlertStyles)[];
 
-export interface AlertProps extends GetProps<typeof AlertFrame> {
+export interface AlertProps extends Omit<GetProps<typeof AlertFrame>, "size" | "variant"> {
+  /**
+   * Spacing / type metrics. A single key (the body reads it as data for the
+   * close button and icon sizes). @default 'md'
+   */
+  size?: AlertSize;
+  /** Fill style from the shared colour ladder. @default 'light' */
+  variant?: AlertVariant;
   /** Alert title, rendered bold above the body. */
   title?: React.ReactNode;
   /** Icon displayed in a column next to the body. */
@@ -224,7 +237,7 @@ export interface AlertProps extends GetProps<typeof AlertFrame> {
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
@@ -280,7 +293,7 @@ function getCloseButtonSize(size: AlertSize): AlertSize {
   }
 }
 
-const AlertComponent = AlertFrame.styleable<AlertProps>(function Alert(props, ref) {
+const AlertComponent = styleable<AlertProps>(AlertFrame, function Alert(props, ref) {
   const {
     children,
     title,
@@ -321,7 +334,7 @@ const AlertComponent = AlertFrame.styleable<AlertProps>(function Alert(props, re
     ) : null;
 
   // Pick a close-button variant whose glyph contrasts the panel fill: on a
-  // `filled` ($color9) panel the close button matches it ($color1 glyph); on a
+  // `filled` (color9) panel the close button matches it (color1 glyph); on a
   // `white` panel it stays dark; elsewhere a subtle accent-tinted glyph reads.
   const closeVariant = variant === "filled" ? "filled" : variant === "white" ? "white" : "subtle";
   const closeButtonSize = getCloseButtonSize(size);

@@ -32,6 +32,8 @@ export { useInterval, type UseIntervalOptions, type UseIntervalReturn } from "./
 export { useIsFirstRender } from "./use-is-first-render";
 export { useKeyboardActions } from "./use-keyboard-actions";
 export type {
+  AccessibilityActionEvent,
+  AccessibilityActionInfo,
   KeyboardActionProps,
   KeyboardActions,
   UseKeyboardActionsOptions,

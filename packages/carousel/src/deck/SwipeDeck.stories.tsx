@@ -190,7 +190,7 @@ export const ImperativeButtons: Story = {
           borderWidth: 2,
           borderColor: color,
         }}
-        pressStyle={{ opacity: 0.6 }}
+        opacity="press:0.6"
       >
         <Text style={{ color, fontWeight: "700" }}>{label}</Text>
       </UnstyledButton>

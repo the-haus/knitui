@@ -14,13 +14,20 @@ export { AnimatePresence } from "@tamagui/animate-presence";
 export {
   // token → CSS custom property name (`"color5"` → `"var(--color5)"`), applying
   // Tamagui's own name hashing + `TAMAGUI_CSS_VARIABLE_PREFIX`. Lets web-only
-  // code resolve a `$token` colour WITHOUT subscribing to the theme via
+  // code resolve a token colour WITHOUT subscribing to the theme via
   // `useTheme()` (see `components/internal/theme-color-web.ts`).
   createCSSVariable,
   // composition helpers
   createStyledContext,
+  // the v3 behaviour-HOC factory. INTERNAL: kit code wraps a frame with
+  // `styleable()` from `@knitui/core` (memoized, chain-safe), never with this
+  // directly — see `./styled.ts` and docs/v3/conventions.md §5.
+  createStyledHOC,
   // config access
   getConfig,
+  // one authored style prop, longhand or configured shorthand (`getExpandedShorthand("padding", props)`
+  // reads `padding` or `p`). Does not resolve tokens or conditions.
+  getExpandedShorthand,
   getToken,
   // tokens
   getTokens,
@@ -42,18 +49,30 @@ export {
   // it after some third party's stray `createTamagui`, previously had no way to
   // do so without importing `@tamagui/*` directly.
   setConfig,
+  // v3 replacement for v2's `useProps` / `usePropsAndStyle`: partition authored
+  // props into [style props, everything else] (optionally expanding shorthands
+  // or filtering to a key subset) so a behaviour wrapper can route them. It does
+  // NOT resolve tokens or pick an active condition clause — pass flat values on
+  // to a styled component instead.
+  splitStyleProps,
+  // statically-shaped style fragments for `style`-typed props
+  // (`contentContainerStyle={style({ p: 16 })}`), and the v3 `useStyle(piece)`
+  // that resolves one to an inline RN style for compatibility props. (v2's
+  // `useStyle(props)` is gone.)
+  style,
   // raw Tamagui text primitive (the kit's styled `Text` lives in components;
   // the vendored Input reads `Text.staticConfig.validStyles`)
   Text,
   // theming
   Theme,
+  // animated numbers (drive a value without re-rendering; reanimated on native,
+  // the CSS driver's `/extras` on web)
+  useAnimatedNumber,
+  useAnimatedNumberReaction,
+  useAnimatedNumbersStyle,
+  useAnimatedNumberStyle,
   // responsive
   useMedia,
-  useProps,
-  // style resolution — flatten Tamagui tokens/variants to plain RN styles
-  // without rendering a styled host (used by the native Input to keep the
-  // underlying RN TextInput state-safe; see Input/Input.native.tsx)
-  usePropsAndStyle,
   useStyle,
   useTheme,
   useThemeName,
@@ -63,22 +82,36 @@ export {
 } from "@tamagui/core";
 export type {
   ColorTokens,
+  FlatStyleValue,
   FontSizeTokens,
   GetProps,
   GetRef,
+  OnTransition,
   RadiusTokens,
   SizeTokens,
-  SizeVariantSpreadFunction,
   SpaceTokens,
+  SplitStylePropsOptions,
+  SplitStylePropsResult,
+  StylePiece,
+  TamaguiComponent,
   TamaguiElement,
   TamaguiElementMethods,
   TextStyle,
   ThemeKeys,
   ThemeName,
+  TransitionEvent,
+  TransitionKeys,
+  TransitionProp,
+  UniversalAnimatedNumber,
   Variable,
-  VariantSpreadFunction,
   ViewProps,
 } from "@tamagui/core";
+
+// `<ThemeUpdate keyName="value dark:value">` — override theme keys / config
+// variables for a subtree. On web it restyles through CSS custom properties with
+// no React re-render, which makes it the fast path for local overrides (error
+// states, a re-coloured focus ring) that would otherwise mount `<Theme name>`.
+export { ThemeUpdate, type ThemeUpdateProps } from "@tamagui/core/theme-update";
 
 export { useNativeInputRef, useWebRef } from "@tamagui/element";
 

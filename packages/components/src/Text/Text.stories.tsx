@@ -72,7 +72,7 @@ export const Playground: Story = {};
 /** All seven sizes from xxs to xxl rendered side by side. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
         <Text key={size} {...args} size={size}>
           {size} — {SAMPLE.slice(0, 48)}
@@ -85,10 +85,10 @@ export const Sizes: Story = {
 /** `lineClamp` limits text to N lines and appends an ellipsis. */
 export const LineClamp: Story = {
   render: (args) => (
-    <Box gap="$lg" maxWidth={400}>
+    <Box gap="lg" maxWidth={400}>
       {([1, 2, 3] as const).map((n) => (
-        <Box key={n} gap="$xs">
-          <Text size="xs" c="$colorSubtle">
+        <Box key={n} gap="xs">
+          <Text size="xs" c="color11">
             lineClamp={n}
           </Text>
           <Text {...args} lineClamp={n}>
@@ -103,10 +103,10 @@ export const LineClamp: Story = {
 /** Single-line truncation: `true`/`"end"` clips the tail; `"start"` clips the head. */
 export const Truncate: Story = {
   render: (args) => (
-    <Box gap="$lg" maxWidth={320}>
+    <Box gap="lg" maxWidth={320}>
       {(["end", "start"] as const).map((mode) => (
-        <Box key={mode} gap="$xs">
-          <Text size="xs" c="$colorSubtle">
+        <Box key={mode} gap="xs">
+          <Text size="xs" c="color11">
             truncate="{mode}"
           </Text>
           <Text {...args} truncate={mode}>
@@ -121,14 +121,14 @@ export const Truncate: Story = {
 /** `inline` tightens line-height so the text sits flush inside inline contexts. */
 export const Inline: Story = {
   render: (args) => (
-    <Box gap="$lg">
-      <Box flexDirection="row" alignItems="center" gap="$xs">
+    <Box gap="lg">
+      <Box flexDirection="row" alignItems="center" gap="xs">
         <Text>⭐</Text>
         <Text {...args} inline>
           Inline text — sits flush with an icon
         </Text>
       </Box>
-      <Box flexDirection="row" alignItems="center" gap="$xs">
+      <Box flexDirection="row" alignItems="center" gap="xs">
         <Text>⭐</Text>
         <Text {...args}>Non-inline text — default line-height</Text>
       </Box>
@@ -139,7 +139,7 @@ export const Inline: Story = {
 /** `inherit` forwards font-size, weight, line-height, and family from the parent. */
 export const Inherit: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Text size="xl" fontWeight="700">
         Parent xl bold —{" "}
         <Text {...args} inherit span>
@@ -161,7 +161,7 @@ export const AsSpan: Story = {
   render: (args) => (
     <Text size="md">
       This sentence has{" "}
-      <Text {...args} span c="$blue10">
+      <Text {...args} span c="blue10">
         an inline span
       </Text>{" "}
       in the middle of running prose.

@@ -13,7 +13,7 @@
 //   1. File header documenting provenance + cross-platform stance.
 //   2. `createStyledContext` to share `size` across every styled part.
 //   3. Sizing DERIVED from the shared `cell-metrics` ladders (no magic numbers).
-//   4. Theme-ramp colors only ($colorN) — `theme="red"` recolors, zero per-comp logic.
+//   4. Theme-ramp colors only (colorN) — `theme="red"` recolors, zero per-comp logic.
 //   5. A styled Frame + leaf parts, each carrying the context.
 //   6. Marker-slot composition (`createSlot`/`defineSlots` from `@knitui/core`).
 //   7. Per-slot `styles={{…}}` sugar (`SlotStyles` + `slotStyles().merge`) PLUS the
@@ -22,8 +22,8 @@
 //   9. Locale + date formatting via `useDatesContext` + dayjs.
 //  10. min/max bounds via the shared date utils.
 //  11. Native + web a11y set side-by-side (`controlA11yProps` + `aria-*`).
-//  12. `webCursor`, real `hoverStyle`/`pressStyle`, a `disabled` variant.
-//  13. `.styleable` wrapper forwarding a ref + style props (the dates norm).
+//  12. `web:` cursor clauses, real `hover:`/`press:` clauses, a `disabled` variant.
+//  13. `styleable()` wrapper forwarding a ref + style props (the dates norm).
 //  14. `withStaticProperties` exposing parts + slot markers.
 //  15. A documented "compiler-safe styling" pitfall (the `_o-0` trap).
 //
@@ -42,15 +42,15 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 import { useUncontrolled } from "@knitui/hooks";
 
-import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
+import { type CalendarSize, cellFontVariant, cellMinWidthVariant } from "../cell-metrics";
 import { useDatesContext } from "../DatesProvider";
 import { controlA11yProps } from "../internal/a11y";
-import { webCursor } from "../internal/web-cursor";
 import type { DateStringValue } from "../types";
 import { isAfterMinDate, isBeforeMaxDate, toDateString } from "../utils";
 
@@ -67,77 +67,53 @@ const ExampleControlContext = createStyledContext<{ size: CalendarSize }>({ size
 // Each variant maps the `xxs…xxl` keys onto a metric so retuning the ladder moves
 // every component together. Express these with raw values from the ladder (they
 // resolve at module-load) — NOT `getTokenValue`, which needs the live config.
-const optionMinWidthVariant = {
-  xxs: { minWidth: CELL_WIDTH.xxs },
-  xs: { minWidth: CELL_WIDTH.xs },
-  sm: { minWidth: CELL_WIDTH.sm },
-  md: { minWidth: CELL_WIDTH.md },
-  lg: { minWidth: CELL_WIDTH.lg },
-  xl: { minWidth: CELL_WIDTH.xl },
-  xxl: { minWidth: CELL_WIDTH.xxl },
-} as const;
-
-const optionFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 // ── 5. Styled parts ───────────────────────────────────────────────────────────
 
 /** The root row: optional lead · option strip · optional trail. */
 const ExampleControlFrame = styled(Box, {
-  name: "ExampleControl",
+  displayName: "ExampleControl",
   context: ExampleControlContext,
   flexDirection: "row",
   alignItems: "center",
-  gap: "$xs",
+  gap: "xs",
 });
 
 /** The strip wrapping the option buttons. */
 const ExampleControlOptions = styled(Box, {
-  name: "ExampleControlOptions",
+  displayName: "ExampleControlOptions",
   flexDirection: "row",
   alignItems: "stretch",
-  gap: "$xxs",
+  gap: "xxs",
 });
 
 /**
  * A single selectable option button.
  *
- * 4. Colors are theme-ramp tokens ONLY: idle text is the neutral `$color`, the
- *    selected fill is the accent `$color9` with `$color1` contrast text. No hex,
+ * 4. Colors are theme-ramp tokens ONLY: idle text is the neutral `color`, the
+ *    selected fill is the accent `color9` with `color1` contrast text. No hex,
  *    no `color` prop — `theme="red"` on (or above) the control recolors it.
- * 12. Interaction lives in real Tamagui pseudo-state (`hoverStyle`/`pressStyle`)
+ * 12. Interaction lives in real Tamagui pseudo-state (`hover:`/`press:` clauses)
  *     and a `disabled` variant (Mantine parity: 0.3 + non-interactive), never a
  *     runtime `onHoverIn` state machine.
  */
 const ExampleControlOption = styled(UnstyledButton.Frame, {
-  name: "ExampleControlOption",
+  displayName: "ExampleControlOption",
   context: ExampleControlContext,
   alignItems: "center",
   justifyContent: "center",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$xs",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  paddingVertical: "xs",
+  paddingHorizontal: "xs",
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
-    size: optionMinWidthVariant,
+    size: cellMinWidthVariant,
 
     /** Selected option — solid accent fill. */
     selected: {
       true: {
-        backgroundColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
       },
     },
 
@@ -146,9 +122,8 @@ const ExampleControlOption = styled(UnstyledButton.Frame, {
       true: {
         opacity: 0.3,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -170,22 +145,22 @@ const ExampleControlOption = styled(UnstyledButton.Frame, {
  *     a per-render dynamic `opacity`/`display` style prop.
  */
 const ExampleControlLabel = styled(Text, {
-  name: "ExampleControlLabel",
+  displayName: "ExampleControlLabel",
   context: ExampleControlContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
   variants: {
-    size: optionFontVariant,
+    size: cellFontVariant,
 
     /** On the selected accent fill, the label flips to the contrast color. */
-    selected: { true: { color: "$color1" } },
+    selected: { true: { color: "color1" } },
   } as const,
   defaultVariants: { size: "md" },
 });
 
 /** Lead/trail section wrapper — a real styled part for the section props to land on. */
 const ExampleControlSection = styled(Box, {
-  name: "ExampleControlSection",
+  displayName: "ExampleControlSection",
   context: ExampleControlContext,
   flexDirection: "row",
   alignItems: "center",
@@ -304,7 +279,8 @@ export interface ExampleControlProps extends ExampleControlFrameProps {
  *   onChange={setValue}
  * />
  */
-const ExampleControlComponent = ExampleControlFrame.styleable<ExampleControlProps>(
+const ExampleControlComponent = styleable<ExampleControlProps>(
+  ExampleControlFrame,
   function ExampleControl(props, ref) {
     const {
       data,

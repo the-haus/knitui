@@ -133,6 +133,7 @@ export {
   type ComboboxTargetProps,
   defaultOptionsFilter,
   type FilterOptionsInput,
+  getComboboxOptionId,
   type OptionsDropdownProps,
   type OptionsFilter,
   useCombobox,
@@ -258,6 +259,22 @@ export {
   usePressScale,
   useReducedTransition,
 } from "./internal/motion";
+// Variant value types the public frames' prop types reference. Exported so a
+// downstream `styled(Group, …)` / inferred component type can be NAMED in its
+// emitted declarations (TS2883 otherwise).
+export type {
+  AlignValue,
+  CssString,
+  DynamicVariant,
+  FlexDirection,
+  JustifyValue,
+  RadiusValue,
+  ShadowKey,
+  StyleFragment,
+  TextWrap,
+  TransitionSpec,
+  TransitionValue,
+} from "./internal/style-props";
 export { Kbd, type KbdProps, type KbdSize } from "./Kbd";
 export { KeyboardAvoidingView, type KeyboardAvoidingViewProps } from "./KeyboardAvoidingView";
 export {
@@ -271,8 +288,8 @@ export {
   type ListProps,
   type ListSize,
 } from "./List";
-export { Loader, type LoaderProps, type LoaderSize, type LoaderType } from "./Loader";
 
+export { Loader, type LoaderProps, type LoaderSize, type LoaderType } from "./Loader";
 export {
   LoadingOverlay,
   type LoadingOverlayLoaderStyle,
@@ -283,6 +300,7 @@ export {
 export { Mark, type MarkProps } from "./Mark";
 export { Marquee, type MarqueeOrientation, type MarqueeProps, type MarqueeStyles } from "./Marquee";
 export { MaskInput, type MaskInputProps } from "./MaskInput";
+
 export {
   Menu,
   type MenuArrowPosition,
@@ -295,7 +313,6 @@ export {
   type MenuTargetProps,
   type MenuTrigger,
 } from "./Menu";
-
 export {
   Modal,
   type ModalBodyProps,
@@ -305,6 +322,7 @@ export {
   type ModalSize,
   type ModalTitleProps,
 } from "./Modal";
+
 export {
   MultiSelect,
   type MultiSelectPillsProps,
@@ -313,7 +331,6 @@ export {
 } from "./MultiSelect";
 
 export { NativeSelect, type NativeSelectProps } from "./NativeSelect";
-
 export { NavLink, type NavLinkProps, type NavLinkStyles, type NavLinkVariant } from "./NavLink";
 export {
   Notification,
@@ -325,9 +342,9 @@ export {
   type NotificationProps,
   type NotificationTitleProps,
 } from "./Notification";
+
 // Typography utilities
 export { NumberFormatter, type NumberFormatterProps } from "./NumberFormatter";
-
 export {
   NumberInput,
   type NumberInputHandlers,
@@ -335,6 +352,7 @@ export {
   type NumberInputStyles,
   type NumberInputValue,
 } from "./NumberInput";
+
 // Overlays
 export { Overlay, type OverlayProps } from "./Overlay";
 
@@ -347,7 +365,6 @@ export {
   type PaginationRootProps,
   type PaginationSize,
 } from "./Pagination";
-
 // Surfaces
 export { Paper, type PaperProps } from "./Paper";
 export { Paragraph, type ParagraphProps } from "./Paragraph";
@@ -365,8 +382,8 @@ export {
   type PillStyles,
   type PillVariant,
 } from "./Pill";
-export { PillsInput, type PillsInputFieldProps, type PillsInputProps } from "./PillsInput";
 
+export { PillsInput, type PillsInputFieldProps, type PillsInputProps } from "./PillsInput";
 export {
   PinInput,
   type PinInputHostType,
@@ -414,6 +431,7 @@ export {
   type ProgressSectionProps,
   type ProgressSize,
 } from "./Progress";
+
 // Form controls
 export {
   Radio,
@@ -427,7 +445,6 @@ export {
 } from "./Radio";
 
 export { Rating, type RatingProps, type RatingSize, type RatingStyles } from "./Rating";
-
 export {
   RollingNumber,
   type RollingNumberFontSize,
@@ -481,8 +498,8 @@ export {
   type SliderSize,
   type SliderStyles,
 } from "./Slider";
-export { Spacer, type SpacerProps } from "./Spacer";
 
+export { Spacer, type SpacerProps } from "./Spacer";
 // Mantine ships this component as `Space`; we expose both names off one impl.
 export { Spacer as Space, type SpacerProps as SpaceProps } from "./Spacer";
 export { Spoiler, type SpoilerProps } from "./Spoiler";
@@ -501,6 +518,7 @@ export {
   type StepperVariant,
 } from "./Stepper";
 export { Switch, type SwitchGroupProps, type SwitchProps, type SwitchSize } from "./Switch";
+
 export {
   Table,
   type TableCaptionProps,
@@ -535,24 +553,23 @@ export {
   type TabsTabProps,
   type TabsVariant,
 } from "./Tabs";
-
 export {
   TagsInput,
   type TagsInputPillsProps,
   type TagsInputProps,
   type TagsInputRef,
 } from "./TagsInput";
-export { Text, type TextProps } from "./Text";
 
+export { Text, type TextProps } from "./Text";
 export { Textarea, type TextareaProps, type TextareaRef, type TextareaResize } from "./Textarea";
 export { TextInput, type TextInputProps, type TextInputRef } from "./TextInput";
+
 export {
   ThemeIcon,
   type ThemeIconProps,
   type ThemeIconSize,
   type ThemeIconVariant,
 } from "./ThemeIcon";
-
 // Typographyy
 export { Title, type TitleOrder, type TitleProps, type TitleSize } from "./Title";
 export {
@@ -593,8 +610,8 @@ export {
   useTree,
   type UseTreeInput,
 } from "./Tree";
-export { TreeSelect, type TreeSelectProps, type TreeSelectSize } from "./TreeSelect";
 
+export { TreeSelect, type TreeSelectProps, type TreeSelectSize } from "./TreeSelect";
 export { Typography, type TypographyProps } from "./Typography";
 export { UnstyledButton, type UnstyledButtonProps } from "./UnstyledButton";
 export {
@@ -605,4 +622,5 @@ export {
   type VirtualListRenderItemInfo,
   type VirtualListStyles,
 } from "./VirtualList";
+
 export { VisuallyHidden, type VisuallyHiddenProps } from "./VisuallyHidden";

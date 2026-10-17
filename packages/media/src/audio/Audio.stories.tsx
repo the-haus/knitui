@@ -102,11 +102,11 @@ export const CustomControlBar: Story = {
   args: {
     controls: (
       <Group justify="space-between" align="center" width="100%">
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           <Audio.PlayPause />
           <Audio.Time />
         </Group>
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           <Audio.Mute />
           <Audio.PlaybackRate />
         </Group>
@@ -127,14 +127,14 @@ export const Styles: Story = {
     artist: "Custom slots",
     artwork: "https://picsum.photos/seed/styled/200",
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue6" },
-      title: { color: "$blue11" },
+      root: { backgroundColor: "blue3", borderColor: "blue6" },
+      title: { color: "blue11" },
     },
   },
 };
 
 /**
- * Theme-driven recolor. The whole player is built on `$colorN` ramp tokens, so
+ * Theme-driven recolor. The whole player is built on `colorN` ramp tokens, so
  * dropping it under a `<Theme>` recolors it with zero per-component logic — the
  * same property that themes Button/ActionIcon. No hardcoded colors anywhere.
  */
@@ -142,10 +142,10 @@ export const Themed: Story = {
   render: (args) => (
     <Stack gap={16}>
       <Theme name="red">
-        <Audio {...args} title="Red theme" artist="$colorN recolor" />
+        <Audio {...args} title="Red theme" artist="colorN recolor" />
       </Theme>
       <Theme name="dark">
-        <Audio {...args} title="Dark theme" artist="$colorN recolor" />
+        <Audio {...args} title="Dark theme" artist="colorN recolor" />
       </Theme>
     </Stack>
   ),
@@ -178,7 +178,7 @@ export const LongTrack: Story = {
 export const TwoPlayers: Story = {
   parameters: { layout: "padded" },
   render: () => (
-    <Stack gap="$lg" maxWidth={480} width="100%">
+    <Stack gap="lg" maxWidth={480} width="100%">
       <Audio source={SONG_1} title="Song 1" artist="Shared engine" />
       <Audio source={SONG_2} title="Song 2" artist="Shared engine" />
     </Stack>

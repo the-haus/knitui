@@ -3,6 +3,7 @@ import * as React from "react";
 import type { TamaguiElement } from "@knitui/core";
 
 import { fireEvent, render, screen } from "../test-utils";
+import { Text } from "../Text";
 import { ScrollArea } from "./ScrollArea";
 import type { ScrollAreaHandle } from "./ScrollArea";
 import {
@@ -29,7 +30,7 @@ describe("ScrollArea", () => {
   it("accepts pull-to-refresh props on web without leaking them onto the DOM", () => {
     const onRefresh = jest.fn();
     const { container } = render(
-      <ScrollArea scrollbars="y" onRefresh={onRefresh} refreshing refreshColor="$color10">
+      <ScrollArea scrollbars="y" onRefresh={onRefresh} refreshing refreshColor="color10">
         <span>Refreshable</span>
       </ScrollArea>,
     );
@@ -173,6 +174,32 @@ describe("ScrollArea", () => {
     expect(viewport.scrollTop).toBe(42);
     ref.current?.scrollToTop();
     expect(viewport.scrollTop).toBe(0);
+  });
+
+  it("tracks hover through DOM mouse events and still calls the caller's handlers", () => {
+    const onMouseEnter = jest.fn();
+    const onMouseLeave = jest.fn();
+    render(
+      <ScrollArea testID="sa" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <Text>hover</Text>
+      </ScrollArea>,
+    );
+    const frame = screen.getByTestId("sa");
+    fireEvent.mouseEnter(frame);
+    fireEvent.mouseLeave(frame);
+    expect(onMouseEnter).toHaveBeenCalledTimes(1);
+    expect(onMouseLeave).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not leak styled frame names onto the DOM", () => {
+    render(
+      <ScrollArea testID="sa" scrollbars="xy" shadows>
+        <Text>n</Text>
+      </ScrollArea>,
+    );
+    const frame = screen.getByTestId("sa");
+    expect(frame).not.toHaveAttribute("name");
+    expect(frame.querySelector("[name]")).toBeNull();
   });
 
   it("exposes the Autosize compound sub-component", () => {

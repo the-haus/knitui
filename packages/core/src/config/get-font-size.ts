@@ -12,18 +12,15 @@ const FONT_SIZE_KEYS = new Set<string>(Object.keys(font));
  * NOT the font ladder (12→28) — so this reads the static `font` scale directly.
  * Like `resolveSizePx` (see `components/internal/control-metrics.ts`) it is
  * config-free and safe to call at MODULE-LOAD time and during SSR, before the
- * Tamagui config exists. The number it returns is exactly what a `$`-token
- * resolves to on `fontSize` (e.g. `$xxl` → `bodyFont.size.xxl` → `font.xxl` 28).
+ * Tamagui config exists. The number it returns is exactly what a token resolves
+ * to on `fontSize` (e.g. `"xxl"` → `bodyFont.size.xxl` → `font.xxl` 28).
  *
- * Accepts a `$`-token (`"$xxl"`), a bare key (`"xxl"`), the `"$true"`/`"true"`
- * alias (→ the `md` step, matching the font config), or a number (passed
- * through). An unrecognized string falls back to the `md` step.
+ * Accepts a token key (`"xxl"`) or a number (passed through). An unrecognized
+ * string falls back to the `md` step. (v3 has no `$` sigil and no `true` alias.)
  */
 export const getFontSize = (size: string | number): number => {
   if (typeof size === "number") return size;
-  const key = size.startsWith("$") ? size.slice(1) : size;
-  if (key === "true") return font.md;
-  return FONT_SIZE_KEYS.has(key) ? font[key as FontSizeKey] : font.md;
+  return FONT_SIZE_KEYS.has(size) ? font[size as FontSizeKey] : font.md;
 };
 
 const FONT_SIZE_ENTRIES = (Object.keys(font) as FontSizeKey[]).map((key) => ({
@@ -34,7 +31,7 @@ const FONT_SIZE_ENTRIES = (Object.keys(font) as FontSizeKey[]).map((key) => ({
 /**
  * The ratio a RAW px font size would carry if it were a token — the step it sits
  * closest to on the `font` scale. Without this a numeric size is stuck on one
- * fixed ratio, so `fontSize={28}` and `fontSize="$xxl"` (also 28) render lines of
+ * fixed ratio, so `fontSize={28}` and `fontSize="xxl"` (also 28) render lines of
  * different heights; walking the ladder keeps the taper in `lineHeightRatios`
  * continuous across both. Sizes past either end clamp to that end's ratio.
  */
@@ -57,12 +54,11 @@ const nearestRatio = (px: number): number => {
  *
  * Accepts the same inputs as `getFontSize`. A bare number is treated as a raw font
  * size and takes the ratio of the nearest step on the font scale, so it lands on
- * the same line height as the equivalent token; `"true"` and unrecognized strings
- * fall back to the `md` step.
+ * the same line height as the equivalent token; unrecognized strings fall back to
+ * the `md` step.
  */
 export const getLineHeight = (size: string | number): number => {
   if (typeof size === "number") return Math.round(size * nearestRatio(size));
-  const raw = size.startsWith("$") ? size.slice(1) : size;
-  const key = (raw === "true" || !FONT_SIZE_KEYS.has(raw) ? "md" : raw) as FontSizeKey;
+  const key = (FONT_SIZE_KEYS.has(size) ? size : "md") as FontSizeKey;
   return Math.round(font[key] * lineHeightRatios[key]);
 };

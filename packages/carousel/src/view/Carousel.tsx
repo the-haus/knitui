@@ -2,7 +2,7 @@ import * as React from "react";
 import { GestureDetector } from "react-native-gesture-handler";
 
 import { ActionIcon } from "@knitui/components";
-import { isWeb, type LayoutChangeEvent, type ViewStyle, withStaticProperties } from "@knitui/core";
+import { isWeb, type LayoutChangeEvent, withStaticProperties } from "@knitui/core";
 import { useReducedMotion } from "@knitui/hooks";
 import { IconChevronDown } from "@knitui/icons/IconChevronDown";
 import { IconChevronLeft } from "@knitui/icons/IconChevronLeft";
@@ -18,6 +18,7 @@ import { useLayout } from "../layouts";
 import { resolveConfig, type SeekFn, useCarouselCore } from "../motion/useCarouselCore";
 import { Pagination } from "../pagination/Pagination";
 import { useResolvedSource } from "../source";
+import type { HostStyle } from "../style";
 import type { CarouselProps, CarouselRef } from "../types";
 import {
   CarouselControls,
@@ -34,6 +35,10 @@ import {
 } from "./chrome";
 import { NativeTrack } from "./NativeTrack";
 import { Track } from "./Track";
+
+/** Web transform mode: the browser keeps the cross-axis pan (hoisted). */
+const TOUCH_PAN_X: HostStyle = { touchAction: "pan-x" };
+const TOUCH_PAN_Y: HostStyle = { touchAction: "pan-y" };
 
 function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) {
   const config = resolveConfig(props);
@@ -173,10 +178,8 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
   // Transform mode: let the browser own the cross-axis scroll; we own the main
   // axis. Native mode leaves `touch-action` alone so the real scroll container
   // handles touch itself.
-  const touchActionStyle =
-    isWeb && !native
-      ? ({ touchAction: vertical ? "pan-x" : "pan-y" } as unknown as ViewStyle)
-      : null;
+  const touchActionStyle: HostStyle | null =
+    isWeb && !native ? (vertical ? TOUCH_PAN_X : TOUCH_PAN_Y) : null;
 
   // Per-slot style sugar + marker-slot chrome (Controls / Indicators / Overlay).
   const s = useCarouselSlots(props.styles);

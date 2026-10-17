@@ -37,7 +37,7 @@
 //       labelled `TimePicker` segments, and the submit `ActionIcon`.
 //   13. The `<Type>` generic is preserved through `forwardRef` (which would
 //       otherwise pin it at `"default"`), so the ref is forwarded via a typed
-//       `forwardRef` rather than `.styleable` — the documented sibling-picker
+//       `forwardRef` rather than `styleable()` — the documented sibling-picker
 //       pattern (`DatePicker` / `DateTimePicker`).
 //   14. The styled wrapper parts (`.TimeWrapper` / `.TimeInput` / `.SubmitButton`
 //       / `.RangeInfo`) are attached as static properties so consumers can
@@ -90,19 +90,26 @@ export type InlineDateTimePickerSubmitButtonProps = ActionIconProps;
 // to land on — the calendar twin of Mantine's `timeWrapper` / `rangeInfo`
 // class-name slots.
 
+/**
+ * The root's `fullWidth` stretch, spread CONDITIONALLY: in v3 an explicit
+ * `width={undefined}` still claims the call-site slot and clears a slot/consumer
+ * width, so the prop is only present when it is on.
+ */
+const FULL_WIDTH = { width: "100%" } as const;
+
 /** Row wrapping the time input(s) and the submit button. */
 const InlineDateTimePickerTimeWrapper = styled(Box, {
-  name: "InlineDateTimePickerTimeWrapper",
+  displayName: "InlineDateTimePickerTimeWrapper",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$xs",
-  marginTop: "$xs",
+  gap: "xs",
+  marginTop: "xs",
 });
 
 /** Read-only summary of the selected range (range mode only). */
 const InlineDateTimePickerRangeInfo = styled(Text, {
-  name: "InlineDateTimePickerRangeInfo",
-  marginTop: "$xs",
+  displayName: "InlineDateTimePickerRangeInfo",
+  marginTop: "xs",
 });
 
 /**
@@ -446,7 +453,7 @@ function InlineDateTimePickerInner<Type extends DatePickerType = "default">(
   );
 
   return (
-    <Box ref={ref} width={_fullWidth ? "100%" : undefined} {...s.get("root")} {...others}>
+    <Box ref={ref} {...(_fullWidth ? FULL_WIDTH : null)} {...s.get("root")} {...others}>
       <DatePicker
         // `fullWidth` makes the calendar fill BOTH axes (its frame carries
         // `flexGrow: 1`), so when the picker is given a height the calendar fills

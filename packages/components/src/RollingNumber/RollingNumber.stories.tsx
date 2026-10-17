@@ -70,11 +70,11 @@ export const Playground: Story = {};
 /** Full font-size token scale shown side by side to illustrate the sizing knob. */
 export const FontSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {FONT_SIZES.map((size) => (
-        <Box key={size} gap="$xs" alignItems="center">
+        <Box key={size} gap="xs" alignItems="center">
           <RollingNumber {...args} value={args.value} fontSize={size} />
-          <Text fontSize="$xs" color="$color11">
+          <Text fontSize="xs" color="color11">
             {size}
           </Text>
         </Box>
@@ -104,7 +104,7 @@ export const WithPrefixAndSuffix: Story = {
 /** Thousands separator groups digits for large numbers; decimal scale fixes the fractional part. */
 export const FormattedNumber: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <RollingNumber {...args} value={1234567} thousandSeparator />
       <RollingNumber {...args} value={9.5} decimalScale={2} fixedDecimalScale />
       <RollingNumber {...args} value={1000000} prefix="€" thousandSeparator suffix=" EUR" />
@@ -124,24 +124,24 @@ export const AnimatedCounter: Story = {
   render: (args) => {
     const [count, setCount] = React.useState(0);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <RollingNumber {...args} value={count} fontSize="xxl" />
-        <Box flexDirection="row" gap="$md">
+        <Box flexDirection="row" gap="md">
           <Box
             onPress={() => setCount((n) => n - 1)}
-            paddingHorizontal="$md"
-            paddingVertical="$sm"
-            backgroundColor="$color4"
-            borderRadius="$sm"
+            paddingHorizontal="md"
+            paddingVertical="sm"
+            backgroundColor="color4"
+            borderRadius="sm"
           >
             <Text>−</Text>
           </Box>
           <Box
             onPress={() => setCount((n) => n + 1)}
-            paddingHorizontal="$md"
-            paddingVertical="$sm"
-            backgroundColor="$color4"
-            borderRadius="$sm"
+            paddingHorizontal="md"
+            paddingVertical="sm"
+            backgroundColor="color4"
+            borderRadius="sm"
           >
             <Text>+</Text>
           </Box>
@@ -172,8 +172,8 @@ export const Styles: Story = {
   args: {
     value: 1234,
     styles: {
-      digitViewport: { backgroundColor: "$blue3", borderRadius: "$xs" },
-      digitText: { color: "$blue9", fontWeight: "700" },
+      digitViewport: { backgroundColor: "blue3", borderRadius: "xs" },
+      digitText: { color: "blue9", fontWeight: "700" },
     },
   },
 };

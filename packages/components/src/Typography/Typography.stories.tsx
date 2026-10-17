@@ -14,7 +14,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '`Typography` is a content-column wrapper that establishes a consistent vertical rhythm between stacked block children via `gap="$md"`. It forwards every `Box` prop and inherits text color from the active theme. Compose the kit\'s own `Title`, `Paragraph`, `List`, `Anchor`, `Blockquote`, and `Code` components inside it — they already carry their own styling.',
+          '`Typography` is a content-column wrapper that establishes a consistent vertical rhythm between stacked block children via `gap="md"`. It forwards every `Box` prop and inherits text color from the active theme. Compose the kit\'s own `Title`, `Paragraph`, `List`, `Anchor`, `Blockquote`, and `Code` components inside it — they already carry their own styling.',
       },
     },
   },
@@ -24,7 +24,7 @@ const meta = {
   argTypes: {
     gap: {
       control: "select",
-      options: ["$xs", "$sm", "$md", "$lg", "$xl"],
+      options: ["xs", "sm", "md", "lg", "xl"],
       description: "Vertical gap between stacked block children.",
     },
     theme: {
@@ -59,7 +59,7 @@ export const SingleBlock: Story = {
 export const MultipleBlocks: Story = {
   render: (args) => (
     <Typography {...args} style={{ maxWidth: 480 }}>
-      <Text fontSize="$xl" fontWeight="700">
+      <Text fontSize="xl" fontWeight="700">
         Article heading
       </Text>
       <Text>
@@ -77,10 +77,10 @@ export const MultipleBlocks: Story = {
 /** Demonstrates that the gap token can be overridden to tighten or loosen rhythm. */
 export const CustomGap: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
-      {(["$xs", "$sm", "$md", "$lg", "$xl"] as const).map((gap) => (
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
+      {(["xs", "sm", "md", "lg", "xl"] as const).map((gap) => (
         <Box key={gap} style={{ width: 200 }}>
-          <Text fontSize="$sm" color="$colorSubtitle" marginBottom="$xs">
+          <Text fontSize="sm" color="color11" marginBottom="xs">
             gap={gap}
           </Text>
           <Typography gap={gap}>
@@ -98,14 +98,14 @@ export const CustomGap: Story = {
 export const RichContent: Story = {
   render: (args) => (
     <Typography {...args} style={{ maxWidth: 520 }}>
-      <Text fontSize="$xxl" fontWeight="800">
+      <Text fontSize="xxl" fontWeight="800">
         ⭐ Welcome to the docs
       </Text>
       <Text>
         Typography is a layout primitive, not a style applier. Pair it with the kit's semantic
         components for headings, lists, code blocks, and anchors.
       </Text>
-      <Text fontSize="$xl" fontWeight="700">
+      <Text fontSize="xl" fontWeight="700">
         Getting started
       </Text>
       <Text>
@@ -119,13 +119,13 @@ export const RichContent: Story = {
 /** The color of descendant text follows the active Tamagui theme accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-start">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <Typography key={theme} {...args} theme={theme} style={{ width: 140 }}>
           <Text fontWeight="700" textTransform="capitalize">
             {theme}
           </Text>
-          <Text fontSize="$sm">Theme accent flows to all descendants automatically.</Text>
+          <Text fontSize="sm">Theme accent flows to all descendants automatically.</Text>
         </Typography>
       ))}
     </Box>

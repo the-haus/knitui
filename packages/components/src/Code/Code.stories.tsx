@@ -14,7 +14,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Inline or block-level monospace code. Tint comes from the active theme ramp (`$color3` surface, `$color12` text), so the `theme` prop recolors it with no per-component logic. `block` switches from inline `<code>` to a full-width `<pre>`.",
+          "Inline or block-level monospace code. Tint comes from the active theme ramp (`color3` surface, `color12` text), so the `theme` prop recolors it with no per-component logic. `block` switches from inline `<code>` to a full-width `<pre>`.",
       },
     },
   },
@@ -71,7 +71,7 @@ export const Block: Story = {
 /** Inline and block variants side by side for a quick comparison. */
 export const InlineVsBlock: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Text>
         Inline: <Code {...args}>const x = 42;</Code>
       </Text>
@@ -86,7 +86,7 @@ export const InlineVsBlock: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink", "gray"] as const).map((theme) => (
         <Code key={theme} {...args} theme={theme}>
           {theme}
@@ -100,7 +100,7 @@ export const Themed: Story = {
 /** Block code themed to different accents for visual regression. */
 export const ThemedBlock: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {(["blue", "red", "green", "yellow", "pink", "gray"] as const).map((theme) => (
         <Code key={theme} {...args} block theme={theme}>
           {`// theme="${theme}"\nconst color = "${theme}";`}

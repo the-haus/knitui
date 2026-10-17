@@ -4,6 +4,7 @@ import {
   DURATIONS,
   type GetProps,
   isWeb,
+  styleable,
   styled,
   type TamaguiElement,
   withStaticProperties,
@@ -22,28 +23,28 @@ import { Text } from "../Text";
 /* Styled parts                                                               */
 /* -------------------------------------------------------------------------- */
 
-const SpoilerRoot = styled(Box, { name: "Spoiler", flexDirection: "column" });
+const SpoilerRoot = styled(Box, { displayName: "Spoiler", flexDirection: "column" });
 
 /** Clipping region whose `height` animates between `maxHeight` and the content's
  *  natural height. `overflow: hidden` hides the overflow as it shrinks.
  *  paddingBottom gives a small buffer so the last fully-visible line is never
  *  clipped mid-glyph at the collapsed boundary. */
 const SpoilerRegion = styled(Box, {
-  name: "SpoilerRegion",
+  displayName: "SpoilerRegion",
   overflow: "hidden",
-  paddingBottom: "$xxs",
+  paddingBottom: "xxs",
 });
 
 /** The reveal/hide toggle — styled like a hover-underlined `Anchor`. */
 const SpoilerControl = styled(Text, {
-  name: "SpoilerControl",
-  color: "$color11",
+  displayName: "SpoilerControl",
+  color: "color11",
   ...webCursor("pointer"),
-  marginTop: "$xs",
+  marginTop: "xs",
   alignSelf: "flex-start",
   fontWeight: "500",
-  hoverStyle: { textDecorationLine: "underline" },
-  pressStyle: { opacity: 0.7 },
+  textDecorationLine: "hover:underline",
+  opacity: "press:0.7",
 });
 
 /**
@@ -61,7 +62,7 @@ const SpoilerControl = styled(Text, {
  * old `?? "#fff"` last resort survives as the CSS variable's own fallback.
  */
 const SPOILER_FADE_BACKGROUND = (() => {
-  const backgroundVar = themeColorToCssVar("$background");
+  const backgroundVar = themeColorToCssVar("background");
   return backgroundVar.startsWith("var(") ? `${backgroundVar.slice(0, -1)}, #fff)` : backgroundVar;
 })();
 const SPOILER_FADE_GRADIENT = `linear-gradient(to bottom, transparent, ${SPOILER_FADE_BACKGROUND})`;
@@ -93,7 +94,12 @@ const SPOILER_SLOT_KEYS = [
   "fade",
 ] as const satisfies readonly (keyof SpoilerStyles)[];
 
-export interface SpoilerProps extends GetProps<typeof SpoilerRoot> {
+// `maxHeight` / `transitionDuration` are re-declared below with Spoiler's own
+// meaning (a px threshold, a ms number), so the v3 style props are Omit-ed.
+export interface SpoilerProps extends Omit<
+  GetProps<typeof SpoilerRoot>,
+  "maxHeight" | "transitionDuration"
+> {
   /** Max height (px) of the collapsed content. The toggle appears when the
    *  content is taller than this. @default 100 */
   maxHeight?: number;
@@ -147,7 +153,7 @@ type WebFadeProps = {
 /* Spoiler                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const SpoilerBase = SpoilerRoot.styleable<SpoilerProps>(function Spoiler(props, ref) {
+const SpoilerBase = styleable<SpoilerProps>(SpoilerRoot, function Spoiler(props, ref) {
   const {
     maxHeight = 100,
     showLabel,
@@ -248,9 +254,9 @@ const SpoilerBase = SpoilerRoot.styleable<SpoilerProps>(function Spoiler(props, 
             bottom={0}
             left={0}
             right={0}
-            height="$xxl"
+            height="xxl"
             pointerEvents="none"
-            {...(isWeb ? webFade : { backgroundColor: "$background", opacity: 0.85 })}
+            {...(isWeb ? webFade : { backgroundColor: "background", opacity: 0.85 })}
           />
         ) : null}
       </CollapseBox>

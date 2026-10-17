@@ -55,8 +55,8 @@ function SidebarRow({
         borderRadius: 6,
       })}
     >
-      <Box px="$sm" py="$xs">
-        <Text c={active ? "$color12" : "$color11"} fz={13} fontWeight={active ? "600" : "400"}>
+      <Box px="sm" py="xs">
+        <Text c={active ? "color12" : "color11"} fz={13} fontWeight={active ? "600" : "400"}>
           {section.title}
         </Text>
       </Box>
@@ -74,10 +74,10 @@ function Gallery() {
   const active = demoSections.find((s) => s.id === activeId);
 
   return (
-    <Box flexDirection="row" height={height} bg="$background">
+    <Box flexDirection="row" height={height} bg="background">
       {/* Sidebar */}
-      <Stack width={260} borderRightWidth={1} borderColor="$color4">
-        <Stack p="$md" gap="$sm">
+      <Stack width={260} borderRightWidth={1} borderColor="color4">
+        <Stack p="md" gap="sm">
           <Box flexDirection="row" justifyContent="space-between" alignItems="center">
             <Title order={4}>Knit UI</Title>
             <Pressable onPress={toggleColorScheme} accessibilityLabel="Toggle color scheme">
@@ -92,16 +92,16 @@ function Gallery() {
             autoCorrect={false}
             size="sm"
           />
-          <Text c="$color10" fz={11}>
+          <Text c="color10" fz={11}>
             {demoSections.length} components
           </Text>
         </Stack>
         <Separator />
         <ScrollView testID="DemoScreen.sidebar" style={{ flex: 1 }}>
-          <Stack p="$sm" gap="$md">
+          <Stack p="sm" gap="md">
             {grouped.map(([group, sections]) => (
-              <Stack key={group} gap="$xxs">
-                <Text c="$color9" fz={10} fontWeight="700" px="$sm" textTransform="uppercase">
+              <Stack key={group} gap="xxs">
+                <Text c="color9" fz={10} fontWeight="700" px="sm" textTransform="uppercase">
                   {group}
                 </Text>
                 {sections.map((section) => (
@@ -115,8 +115,8 @@ function Gallery() {
               </Stack>
             ))}
             {grouped.length === 0 && (
-              <Center py="$xl">
-                <Paragraph c="$color11">No matches for “{query}”.</Paragraph>
+              <Center py="xl">
+                <Paragraph c="color11">No matches for “{query}”.</Paragraph>
               </Center>
             )}
           </Stack>
@@ -126,7 +126,7 @@ function Gallery() {
       {/* Active section. Full-bleed sections (maps) fill the pane so their
           flex:1 content gets a real height; the rest scroll in a padded column. */}
       {active?.fullBleed ? (
-        <Flex testID="DemoScreen.content" flex={1} p="$lg">
+        <Flex testID="DemoScreen.content" flex={1} p="lg">
           <Suspense
             fallback={
               <Center flex={1}>
@@ -146,10 +146,10 @@ function Gallery() {
           contentContainerStyle={{ padding: 32 }}
         >
           {active ? (
-            <Stack gap="$xl" maw={900} w="100%">
+            <Stack gap="xl" maw={900} w="100%">
               <Suspense
                 fallback={
-                  <Center py="$xl">
+                  <Center py="xl">
                     <Loader theme="blue" />
                   </Center>
                 }
@@ -161,7 +161,7 @@ function Gallery() {
             </Stack>
           ) : (
             <Center flex={1}>
-              <Paragraph c="$color11">Select a component.</Paragraph>
+              <Paragraph c="color11">Select a component.</Paragraph>
             </Center>
           )}
         </ScrollView>

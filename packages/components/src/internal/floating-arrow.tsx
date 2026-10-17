@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { getTokenValue, type RadiusTokens } from "@knitui/core";
+import { type RadiusTokens, resolveToken } from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
 import { type Placement } from "../floating";
@@ -8,31 +8,26 @@ import { type Placement } from "../floating";
 /** Where the arrow sits along the dropdown edge. */
 export type ArrowPosition = "center" | "side";
 
-/** Resolve a radius token (`"$md"` or bare `"md"`) to its px value via the token system. */
+/** Resolve a radius token (`"md"`) to its px value via the active config. */
 function radiusTokenToPx(value: RadiusTokens | string): number | undefined {
-  // `RadiusTokens` widens to `string | number | Variable | UnionableNumber`, so
-  // narrow to a real string before token lookup; a bare number is already px.
+  // `RadiusTokens` widens past `string`, so a bare number is already px.
   if (typeof value !== "string") {
     return typeof value === "number" ? value : undefined;
   }
-  const token = (value.startsWith("$") ? value : `$${value}`) as Parameters<
-    typeof getTokenValue
-  >[0];
-  const resolved = getTokenValue(token, "radius");
+  const resolved = resolveToken(value, "radius");
   return typeof resolved === "number" ? resolved : undefined;
 }
 
 /**
  * Resolve a dropdown `radius` prop to pixels, for the arrow's corner keepout.
- * Mirrors `radiusVariant`/`toRadius`: a size key (`"md"`) or `$`-token (`"$md"`)
- * resolves through Tamagui's token system, a number passes through, and anything
- * unrecognized (`undefined`, or an arbitrary CSS value like `"10px"` the arrow math
- * can't use) falls back to `fallback` (itself a token, defaulting to the dropdown
- * frame's `$sm` radius). Only ever called at render, so the config is always present.
+ * Mirrors `radiusVariant`: a radius token (`"md"`) resolves through the active
+ * config, a number passes through, and anything unrecognized (`undefined`, or an
+ * arbitrary CSS value like `"10px"` the arrow math can't use) falls back to
+ * `fallback` (itself a token, defaulting to the dropdown frame's `sm` radius). Only ever called at render, so the config is always present.
  */
 export function resolveRadiusPx(
   radius: RadiusTokens | string | number | undefined,
-  fallback: RadiusTokens | number = "$sm",
+  fallback: RadiusTokens | number = "sm",
 ): number {
   if (typeof radius === "number") return radius;
   const resolved = radius != null ? radiusTokenToPx(radius) : undefined;
@@ -44,15 +39,11 @@ export function resolveRadiusPx(
 /**
  * The subset of Box style props the placement math drives. Narrowed (not widened)
  * so the computed object stays cast-free under Tamagui's strict style typing.
+ * Only the FINITE-domain values (edge colours, the corner radius) go through Tamagui
+ * style props; the geometry lives in {@link ArrowGeometry}.
  */
 type ArrowStyle = Pick<
   BoxProps,
-  | "top"
-  | "bottom"
-  | "left"
-  | "right"
-  | "marginLeft"
-  | "marginTop"
   | "borderTopColor"
   | "borderBottomColor"
   | "borderLeftColor"
@@ -62,6 +53,21 @@ type ArrowStyle = Pick<
   | "borderBottomLeftRadius"
   | "borderBottomRightRadius"
 >;
+
+/**
+ * Position values that follow the measured middleware coordinate, so they change on
+ * every scroll / resize. They go into the inline `style` prop: as Tamagui style
+ * props each distinct value would inject one more atomic CSS rule on web
+ * (docs/v3/conventions.md §11, W2 findings).
+ */
+interface ArrowGeometry {
+  top?: number | `${number}%`;
+  bottom?: number;
+  left?: number | `${number}%`;
+  right?: number;
+  marginLeft?: number;
+  marginTop?: number;
+}
 
 const TRANSPARENT = "transparent";
 
@@ -83,29 +89,30 @@ function getArrowStyle(
   borderColor: BoxProps["borderColor"],
   arrowX?: number,
   arrowY?: number,
-): ArrowStyle {
+): { style: ArrowStyle; geometry: ArrowGeometry } {
   const [side, align] = placement.split("-") as [string, string | undefined];
   const half = size / 2;
   const centered = position === "center" || !align;
   const style: ArrowStyle = {};
+  const geometry: ArrowGeometry = {};
 
   // Main axis: half-out pull, outward corner radius, outward border pair.
   if (side === "top") {
-    style.bottom = -half;
+    geometry.bottom = -half;
     style.borderBottomRightRadius = radius;
     style.borderTopColor = TRANSPARENT;
     style.borderLeftColor = TRANSPARENT;
     style.borderBottomColor = borderColor;
     style.borderRightColor = borderColor;
   } else if (side === "bottom") {
-    style.top = -half;
+    geometry.top = -half;
     style.borderTopLeftRadius = radius;
     style.borderBottomColor = TRANSPARENT;
     style.borderRightColor = TRANSPARENT;
     style.borderTopColor = borderColor;
     style.borderLeftColor = borderColor;
   } else if (side === "left") {
-    style.right = -half;
+    geometry.right = -half;
     style.borderTopRightRadius = radius;
     style.borderLeftColor = TRANSPARENT;
     style.borderBottomColor = TRANSPARENT;
@@ -113,7 +120,7 @@ function getArrowStyle(
     style.borderRightColor = borderColor;
   } else {
     // right
-    style.left = -half;
+    geometry.left = -half;
     style.borderBottomLeftRadius = radius;
     style.borderRightColor = TRANSPARENT;
     style.borderTopColor = TRANSPARENT;
@@ -125,27 +132,27 @@ function getArrowStyle(
   // static fallback — center, or pin `offset` from the start/end edge.
   if (side === "top" || side === "bottom") {
     if (typeof arrowX === "number") {
-      style.left = arrowX;
+      geometry.left = arrowX;
     } else if (centered) {
-      style.left = "50%";
-      style.marginLeft = -half;
+      geometry.left = "50%";
+      geometry.marginLeft = -half;
     } else if (align === "start") {
-      style.left = offset;
+      geometry.left = offset;
     } else {
-      style.right = offset;
+      geometry.right = offset;
     }
   } else if (typeof arrowY === "number") {
-    style.top = arrowY;
+    geometry.top = arrowY;
   } else if (centered) {
-    style.top = "50%";
-    style.marginTop = -half;
+    geometry.top = "50%";
+    geometry.marginTop = -half;
   } else if (align === "start") {
-    style.top = offset;
+    geometry.top = offset;
   } else {
-    style.bottom = offset;
+    geometry.bottom = offset;
   }
 
-  return style;
+  return { style, geometry };
 }
 
 export interface FloatingArrowProps {
@@ -159,9 +166,9 @@ export interface FloatingArrowProps {
   position: ArrowPosition;
   /** Corner radius applied to the arrow's outward corner. */
   radius: number;
-  /** Arrow fill — match the dropdown surface (e.g. `"$background"`). */
+  /** Arrow fill — match the dropdown surface (e.g. `"background"`). */
   background: BoxProps["backgroundColor"];
-  /** Outward-edge border color — match the dropdown border. @default "$borderColor" */
+  /** Outward-edge border color — match the dropdown border. @default "borderColor" */
   borderColor?: BoxProps["borderColor"];
   /** Border width; pass `0` for a borderless (solid) arrow. @default 1 */
   borderWidth?: number;
@@ -188,12 +195,12 @@ export function FloatingArrow({
   position,
   radius,
   background,
-  borderColor = "$borderColor",
+  borderColor = "borderColor",
   borderWidth = 1,
   arrowX,
   arrowY,
 }: FloatingArrowProps) {
-  const style = getArrowStyle(
+  const { style, geometry } = getArrowStyle(
     placement,
     size,
     offset,
@@ -213,6 +220,7 @@ export function FloatingArrow({
       rotate="45deg"
       pointerEvents="none"
       {...style}
+      style={geometry}
     />
   );
 }

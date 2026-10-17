@@ -139,4 +139,71 @@ describe("TagsInput", () => {
     render(<TagsInput defaultValue={["alpha"]} styles={{ pill: { testID: "styled-pill" } }} />);
     expect(screen.getByTestId("styled-pill")).toBeInTheDocument();
   });
+
+  describe("add / remove + suggestions", () => {
+    const field = () => screen.getByRole("textbox");
+
+    it("splits on a split char and on paste into several tags", () => {
+      const onChange = jest.fn();
+      render(<TagsInput onChange={onChange} splitChars={[","]} />);
+      fireEvent.change(field(), { target: { value: "a" } });
+      fireEvent.keyDown(field(), { key: "," });
+      expect(onChange).toHaveBeenLastCalledWith(["a"]);
+      fireEvent.paste(field(), { clipboardData: { getData: () => "b,c" } });
+      expect(onChange).toHaveBeenLastCalledWith(["a", "b", "c"]);
+    });
+
+    it("rejects duplicates (case-insensitive) and reports onDuplicate", () => {
+      const onDuplicate = jest.fn();
+      const onChange = jest.fn();
+      render(<TagsInput defaultValue={["Alpha"]} onChange={onChange} onDuplicate={onDuplicate} />);
+      fireEvent.change(field(), { target: { value: "alpha" } });
+      fireEvent.keyDown(field(), { key: "Enter" });
+      expect(onDuplicate).toHaveBeenCalledWith("alpha");
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("stops at maxTags", () => {
+      const onMaxTags = jest.fn();
+      render(<TagsInput defaultValue={["a"]} maxTags={1} onMaxTags={onMaxTags} />);
+      fireEvent.change(field(), { target: { value: "b" } });
+      fireEvent.keyDown(field(), { key: "Enter" });
+      expect(onMaxTags).toHaveBeenCalledWith("b");
+      expect(screen.queryByText("b")).not.toBeInTheDocument();
+    });
+
+    it("removes a tag via its pill remove button and on Backspace", () => {
+      const onRemove = jest.fn();
+      render(<TagsInput defaultValue={["a", "b", "c"]} onRemove={onRemove} />);
+      fireEvent.click(document.querySelectorAll(".tabler-icon-x")[0]);
+      expect(onRemove).toHaveBeenLastCalledWith("a");
+      fireEvent.keyDown(field(), { key: "Backspace" });
+      expect(onRemove).toHaveBeenLastCalledWith("c");
+      expect(screen.getByText("b")).toBeInTheDocument();
+      expect(screen.queryByText("c")).not.toBeInTheDocument();
+    });
+
+    it("is a combobox with keyboard-navigable suggestions when data is given", () => {
+      const onChange = jest.fn();
+      render(<TagsInput data={["react", "redux", "vue"]} onChange={onChange} />);
+      const input = screen.getByRole("combobox");
+      expect(input).toHaveAttribute("aria-expanded", "false");
+      fireEvent.change(input, { target: { value: "re" } });
+      expect(input).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["react", "redux"]);
+      expect(document.getElementById(input.getAttribute("aria-controls") ?? "")).not.toBeNull();
+      fireEvent.keyDown(input, { key: "ArrowDown" });
+      fireEvent.keyDown(input, { key: "ArrowDown" });
+      const active = document.getElementById(input.getAttribute("aria-activedescendant") ?? "");
+      expect(active).toHaveTextContent("redux");
+      fireEvent.keyDown(input, { key: "Enter" });
+      expect(onChange).toHaveBeenLastCalledWith(["redux"]);
+    });
+
+    it("never suggests a tag that is already picked", () => {
+      render(<TagsInput data={["react", "redux"]} defaultValue={["react"]} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "re" } });
+      expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["redux"]);
+    });
+  });
 });

@@ -2,22 +2,27 @@ import * as React from "react";
 
 import {
   type GetProps,
-  getTokenValue,
+  resolveToken,
   type SpaceTokens,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
-import { radiusVariant, shadowVariant } from "../internal/style-props";
+import { radiusVariant } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 
-const DEFAULT_PADDING: SpaceTokens = "$lg";
+const DEFAULT_PADDING: SpaceTokens = "lg";
 
-/** Resolve a padding prop (token or number) to a px number for the bleed math. */
-const resolvePadding = (p: SpaceTokens | number): number => {
+/**
+ * Resolve a padding prop (a space token or a number) to px for the Section bleed
+ * math. A clause program (`"md lg:xl"`) or an unknown name has no single px
+ * value, so it bleeds by 0 rather than guessing.
+ */
+const resolvePadding = (p: unknown): number => {
   if (typeof p === "number") return p;
-  const value = getTokenValue(p as Parameters<typeof getTokenValue>[0], "space");
+  const value = resolveToken(p, "space");
   return typeof value === "number" ? value : 0;
 };
 
@@ -40,22 +45,19 @@ const useCardContext = (): CardContextValue =>
   };
 
 const CardFrame = styled(Box, {
-  name: "Card",
+  displayName: "Card",
   flexDirection: "column",
-  // Pinned ramp steps, NOT `$background`/`$borderColor`. `name: "Card"` used to
-  // collide with Tamagui's (deprecated) `defaultComponentThemes`, which nested
-  // this frame into a `<scheme>_Card` theme whose `surface1` template offset
-  // `$background` to `$color2` and `$borderColor` to `$color5`. Those component
-  // themes are now off (`core/config/themes.ts` → `componentThemes: false`), so
-  // the offset is stated here instead — a card must read as a raised surface
-  // ABOVE the page background (`$color1`), which `$background` alone would not.
-  backgroundColor: "$color2",
-  borderColor: "$color5",
-  borderRadius: "$md",
+  // Pinned ramp steps, NOT `background`/`borderColor`: a card must read as a
+  // raised surface ABOVE the page background (`color1`), which `background`
+  // alone would not. (v2's `<scheme>_Card` component theme used to provide this
+  // offset; component themes are off — `componentThemes: false` — and v3 no
+  // longer resolves them, so the offset is stated here.)
+  backgroundColor: "color2",
+  borderColor: "color5",
+  borderRadius: "md",
   padding: DEFAULT_PADDING,
-  gap: "$sm",
+  gap: "sm",
   variants: {
-    shadow: shadowVariant,
     radius: radiusVariant,
     withBorder: {
       true: { borderWidth: 1 },
@@ -71,7 +73,7 @@ const CardFrame = styled(Box, {
 });
 
 const CardSectionFrame = styled(Box, {
-  name: "CardSection",
+  displayName: "CardSection",
 });
 
 export interface CardSectionProps extends GetProps<typeof CardSectionFrame> {
@@ -100,13 +102,16 @@ type SectionBleed = Pick<
   | "paddingVertical"
 >;
 
+const V_BORDER = { borderTopWidth: 1, borderBottomWidth: 1, borderColor: "color5" } as const;
+const H_BORDER = { borderLeftWidth: 1, borderRightWidth: 1, borderColor: "color5" } as const;
+
 /**
  * Full-bleed card region — mirrors Mantine's `Card.Section`. It negates the
  * card's padding so it spans edge-to-edge; the first/last sections also cancel
  * the card's leading/trailing padding (flagged by `Card` via `__first`/`__last`).
  * `inheritPadding` re-insets the content; `withBorder` adds dividers.
  */
-const CardSection = CardSectionFrame.styleable<CardSectionProps>(function CardSection(props, ref) {
+const CardSection = styleable<CardSectionProps>(CardSectionFrame, function CardSection(props, ref) {
   const { withBorder, inheritPadding, __first, __last, ...rest } = props;
   const { padding, orientation } = useCardContext();
   const isHorizontal = orientation === "horizontal";
@@ -128,34 +133,27 @@ const CardSection = CardSectionFrame.styleable<CardSectionProps>(function CardSe
         ...(inheritPadding ? { paddingHorizontal: padding } : null),
       };
 
-  return (
-    <CardSectionFrame
-      ref={ref}
-      borderTopWidth={withBorder && !isHorizontal ? 1 : undefined}
-      borderBottomWidth={withBorder && !isHorizontal ? 1 : undefined}
-      borderLeftWidth={withBorder && isHorizontal ? 1 : undefined}
-      borderRightWidth={withBorder && isHorizontal ? 1 : undefined}
-      // `$color5` (not `$borderColor`) to match `CardFrame` — see the note there.
-      borderColor={withBorder ? "$color5" : undefined}
-      {...bleed}
-      {...rest}
-    />
-  );
+  // Spread conditionally: an explicit `prop={undefined}` would still claim the
+  // call-site slot in v3 and clear a base/`styles` value (conventions §5).
+  // `color5` (not `borderColor`) to match `CardFrame` — see the note there.
+  const border = withBorder ? (isHorizontal ? H_BORDER : V_BORDER) : null;
+
+  return <CardSectionFrame ref={ref} {...border} {...bleed} {...rest} />;
 });
 
-const CardHeader = styled(Box, { name: "CardHeader", flexDirection: "column", gap: "$xs" });
+const CardHeader = styled(Box, { displayName: "CardHeader", flexDirection: "column", gap: "xs" });
 const CardFooter = styled(Box, {
-  name: "CardFooter",
+  displayName: "CardFooter",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$sm",
-  marginTop: "$sm",
+  gap: "sm",
+  marginTop: "sm",
 });
 
 /**
  * Named style slots (Pillar B / `styles.ts`). Each key maps to the props of the
- * styled part it targets, so `styles={{ header: { gap: "$md" } }}` is sugar for
- * `<Card.Header gap="$md" />`. Distributed onto the matching child parts; a
+ * styled part it targets, so `styles={{ header: { gap: "md" } }}` is sugar for
+ * `<Card.Header gap="md" />`. Distributed onto the matching child parts; a
  * part's own props win over the `styles` map.
  */
 export interface CardStyles {
@@ -173,14 +171,19 @@ const CARD_SLOT_KEYS = [
   "section",
 ] as const satisfies readonly (keyof CardStyles)[];
 
-export interface CardProps extends GetProps<typeof CardFrame> {
+export interface CardProps extends Omit<GetProps<typeof CardFrame>, "orientation"> {
+  /**
+   * Main-axis layout of the card's children. A single value (not a clause
+   * program): `Card.Section` reads it to pick its bleed axis. @default "vertical"
+   */
+  orientation?: "horizontal" | "vertical";
   /** Per-slot style sugar — props spread onto the matching child parts. */
   styles?: SlotStyles<CardStyles>;
 }
 
-const CardComponent = CardFrame.styleable<CardProps>(function Card(props, ref) {
+const CardComponent = styleable<CardProps>(CardFrame, function Card(props, ref) {
   const { padding = DEFAULT_PADDING, orientation = "vertical", styles, children, ...rest } = props;
-  const paddingValue = resolvePadding(padding as SpaceTokens | number);
+  const paddingValue = resolvePadding(padding);
   const s = slotStyles<CardStyles>(styles, CARD_SLOT_KEYS, "Card");
 
   // Flag the first/last card children that are Sections so they can negate the
@@ -213,8 +216,13 @@ const CardComponent = CardFrame.styleable<CardProps>(function Card(props, ref) {
     return child;
   });
 
+  const context = React.useMemo(
+    () => ({ padding: paddingValue, orientation }),
+    [paddingValue, orientation],
+  );
+
   return (
-    <CardContext.Provider value={{ padding: paddingValue, orientation }}>
+    <CardContext.Provider value={context}>
       <CardFrame ref={ref} padding={padding} orientation={orientation} {...rest}>
         {content}
       </CardFrame>

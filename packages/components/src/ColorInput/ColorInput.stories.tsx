@@ -104,7 +104,7 @@ export const Playground: Story = {};
 /** The five sizes rendered side by side for quick visual comparison. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <ColorInput key={size} {...args} size={size} placeholder={size} />
       ))}
@@ -115,7 +115,7 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation ladder, from `xs` to `xl`. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <ColorInput key={shadow} {...args} shadow={shadow} placeholder={shadow} />
       ))}
@@ -185,9 +185,9 @@ export const Controlled: Story = {
   render: (args) => {
     const [color, setColor] = React.useState("#be4bdb");
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <ColorInput {...args} value={color} onChange={setColor} />
-        <Box flexDirection="row" gap="$sm" alignItems="center">
+        <Box flexDirection="row" gap="sm" alignItems="center">
           <Text>Selected:</Text>
           <Text fontWeight="600">{color || "—"}</Text>
         </Box>
@@ -214,8 +214,8 @@ export const Styles: Story = {
     value: "#228be6",
     placeholder: "Pick a color",
     styles: {
-      label: { color: "$blue9", fontWeight: "700" },
-      preview: { radius: "$lg", withShadow: false },
+      label: { color: "blue9", fontWeight: "700" },
+      preview: { radius: "lg", withShadow: false },
     },
   },
 };

@@ -6,8 +6,8 @@ that runs on **web (Next.js)** and **React Native (Expo)**, SSR-safe.
 - **`useMediaQuery`** — a `matchMedia`-compatible hook. Pass a CSS media query
   string _or_ a structured descriptor.
 - **`useBreakpoint` / `useBreakpointValue`** — imperative access to the breakpoint
-  scale defined in `@knitui/core` (the same scale that powers Tamagui's
-  `$gtSm`-style media props).
+  scale defined in `@knitui/core` (the same scale that powers the `gtSm:` media
+  clauses in style values, e.g. `p="sm gtSm:lg"`).
 - **SSR seeding** — a `MediaQueryProvider` + `User-Agent` device detection so the
   server and first client render agree (no hydration flash).
 

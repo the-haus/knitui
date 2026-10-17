@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { styleable } from "@knitui/core";
+
 import { Input, type InputProps } from "../Input";
 import type { InputWrapperProps } from "../Input/shared";
 
@@ -11,7 +13,7 @@ export interface InputBaseProps extends InputBaseInputProps, InputBaseWrapperPro
   wrapperProps?: InputBaseWrapperProps & InputProps["wrapperProps"];
 }
 
-export const InputBase = Input.styleable<InputBaseProps>(function InputBase(props, ref) {
+export const InputBase = styleable<InputBaseProps>(Input, function InputBase(props, ref) {
   const {
     label,
     description,

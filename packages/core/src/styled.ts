@@ -1,68 +1,142 @@
-import { styled as tamaguiStyled } from "@tamagui/core";
+import type { ReactNode, Ref } from "react";
+
+import {
+  createStyledHOC,
+  type GetFinalProps,
+  type StaticConfig,
+  type StyledHOCMergedProps,
+  type TamaDefer,
+  type TamaguiComponent,
+  type TamaguiElement,
+} from "@tamagui/core";
 
 /**
- * The kit's `styled` — Tamagui's factory, with `.styleable()` output memoized.
- *
- * WHY THIS WRAPPER EXISTS
- * ----------------------
- * Tamagui memoizes the component `styled()` returns unconditionally
- * (`createComponent.tsx`: `res = React.memo(res)`). It does NOT memoize the
- * component `.styleable()` returns — that is gated behind a flag:
- *
- *     // @tamagui/web/src/createComponent.tsx:1906
- *     if (extendedConfig.memo || process.env.TAMAGUI_MEMOIZE_STYLEABLE) {
- *       out = React.memo(out)
- *     }
- *
- * Every public component in this kit is `styled(...).styleable(...)` — the
- * `.styleable()` HOC *is* the exported component. So without this, the kit's own
- * layer was the only unmemoized layer in the stack: any parent state change
- * re-rendered every kit component in the subtree even when none of its props
- * changed.
- *
- * Measured in jsdom on a 300-instance tree (100 rows × Button + Badge + Text),
- * one parent `setState` with IDENTICAL child props, median of 21 runs:
- *
- *     unmemoized   86.9 ms
- *     memoized      2.9 ms     (~30x)
- *
- * With props that genuinely change every render (an inline `onPress` per row)
- * the win shrinks to the low tens of percent — memo then costs a comparison it
- * cannot skip on. It is never negative in a meaningful way, because the inner
- * frame is already memoized, so prop-equality skipping is already how this
- * stack behaves.
- *
- * WHY IT IS DONE BY MUTATING `staticConfig` RATHER THAN AT EACH CALL SITE
- * ---------------------------------------------------------------------
- * `styleable()` reads the flag off `extendStyledConfig()`, which spreads the
- * frame's own `staticConfig` FIRST and the per-call `options.staticConfig`
- * second. Setting `memo` on the frame therefore reaches every `.styleable()`
- * call — ~155 sites across `components` and `dates`, plus anything added later —
- * from one place, and a call site can still opt out explicitly with
- * `.styleable(render, { staticConfig: { memo: false } })` because its spread
- * wins. `styled()` itself does NOT forward a `memo` key into `staticConfig`
- * (verified), which is why this is a post-hoc assignment and not an option
- * passed through.
- *
- * `memo` is read in exactly ONE place in all of `@tamagui/web` — the branch
- * quoted above — so setting it has precisely one effect and no other behavioral
- * side effects. The env var in that same condition is not a shipping option: it
- * is read at module scope in the consumer's bundle, and neither Metro nor
- * webpack reliably define it.
- *
- * Prefer this over importing `styled` from `@tamagui/core` directly; the kit's
- * components already import it from `@knitui/core`.
+ * The kit's `styled` — Tamagui v3's factory, re-exported as-is (including
+ * `styled.dynamic`). v2 needed a wrapper here to force `memo` onto every frame's
+ * `staticConfig` so its `.styleable()` HOCs were memoized; v3 removed
+ * `.styleable()`, styled frames are memoized by Tamagui itself, and HOC memoization
+ * now lives in {@link styleable}.
  */
-export const styled = ((...args: Parameters<typeof tamaguiStyled>) => {
-  const frame = tamaguiStyled(...args);
-  // `staticConfig` is the live object `createComponent` also reads, and it is not
-  // frozen. Reached through a narrow structural view rather than by narrowing the
-  // heavily-overloaded return type (which collapses to `never`). Optional-chained
-  // so a future Tamagui that stops exposing `staticConfig` degrades to a no-op
-  // instead of throwing at module scope.
-  const withConfig = frame as unknown as { staticConfig?: { memo?: boolean } };
-  if (withConfig.staticConfig) {
-    withConfig.staticConfig.memo = true;
-  }
-  return frame;
-}) as typeof tamaguiStyled;
+export { styled } from "@tamagui/core";
+
+/** Anything `createStyledHOC` accepts as a receiver: a styled frame OR a styleable result. */
+export interface StyleableReceiver {
+  __tama: [unknown, unknown, unknown, unknown, unknown, unknown];
+  staticConfig: StaticConfig;
+}
+
+export interface StyleableOptions {
+  /** Defaults to the render function's name, else the frame's display name. */
+  displayName?: string;
+  /** Skip the `theme` prop → `<Theme>` wrapping (the render handles `theme` itself). */
+  disableTheme?: boolean;
+  /**
+   * Merged over the frame's static config. `memo` defaults to `true`; pass
+   * `{ memo: false }` to opt a component out (e.g. one whose props are new
+   * objects every render, where the comparison can never skip).
+   */
+  staticConfig?: Partial<StaticConfig>;
+}
+
+/**
+ * The component a {@link styleable} call with an explicit props generic returns:
+ * a real Tamagui component (has `staticConfig` and the `__tama` tuple), so it can
+ * be the receiver of another `styleable()` (chains such as Input → InputBase →
+ * TextInput), the parent of `styled()`, and the target of
+ * `withStaticProperties`. `GetProps<typeof X>` is exactly `P`.
+ */
+// `{}` mirrors Tamagui's own "no base styles / variants / statics" slots.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type StyleableComponent<P, R = TamaguiElement> = TamaguiComponent<P, R, P, {}, {}, {}>;
+
+/**
+ * The behaviour-HOC factory: wrap a styled frame with a render function that adds
+ * REAL behaviour (state, effects, refs, context providers, handlers, child
+ * composition). This is v3's `createStyledHOC`, plus:
+ *
+ * - **memoization** — `createStyledHOC` only wraps its output in `React.memo`
+ *   behind a `staticConfig.memo` flag. Every public kit component is one of these
+ *   HOCs, so without the flag a parent re-render re-rendered every kit component
+ *   below it even with identical props (measured on v2: 86.9 ms → 2.9 ms, ~30×, on
+ *   a 300-instance tree). `styleable` sets it by default.
+ * - **a display name** taken from the render function (`function Button(…)`).
+ *
+ * Reach for it LAST (see docs/v3/conventions.md §5): the result is always
+ * `neverFlatten`, so the compiler can never collapse it to a host element. A
+ * component that only maps props to styles should be `styled()` + variants,
+ * `styled.dynamic`, or `Frame.resolve` instead.
+ *
+ * Two call shapes, both chain-safe (the receiver may itself be a `styleable`
+ * result):
+ *
+ * ```tsx
+ * // 1. explicit public props (the kit's convention; P is the FULL prop type,
+ * //    normally `interface ButtonProps extends GetProps<typeof ButtonFrame>`)
+ * export const Button = styleable<ButtonProps>(ButtonFrame, function Button(props, ref) {
+ *   return <ButtonFrame ref={ref} {...props} />;
+ * });
+ *
+ * // 2. inferred from the frame — annotate the custom props on the render
+ * //    parameter (upstream's createStyledHOC idiom); the frame's own style props
+ * //    and variants stay in the result type.
+ * export const Button = styleable(ButtonFrame, (props: ButtonOwnProps, ref) => …);
+ * ```
+ *
+ * Shape 1 types the result from `P` alone (plus `R`, the ref element, default
+ * `TamaguiElement`); shape 2 keeps the frame's full tuple. Never call
+ * `createStyledHOC` directly outside core.
+ */
+export function styleable<
+  Props,
+  RefType,
+  NonStyledProps,
+  BaseStyles extends object,
+  VariantProps,
+  ParentStaticProperties,
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- createStyledHOC's own default
+  CustomProps extends object = {},
+>(
+  frame: {
+    __tama: [Props, RefType, NonStyledProps, BaseStyles, VariantProps, ParentStaticProperties];
+    staticConfig: StaticConfig;
+  },
+  render: (
+    props: Omit<
+      NoInfer<
+        Props extends TamaDefer ? GetFinalProps<NonStyledProps, BaseStyles, VariantProps> : Props
+      >,
+      keyof CustomProps
+    > &
+      CustomProps,
+    ref: Ref<NoInfer<RefType>> | null,
+  ) => ReactNode,
+  options?: StyleableOptions,
+): TamaguiComponent<
+  Props extends TamaDefer
+    ? string extends keyof NonStyledProps
+      ? StyledHOCMergedProps<GetFinalProps<NonStyledProps, BaseStyles, VariantProps>, CustomProps>
+      : TamaDefer
+    : StyledHOCMergedProps<Props, CustomProps>,
+  RefType,
+  StyledHOCMergedProps<NonStyledProps, CustomProps>,
+  BaseStyles,
+  keyof CustomProps extends never ? VariantProps : Omit<VariantProps, keyof CustomProps>,
+  ParentStaticProperties
+>;
+export function styleable<P extends object, R = TamaguiElement>(
+  frame: StyleableReceiver,
+  render: (props: P, ref: Ref<R> | null) => ReactNode,
+  options?: StyleableOptions,
+): StyleableComponent<P, R>;
+export function styleable(
+  frame: StyleableReceiver,
+  render: (props: never, ref: never) => ReactNode,
+  options?: StyleableOptions,
+): unknown {
+  const named = render.name && render.name !== "render" ? render.name : undefined;
+  return createStyledHOC(frame as never, render as never, {
+    disableTheme: options?.disableTheme,
+    displayName: options?.displayName ?? named,
+    staticConfig: { memo: true, ...options?.staticConfig },
+  });
+}

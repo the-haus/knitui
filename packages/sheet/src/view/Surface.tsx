@@ -2,10 +2,9 @@ import * as React from "react";
 import { GestureDetector, type PanGesture } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 
-import { Box } from "@knitui/components";
-import { type GetProps, isWeb, type LayoutChangeEvent, type TamaguiElement } from "@knitui/core";
+import type { GetProps, LayoutChangeEvent, TamaguiElement } from "@knitui/core";
 
-import { SheetFrame } from "../chrome";
+import { SheetFill, SheetFrame, SheetLayer } from "../chrome";
 import { AnimatedFrameHost, AnimatedOverlay } from "./animated";
 import type { AnimatedOverlayProps } from "./animated.types";
 
@@ -69,14 +68,7 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
   } = props;
 
   return (
-    <Box
-      ref={ref}
-      testID={testID}
-      onLayout={onLayout}
-      pointerEvents="box-none"
-      zIndex={zIndex}
-      style={{ position: isWeb ? "fixed" : "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-    >
+    <SheetLayer ref={ref} testID={testID} onLayout={onLayout} zIndex={zIndex}>
       {/*
        * One gesture spans the WHOLE layer — scrim and panel — so the sheet can be
        * dragged from the backdrop, not just the panel. The capture container is
@@ -87,10 +79,7 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
        * `onPress` (tap-to-dismiss) still fires.
        */}
       <GestureDetector gesture={gesture}>
-        <Box
-          pointerEvents="box-none"
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-        >
+        <SheetFill pointerEvents="box-none">
           {withOverlay ? (
             <AnimatedOverlay
               offset={offset}
@@ -110,8 +99,8 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
               {footer}
             </SheetFrame>
           </AnimatedFrameHost>
-        </Box>
+        </SheetFill>
       </GestureDetector>
-    </Box>
+    </SheetLayer>
   );
 });

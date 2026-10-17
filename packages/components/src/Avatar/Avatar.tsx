@@ -3,6 +3,7 @@ import * as React from "react";
 import {
   createStyledContext,
   type GetProps,
+  styleable,
   styled,
   Theme,
   withStaticProperties,
@@ -13,12 +14,14 @@ import { Image, type ImageProps } from "../Image";
 import { type GradientValue, useGradient } from "../internal/gradient";
 import {
   controlTextColorVariant,
+  type CssString,
   fontSizePassthroughVariant,
   pickVariants,
   radiusVariant,
   type SizeKey,
   squareSizeVariantFallthrough,
   surfaceColorVariant,
+  tableVariant,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Text } from "../Text";
@@ -54,7 +57,7 @@ function pickColor(name: string, allowed: readonly string[]): string {
 
 /**
  * Group context — shared down so each `Avatar` inside an `Avatar.Group` overlaps
- * its neighbour (negative left margin) and draws a `$background` ring so the
+ * its neighbour (negative left margin) and draws a `background` ring so the
  * stacked circles stay visually separated.
  */
 const AvatarGroupContext = createStyledContext<{ withinGroup: boolean; spacing: number }>({
@@ -64,14 +67,17 @@ const AvatarGroupContext = createStyledContext<{ withinGroup: boolean; spacing: 
 
 /**
  * Circular avatar — mirrors Mantine's `Avatar`. Built from `Box` + `Text`.
- * Accent comes from the `theme` prop + palette ramp ($color1…$color12), never a
+ * Accent comes from the `theme` prop + palette ramp (`color1`…`color12`), never a
  * `color` prop; `variant` chooses how the ramp applies, `size` the diameter,
  * `radius` the rounding (defaults to a full circle). When `src` is set the image
  * is rendered (clipped to the frame) and falls back to the themed placeholder —
  * `name` initials or `children` — if it fails to load or is absent.
  */
+/** `Avatar.Group` overlap: any px → negative left margin (memoised per value). */
+const avatarSpacing = tableVariant({}, (val: number) => ({ marginLeft: -val }));
+
 const AvatarFrame = styled(Box, {
-  name: "Avatar",
+  displayName: "Avatar",
   context: AvatarGroupContext,
   alignItems: "center",
   justifyContent: "center",
@@ -96,25 +102,21 @@ const AvatarFrame = styled(Box, {
       outline: { ...surfaceColorVariant.outline, borderWidth: 1 },
       default: { ...surfaceColorVariant.default, borderWidth: 1 },
     },
-    size: {
-      ...squareSizeVariantFallthrough,
-    },
+    size: squareSizeVariantFallthrough,
     radius: radiusVariant,
     /** Set by `Avatar.Group`: ring + overlap so stacked avatars stay distinct. */
     withinGroup: {
-      true: { borderWidth: 2, borderColor: "$background" },
+      true: { borderWidth: 2, borderColor: "background" },
     },
     /** Set by `Avatar.Group`: negative left margin for the overlap. */
-    spacing: {
-      ":number": (val: number) => ({ marginLeft: -val }),
-    },
+    spacing: avatarSpacing,
   } as const,
 
   defaultVariants: { variant: "light", size: "md" },
 });
 
 const AvatarText = styled(Text, {
-  name: "AvatarText",
+  displayName: "AvatarText",
   userSelect: "none",
   fontWeight: "600",
   variants: {
@@ -130,9 +132,7 @@ const AvatarText = styled(Text, {
         "gradient",
       ]),
     },
-    size: {
-      ...fontSizePassthroughVariant,
-    },
+    size: fontSizePassthroughVariant,
   } as const,
 });
 
@@ -152,7 +152,7 @@ function getInitials(name: string, limit = 2): string {
 /**
  * Named slots for {@link AvatarStyles} (Pillar B / `internal/styles.ts`). Each
  * key maps to the props of the styled part it targets, so
- * `styles={{ text: { color: "$red9" } }}` is sugar for `<Avatar.Text color="$red9" />`.
+ * `styles={{ text: { color: "red9" } }}` is sugar for `<Avatar.Text color="red9" />`.
  */
 export interface AvatarStyles {
   /** Props spread onto the avatar frame (`.Frame`). */
@@ -169,7 +169,12 @@ const AVATAR_SLOT_KEYS = [
   "text",
 ] as const satisfies readonly (keyof AvatarStyles)[];
 
-export interface AvatarProps extends GetProps<typeof AvatarFrame> {
+export interface AvatarProps extends Omit<GetProps<typeof AvatarFrame>, "radius"> {
+  /**
+   * Corner rounding (key, px or CSS value). A single value, not a v3 clause
+   * program: it is also handed to the `<Image>` as data. @default full circle
+   */
+  radius?: SizeKey | number | CssString;
   /** Per-slot style sugar — props spread onto the matching styled part. */
   styles?: SlotStyles<AvatarStyles>;
   /** User's name. When set (and no `children`), rendered as initials. */
@@ -195,13 +200,13 @@ export interface AvatarProps extends GetProps<typeof AvatarFrame> {
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    * Shown behind the initials/placeholder; an `src` image still covers it.
    */
   gradient?: GradientValue;
 }
 
-const AvatarComponent = AvatarFrame.styleable<AvatarProps>(function Avatar(props, ref) {
+const AvatarComponent = styleable<AvatarProps>(AvatarFrame, function Avatar(props, ref) {
   const {
     children,
     name,
@@ -229,6 +234,8 @@ const AvatarComponent = AvatarFrame.styleable<AvatarProps>(function Avatar(props
   const [errored, setErrored] = React.useState(false);
   React.useEffect(() => setErrored(false), [src]);
 
+  const handleImageError = React.useCallback(() => setErrored(true), []);
+
   const placeholder = children ?? (name ? getInitials(name) : null);
   const showImage = !!src && !errored;
 
@@ -237,7 +244,8 @@ const AvatarComponent = AvatarFrame.styleable<AvatarProps>(function Avatar(props
       ref={ref}
       size={size}
       variant={variant}
-      radius={radius}
+      // Conditional: an explicit `radius={undefined}` must not reach the frame.
+      {...(radius !== undefined ? { radius } : null)}
       theme={theme}
       role="img"
       aria-label={alt ?? name}
@@ -259,8 +267,8 @@ const AvatarComponent = AvatarFrame.styleable<AvatarProps>(function Avatar(props
             width: "100%",
             height: "100%",
             fit: "cover",
-            radius,
-            onError: () => setErrored(true),
+            ...(radius !== undefined ? { radius } : null),
+            onError: handleImageError,
           })}
         />
       ) : typeof placeholder === "string" ? (
@@ -284,7 +292,7 @@ const AvatarComponent = AvatarFrame.styleable<AvatarProps>(function Avatar(props
 });
 
 const AvatarGroupFrame = styled(Box, {
-  name: "AvatarGroup",
+  displayName: "AvatarGroup",
   role: "group",
   flexDirection: "row",
   alignItems: "center",
@@ -300,18 +308,18 @@ export interface AvatarGroupProps extends GetProps<typeof AvatarGroupFrame> {
  * and ring through context so every child `Avatar` self-positions; the left pad
  * cancels the first child's negative margin so the row stays flush-left.
  */
-const AvatarGroup = AvatarGroupFrame.styleable<AvatarGroupProps>(function AvatarGroup(
-  { spacing = 8, children, ...rest },
-  ref,
-) {
-  return (
-    <AvatarGroupContext.Provider withinGroup spacing={spacing}>
-      <AvatarGroupFrame ref={ref} paddingLeft={spacing} {...rest}>
-        {children}
-      </AvatarGroupFrame>
-    </AvatarGroupContext.Provider>
-  );
-});
+const AvatarGroup = styleable<AvatarGroupProps>(
+  AvatarGroupFrame,
+  function AvatarGroup({ spacing = 8, children, ...rest }, ref) {
+    return (
+      <AvatarGroupContext.Provider withinGroup spacing={spacing}>
+        <AvatarGroupFrame ref={ref} paddingLeft={spacing} {...rest}>
+          {children}
+        </AvatarGroupFrame>
+      </AvatarGroupContext.Provider>
+    );
+  },
+);
 
 export const Avatar = withStaticProperties(AvatarComponent, {
   Text: AvatarText,

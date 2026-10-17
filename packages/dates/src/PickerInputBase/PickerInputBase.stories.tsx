@@ -29,7 +29,7 @@ const Frame = ({ children }: { children: React.ReactNode }) => <Box width={320}>
 
 /** A stand-in inline picker body — the real wrappers drop a calendar here. */
 const PickerBody = () => (
-  <Box padding="$sm">
+  <Box padding="sm">
     <Text>Inline picker body</Text>
   </Box>
 );
@@ -162,7 +162,7 @@ export const StylesSlots: Story = {
       placeholder="Pick a date"
       formattedValue={null}
       styles={{
-        dropdown: { backgroundColor: "$color2" },
+        dropdown: { backgroundColor: "color2" },
         input: { variant: "filled" },
       }}
     />

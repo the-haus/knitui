@@ -24,7 +24,7 @@ export const FONT_UNITS_REM: boolean = isWeb && process.env.TAMAGUI_TARGET !== "
  * the platform scales with. On the web every number becomes a `rem` string, so
  * browser text-only zoom and a raised default font size scale the kit's text
  * (WCAG 1.4.4); with the default 16px root it renders the same px as before.
- * Anything else (a caller's own CSS length, a `$theme` reference, a Tamagui
+ * Anything else (a caller's own CSS length, a theme reference, a Tamagui
  * Variable) passes through.
  *
  * The result is typed as the px record it came from because Tamagui's
@@ -42,6 +42,26 @@ export const toFontUnits = <S extends Record<string, unknown>>(
   for (const key in section) {
     const value = section[key];
     out[key] = typeof value === "number" ? pxToRem(value) : value;
+  }
+  return out as S;
+};
+
+/**
+ * {@link toFontUnits} for a `lineHeight` section. In Tamagui v3 a NUMERIC line
+ * height is a RATIO of the font size on every platform, font tokens included
+ * (`resolveTextMetrics`: `lineHeight = fontSize * leading`), so the kit's absolute
+ * px line heights must never reach v3 as bare numbers. The web gets `rem` (as for
+ * sizes); native gets `"<n>px"` strings, which v3 resolves to that exact length.
+ */
+export const toLineHeightUnits = <S extends Record<string, unknown>>(
+  section: S,
+  rem: boolean = FONT_UNITS_REM,
+): S => {
+  if (rem) return toFontUnits(section, true);
+  const out: Record<string, unknown> = {};
+  for (const key in section) {
+    const value = section[key];
+    out[key] = typeof value === "number" ? `${value}px` : value;
   }
   return out as S;
 };

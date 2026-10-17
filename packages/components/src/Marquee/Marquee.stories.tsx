@@ -25,7 +25,7 @@ const meta = {
     repeat: 4,
     duration: 8000,
     orientation: "horizontal",
-    gap: "$md",
+    gap: "md",
   },
   argTypes: {
     orientation: {
@@ -51,7 +51,7 @@ const meta = {
     },
     gap: {
       control: "select",
-      options: ["$xs", "$sm", "$md", "$lg", "$xl"],
+      options: ["xs", "sm", "md", "lg", "xl"],
       description: "Gap between repeated groups.",
     },
     fadeEdges: { control: "boolean" },
@@ -83,10 +83,10 @@ const TagList = () => (
     {TAGS.map((tag) => (
       <Box
         key={tag}
-        paddingHorizontal="$sm"
-        paddingVertical="$xs"
-        backgroundColor="$color3"
-        borderRadius="$sm"
+        paddingHorizontal="sm"
+        paddingVertical="xs"
+        backgroundColor="color3"
+        borderRadius="sm"
       >
         <Text>{tag}</Text>
       </Box>
@@ -127,7 +127,7 @@ export const Vertical: Story = {
     children: (
       <>
         {TAGS.map((tag) => (
-          <Box key={tag} paddingVertical="$xs">
+          <Box key={tag} paddingVertical="xs">
             <Text>{tag}</Text>
           </Box>
         ))}
@@ -147,10 +147,10 @@ export const Reverse: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="sm" color="color11">
             {shadow}
           </Text>
           <Marquee {...args} shadow={shadow}>
@@ -202,8 +202,8 @@ export const Styles: Story = {
     duration: 8000,
     children: "Breaking news — per-slot styles in action — ",
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      text: { color: "$red9", fontWeight: "700" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      text: { color: "red9", fontWeight: "700" },
     },
   },
 };
@@ -218,15 +218,15 @@ export const RichContent: Story = {
         {["⭐ Feature A", "🔥 Feature B", "💡 Feature C", "🚀 Feature D"].map((label) => (
           <Box
             key={label}
-            paddingHorizontal="$md"
-            paddingVertical="$sm"
-            backgroundColor="$color4"
-            borderRadius="$md"
+            paddingHorizontal="md"
+            paddingVertical="sm"
+            backgroundColor="color4"
+            borderRadius="md"
             minWidth={140}
             alignItems="center"
           >
             <Text fontWeight="700">{label}</Text>
-            <Text fontSize="$sm" color="$color10">
+            <Text fontSize="sm" color="color10">
               tap to learn more
             </Text>
           </Box>

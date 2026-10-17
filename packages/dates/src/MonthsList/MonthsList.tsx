@@ -23,11 +23,13 @@ import { useMemo } from "react";
 import dayjs from "dayjs";
 
 import { Box } from "@knitui/components";
+import { hoverProps } from "@knitui/components/control-system";
 import {
   createStyledContext,
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -69,7 +71,7 @@ const MonthsListContext = createStyledContext<{ size: CalendarSize }>({ size: "m
 
 /** The grid container — a column of month rows (web `role="grid"`). */
 const MonthsListFrame = styled(Box, {
-  name: "MonthsList",
+  displayName: "MonthsList",
   context: MonthsListContext,
   flexDirection: "column",
 
@@ -88,7 +90,7 @@ const MonthsListFrame = styled(Box, {
 
 /** A single month row (web `role="row"`). */
 const MonthsListRow = styled(Box, {
-  name: "MonthsListRow",
+  displayName: "MonthsListRow",
   context: MonthsListContext,
   flexDirection: "row",
 
@@ -113,7 +115,7 @@ const MonthsListRow = styled(Box, {
  * per-render `flexGrow` spread — so the optimiser has nothing dynamic to fold).
  */
 const MonthsListCell = styled(Box, {
-  name: "MonthsListCell",
+  displayName: "MonthsListCell",
   context: MonthsListContext,
   alignItems: "center",
   justifyContent: "center",
@@ -206,12 +208,8 @@ const MonthsListControlCell = React.memo(function MonthsListControlCell({
   onControlKeyDown,
   getControlRef,
 }: MonthsListControlCellProps) {
-  // Tamagui hover handlers are not part of `PickerControl`'s public prop type;
-  // attach them via a precisely-typed object spread, the kit's pattern for web-only
-  // affordances (see `Month`). Native never fires it.
-  const hoverHandlers: { onHoverIn?: (event: unknown) => void } = {
-    onHoverIn: (event) => onControlMouseEnter(event, month),
-  };
+  // Range hover preview (see `Month`): `onMouseEnter` on web, `onHoverIn` on native.
+  const hoverHandlers = hoverProps({ onHoverIn: (event) => onControlMouseEnter(event, month) });
 
   return (
     <MonthsListCell role="cell" fullWidth={fullWidth} {...cellProps}>
@@ -342,7 +340,8 @@ export interface MonthsListProps extends MonthsListFrameProps, MonthsListSetting
  * wrapping a `role="button"` control. (ARIA's `gridcell` would be the ideal child
  * of `role="grid"`, but the cross-platform `Role` type has no `gridcell` member.)
  */
-const MonthsListComponent = MonthsListFrame.styleable<MonthsListProps>(
+const MonthsListComponent = styleable<MonthsListProps>(
+  MonthsListFrame,
   function MonthsList(props, ref) {
     const {
       year,

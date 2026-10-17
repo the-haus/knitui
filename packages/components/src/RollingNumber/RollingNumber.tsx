@@ -1,6 +1,13 @@
 import * as React from "react";
 
-import { DURATIONS, getFontSize, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  DURATIONS,
+  getFontSize,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useReducedMotion } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -16,23 +23,23 @@ export type { CharSlot, DigitParts, DigitSlot, RenderSlot } from "./rolling-numb
 /* -------------------------------------------------------------------------- */
 
 const RollingNumberRoot = styled(Box, {
-  name: "RollingNumber",
+  displayName: "RollingNumber",
   flexDirection: "row",
   alignItems: "center",
   overflow: "hidden",
 });
 
 const RollingNumberDigitViewport = styled(Box, {
-  name: "RollingNumberDigitViewport",
+  displayName: "RollingNumberDigitViewport",
   overflow: "hidden",
 });
 
 const RollingNumberDigitStrip = styled(Box, {
-  name: "RollingNumberDigitStrip",
+  displayName: "RollingNumberDigitStrip",
 });
 
 const RollingNumberDigitText = styled(Text, {
-  name: "RollingNumberDigitText",
+  displayName: "RollingNumberDigitText",
   textAlign: "center",
 });
 
@@ -71,15 +78,33 @@ const DEFAULT_FONT_SIZE: RollingNumberFontSize = "xxl";
  * Resolve the `fontSize` prop to a Tamagui font TOKEN (passed to the rendered
  * `Text` so the digits use the font-size scale, not a hardcoded px) plus its raw
  * px value (needed for the digit-strip `translateY`/`height` geometry, which must
- * be a number to work on native). A bare key (`"xxl"`) maps to its `$`-token and
- * its px via `getFontSize`; a custom number is used verbatim for both.
+ * be a number to work on native). A bare key (`"xxl"`) IS the v3 font token
+ * (no sigil) and its px comes from core's config-free `getFontSize`; a custom
+ * number is used verbatim for both.
  */
 const resolveFontSize = (
   fontSize: RollingNumberFontSize | number,
-): { token: TextProps["fontSize"]; px: number } =>
-  typeof fontSize === "number"
-    ? { token: fontSize, px: fontSize }
-    : { token: `$${fontSize}` as TextProps["fontSize"], px: getFontSize(fontSize) };
+): { token: TextProps["fontSize"]; px: number } => ({
+  token: fontSize,
+  px: getFontSize(fontSize),
+});
+
+/**
+ * v3: a NUMERIC `lineHeight` is a ratio (×fontSize) on web AND native, so the
+ * absolute line box is written as a `"<n>px"` string (native parses it back).
+ */
+const lineHeightPx = (px: number) => `${px}px` as const;
+
+/** Font props shared by every glyph — built once per render by the parent. */
+type DigitFont = Pick<TextProps, "fontSize" | "fontFamily">;
+
+/**
+ * The viewport's per-state props as module constants. A visible column must NOT
+ * get `width={undefined}`: v3 treats an explicit `undefined` style prop as "clear
+ * the value", which would wipe a `styles.digitViewport.width`.
+ */
+const EMPTY_VIEWPORT = { width: 0, opacity: 0 } as const;
+const FULL_VIEWPORT = { opacity: 1 } as const;
 
 /** Resolved per-slot style sugar for the digit-column parts. */
 interface RollingDigitSlots {
@@ -92,8 +117,8 @@ interface RollingDigitProps {
   digit: string;
   empty: boolean;
   digitHeight: number;
-  fontSize: TextProps["fontSize"];
-  fontFamily: TextProps["fontFamily"];
+  /** Memoised by the parent (`fontFamily` only present for tabular digits). */
+  font: DigitFont;
   /**
    * The ready-made `{ transition }` object, built ONCE by the parent. Every
    * column used to recompute the identical `transitionProps(timedTransition(…))`
@@ -116,8 +141,7 @@ const RollingDigit = React.memo(function RollingDigit({
   digit,
   empty,
   digitHeight,
-  fontSize,
-  fontFamily,
+  font,
   transition,
   slots,
 }: RollingDigitProps) {
@@ -129,8 +153,7 @@ const RollingDigit = React.memo(function RollingDigit({
     <RollingNumberDigitViewport
       {...slots.viewport}
       height={digitHeight}
-      width={empty ? 0 : undefined}
-      opacity={empty ? 0 : 1}
+      {...(empty ? EMPTY_VIEWPORT : FULL_VIEWPORT)}
       aria-hidden
       {...transition}
     >
@@ -140,9 +163,8 @@ const RollingDigit = React.memo(function RollingDigit({
             key={i}
             {...slots.text}
             height={digitHeight}
-            lineHeight={digitHeight}
-            fontSize={fontSize}
-            fontFamily={fontFamily}
+            lineHeight={lineHeightPx(digitHeight)}
+            {...font}
           >
             {d}
           </RollingNumberDigitText>
@@ -156,7 +178,14 @@ const RollingDigit = React.memo(function RollingDigit({
 /* Types                                                                      */
 /* -------------------------------------------------------------------------- */
 
-type RollingNumberRootProps = Omit<GetProps<typeof RollingNumberRoot>, "children" | "fontSize">;
+/**
+ * `animationDuration` is a CSS style prop in v3, so the root's own one is
+ * omitted: here it is the roll duration in ms (Mantine's name).
+ */
+type RollingNumberRootProps = Omit<
+  GetProps<typeof RollingNumberRoot>,
+  "children" | "fontSize" | "animationDuration"
+>;
 
 export interface RollingNumberProps extends RollingNumberRootProps {
   /** Number value to display. */
@@ -202,7 +231,8 @@ export interface RollingNumberProps extends RollingNumberRootProps {
  * statically. Formatting (prefix/suffix/separators/decimals) comes from the pure
  * ports of Mantine's value helpers. Respects reduced motion (snaps, no roll).
  */
-const RollingNumberBase = RollingNumberRoot.styleable<RollingNumberProps>(
+const RollingNumberBase = styleable<RollingNumberProps>(
+  RollingNumberRoot,
   function RollingNumber(props, ref) {
     const {
       value,
@@ -245,7 +275,11 @@ const RollingNumberBase = RollingNumberRoot.styleable<RollingNumberProps>(
 
     const { token: fontToken, px: fontSizePx } = resolveFontSize(fontSize);
     const digitHeight = Math.round(fontSizePx * 1.25);
-    const fontFamily: TextProps["fontFamily"] = tabularNumbers ? "$mono" : undefined;
+    const font = React.useMemo<DigitFont>(
+      () =>
+        tabularNumbers ? { fontSize: fontToken, fontFamily: "mono" } : { fontSize: fontToken },
+      [fontToken, tabularNumbers],
+    );
 
     const previousRef = React.useRef(value);
     const previousValue = previousRef.current;
@@ -288,17 +322,15 @@ const RollingNumberBase = RollingNumberRoot.styleable<RollingNumberProps>(
               digit={slot.digit}
               empty={slot.empty}
               digitHeight={digitHeight}
-              fontSize={fontToken}
-              fontFamily={fontFamily}
+              font={font}
               transition={digitTransition}
               slots={digitSlots}
             />
           ) : (
             <Text
               key={slot.key}
-              fontSize={fontToken}
-              lineHeight={digitHeight}
-              fontFamily={fontFamily}
+              lineHeight={lineHeightPx(digitHeight)}
+              {...font}
               opacity={slot.empty ? 0 : 1}
               aria-hidden
             >

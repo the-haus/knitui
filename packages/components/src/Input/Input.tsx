@@ -3,6 +3,7 @@ import React from "react";
 import {
   type GetProps,
   registerFocusable,
+  styleable,
   styled,
   type TamaguiElement,
   useWebRef,
@@ -13,13 +14,12 @@ import { useCallbackRef, useId } from "@knitui/hooks";
 import { Box } from "../Box";
 import { webCursor } from "../internal/style-props";
 import { pick } from "../internal/styles";
-import { themeColorToCssVar } from "../internal/theme-color-web";
 import { Text } from "../Text";
 import {
-  DEFAULT_PLACEHOLDER_COLOR,
-  DEFAULT_SELECTION_COLOR,
   getInputSectionInsets,
   INPUT_CHROME_SLOTS,
+  INPUT_HOST_CONFIG,
+  INPUT_HOST_STATIC,
   InputChrome,
   InputClearButton,
   InputDescription,
@@ -30,8 +30,7 @@ import {
   InputWrapper,
   InputWrapperContext,
   registerInputFocusable,
-  styledBody,
-  styledTextareaBody,
+  TEXTAREA_HOST_CONFIG,
 } from "./shared";
 import type { InputSharedProps } from "./types";
 import { useTextareaAutosize } from "./useAutosize";
@@ -47,7 +46,43 @@ type WebInputHostProps = React.InputHTMLAttributes<HTMLInputElement>;
  */
 export type InputHostTag = "input" | "textarea" | "select" | "button";
 
-type WebInputProps = Omit<
+const StyledInput = styled(Box, { ...INPUT_HOST_CONFIG, render: "input" }, INPUT_HOST_STATIC);
+const StyledTextareaInput = styled(Box, TEXTAREA_HOST_CONFIG, INPUT_HOST_STATIC);
+const StyledButtonInput = styled(Text, {
+  displayName: "InputButton",
+  render: "button",
+  flex: 1,
+  minWidth: 0,
+  height: "100%",
+  alignItems: "stretch",
+  justifyContent: "center",
+  outlineWidth: 0,
+  outlineStyle: "none",
+  borderWidth: 0,
+  borderColor: "transparent",
+  backgroundColor: "transparent",
+  boxShadow: "none",
+  ...webCursor("inherit"),
+  fontFamily: "body",
+  textAlign: "left",
+
+  variants: {
+    size: inputHostSizeVariant,
+  } as const,
+
+  defaultVariants: {
+    size: "md",
+  },
+});
+
+/**
+ * The host frame's own props: every style prop of the text host (padding, text
+ * styles, `placeholderTextColor`, `selectionColor`, …) is part of `Input`'s public
+ * surface, as it was under v2's `.styleable()` merge.
+ */
+type InputHostFrameProps = GetProps<typeof StyledInput>;
+
+type WebInputOwnProps = Omit<
   InputSharedProps,
   "autoCorrect" | "autoCapitalize" | "onChange" | "onInput" | "onKeyDown"
 > &
@@ -70,69 +105,14 @@ type WebInputProps = Omit<
     children?: React.ReactNode;
   };
 
-const StyledInput = styled(Box, styledBody[0], styledBody[1]);
-const StyledTextareaInput = styled(Box, styledTextareaBody[0], styledTextareaBody[1]);
-const StyledButtonInput = styled(Text, {
-  name: "InputButton",
-  render: "button",
-  flex: 1,
-  minWidth: 0,
-  height: "100%",
-  alignItems: "stretch",
-  justifyContent: "center",
-  outlineWidth: 0,
-  outlineStyle: "none",
-  borderWidth: 0,
-  borderColor: "transparent",
-  backgroundColor: "transparent",
-  boxShadow: "none",
-  ...webCursor("inherit"),
-  fontFamily: "$body",
-  textAlign: "left",
+type WebInputProps = Omit<InputHostFrameProps, keyof WebInputOwnProps> & WebInputOwnProps;
 
-  focusStyle: {
-    outlineWidth: 0,
-    outlineStyle: "none",
-    borderWidth: 0,
-    borderColor: "transparent",
-    boxShadow: "none",
-  },
+/** `component="select"` reuses the text host with the `<select>` tag. */
+const SELECT_HOST = { render: "select" } as const;
+/** A `<button>` host defaults to `type="button"` so it never submits a form. */
+const BUTTON_TYPE = { type: "button" } as const;
 
-  focusVisibleStyle: {
-    outlineWidth: 0,
-    outlineStyle: "none",
-    borderWidth: 0,
-    borderColor: "transparent",
-    boxShadow: "none",
-  },
-
-  variants: {
-    size: inputHostSizeVariant,
-  } as const,
-
-  defaultVariants: {
-    size: "md",
-  },
-});
-type StyledInputProps = GetProps<typeof StyledInput>;
-type InputStyle = StyledInputProps["style"] & Record<`--${string}`, string | undefined>;
-
-/**
- * Placeholder / selection colours as CSS custom properties, resolved ONCE at
- * module scope.
- *
- * Both inputs are module constants (`"$color8"` / `"$blue5"`), and on web a
- * `$token` maps to its CSS variable by pure string transform (see
- * `theme-color-web.ts`) — the `var()` tracks the active theme by itself. So this
- * needed no theme object, yet every `Input` used to call `useTheme()` for it,
- * paying a `useThemeWithState` (useId + useRef + useReducer + a DEP-LESS
- * `useEffect` that fires after EVERY render) plus a global theme-subscriber
- * registration per mounted field — on every keystroke-driven re-render.
- */
-const PLACEHOLDER_COLOR_VAR = themeColorToCssVar(DEFAULT_PLACEHOLDER_COLOR);
-const SELECTION_COLOR_VAR = themeColorToCssVar(DEFAULT_SELECTION_COLOR);
-
-const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRef) => {
+const InputComponent = styleable<WebInputProps>(StyledInput, function Input(props, forwardedRef) {
   const {
     disabled,
     id,
@@ -171,11 +151,9 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     minRows,
     maxRows,
     value,
-    style,
     onBlur,
     onChange,
     onFocus,
-    onInput,
     onKeyDown,
     children,
 
@@ -183,21 +161,15 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     component,
     autoCapitalize: autoCapitalizeProp,
     autoCorrect: autoCorrectProp,
-    onScroll,
-    spellCheck,
     textContentType,
 
     // Removes the host chrome so the input renders bare (composite inputs).
     unstyled,
 
-    // RN-style prop with no DOM equivalent: it feeds `--t_placeholderColor`
-    // below instead of leaking onto the `<input>` as an unknown attribute.
-    placeholderTextColor,
-
     ...rest
   } = props;
 
-  const { ref, composedRef } = useWebRef<WebInputElement>(_forwardedRef);
+  const { ref, composedRef } = useWebRef<WebInputElement>(forwardedRef);
   const [focused, setFocused] = React.useState(false);
   const wrapperContext = React.useContext(InputWrapperContext);
   const generatedInputId = useId(id);
@@ -205,10 +177,9 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
   const inputError = error ?? wrapperContext?.error;
   const effectiveSize = size || wrapperContext?.size || "md";
   const isMultiline = multiline || (typeof rows === "number" && rows > 1);
-  const inputTag = isMultiline ? "textarea" : "input";
   // A `component` override (e.g. NativeSelect's `"select"`, FileInput's `"button"`)
   // wins over the computed text-host tag; default path is unchanged.
-  const hostTag = component ?? inputTag;
+  const hostTag = component ?? (isMultiline ? "textarea" : "input");
 
   void inputSize;
   void textContentType;
@@ -291,86 +262,43 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
 
   useTextareaAutosize(textareaNode, autosize, minRows, maxRows, value);
 
-  const focusInput = React.useCallback(() => {
+  // Every handler keeps a STABLE identity (latest-closure pattern): the field
+  // re-renders on every keystroke, and fresh listener props would re-bind the
+  // host's listeners each time.
+  const focusInput = useCallbackRef(() => {
     if (!disabled) {
       ref.current?.focus();
     }
-  }, [disabled, ref]);
+  });
 
-  const handleFocus = (e: React.FocusEvent<WebInputElement>) => {
+  const handleFocus = useCallbackRef((e: React.FocusEvent<HTMLInputElement>) => {
     setFocused(true);
-    onFocus?.(e as React.FocusEvent<HTMLInputElement>);
-  };
+    onFocus?.(e);
+  });
 
-  const handleBlur = (e: React.FocusEvent<WebInputElement>) => {
+  const handleBlur = useCallbackRef((e: React.FocusEvent<HTMLInputElement>) => {
     setFocused(false);
-    onBlur?.(e as React.FocusEvent<HTMLInputElement>);
-  };
+    onBlur?.(e);
+  });
 
   // Handle keyboard submit. For multiline inputs Enter inserts a newline, not a submit.
-  const handleKeyDown = (e: React.KeyboardEvent<WebInputElement>) => {
+  const handleKeyDown = useCallbackRef((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && onSubmitEditing && !isMultiline) {
       onSubmitEditing({
         nativeEvent: { text: "value" in e.target ? String(e.target.value) : "" },
       });
     }
-    onKeyDown?.(e as React.KeyboardEvent<HTMLInputElement>);
-  };
+    onKeyDown?.(e);
+  });
 
   // Handle change with onChangeText support
-  const handleChange = (e: React.ChangeEvent<WebInputElement>) => {
+  const handleChange = useCallbackRef((e: React.ChangeEvent<HTMLInputElement>) => {
     onChangeText?.("value" in e.target ? String(e.target.value) : "");
-    onChange?.(e as React.ChangeEvent<HTMLInputElement>);
-  };
+    onChange?.(e);
+  });
 
-  const incomingStyle =
-    style && typeof style === "object" && !Array.isArray(style) ? style : undefined;
-  const inputStyle: InputStyle = {
-    ...(incomingStyle as object),
-    "--t_placeholderColor":
-      typeof placeholderTextColor === "string"
-        ? themeColorToCssVar(placeholderTextColor)
-        : PLACEHOLDER_COLOR_VAR,
-    "--t_selectionColor": SELECTION_COLOR_VAR,
-  };
-
-  const inputHostProps = {
-    ...rest,
-    disabled,
-    readOnly,
-    id: inputId,
-    value,
-    rows: rows ?? (isMultiline ? minRows : undefined),
-    autoCorrect,
-    autoCapitalize,
-    spellCheck,
-    required,
-    "aria-invalid": withAria && inputError ? true : undefined,
-    "aria-describedby": withAria ? wrapperContext?.describedBy : undefined,
-    onBlur: handleBlur,
-    onFocus: handleFocus,
-    onScroll,
-    onInput,
-    onKeyDown: onSubmitEditing || onKeyDown ? handleKeyDown : undefined,
-    onChange: onChangeText || onChange ? handleChange : undefined,
-    style: inputStyle,
-  };
-  const restWithButtonType = rest as { type?: string };
-  const buttonHostProps = {
-    ...rest,
-    disabled,
-    id: inputId,
-    type: restWithButtonType.type ?? "button",
-    required,
-    "aria-invalid": withAria && inputError ? true : undefined,
-    "aria-describedby": withAria ? wrapperContext?.describedBy : undefined,
-    onBlur: handleBlur,
-    onFocus: handleFocus,
-    onKeyDown: onSubmitEditing || onKeyDown ? handleKeyDown : undefined,
-    style: inputStyle,
-  };
-  // After `size` so it beats the variant's `paddingHorizontal`; before the host
-  // props so a consumer-passed padding still wins.
+  // After `size` so it beats the variant's `paddingHorizontal`; before `rest` so a
+  // consumer-passed padding still wins. A shared constant (never allocates).
   const sectionInsets = getInputSectionInsets({
     leftSection,
     rightSection,
@@ -381,34 +309,60 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
     __clearSectionMode,
     __defaultRightSection,
   });
-  const sharedInputProps = {
-    ref: composedRef as React.Ref<TamaguiElement>,
-    flex: 1,
-    minWidth: 0,
-    unstyled: true,
-    size: effectiveSize,
-    ...sectionInsets,
-    ...(inputHostProps as object),
+
+  // DOM-only attributes of the real element (the frame types only Tamagui/RN
+  // props), passed as one bag.
+  const domAttrs = {
+    disabled,
+    readOnly,
+    id: inputId,
+    required,
+    "aria-invalid": withAria && inputError ? true : undefined,
+    "aria-describedby": withAria ? wrapperContext?.describedBy : undefined,
+    onBlur: handleBlur,
+    onFocus: handleFocus,
+    onKeyDown: onSubmitEditing || onKeyDown ? handleKeyDown : undefined,
   };
-  const styledInput =
-    hostTag === "button" ? (
+
+  let host: React.ReactNode;
+  if (hostTag === "button") {
+    host = (
       <StyledButtonInput
         ref={composedRef as React.Ref<TamaguiElement>}
         size={effectiveSize}
         {...sectionInsets}
-        {...(buttonHostProps as object)}
+        {...(rest as object)}
+        {...(domAttrs as object)}
+        {...((rest as { type?: string }).type ? null : BUTTON_TYPE)}
       >
         {children}
       </StyledButtonInput>
-    ) : hostTag === "select" ? (
-      <StyledInput render={hostTag} {...sharedInputProps}>
-        {children}
-      </StyledInput>
-    ) : isMultiline ? (
-      <StyledTextareaInput {...sharedInputProps} />
-    ) : (
-      <StyledInput {...sharedInputProps} />
     );
+  } else {
+    const Host = hostTag === "textarea" ? StyledTextareaInput : StyledInput;
+    const textAttrs = {
+      value,
+      rows: rows ?? (isMultiline ? minRows : undefined),
+      autoCorrect,
+      autoCapitalize,
+      onChange: onChangeText || onChange ? handleChange : undefined,
+    };
+    host = (
+      <Host
+        ref={composedRef as React.Ref<TamaguiElement>}
+        flex={1}
+        minWidth={0}
+        size={effectiveSize}
+        {...(hostTag === "select" ? SELECT_HOST : null)}
+        {...sectionInsets}
+        {...(rest as object)}
+        {...(domAttrs as object)}
+        {...(textAttrs as object)}
+      >
+        {hostTag === "select" ? children : null}
+      </Host>
+    );
+  }
 
   return (
     <InputChrome
@@ -439,7 +393,7 @@ const InputComponent = StyledInput.styleable<WebInputProps>((props, _forwardedRe
       __clearSectionMode={__clearSectionMode}
       __defaultRightSection={__defaultRightSection}
     >
-      {styledInput}
+      {host}
     </InputChrome>
   );
 });

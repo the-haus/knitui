@@ -1,4 +1,4 @@
-import { type GetProps, styled } from "@knitui/core";
+import { type GetProps, styleable, styled } from "@knitui/core";
 
 import {
   focusRingStyle,
@@ -13,12 +13,12 @@ import { Text } from "../Text";
  * (`size`, `lineClamp`, `truncate`, `inline`, `inherit`) and adds `underline`,
  * which controls WHEN the underline shows. Renders an `<a>` element with
  * `role="link"` and accepts an `href`. Color is the kit's deliberate divergence
- * — the default link color comes from the theme accent ramp (`$color11`);
+ * — the default link color comes from the theme accent ramp (`color11`);
  * recolor via the `theme` prop, never a `color` prop.
  */
 const AnchorFrame = styled(Text, {
-  name: "Anchor",
-  color: "$color11",
+  displayName: "Anchor",
+  color: "color11",
   ...webCursor("pointer"),
   // Anchor renders a real, natively-focusable `<a>` (when `href` is set), so the
   // shared focus-visible outline fires for keyboard users (web). See the focus
@@ -26,18 +26,14 @@ const AnchorFrame = styled(Text, {
   ...focusRingStyle,
 
   variants: {
-    size: {
-      ...fontSizePassthroughVariant,
-    },
+    size: fontSizePassthroughVariant,
     underline: {
       always: { textDecorationLine: "underline" },
       hover: {
-        textDecorationLine: "none",
-        hoverStyle: { textDecorationLine: "underline" },
+        textDecorationLine: "none hover:underline",
       },
       "not-hover": {
-        textDecorationLine: "underline",
-        hoverStyle: { textDecorationLine: "none" },
+        textDecorationLine: "underline hover:none",
       },
       never: { textDecorationLine: "none" },
     },
@@ -60,7 +56,12 @@ export interface AnchorProps extends GetProps<typeof AnchorFrame> {
   href?: string;
 }
 
-export const Anchor = AnchorFrame.styleable<AnchorProps>(function Anchor(props, ref) {
+/**
+ * Thin typed wrapper (stays `styleable`): `href` is not part of Tamagui's prop
+ * types, so the wrapper types it and pins the `<a>` host + `link` role last so
+ * a caller cannot strip the link semantics.
+ */
+export const Anchor = styleable<AnchorProps>(AnchorFrame, function Anchor(props, ref) {
   const { href, ...rest } = props;
   // `href` is a runtime-only `<a>` prop that isn't in the generated style prop
   // types; narrow it (with `render`) to a precise local type rather than widening

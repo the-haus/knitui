@@ -21,8 +21,33 @@ describe("Center", () => {
   });
 
   it("renders in the inline variant", () => {
-    render(<Center inline>Inline centered</Center>);
+    render(
+      <Center inline testID="c">
+        Inline centered
+      </Center>,
+    );
     expect(screen.getByText("Inline centered")).toBeInTheDocument();
+    expect(screen.getByTestId("c")).toHaveStyle({ display: "inline-flex" });
+  });
+
+  it("centres on both axes as a block flex box by default", () => {
+    render(<Center testID="c">x</Center>);
+    expect(screen.getByTestId("c")).toHaveStyle({
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    });
+  });
+
+  it("wraps a bare string child in a themed Text (native-safe)", () => {
+    render(<Center testID="c">plain</Center>);
+    expect(screen.getByText("plain").tagName).toBe("SPAN");
+    expect(screen.getByText("plain").parentElement).toBe(screen.getByTestId("c"));
+  });
+
+  it("renders a semantic host through render", () => {
+    render(<Center render="section" testID="c" />);
+    expect(screen.getByTestId("c").tagName).toBe("SECTION");
   });
 
   it("forwards a ref", () => {

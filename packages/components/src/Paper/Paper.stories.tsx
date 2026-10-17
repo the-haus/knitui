@@ -25,7 +25,7 @@ const meta = {
     shadow: undefined,
     radius: "md",
     withBorder: false,
-    padding: "$md",
+    padding: "md",
   },
   argTypes: {
     shadow: {
@@ -40,7 +40,7 @@ const meta = {
     },
     withBorder: {
       control: "boolean",
-      description: "When true, renders a 1 px border using the $borderColor token.",
+      description: "When true, renders a 1 px border using the `borderColor` theme key.",
     },
   },
 } satisfies Meta<typeof Paper>;
@@ -53,7 +53,7 @@ type Story = StoryObj<ComponentProps<typeof Paper>>;
 export const Playground: Story = {
   args: {
     children: <Text>Paper surface</Text>,
-    padding: "$lg",
+    padding: "lg",
     width: 280,
   },
 };
@@ -61,16 +61,9 @@ export const Playground: Story = {
 /** All five shadow levels side by side to compare elevation. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Paper
-          key={shadow}
-          {...args}
-          shadow={shadow}
-          padding="$md"
-          minWidth="$xxl"
-          minHeight="$xxl"
-        >
+        <Paper key={shadow} {...args} shadow={shadow} padding="md" minWidth="xxl" minHeight="xxl">
           <Text>{shadow}</Text>
         </Paper>
       ))}
@@ -81,16 +74,16 @@ export const Shadows: Story = {
 /** All five radius values side by side, from sharp to fully rounded. */
 export const Radii: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RADII.map((radius) => (
         <Paper
           key={radius}
           {...args}
           radius={radius}
           withBorder
-          padding="$md"
-          minWidth="$xxl"
-          minHeight="$xxl"
+          padding="md"
+          minWidth="xxl"
+          minHeight="xxl"
         >
           <Text>{radius}</Text>
         </Paper>
@@ -99,11 +92,11 @@ export const Radii: Story = {
   ),
 };
 
-/** Border variant — a 1 px outline using the active theme's $borderColor token. */
+/** Border variant — a 1 px outline using the active theme's `borderColor` theme key. */
 export const WithBorder: Story = {
   args: {
     withBorder: true,
-    padding: "$lg",
+    padding: "lg",
     width: 280,
     children: <Text>Bordered surface</Text>,
   },
@@ -114,7 +107,7 @@ export const ShadowAndBorder: Story = {
   args: {
     shadow: "md",
     withBorder: true,
-    padding: "$lg",
+    padding: "lg",
     width: 280,
     children: <Text>Shadow + border</Text>,
   },
@@ -126,14 +119,14 @@ export const CardLayout: Story = {
     shadow: "sm",
     withBorder: true,
     radius: "md",
-    padding: "$lg",
+    padding: "lg",
     width: 320,
     children: (
-      <Box gap="$sm">
-        <Text fontWeight="700" fontSize="$md">
+      <Box gap="sm">
+        <Text fontWeight="700" fontSize="md">
           Card title
         </Text>
-        <Text fontSize="$sm" color="$colorSubtitle">
+        <Text fontSize="sm" color="color11">
           This is a short description rendered inside a Paper surface acting as a card.
         </Text>
       </Box>
@@ -144,10 +137,10 @@ export const CardLayout: Story = {
 /** Nesting two Paper surfaces to create a layered depth effect. */
 export const Nested: Story = {
   render: (args) => (
-    <Paper {...args} shadow="lg" padding="$xl" width={340}>
-      <Box gap="$md">
+    <Paper {...args} shadow="lg" padding="xl" width={340}>
+      <Box gap="md">
         <Text fontWeight="700">Outer surface</Text>
-        <Paper shadow="xs" withBorder padding="$md">
+        <Paper shadow="xs" withBorder padding="md">
           <Text>Inner surface</Text>
         </Paper>
       </Box>

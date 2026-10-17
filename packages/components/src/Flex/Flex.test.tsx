@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Flex } from "./Flex";
 
@@ -26,7 +27,7 @@ describe("Flex", () => {
     expect(screen.getByText("Item")).toBeInTheDocument();
   });
 
-  it("supports the Tamagui v2 render host prop", () => {
+  it("supports the render host prop", () => {
     const { container } = render(
       <Flex render="ul">
         <li>Item</li>
@@ -40,23 +41,46 @@ describe("Flex", () => {
   // RN/Yoga defaults to `column`, so without an explicit base an undirected
   // <Flex> would lay out differently on native than on web.
   it("defaults to a row direction", () => {
-    const { container } = render(
-      <Flex>
+    render(
+      <Flex testID="flex">
         <span>Item</span>
       </Flex>,
     );
-    expect(container.querySelector(".is_Flex")?.className).toMatch(/_fd-row\b/);
+    expect(screen.getByTestId("flex")).toHaveStyle({ flexDirection: "row", display: "flex" });
   });
 
   it("maps the direction prop onto flexDirection", () => {
-    const { container } = render(
-      <Flex direction="column">
+    render(
+      <Flex testID="flex" direction="column">
         <span>Item</span>
       </Flex>,
     );
-    const className = container.querySelector(".is_Flex")?.className ?? "";
-    expect(className).toMatch(/_fd-column\b/);
-    expect(className).not.toMatch(/_fd-row\b/);
+    expect(screen.getByTestId("flex")).toHaveStyle({ flexDirection: "column" });
+  });
+
+  it("lets a raw flexDirection beat the direction variant", () => {
+    render(<Flex testID="flex" direction="column" flexDirection="row-reverse" />);
+    expect(screen.getByTestId("flex")).toHaveStyle({ flexDirection: "row-reverse" });
+  });
+
+  it("maps align / justify / wrap onto their flex style props", () => {
+    render(<Flex testID="flex" align="center" justify="space-between" wrap="wrap" />);
+    expect(screen.getByTestId("flex")).toHaveStyle({
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+    });
+  });
+
+  it("accepts a per-breakpoint direction clause", () => {
+    render(<Flex testID="flex" direction="column md:row" />);
+    const rules = cssRulesOf(screen.getByTestId("flex")).join("\n");
+    expect(rules).toContain("flex-direction: column");
+    expect(rules).toMatch(/@media[^{]*\{[^}]*flex-direction: row/);
+  });
+
+  it("is a flattenable styled() component (no styleable wrapper)", () => {
+    expect(Flex.staticConfig.neverFlatten).toBeFalsy();
   });
 
   it("forwards a ref to the underlying element", () => {

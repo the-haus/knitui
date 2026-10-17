@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Mark } from "./Mark";
 
@@ -32,5 +33,21 @@ describe("Mark", () => {
     const ref = React.createRef<GetRef<typeof Mark>>();
     render(<Mark ref={ref}>ref</Mark>);
     expect(ref.current).not.toBeNull();
+  });
+
+  it("fills behind the text from the theme ramp", () => {
+    render(<Mark>fill</Mark>);
+    const rules = cssRulesOf(screen.getByText("fill")).join("\n");
+    expect(rules).toContain("background-color: var(--color5)");
+    expect(rules).toContain("color: var(--color12)");
+  });
+
+  it("keeps the inherited Text size variant", () => {
+    render(<Mark size="xl">big</Mark>);
+    expect(cssRulesOf(screen.getByText("big")).join("\n")).toContain("font-size: var(--f-size-xl)");
+  });
+
+  it("is a flattenable styled() component", () => {
+    expect(Mark.staticConfig.neverFlatten).toBeFalsy();
   });
 });

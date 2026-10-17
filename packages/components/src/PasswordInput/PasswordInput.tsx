@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, withStaticProperties } from "@knitui/core";
 import { useUncontrolled } from "@knitui/hooks";
 
 import { ActionIcon, type ActionIconProps, type ActionIconSize } from "../ActionIcon";
@@ -22,7 +22,7 @@ export interface PasswordToggleIconProps {
  */
 function PasswordToggleIcon({ reveal }: PasswordToggleIconProps) {
   return (
-    <Text fontSize="$md" lineHeight={0} userSelect="none" aria-hidden>
+    <Text fontSize="md" lineHeight="0px" userSelect="none" aria-hidden>
       {reveal ? "🙈" : "👁"}
     </Text>
   );
@@ -116,71 +116,71 @@ const toggleAriaProps = (pressed: boolean): { "aria-pressed": boolean; tabIndex:
  * masking works cross-platform. A caller-supplied `rightSection` takes precedence
  * over the toggle, matching Mantine.
  */
-const PasswordInputComponent = InputBase.styleable<PasswordInputProps>(function PasswordInput(
-  props,
-  ref: React.Ref<PasswordInputRef>,
-) {
-  const runtimeProps: PasswordInputRuntimeProps = props;
-  const {
-    visible,
-    defaultVisible,
-    onVisibilityChange,
-    withVisibilityToggle = true,
-    visibilityToggleIcon: VisibilityToggleIcon = PasswordToggleIcon,
-    visibilityToggleButtonProps,
-    size = "md",
-    disabled,
-    rightSection,
-    autoComplete,
-    radius,
-    type: _ignoredType,
-    styles,
-    ...others
-  } = runtimeProps;
-  void _ignoredType;
+const PasswordInputComponent = styleable<PasswordInputProps>(
+  InputBase,
+  function PasswordInput(props, ref: React.Ref<PasswordInputRef>) {
+    const runtimeProps: PasswordInputRuntimeProps = props;
+    const {
+      visible,
+      defaultVisible,
+      onVisibilityChange,
+      withVisibilityToggle = true,
+      visibilityToggleIcon: VisibilityToggleIcon = PasswordToggleIcon,
+      visibilityToggleButtonProps,
+      size = "md",
+      disabled,
+      rightSection,
+      autoComplete,
+      radius,
+      type: _ignoredType,
+      styles,
+      ...others
+    } = runtimeProps;
+    void _ignoredType;
 
-  const s = slotStyles<PasswordInputStyles>(styles, PASSWORD_INPUT_SLOT_KEYS, "PasswordInput");
-  const chromeStyles = pick<PasswordInputStyles, InputWrapperSlots>(styles, INPUT_WRAPPER_SLOTS);
+    const s = slotStyles<PasswordInputStyles>(styles, PASSWORD_INPUT_SLOT_KEYS, "PasswordInput");
+    const chromeStyles = pick<PasswordInputStyles, InputWrapperSlots>(styles, INPUT_WRAPPER_SLOTS);
 
-  const [isVisible, setVisible] = useUncontrolled<boolean>({
-    value: visible,
-    defaultValue: defaultVisible,
-    finalValue: false,
-    onChange: onVisibilityChange,
-  });
+    const [isVisible, setVisible] = useUncontrolled<boolean>({
+      value: visible,
+      defaultValue: defaultVisible,
+      finalValue: false,
+      onChange: onVisibilityChange,
+    });
 
-  const toggle = React.useCallback(() => setVisible(!isVisible), [isVisible, setVisible]);
+    const toggle = React.useCallback(() => setVisible(!isVisible), [isVisible, setVisible]);
 
-  const toggleButton =
-    withVisibilityToggle && !disabled ? (
-      <ActionIcon
-        variant="subtle"
-        size={toToggleSize(size)}
-        radius={radius ?? INPUT_DEFAULT_RADIUS}
-        aria-label="Toggle password visibility"
-        onPress={toggle}
-        {...toggleAriaProps(isVisible)}
-        {...s.merge("visibilityToggle", visibilityToggleButtonProps)}
-      >
-        <VisibilityToggleIcon reveal={isVisible} />
-      </ActionIcon>
-    ) : null;
+    const toggleButton =
+      withVisibilityToggle && !disabled ? (
+        <ActionIcon
+          variant="subtle"
+          size={toToggleSize(size)}
+          radius={radius ?? INPUT_DEFAULT_RADIUS}
+          aria-label="Toggle password visibility"
+          onPress={toggle}
+          {...toggleAriaProps(isVisible)}
+          {...s.merge("visibilityToggle", visibilityToggleButtonProps)}
+        >
+          <VisibilityToggleIcon reveal={isVisible} />
+        </ActionIcon>
+      ) : null;
 
-  return (
-    <InputBase
-      ref={ref}
-      type={isVisible ? "text" : "password"}
-      autoComplete={autoComplete ?? "off"}
-      size={size}
-      radius={radius}
-      disabled={disabled}
-      styles={chromeStyles}
-      rightSection={rightSection ?? toggleButton}
-      rightSectionPointerEvents="all"
-      {...others}
-    />
-  );
-});
+    return (
+      <InputBase
+        ref={ref}
+        type={isVisible ? "text" : "password"}
+        autoComplete={autoComplete ?? "off"}
+        size={size}
+        radius={radius}
+        disabled={disabled}
+        styles={chromeStyles}
+        rightSection={rightSection ?? toggleButton}
+        rightSectionPointerEvents="all"
+        {...others}
+      />
+    );
+  },
+);
 
 PasswordInputComponent.displayName = "PasswordInput";
 

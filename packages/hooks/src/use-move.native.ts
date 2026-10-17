@@ -1,10 +1,10 @@
 import * as React from "react";
-import type { GestureResponderEvent } from "react-native";
 
 import type { TamaguiElement } from "@knitui/core";
 
 import {
   clampMovePosition,
+  type GestureResponderEvent,
   type MovePosition,
   type MoveRootProps,
   type UseMoveHandlers,

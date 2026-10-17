@@ -31,14 +31,14 @@ const VARIABLE = makeData(10000, true);
 const RowCard = ({ row }: { row: Row }) => (
   <Box
     height={row.height}
-    paddingHorizontal="$md"
+    paddingHorizontal="md"
     justifyContent="center"
     borderBottomWidth={1}
-    borderColor="$borderColor"
-    backgroundColor="$background"
+    borderColor="borderColor"
+    backgroundColor="background"
   >
     <Text fontWeight="600">{row.label}</Text>
-    {row.height > 90 ? <Text color="$colorSubtle">{LOREM.slice(0, 80)}</Text> : null}
+    {row.height > 90 ? <Text color="color11">{LOREM.slice(0, 80)}</Text> : null}
   </Box>
 );
 
@@ -53,14 +53,14 @@ const MountCounter = ({ title, children }: { title: string; children: React.Reac
   const [mounted, setMounted] = React.useState(0);
   const report = React.useCallback((delta: number) => setMounted((n) => n + delta), []);
   return (
-    <Box gap="$xs" width={240}>
-      <Text fontWeight="700" fontSize="$sm">
+    <Box gap="xs" width={240}>
+      <Text fontWeight="700" fontSize="sm">
         {title}
       </Text>
-      <Text color="$colorSubtle" fontSize="$sm">
+      <Text color="color11" fontSize="sm">
         {`${mounted} rows mounted`}
       </Text>
-      <Box height={340} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+      <Box height={340} borderWidth={1} borderColor="borderColor" borderRadius="md">
         <MountTallyContext.Provider value={report}>{children}</MountTallyContext.Provider>
       </Box>
     </Box>
@@ -81,14 +81,14 @@ const CounterRow = ({ row }: { row: Row }) => {
   return (
     <Box
       height={row.height}
-      paddingHorizontal="$md"
+      paddingHorizontal="md"
       flexDirection="row"
       alignItems="center"
       justifyContent="space-between"
-      gap="$sm"
+      gap="sm"
       borderBottomWidth={1}
-      borderColor="$borderColor"
-      backgroundColor={count > 0 ? "$blue2" : "$background"}
+      borderColor="borderColor"
+      backgroundColor={count > 0 ? "blue2" : "background"}
     >
       <Text fontWeight="600">{row.label}</Text>
       {/* Button defaults to alignSelf="flex-start" so it never stretches; centre it. */}
@@ -121,7 +121,7 @@ type Story = StoryObj<typeof meta>;
 /** 10,000 fixed-height rows — scroll freely; only ~a dozen nodes are mounted. */
 export const Basic: Story = {
   render: () => (
-    <Box width={360} height={420} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+    <Box width={360} height={420} borderWidth={1} borderColor="borderColor" borderRadius="md">
       <VirtualList<Row>
         data={DATA}
         keyExtractor={(item) => item.id}
@@ -135,7 +135,7 @@ export const Basic: Story = {
 /** Rows of differing heights — measured on mount and estimated by running average. */
 export const VariableHeights: Story = {
   render: () => (
-    <Box width={360} height={420} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+    <Box width={360} height={420} borderWidth={1} borderColor="borderColor" borderRadius="md">
       <VirtualList<Row>
         data={VARIABLE}
         keyExtractor={(item) => item.id}
@@ -150,22 +150,22 @@ export const VariableHeights: Story = {
 /** Header, footer, and separators between rows. */
 export const WithChrome: Story = {
   render: () => (
-    <Box width={360} height={420} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+    <Box width={360} height={420} borderWidth={1} borderColor="borderColor" borderRadius="md">
       <VirtualList<Row>
         data={DATA}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <RowCard row={item} />}
         ListHeaderComponent={
-          <Box padding="$md" backgroundColor="$backgroundStrong">
+          <Box padding="md" backgroundColor="color3">
             <Text fontWeight="700">10,000 rows</Text>
           </Box>
         }
         ListFooterComponent={
-          <Box padding="$md" alignItems="center">
-            <Text color="$colorSubtle">— end —</Text>
+          <Box padding="md" alignItems="center">
+            <Text color="color11">— end —</Text>
           </Box>
         }
-        ItemSeparatorComponent={<Box height={1} backgroundColor="$borderColor" />}
+        ItemSeparatorComponent={<Box height={1} backgroundColor="borderColor" />}
         height="100%"
       />
     </Box>
@@ -175,13 +175,13 @@ export const WithChrome: Story = {
 /** No data → the empty component is shown. */
 export const Empty: Story = {
   render: () => (
-    <Box width={360} height={240} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+    <Box width={360} height={240} borderWidth={1} borderColor="borderColor" borderRadius="md">
       <VirtualList<Row>
         data={[]}
         renderItem={({ item }) => <RowCard row={item} />}
         ListEmptyComponent={
-          <Box flex={1} alignItems="center" justifyContent="center" padding="$xl">
-            <Text color="$colorSubtle">No items yet</Text>
+          <Box flex={1} alignItems="center" justifyContent="center" padding="xl">
+            <Text color="color11">No items yet</Text>
           </Box>
         }
         height="100%"
@@ -195,8 +195,8 @@ export const ImperativeScroll: Story = {
   render: () => {
     const ref = React.useRef<VirtualListHandle>(null);
     return (
-      <Box gap="$sm" width={360}>
-        <Box flexDirection="row" gap="$sm">
+      <Box gap="sm" width={360}>
+        <Box flexDirection="row" gap="sm">
           <Button size="sm" onPress={() => ref.current?.scrollToTop(true)}>
             Top
           </Button>
@@ -210,7 +210,7 @@ export const ImperativeScroll: Story = {
             End
           </Button>
         </Box>
-        <Box height={380} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+        <Box height={380} borderWidth={1} borderColor="borderColor" borderRadius="md">
           <VirtualList<Row>
             ref={ref}
             data={DATA}
@@ -246,7 +246,7 @@ export const InfiniteScroll: Story = {
       }, 300);
     };
     return (
-      <Box width={360} height={420} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+      <Box width={360} height={420} borderWidth={1} borderColor="borderColor" borderRadius="md">
         <VirtualList<Row>
           data={rows}
           keyExtractor={(item) => item.id}
@@ -254,8 +254,8 @@ export const InfiniteScroll: Story = {
           onEndReached={loadMore}
           onEndReachedThreshold={1}
           ListFooterComponent={
-            <Box padding="$md" alignItems="center">
-              <Text color="$colorSubtle">Loading more…</Text>
+            <Box padding="md" alignItems="center">
+              <Text color="color11">Loading more…</Text>
             </Box>
           }
           height="100%"
@@ -282,18 +282,18 @@ export const KeepMounted: Story = {
       [],
     );
     return (
-      <Box flexDirection="row" gap="$md">
+      <Box flexDirection="row" gap="md">
         {(
           [
             { title: "Default (unmounts)", keep: false as const },
             { title: "keepMounted={40}", keep: 40 },
           ] satisfies Array<{ title: string; keep: boolean | number }>
         ).map(({ title, keep }) => (
-          <Box key={title} gap="$xs" width={240}>
-            <Text fontWeight="700" fontSize="$sm">
+          <Box key={title} gap="xs" width={240}>
+            <Text fontWeight="700" fontSize="sm">
               {title}
             </Text>
-            <Box height={360} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+            <Box height={360} borderWidth={1} borderColor="borderColor" borderRadius="md">
               <VirtualList<Row>
                 data={data}
                 keyExtractor={(item) => item.id}
@@ -326,7 +326,7 @@ export const MountEverything: Story = {
       [],
     );
     return (
-      <Box flexDirection="row" gap="$md">
+      <Box flexDirection="row" gap="md">
         {(
           [
             { title: "Windowed (default)", keep: false as const },
@@ -358,8 +358,8 @@ export const Styles: Story = {
         renderItem={({ item }) => <RowCard row={item} />}
         height="100%"
         styles={{
-          scrollArea: { borderWidth: 2, borderColor: "$blue8", borderRadius: "$md" },
-          item: { paddingHorizontal: "$xs" },
+          scrollArea: { borderWidth: 2, borderColor: "blue8", borderRadius: "md" },
+          item: { paddingHorizontal: "xs" },
         }}
       />
     </Box>

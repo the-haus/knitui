@@ -77,7 +77,7 @@ export const Playground: Story = {
 /** Both visual variants at the default size, checked and unchecked. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Checkbox key={variant} {...args} variant={variant} defaultChecked label={variant} />
       ))}
@@ -88,7 +88,7 @@ export const Variants: Story = {
 /** Full seven-step size scale. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Checkbox key={size} {...args} size={size} defaultChecked label={size} />
       ))}
@@ -99,7 +99,7 @@ export const Sizes: Story = {
 /** Disabled state — the box is dimmed and cannot be toggled. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       <Checkbox {...args} disabled label="Disabled unchecked" />
       <Checkbox {...args} disabled defaultChecked label="Disabled checked" />
     </Box>
@@ -114,7 +114,7 @@ export const Indeterminate: Story = {
 /** Label, description and error message rendered together. */
 export const WithLabelAndDescription: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$lg">
+    <Box flexDirection="column" gap="lg">
       <Checkbox
         {...args}
         label="I agree to the terms"
@@ -135,9 +135,9 @@ export const Controlled: Story = {
   render: (args) => {
     const [checked, setChecked] = React.useState(false);
     return (
-      <Box flexDirection="column" gap="$sm" alignItems="flex-start">
+      <Box flexDirection="column" gap="sm" alignItems="flex-start">
         <Checkbox {...args} checked={checked} onChange={setChecked} label="Controlled checkbox" />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           checked: {String(checked)}
         </Text>
       </Box>
@@ -148,7 +148,7 @@ export const Controlled: Story = {
 /** Read-only — the value is visible but cannot be changed. */
 export const ReadOnly: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       <Checkbox {...args} readOnly label="Read-only unchecked" />
       <Checkbox {...args} readOnly defaultChecked label="Read-only checked" />
     </Box>
@@ -160,7 +160,7 @@ export const Group: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string[]>(["react"]);
     return (
-      <Box flexDirection="column" gap="$sm" alignItems="flex-start">
+      <Box flexDirection="column" gap="sm" alignItems="flex-start">
         <Checkbox.Group
           value={value}
           onChange={setValue}
@@ -173,7 +173,7 @@ export const Group: Story = {
           <Checkbox value="svelte" label="Svelte" />
           <Checkbox value="solid" label="Solid" />
         </Checkbox.Group>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: [{value.join(", ")}]
         </Text>
       </Box>
@@ -186,7 +186,7 @@ export const GroupMaxValues: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string[]>(["react"]);
     return (
-      <Box flexDirection="column" gap="$sm" alignItems="flex-start">
+      <Box flexDirection="column" gap="sm" alignItems="flex-start">
         <Checkbox.Group
           value={value}
           onChange={setValue}
@@ -199,7 +199,7 @@ export const GroupMaxValues: Story = {
           <Checkbox value="svelte" label="Svelte" />
           <Checkbox value="solid" label="Solid" />
         </Checkbox.Group>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: [{value.join(", ")}]
         </Text>
       </Box>
@@ -213,11 +213,11 @@ export const Card: Story = {
     const [checked, setChecked] = React.useState(false);
     return (
       <Checkbox.Card checked={checked} onChange={setChecked} radius="md" width={240}>
-        <Box flexDirection="row" gap="$sm" alignItems="center">
+        <Box flexDirection="row" gap="sm" alignItems="center">
           <Checkbox.Indicator checked={checked} variant={args.variant} size={args.size} />
-          <Stack gap="$xxs">
+          <Stack gap="xxs">
             <Text fontWeight="600">Enable notifications</Text>
-            <Text fontSize="$xs" color="$color11">
+            <Text fontSize="xs" color="color11">
               Receive alerts for new activity.
             </Text>
           </Stack>
@@ -230,10 +230,10 @@ export const Card: Story = {
 /** `Checkbox.Card` with the `shadow` elevation prop across the shadow ladder. */
 export const CardShadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" padding="$md">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" padding="md">
       {(["xs", "sm", "md", "lg", "xl"] as const).map((shadow) => (
         <Checkbox.Card key={shadow} shadow={shadow} radius="md" width={200}>
-          <Box flexDirection="row" gap="$sm" alignItems="center">
+          <Box flexDirection="row" gap="sm" alignItems="center">
             <Checkbox.Indicator checked variant={args.variant} size={args.size} />
             <Text fontWeight="600">{shadow}</Text>
           </Box>
@@ -246,7 +246,7 @@ export const CardShadows: Story = {
 /** `Checkbox.Indicator` is a presentational-only box with no press handler. */
 export const Indicator: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Checkbox.Indicator checked={false} variant={args.variant} size={args.size} />
       <Checkbox.Indicator checked variant={args.variant} size={args.size} />
       <Checkbox.Indicator indeterminate variant={args.variant} size={args.size} />
@@ -258,7 +258,7 @@ export const Indicator: Story = {
 /** Accent themes use Tamagui `theme`, not a public color prop. */
 export const Themes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink", "gray"] as const).map((theme) => (
         <Checkbox key={theme} {...args} theme={theme} defaultChecked label={theme} />
       ))}
@@ -269,9 +269,9 @@ export const Themes: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Checkbox key={size} variant={variant} size={size} defaultChecked label={size} />
           ))}
@@ -287,8 +287,8 @@ export const Styles: Story = {
     label: "Accept terms and conditions",
     defaultChecked: true,
     styles: {
-      box: { backgroundColor: "$blue9", borderColor: "$blue7", borderWidth: 2 },
-      label: { color: "$red9", fontWeight: "700" },
+      box: { backgroundColor: "blue9", borderColor: "blue7", borderWidth: 2 },
+      label: { color: "red9", fontWeight: "700" },
     },
   },
 };

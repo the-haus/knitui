@@ -11,8 +11,7 @@
 // Need to tweak options? Pass overrides:
 //   config.plugins.push(TamaguiPlugin({ disableExtraction: true }))
 
-/** Packages the compiler scans for kit components to optimize. */
-const DEFAULT_COMPONENTS = ["@knitui/components", "@knitui/core"];
+const { DEFAULT_COMPONENTS, KNIT_CONFIG, ignoredStaticEvaluationModules } = require("./components");
 
 /** @typedef {import("tamagui-loader").TamaguiPlugin} TamaguiPluginInstance */
 /** @typedef {import("tamagui-loader").PluginOptions} PluginOptions */
@@ -30,9 +29,10 @@ function createTamaguiPlugin(overrides = {}) {
   return new TamaguiPlugin({
     // The kit's design-system config, resolved from this package so the
     // consumer never references an internal path.
-    config: require.resolve("@knitui/core/config"),
+    config: require.resolve(KNIT_CONFIG),
     components: DEFAULT_COMPONENTS,
     ...overrides,
+    dangerouslyIgnoreStaticEvaluationModules: ignoredStaticEvaluationModules(overrides),
   });
 }
 

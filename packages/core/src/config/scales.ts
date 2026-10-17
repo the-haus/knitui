@@ -22,7 +22,7 @@ export const font = { xxs: 12, xs: 14, sm: 16, md: 18, lg: 20, xl: 24, xxl: 28 }
  * read over many lines, which wants the most air. The top steps are display copy,
  * where a body ratio reads as a gap between lines rather than leading. A ladder that
  * only climbs (the previous shape here, 1.35 → 1.65) inverts the top half: it made
- * `$xxl` headings 46px tall, double-spaced.
+ * `xxl` headings 46px tall, double-spaced.
  *
  * This matches the systems the kit draws from, which agree on the shape even though
  * they express it differently. Mantine ships two scales — body `lineHeights` that

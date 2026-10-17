@@ -5,6 +5,7 @@ import type { StyleProp, ViewStyle } from "@knitui/core";
 
 import { mod } from "../engine";
 import type { SeekFn } from "../motion/useCarouselCore";
+import type { LayoutStyle } from "../style";
 import type { RenderItem } from "../types";
 
 /**
@@ -65,7 +66,7 @@ export interface NativeTrackProps<T> {
  * `flexShrink: 0` keeps slides from being squeezed by the flex container so the
  * content overflows and scrolls.
  */
-export function flowSlideStyle(vertical: boolean, pageSize: number): ViewStyle {
+export function flowSlideStyle(vertical: boolean, pageSize: number): LayoutStyle {
   return vertical
     ? { width: "100%", height: pageSize, flexShrink: 0 }
     : { height: "100%", width: pageSize, flexShrink: 0 };

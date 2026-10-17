@@ -2,7 +2,9 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { effectiveBaseValue } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
+import { TextInput } from "../TextInput";
 import { Fieldset } from "./Fieldset";
 
 describe("Fieldset", () => {
@@ -86,5 +88,42 @@ describe("Fieldset", () => {
       </Fieldset>,
     );
     expect(screen.getByTestId("legend-slot")).toBeInTheDocument();
+  });
+
+  it("cascades disabled to every native control inside (real <fieldset disabled>)", () => {
+    render(
+      <Fieldset disabled legend="Group">
+        <TextInput placeholder="inside" />
+      </Fieldset>,
+    );
+    expect(screen.getByPlaceholderText("inside")).toBeDisabled();
+  });
+
+  it("never leaks a `name` attribute from the styled config", () => {
+    const { container } = render(<Fieldset legend="L">x</Fieldset>);
+    expect(container.querySelector("fieldset")).not.toHaveAttribute("name");
+    expect(screen.getByText("L")).not.toHaveAttribute("name");
+  });
+
+  it("paints the variants from the theme", () => {
+    const { container, rerender } = render(<Fieldset>x</Fieldset>);
+    const frame = () => container.querySelector("fieldset") as HTMLElement;
+    expect(effectiveBaseValue(frame(), "borderColor", ["border"])).toBe("var(--borderColor)");
+    expect(effectiveBaseValue(frame(), "backgroundColor")).toBe("var(--background)");
+    rerender(<Fieldset variant="filled">x</Fieldset>);
+    expect(effectiveBaseValue(frame(), "backgroundColor")).toBe("var(--color2)");
+    rerender(<Fieldset variant="unstyled">x</Fieldset>);
+    expect(effectiveBaseValue(frame(), "borderWidth", ["border"])).toBe("0px");
+  });
+
+  it("applies radius and shadow variants", () => {
+    const { container } = render(
+      <Fieldset radius="lg" shadow="md">
+        x
+      </Fieldset>,
+    );
+    const frame = container.querySelector("fieldset") as HTMLElement;
+    expect(effectiveBaseValue(frame, "borderRadius")).toBe("var(--t-radius-lg)");
+    expect(effectiveBaseValue(frame, "boxShadow")).toContain("var(--dropShadowColor)");
   });
 });

@@ -1,9 +1,15 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 
-import { Box, type BoxProps } from "../Box";
+import { Box } from "../Box";
 import { resolveSizePx } from "../internal/control-metrics";
 import { HiddenInput } from "../internal/hidden-input";
 import { clamp } from "../internal/number-utils";
@@ -13,6 +19,7 @@ import {
   hoverProps,
   type SizeKey,
   squareSizeVariantFallthrough,
+  tableVariant,
   webCursor,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
@@ -33,20 +40,20 @@ function roundValueTo(value: number, to: number): number {
 }
 
 const RatingRoot = styled(Box, {
-  name: "Rating",
+  displayName: "Rating",
   context: RatingContext,
   flexDirection: "row",
   alignItems: "center",
 
   variants: {
     size: {
-      xxs: { gap: "$xxs" },
-      xs: { gap: "$xxs" },
-      sm: { gap: "$xxs" },
-      md: { gap: "$xs" },
-      lg: { gap: "$xs" },
-      xl: { gap: "$sm" },
-      xxl: { gap: "$sm" },
+      xxs: { gap: "xxs" },
+      xs: { gap: "xxs" },
+      sm: { gap: "xxs" },
+      md: { gap: "xs" },
+      lg: { gap: "xs" },
+      xl: { gap: "sm" },
+      xxl: { gap: "sm" },
     },
     disabled: {
       true: { opacity: 0.6, pointerEvents: "none" },
@@ -57,32 +64,48 @@ const RatingRoot = styled(Box, {
 });
 
 const RatingSymbolFrame = styled(Box, {
-  name: "RatingSymbol",
+  displayName: "RatingSymbol",
   context: RatingContext,
   position: "relative",
 
   variants: {
-    size: {
-      ...squareSizeVariantFallthrough,
-    },
+    size: squareSizeVariantFallthrough,
   } as const,
 });
 
+/**
+ * Glyph `size`: a font-size key, or a px number onto `fontSize` + `lineHeight`
+ * (the symbol frame's square, so the star fills it). Built at module scope.
+ * v3: a NUMERIC `lineHeight` is a ratio (×fontSize) on web and native, so the
+ * absolute line box is a `"<n>px"` string (native parses it back to a number).
+ */
+const glyphSizeVariant = tableVariant(fontSizeVariant, (value: number) => ({
+  fontSize: value,
+  lineHeight: `${value}px`,
+}));
+
 const RatingGlyph = styled(Text, {
-  name: "RatingGlyph",
+  displayName: "RatingGlyph",
   context: RatingContext,
   userSelect: "none",
 
   variants: {
-    size: {
-      ...fontSizeVariant,
-      ":number": (value: number) => ({ fontSize: value, lineHeight: value }),
-    },
+    size: glyphSizeVariant,
   } as const,
 });
 
+/** Width-clipped overlay that reveals the "full" symbol for a fractional fill. */
+const RatingFill = styled(Box, {
+  displayName: "RatingFill",
+  position: "absolute",
+  top: 0,
+  left: 0,
+  height: "100%",
+  overflow: "hidden",
+});
+
 const RatingSegmentFrame = styled(Box, {
-  name: "RatingSegment",
+  displayName: "RatingSegment",
   position: "absolute",
   top: 0,
   height: "100%",
@@ -121,8 +144,10 @@ const RATING_SLOT_KEYS = [
 
 export interface RatingProps extends Omit<
   GetProps<typeof RatingRoot>,
-  "onChange" | "children" | "size"
+  "onChange" | "children" | "size" | "disabled"
 > {
+  /** Disable the whole control (read as data: gates selection + hover). */
+  disabled?: boolean;
   /** Controlled value. */
   value?: number;
   /** Uncontrolled initial value. */
@@ -157,12 +182,17 @@ export interface RatingProps extends Omit<
   styles?: SlotStyles<RatingStyles>;
 }
 
+const defaultSymbolLabel = (value: number): string => `${value}`;
+
+/** A fraction (0..1) as a CSS percentage. */
+const pct = (fraction: number) => `${fraction * 100}%` as const;
+
 const resolveSymbol = (symbol: RatingSymbol, value: number): React.ReactNode =>
   typeof symbol === "function" ? symbol(value) : symbol;
 
 interface RatingSegmentProps extends Omit<
   GetProps<typeof RatingSegmentFrame>,
-  "children" | "onPress"
+  "children" | "onPress" | "disabled"
 > {
   value: number;
   label: string;
@@ -172,7 +202,8 @@ interface RatingSegmentProps extends Omit<
   onHover: (value: number) => void;
 }
 
-const RatingSegment = RatingSegmentFrame.styleable<RatingSegmentProps>(
+const RatingSegment = styleable<RatingSegmentProps>(
+  RatingSegmentFrame,
   function RatingSegment(props, ref) {
     const { value, label, checked, disabled, onSelect, onHover, ...rest } = props;
 
@@ -220,14 +251,14 @@ function RatingHiddenInput(props: RatingHiddenInputProps) {
 /**
  * Mirrors Mantine's `Rating` — `count` symbols, each divisible into `fractions`,
  * with hover preview, read-only and clearable modes. The filled accent comes from
- * the active theme's palette ramp (`$color9`) via the `theme` prop, never a
+ * the active theme's palette ramp (`color9`) via the `theme` prop, never a
  * Mantine `color` prop.
  *
  * Fractional fill is done by overlaying a width-clipped "full" symbol over the
  * "empty" one — no SVG, cross-platform. Hover preview uses web pointer events;
  * on native, pressing a segment still selects its value.
  */
-const RatingBase = RatingRoot.styleable<RatingProps>(function Rating(props, ref) {
+const RatingBase = styleable<RatingProps>(RatingRoot, function Rating(props, ref) {
   const {
     value,
     defaultValue,
@@ -240,7 +271,7 @@ const RatingBase = RatingRoot.styleable<RatingProps>(function Rating(props, ref)
     highlightSelectedOnly = false,
     emptySymbol,
     fullSymbol,
-    getSymbolLabel = (v) => `${v}`,
+    getSymbolLabel = defaultSymbolLabel,
     onHover,
     name,
     form,
@@ -308,9 +339,6 @@ const RatingBase = RatingRoot.styleable<RatingProps>(function Rating(props, ref)
     return clamp(displayValue - index, 0, 1);
   };
 
-  const widthPct = (frac: number): BoxProps["width"] => `${frac * 100}%` as BoxProps["width"];
-  const leftPct = (n: number): BoxProps["left"] => `${n * 100}%` as BoxProps["left"];
-
   return (
     <RatingRoot
       ref={ref}
@@ -330,12 +358,12 @@ const RatingBase = RatingRoot.styleable<RatingProps>(function Rating(props, ref)
         const fullValue = index + 1;
         const frac = fillFor(index);
         const empty = resolveSymbol(emptySymbol, fullValue) ?? (
-          <RatingGlyph size={symbolSize} color="$color6">
+          <RatingGlyph size={symbolSize} color="color6">
             ★
           </RatingGlyph>
         );
         const full = resolveSymbol(fullSymbol, fullValue) ?? (
-          <RatingGlyph size={symbolSize} color="$color9">
+          <RatingGlyph size={symbolSize} color="color9">
             ★
           </RatingGlyph>
         );
@@ -344,16 +372,9 @@ const RatingBase = RatingRoot.styleable<RatingProps>(function Rating(props, ref)
           <RatingSymbolFrame key={index} {...s.get("symbol")} size={symbolSize}>
             {empty}
             {frac > 0 ? (
-              <Box
-                position="absolute"
-                top={0}
-                left={0}
-                height="100%"
-                width={widthPct(frac)}
-                overflow="hidden"
-              >
+              <RatingFill width={pct(frac)}>
                 <RatingSymbolFrame size={symbolSize}>{full}</RatingSymbolFrame>
-              </Box>
+              </RatingFill>
             ) : null}
 
             {!readOnly
@@ -364,8 +385,8 @@ const RatingBase = RatingRoot.styleable<RatingProps>(function Rating(props, ref)
                     <RatingSegment
                       key={k}
                       {...s.get("segment")}
-                      left={leftPct(k / stepCount)}
-                      width={widthPct(1 / stepCount)}
+                      left={pct(k / stepCount)}
+                      width={pct(1 / stepCount)}
                       value={segValue}
                       label={getSymbolLabel(rounded)}
                       checked={current === rounded}

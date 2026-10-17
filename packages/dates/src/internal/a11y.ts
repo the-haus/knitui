@@ -2,7 +2,7 @@
 // barrel. Shared by every interactive leaf (`Day`, `PickerControl`, `TimeGrid`'s
 // control, `CalendarHeader`, `MiniCalendar`) so the React-Native `accessibility*`
 // shape lives in ONE place and can't drift across call sites — the same
-// extraction discipline as `web-cursor` and `has-prevent-default`.
+// extraction discipline as `has-prevent-default`.
 //
 // Web screen readers are driven by the existing `role`/`aria-*` attributes; these
 // `accessibility*` props are their NATIVE counterparts (VoiceOver/TalkBack). Both
@@ -54,13 +54,16 @@ export interface ControlA11yProps {
  * On WEB this returns nothing: every call site already sets the equivalent
  * `role`/`aria-*` attributes (the kit's cross-platform web a11y axis), and
  * react-native-web does not translate these RN `accessibility*` props on the
- * `styled(...).styleable` hosts these controls use — so emitting them would only
+ * `styleable()` hosts these controls use — so emitting them would only
  * leak unrecognised `accessibility*` attributes onto the DOM. They are the
  * VoiceOver/TalkBack counterparts, needed on native only.
  */
+/** The web result: one frozen empty object, so 42 cells per grid allocate nothing. */
+const NO_NATIVE_A11Y: Partial<ControlA11yProps> = Object.freeze({});
+
 export function controlA11yProps(options: ControlA11yOptions = {}): Partial<ControlA11yProps> {
   if (isWeb) {
-    return {};
+    return NO_NATIVE_A11Y;
   }
 
   const { label, selected, disabled, role = "button" } = options;

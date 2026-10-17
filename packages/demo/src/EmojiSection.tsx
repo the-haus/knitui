@@ -19,17 +19,17 @@ function EmojiTile({ name }: { name: EmojiName }) {
   return (
     <Stack
       width={104}
-      gap="$xs"
+      gap="xs"
       alignItems="center"
-      px="$xs"
-      py="$sm"
+      px="xs"
+      py="sm"
       borderWidth={1}
-      borderColor="$color4"
-      borderRadius="$sm"
-      backgroundColor="$color1"
+      borderColor="color4"
+      borderRadius="sm"
+      backgroundColor="color1"
     >
       <Emoji name={name} size={32} title={name} fallback={<Box width={32} height={32} />} />
-      <Text c="$color11" fz={11} numberOfLines={1} ta="center" w="100%">
+      <Text c="color11" fz={11} numberOfLines={1} ta="center" w="100%">
         {name}
       </Text>
     </Stack>
@@ -60,10 +60,10 @@ export function EmojiSection() {
   const truncated = matches.length - visible.length;
 
   return (
-    <Stack gap="$md">
-      <Stack gap="$xxs">
+    <Stack gap="md">
+      <Stack gap="xxs">
         <Title order={3}>Emoji</Title>
-        <Text c="$color11">
+        <Text c="color11">
           {ALL_EMOJI_NAMES.length} full-color emoji from <Text fontWeight="600">@knitui/emoji</Text>{" "}
           (Google Noto). Search by name to filter; render the{" "}
           <Text fontWeight="600">{"<Emoji name=… />"}</Text> component with any registry name.
@@ -79,7 +79,7 @@ export function EmojiSection() {
         size="sm"
       />
 
-      <Text c="$color10" fz={12}>
+      <Text c="color10" fz={12}>
         {matches.length === 0
           ? `No emoji match “${query.trim()}”.`
           : truncated > 0
@@ -87,7 +87,7 @@ export function EmojiSection() {
             : `Showing ${matches.length} ${matches.length === 1 ? "emoji" : "emoji"}.`}
       </Text>
 
-      <Box flexDirection="row" flexWrap="wrap" gap="$sm">
+      <Box flexDirection="row" flexWrap="wrap" gap="sm">
         {visible.map((name) => (
           <EmojiTile key={name} name={name} />
         ))}

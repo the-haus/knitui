@@ -39,15 +39,30 @@ describe("SimpleGrid", () => {
     expect(screen.getByText("Cell")).toBeInTheDocument();
   });
 
-  it("accepts the full spacing scale and $space tokens", () => {
+  it("resolves bare space tokens to px for the cell math", () => {
     render(
-      <SimpleGrid cols={2} spacing="xxs" verticalSpacing="$xxl">
+      <SimpleGrid testID="grid" cols={2} spacing="xs" verticalSpacing="xxl">
         <span>Small gap</span>
         <span>Large row gap</span>
       </SimpleGrid>,
     );
-    expect(screen.getByText("Small gap")).toBeInTheDocument();
-    expect(screen.getByText("Large row gap")).toBeInTheDocument();
+    // xs = 4px column gap split over 2 columns; xxl = 32px row gap.
+    expect(screen.getByText("Small gap").parentElement).toHaveStyle({
+      paddingLeft: "0px",
+      paddingRight: "2px",
+    });
+    expect(screen.getByTestId("grid")).toHaveStyle({ rowGap: "32px" });
+  });
+
+  it("defaults the spacing to the md token", () => {
+    render(
+      <SimpleGrid testID="grid" cols={2}>
+        <span>a</span>
+        <span>b</span>
+      </SimpleGrid>,
+    );
+    expect(screen.getByTestId("grid")).toHaveStyle({ rowGap: "12px" });
+    expect(screen.getByText("a").parentElement).toHaveStyle({ paddingRight: "6px" });
   });
 
   it("forwards a ref to the grid frame", () => {

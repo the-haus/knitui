@@ -16,13 +16,21 @@
  */
 import * as React from "react";
 
-import { ActionIcon, Box, Group, Slider, Stack, Text } from "@knitui/components";
+import { ActionIcon, Group, Slider, Stack, Text } from "@knitui/components";
 import { IconPlayerPauseFilled } from "@knitui/icons/IconPlayerPauseFilled";
 import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
 import { IconRewindBackward10 } from "@knitui/icons/IconRewindBackward10";
 import { IconRewindForward10 } from "@knitui/icons/IconRewindForward10";
 
 import { clampMediaSize } from "../control-size";
+import {
+  formatScrubLabel,
+  LiveDot,
+  percentWidth,
+  ScrubberBuffered,
+  ScrubberFrame,
+  useScrubPreview,
+} from "../shared/chrome";
 import { bufferedFractionOf, formatTime } from "./engine";
 import { OnScrimIcons, volumeIconFor } from "./Video.chrome.internal";
 import {
@@ -32,7 +40,7 @@ import {
   SettingsMenu,
   VolumeControl,
 } from "./Video.chrome.menus";
-import { shallowEqual, useVideo, useVideoState } from "./Video.shared";
+import { shallowEqual, useVideo, useVideoState, VideoTimeText } from "./Video.shared";
 
 export {
   FullscreenButton,
@@ -54,6 +62,12 @@ export {
 /* Play / pause                                                               */
 /* -------------------------------------------------------------------------- */
 
+/** The play button's buffering spinner, painted white-on-scrim (hoisted). */
+const ON_SCRIM_LOADER = {
+  borderTopColor: "mediaOnScrim",
+  borderRightColor: "mediaOnScrim",
+} as const;
+
 export const PlayPauseButton = React.memo(function PlayPauseButton(): React.ReactElement {
   const { controller, size, keepAlive } = useVideo("PlayPause");
   const { playing, status } = useVideoState(
@@ -67,7 +81,7 @@ export const PlayPauseButton = React.memo(function PlayPauseButton(): React.Reac
       // Only spin (and disable) while buffering DURING playback — a paused or
       // not-yet-loaded player must stay pressable so the user can start it.
       loading={playing && status === "loading"}
-      loaderProps={{ borderTopColor: "$mediaOnScrim", borderRightColor: "$mediaOnScrim" }}
+      loaderProps={ON_SCRIM_LOADER}
       aria-label={playing ? "Pause" : "Play"}
       onPress={() => {
         keepAlive();
@@ -118,7 +132,7 @@ export const SeekButton = React.memo(function SeekButton({
 export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
   const { controller, keepAlive } = useVideo("Scrubber");
   // Reads the per-tick fields — this is one of the few controls that SHOULD
-  // re-render every frame.
+  // re-render every frame. Everything else it renders is static or stable.
   const { currentTime, duration, isLive, bufferedPosition } = useVideoState(
     (s) => ({
       currentTime: s.currentTime,
@@ -128,41 +142,28 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
     }),
     shallowEqual,
   );
+  const seekTo = React.useCallback((v: number) => controller.seekTo(v), [controller]);
+  const { preview, onChange, onChangeEnd } = useScrubPreview(seekTo, keepAlive);
   const hasDuration = Number.isFinite(duration) && duration > 0;
-  const bufferedPct = Math.round(bufferedFractionOf({ bufferedPosition, duration }) * 100);
-
-  // While dragging we show a local preview value and only commit the seek on
-  // release, so incoming timeUpdate events don't fight the thumb.
-  const [scrubValue, setScrubValue] = React.useState<number | null>(null);
+  const buffered = percentWidth(bufferedFractionOf({ bufferedPosition, duration }));
 
   // True live stream: no meaningful timeline to scrub.
   if (isLive) {
     return (
-      <Group gap="$xs" align="center" height={20}>
-        <Box width={8} height={8} borderRadius={8} backgroundColor="$red9" />
-        <Text size="xs" fontWeight="600" color="$mediaOnScrim">
+      <Group gap="xs" align="center" height={20}>
+        <LiveDot />
+        <Text size="xs" fontWeight="600" color="mediaOnScrim">
           LIVE
         </Text>
       </Group>
     );
   }
 
-  const displayValue = scrubValue ?? (hasDuration ? Math.min(currentTime, duration) : 0);
+  const displayValue = preview ?? (hasDuration ? Math.min(currentTime, duration) : 0);
 
   return (
-    <Box position="relative" width="100%" justifyContent="center">
-      {/* Buffered underlay, centered on the (vertically-centered) slider track. */}
-      <Box
-        position="absolute"
-        top="50%"
-        marginTop={-2}
-        left={0}
-        height={4}
-        borderRadius={4}
-        backgroundColor="$mediaHighlight"
-        width={`${bufferedPct}%`}
-        pointerEvents="none"
-      />
+    <ScrubberFrame>
+      <ScrubberBuffered onMedia style={buffered} />
       <Slider
         value={displayValue}
         min={0}
@@ -170,18 +171,12 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
         step={0.1}
         size="xs"
         disabled={!hasDuration}
-        label={(v: number) => formatTime(v)}
+        label={formatScrubLabel}
         aria-label="Seek"
-        onChange={(v: number) => {
-          keepAlive();
-          setScrubValue(v);
-        }}
-        onChangeEnd={(v: number) => {
-          controller.seekTo(v);
-          setScrubValue(null);
-        }}
+        onChange={onChange}
+        onChangeEnd={onChangeEnd}
       />
-    </Box>
+    </ScrubberFrame>
   );
 });
 
@@ -195,21 +190,13 @@ export const TimeCurrent = React.memo(function TimeCurrent(): React.ReactElement
   // float fails `Object.is` on EVERY tick (4 Hz via `timeUpdateEventInterval`) and
   // re-rendered this `<Text>` to produce a byte-identical string 3 times in 4.
   const currentTime = useVideoState((s) => Math.floor(s.currentTime));
-  return (
-    <Text size="xs" color="$mediaOnScrim" fontWeight="500">
-      {formatTime(currentTime)}
-    </Text>
-  );
+  return <VideoTimeText>{formatTime(currentTime)}</VideoTimeText>;
 });
 
 /** Total duration. */
 export const TimeDuration = React.memo(function TimeDuration(): React.ReactElement {
   const duration = useVideoState((s) => (Number.isFinite(s.duration) ? s.duration : 0));
-  return (
-    <Text size="xs" color="$mediaOnScrim" fontWeight="500">
-      {formatTime(duration)}
-    </Text>
-  );
+  return <VideoTimeText>{formatTime(duration)}</VideoTimeText>;
 });
 
 /** Combined "1:23 / 4:56" timecode. */
@@ -223,9 +210,9 @@ export const TimeDisplay = React.memo(function TimeDisplay(): React.ReactElement
     shallowEqual,
   );
   return (
-    <Text size="xs" color="$mediaOnScrim" fontWeight="500">
+    <VideoTimeText>
       {formatTime(currentTime)} / {formatTime(duration)}
-    </Text>
+    </VideoTimeText>
   );
 });
 
@@ -264,17 +251,17 @@ export const MuteButton = React.memo(function MuteButton(): React.ReactElement {
 
 export function ControlBar(): React.ReactElement {
   return (
-    <Stack gap="$xxs" width="100%">
+    <Stack gap="xxs" width="100%">
       <Scrubber />
-      <Group justify="space-between" align="center" gap="$xs" wrap="nowrap">
-        <Group gap="$xxs" align="center" wrap="nowrap">
+      <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <PlayPauseButton />
           <SeekButton seconds={-10} />
           <SeekButton seconds={10} />
           <VolumeControl />
           <TimeDisplay />
         </Group>
-        <Group gap="$xxs" align="center" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <PlaybackRateMenu />
           <SettingsMenu />
           <PiPButton />

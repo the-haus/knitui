@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { type TamaguiElement, withStaticProperties } from "@knitui/core";
-import { useMergedRef } from "@knitui/hooks";
+import { useCallbackRef, useMergedRef } from "@knitui/hooks";
 
 import { type __BaseInputProps, Input, type InputProps } from "../Input";
 import {
@@ -28,7 +28,7 @@ interface PillsInputContextValue {
   variant?: InputVariant;
   /**
    * Field focus/blur reported up from `PillsInput.Field` so the shell can show
-   * the same `$borderColorFocus` border every other text field gets — the field
+   * the same `focusRingColor` border every other text field gets — the field
    * is a SEPARATE child, so the shell can't read its focus state directly.
    */
   setFocused: (focused: boolean) => void;
@@ -37,6 +37,14 @@ interface PillsInputContextValue {
 type InputFieldElement = React.ComponentRef<typeof Input>;
 
 const PillsInputContext = React.createContext<PillsInputContextValue | null>(null);
+
+/** The shell lays the pills + field out as a wrapping row. */
+const SHELL_ROOT = {
+  flexWrap: "wrap",
+  alignItems: "flex-start",
+  padding: "xs",
+  gap: "xs",
+} as const;
 
 /* -------------------------------------------------------------------------- */
 /* PillsInput shell                                                           */
@@ -120,6 +128,12 @@ const PillsInputComponent = React.forwardRef<InputRootRef, PillsInputProps>(
       [size, disabled],
     );
 
+    const shellWrapperProps = React.useMemo(
+      () => (wrapperProps ? { ...SHELL_ROOT, ...wrapperProps } : SHELL_ROOT),
+      [wrapperProps],
+    );
+    const focusField = React.useCallback(() => fieldRef.current?.focus?.(), []);
+
     return (
       <PillsInputContext.Provider value={ctx}>
         <InputWrapper
@@ -158,14 +172,8 @@ const PillsInputComponent = React.forwardRef<InputRootRef, PillsInputProps>(
             rightSectionPointerEvents={rightSectionPointerEvents}
             loading={loading}
             loadingPosition={loadingPosition}
-            wrapperProps={{
-              flexWrap: "wrap",
-              alignItems: "flex-start",
-              padding: "$xs",
-              gap: "$xs",
-              ...wrapperProps,
-            }}
-            onRootPress={() => fieldRef.current?.focus?.()}
+            wrapperProps={shellWrapperProps}
+            onRootPress={focusField}
           >
             <PillGroupContext.Provider value={pillGroupValue}>{children}</PillGroupContext.Provider>
           </InputChrome>
@@ -209,6 +217,31 @@ const PillsInputField = React.forwardRef<InputFieldElement, PillsInputFieldProps
     const isDisabled = disabled ?? ctx?.disabled;
     const hidden = type === "hidden";
 
+    // Report focus up to the shell so its border lights up like any text field.
+    // Stable identities (latest-closure) so the memoized `Input` below isn't
+    // handed fresh handlers on every keystroke in the field.
+    const handleFocus = useCallbackRef((event: FieldFocusEvent) => {
+      ctx?.setFocused(true);
+      onFocus?.(event);
+    });
+    const handleBlur = useCallbackRef((event: FieldFocusEvent) => {
+      ctx?.setFocused(false);
+      onBlur?.(event);
+    });
+
+    // The field sits bare inside the shell: no own height/inset, it flexes into
+    // the free space after the pills. Static per `hidden` unless the caller adds
+    // `wrapperProps`, so it never allocates on a keystroke.
+    const fieldWrapperProps = React.useMemo(
+      () =>
+        wrapperProps
+          ? { ...wrapperProps, ...(hidden ? HIDDEN_FIELD_ROOT : VISIBLE_FIELD_ROOT) }
+          : hidden
+            ? HIDDEN_FIELD_ROOT
+            : VISIBLE_FIELD_ROOT,
+      [wrapperProps, hidden],
+    );
+
     return (
       <Input
         {...rest}
@@ -218,32 +251,28 @@ const PillsInputField = React.forwardRef<InputFieldElement, PillsInputFieldProps
         size={ctx?.size}
         disabled={isDisabled}
         pointer={pointer}
-        // Report focus up to the shell so its border lights up like any text field.
-        onFocus={(event) => {
-          ctx?.setFocused(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          ctx?.setFocused(false);
-          onBlur?.(event);
-        }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         opacity={hidden ? 0 : 1}
-        wrapperProps={{
-          ...wrapperProps,
-          flex: 1,
-          minWidth: hidden ? 1 : "$xxl",
-          width: hidden ? 1 : "auto",
-          height: "auto",
-          minHeight: "$0",
-          paddingHorizontal: "$0",
-          paddingVertical: "$0",
-          backgroundColor: "transparent",
-          alignSelf: "center",
-        }}
+        wrapperProps={fieldWrapperProps}
       />
     );
   },
 );
+
+type FieldFocusEvent = Parameters<NonNullable<InputProps["onFocus"]>>[0];
+
+const FIELD_ROOT = {
+  flex: 1,
+  height: "auto",
+  minHeight: 0,
+  paddingHorizontal: 0,
+  paddingVertical: 0,
+  backgroundColor: "transparent",
+  alignSelf: "center",
+} as const;
+const VISIBLE_FIELD_ROOT = { ...FIELD_ROOT, minWidth: "xxl", width: "auto" } as const;
+const HIDDEN_FIELD_ROOT = { ...FIELD_ROOT, minWidth: 1, width: 1 } as const;
 
 export const PillsInput = withStaticProperties(PillsInputComponent, {
   Field: PillsInputField,

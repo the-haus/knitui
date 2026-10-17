@@ -162,8 +162,8 @@ export const StyledParts: Story = {
         nextLabel="Next month"
         levelControlAriaLabel="Change level"
         styles={{
-          control: { borderRadius: "$lg" },
-          levelLabel: { color: "$color11" },
+          control: { borderRadius: "lg" },
+          levelLabel: { color: "color11" },
         }}
       />
     </Box>
@@ -173,7 +173,7 @@ export const StyledParts: Story = {
 /** Every size from the shared `xxs…xxl` cell-metrics ladder. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$sm" width={280}>
+    <Box gap="sm" width={280}>
       {(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const).map((size) => (
         <CalendarHeader
           key={size}

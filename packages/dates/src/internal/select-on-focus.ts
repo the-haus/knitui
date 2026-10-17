@@ -1,7 +1,7 @@
 // Internal cross-platform helper — NOT exported from the public `src/index.ts`
 // barrel. Shared by the time-segment leaves (`SpinInput`, `AmPmInput`) so the
 // web `.select()`-on-focus narrowing lives in one place (the same extraction
-// pattern as `web-cursor`, `focus-element` and `has-prevent-default`).
+// pattern as `focus-element` and `has-prevent-default`).
 
 import { isWeb } from "@knitui/core";
 

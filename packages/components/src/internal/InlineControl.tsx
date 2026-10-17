@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, Theme } from "@knitui/core";
+import { type GetProps, styleable, styled } from "@knitui/core";
 
 import { Box } from "../Box";
 import { Text } from "../Text";
@@ -21,11 +21,11 @@ type InlineControlSize = SizeKey;
  * layout isn't stretched.
  */
 const InlineControlRoot = styled(Box, {
-  name: "InlineControl",
+  displayName: "InlineControl",
   flexDirection: "row",
   alignItems: "center",
   alignSelf: "flex-start",
-  gap: "$sm",
+  gap: "sm",
 
   variants: {
     disabled: {
@@ -36,46 +36,43 @@ const InlineControlRoot = styled(Box, {
 
 /** Vertical stack: label + description + error. */
 const LabelWrapper = styled(Box, {
-  name: "InlineControlLabelWrapper",
+  displayName: "InlineControlLabelWrapper",
   flexDirection: "column",
-  gap: "$xxs",
+  gap: "xxs",
   flexShrink: 1,
 });
 
 const ControlLabel = styled(Text, {
-  name: "InlineControlLabel",
-  color: "$color",
+  displayName: "InlineControlLabel",
+  color: "color",
   ...webCursor("pointer"),
   userSelect: "none",
   variants: {
-    size: {
-      ...fontSizeVariant,
-    },
+    size: fontSizeVariant,
   } as const,
   defaultVariants: { size: "sm" },
 });
 
 const ControlDescription = styled(Text, {
-  name: "InlineControlDescription",
-  color: "$color",
+  displayName: "InlineControlDescription",
+  color: "color",
   opacity: 0.65,
   userSelect: "none",
   variants: {
-    size: {
-      ...fontSizeVariant,
-    },
+    size: fontSizeVariant,
   } as const,
   defaultVariants: { size: "sm" },
 });
 
+// The error ramp is read straight off the base theme's `red11` key rather than
+// mounting a `<Theme name="red">` sub-theme per error (same colour, no theme
+// provider / re-render; conventions §6).
 const ControlError = styled(Text, {
-  name: "InlineControlError",
-  color: "$color11",
+  displayName: "InlineControlError",
+  color: "red11",
   userSelect: "none",
   variants: {
-    size: {
-      ...fontSizeVariant,
-    },
+    size: fontSizeVariant,
   } as const,
   defaultVariants: { size: "sm" },
 });
@@ -143,9 +140,10 @@ export interface InlineControlProps extends GetProps<typeof InlineControlRoot> {
  * honouring `labelPosition`, scaling the label font with `size`, and forwarding
  * the description/error `id`s so the caller can wire `aria-describedby` onto the
  * control. Pressing the label toggles the control (like a native `<label>`),
- * and a non-boolean `error` renders in the red error theme.
+ * and a non-boolean `error` renders in the red error colour (`red11`).
  */
-export const InlineControl = InlineControlRoot.styleable<InlineControlProps>(
+export const InlineControl = styleable<InlineControlProps>(
+  InlineControlRoot,
   function InlineControl(props, ref) {
     const {
       id,
@@ -184,11 +182,9 @@ export const InlineControl = InlineControlRoot.styleable<InlineControlProps>(
           </ControlDescription>
         ) : null}
         {error != null && error !== true ? (
-          <Theme name="red">
-            <ControlError id={errorId} size={size} {...s.get("error")}>
-              {error}
-            </ControlError>
-          </Theme>
+          <ControlError id={errorId} size={size} {...s.get("error")}>
+            {error}
+          </ControlError>
         ) : null}
       </LabelWrapper>
     ) : null;

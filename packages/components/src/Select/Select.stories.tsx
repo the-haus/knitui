@@ -102,7 +102,7 @@ export const Playground: Story = {};
 /** All seven sizes shown side by side. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Select key={size} {...args} size={size} placeholder={size} />
       ))}
@@ -113,7 +113,7 @@ export const Sizes: Story = {
 /** Elevation shadow ladder applied via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Select key={shadow} {...args} shadow={shadow} placeholder={shadow} />
       ))}
@@ -194,7 +194,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string | null>(null);
     return (
-      <Box gap="$sm" width={280}>
+      <Box gap="sm" width={280}>
         <Select
           {...args}
           value={value}
@@ -202,7 +202,7 @@ export const Controlled: Story = {
           clearable
           placeholder="Pick a fruit"
         />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {value ?? "none"}
         </Text>
       </Box>
@@ -213,7 +213,7 @@ export const Controlled: Story = {
 /** All seven sizes stacked to compare metrics at a glance. */
 export const SizeStack: Story = {
   render: (args) => (
-    <Box gap="$md" width={280}>
+    <Box gap="md" width={280}>
       {SIZES.map((size) => (
         <Select key={size} {...args} size={size} placeholder={size} />
       ))}
@@ -224,7 +224,7 @@ export const SizeStack: Story = {
 /** Loading state — a spinner replaces the chevron; position via `loadingPosition`. */
 export const Loading: Story = {
   render: (args) => (
-    <Box gap="$sm" width={280}>
+    <Box gap="sm" width={280}>
       <Select {...args} label="Loading right" loading loadingPosition="right" />
       <Select {...args} label="Loading left" loading loadingPosition="left" />
     </Box>
@@ -237,8 +237,8 @@ export const Styles: Story = {
     data: FRUITS,
     placeholder: "Pick a fruit",
     styles: {
-      trigger: { backgroundColor: "$blue3", borderColor: "$blue7" },
-      dropdown: { backgroundColor: "$blue2" },
+      trigger: { backgroundColor: "blue3", borderColor: "blue7" },
+      dropdown: { backgroundColor: "blue2" },
     },
   },
 };

@@ -2,23 +2,26 @@ import * as React from "react";
 
 import {
   type GetProps,
+  styleable,
   styled,
   type TamaguiElement,
-  Theme,
   withStaticProperties,
 } from "@knitui/core";
 import { useId, useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 
-import { Box, type BoxProps } from "../Box";
+import { Box } from "../Box";
 import {
   INLINE_CONTROL_SLOTS,
   InlineControl,
   type InlineControlProps,
   type InlineControlSlots,
 } from "../internal/InlineControl";
+import { useReducedTransition } from "../internal/motion";
 import {
   FOCUS_RING,
+  focusRingStyle,
   radiusVariant,
+  scopeTransition,
   shadowVariant,
   type SizeKey,
   squareSizeVariant,
@@ -54,8 +57,24 @@ const CheckboxCardContext = React.createContext<CheckboxCardContextValue | null>
 /* Shared visual (box + glyph) — used by Checkbox and Checkbox.Indicator       */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The square box. Its colours are a STATIC `tone` variant (resolved once per
+ * render from variant + checked + error), so the fill/border are compiler-known
+ * variant bodies instead of per-render JSX colour props:
+ *
+ *  tone      fill          border    glyph
+ *  off       color3        color6    —        (faint fill + a border that reads as a target)
+ *  filled    color9        color9    color1
+ *  outline   transparent   color9    color9
+ *  error     red3          red8      —        (unchecked + `error`; base-theme red keys,
+ *                                              so it stays red under any accent theme)
+ *
+ * The focus ring is NOT in this base: `Checkbox.Indicator` reuses the box and is
+ * not focusable, so the ring is spread only where the box is focusable (two-layer
+ * focus contract).
+ */
 const CheckboxBox = styled(Box, {
-  name: "Checkbox",
+  displayName: "Checkbox",
   borderWidth: 1,
   alignItems: "center",
   justifyContent: "center",
@@ -66,16 +85,21 @@ const CheckboxBox = styled(Box, {
       ...squareSizeVariant,
     },
     radius: radiusVariant,
+    tone: {
+      off: { backgroundColor: "color3", borderColor: "color6" },
+      filled: { backgroundColor: "color9", borderColor: "color9" },
+      outline: { backgroundColor: "transparent", borderColor: "color9" },
+      error: { backgroundColor: "red3", borderColor: "red8" },
+    },
+    disabled: {
+      true: { opacity: 0.6 },
+    },
   } as const,
 
-  defaultVariants: { size: "md" },
+  defaultVariants: { size: "md", tone: "off" },
 });
 
-type CheckColors = {
-  background: BoxProps["backgroundColor"];
-  border: BoxProps["borderColor"];
-  icon: TextProps["color"];
-};
+type CheckboxTone = "off" | "filled" | "outline" | "error";
 
 type CheckboxAriaProps = {
   role: "checkbox";
@@ -86,25 +110,17 @@ type CheckboxAriaProps = {
   "aria-labelledby"?: string;
 };
 
-/** Resolve box/border/icon colours from the variant + active (checked) state. */
-function checkColors(variant: CheckboxVariant, active: boolean): CheckColors {
-  if (!active) {
-    // Pinned ramp steps, NOT `$background`/`$borderColor`. `CheckboxBox` is
-    // `name: "Checkbox"`, which used to collide with Tamagui's (deprecated)
-    // `defaultComponentThemes` and nest into a `<scheme>_Checkbox` theme whose
-    // `surface2` template offset `$background` → `$color3` and `$borderColor` →
-    // `$color6`. Component themes are now off (`core/config/themes.ts` →
-    // `componentThemes: false`), so the unchecked box states its own steps: it
-    // needs a faint fill + a border strong enough to read as an empty target.
-    return { background: "$color3", border: "$color6", icon: "$color1" };
-  }
-  if (variant === "outline") {
-    return { background: "transparent", border: "$color9", icon: "$color9" };
-  }
-  return { background: "$color9", border: "$color9", icon: "$color1" };
-}
+/** The box tone for variant + active (checked / indeterminate) + error. */
+const checkboxTone = (variant: CheckboxVariant, active: boolean, error: boolean): CheckboxTone =>
+  active ? variant : error ? "error" : "off";
 
-interface CheckboxVisualProps extends Omit<GetProps<typeof CheckboxBox>, "size"> {
+/** Glyph colour on each active tone. */
+const ICON_COLOR = { filled: "color1", outline: "color9" } as const;
+
+/** Only the box colours ease between checked states. */
+const BOX_TRANSITION_PROPERTIES = ["backgroundColor", "borderColor"] as const;
+
+interface CheckboxVisualProps extends Omit<GetProps<typeof CheckboxBox>, "size" | "tone"> {
   checked?: boolean;
   indeterminate?: boolean;
   size?: CheckboxSize;
@@ -117,7 +133,8 @@ interface CheckboxVisualProps extends Omit<GetProps<typeof CheckboxBox>, "size">
   withErrorStyles?: boolean;
 }
 
-const CheckboxVisual = CheckboxBox.styleable<CheckboxVisualProps>(
+const CheckboxVisual = styleable<CheckboxVisualProps>(
+  CheckboxBox,
   function CheckboxVisual(props, ref) {
     const {
       checked,
@@ -133,30 +150,30 @@ const CheckboxVisual = CheckboxBox.styleable<CheckboxVisualProps>(
     } = props;
 
     const active = !!(checked || indeterminate);
-    const colors = checkColors(variant, active);
-    const showErrorBorder = !active && !!error && withErrorStyles;
+    // Reduced-motion aware; memoised, and `scopeTransition` caches per result.
+    const fade = useReducedTransition("fast");
 
-    const box = (
+    // No `<Theme name="red">` wrapper for the error state: switching the tree
+    // shape would remount the (focused) box. The `error` tone reads the base
+    // theme's red keys directly.
+    return (
       <CheckboxBox
         ref={ref}
         size={size}
-        backgroundColor={colors.background}
-        borderColor={showErrorBorder ? "$color8" : colors.border}
+        tone={checkboxTone(variant, active, !!error && withErrorStyles)}
+        {...scopeTransition(fade, BOX_TRANSITION_PROPERTIES)}
         {...rest}
       >
         {active ? (
           <Icon
             indeterminate={indeterminate}
             size={size}
-            color={iconColor ?? colors.icon}
+            color={iconColor ?? ICON_COLOR[variant]}
             {...iconProps}
           />
         ) : null}
       </CheckboxBox>
     );
-
-    // Error border uses the red theme so it stays red under every accent theme.
-    return showErrorBorder ? <Theme name="red">{box}</Theme> : box;
   },
 );
 
@@ -173,8 +190,8 @@ const CheckboxVisual = CheckboxBox.styleable<CheckboxVisualProps>(
  * check / indeterminate glyph component.
  */
 export interface CheckboxStyles extends InlineControlSlots {
-  /** Props for the square `CheckboxBox`. */
-  box: Partial<GetProps<typeof CheckboxBox>>;
+  /** Props for the square `CheckboxBox` (size / tone stay owned by the Checkbox). */
+  box: Partial<Omit<GetProps<typeof CheckboxBox>, "size" | "tone">>;
   /** Props for the check / indeterminate glyph (`Checkbox.icon`). */
   icon: Partial<CheckboxIconProps>;
 }
@@ -191,7 +208,7 @@ const CHECKBOX_SLOTS = [
 
 export interface CheckboxProps
   extends
-    Omit<GetProps<typeof CheckboxBox>, "size" | "onChange">,
+    Omit<GetProps<typeof CheckboxBox>, "size" | "tone" | "onChange" | "role">,
     Pick<InlineControlProps, "label" | "description" | "error" | "labelPosition"> {
   /** Controlled checked state. */
   checked?: boolean;
@@ -237,7 +254,7 @@ export interface CheckboxProps
   "aria-describedby"?: string;
 }
 
-const CheckboxComponent = CheckboxBox.styleable<CheckboxProps>(function Checkbox(props, ref) {
+const CheckboxComponent = styleable<CheckboxProps>(CheckboxBox, function Checkbox(props, ref) {
   const {
     checked,
     defaultChecked,
@@ -260,7 +277,6 @@ const CheckboxComponent = CheckboxBox.styleable<CheckboxProps>(function Checkbox
     value,
     disabled,
     rootRef,
-    role: _role,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledBy,
     "aria-describedby": ariaDescribedByProp,
@@ -329,7 +345,7 @@ const CheckboxComponent = CheckboxBox.styleable<CheckboxProps>(function Checkbox
       onPress={toggle}
       {...ariaProps}
       {...focusProps}
-      focusVisibleStyle={FOCUS_RING}
+      {...FOCUS_RING}
       {...s.get("box")}
       {...rest}
     />
@@ -359,22 +375,26 @@ const CheckboxComponent = CheckboxBox.styleable<CheckboxProps>(function Checkbox
 /* -------------------------------------------------------------------------- */
 
 const GroupFrame = styled(Box, {
-  name: "CheckboxGroup",
+  displayName: "CheckboxGroup",
   flexDirection: "column",
-  gap: "$xs",
+  gap: "xs",
 });
 
 const GroupItems = styled(Box, {
-  name: "CheckboxGroupItems",
+  displayName: "CheckboxGroupItems",
   role: "group",
   flexDirection: "column",
-  gap: "$sm",
+  gap: "sm",
 });
 
-const GroupLabel = styled(Text, { name: "CheckboxGroupLabel", fontWeight: "600", color: "$color" });
+const GroupLabel = styled(Text, {
+  displayName: "CheckboxGroupLabel",
+  fontWeight: "600",
+  color: "color",
+});
 const GroupDescription = styled(Text, {
-  name: "CheckboxGroupDescription",
-  color: "$color",
+  displayName: "CheckboxGroupDescription",
+  color: "color",
   opacity: 0.65,
 });
 
@@ -406,7 +426,7 @@ export interface CheckboxGroupProps extends Omit<GetProps<typeof GroupFrame>, "o
   name?: string;
 }
 
-const CheckboxGroup = GroupFrame.styleable<CheckboxGroupProps>(function CheckboxGroup(props, ref) {
+const CheckboxGroup = styleable<CheckboxGroupProps>(GroupFrame, function CheckboxGroup(props, ref) {
   const {
     children,
     value,
@@ -476,7 +496,10 @@ const CheckboxGroup = GroupFrame.styleable<CheckboxGroupProps>(function Checkbox
 /* Checkbox.Indicator — presentational, no input                              */
 /* -------------------------------------------------------------------------- */
 
-export interface CheckboxIndicatorProps extends Omit<GetProps<typeof CheckboxBox>, "size"> {
+export interface CheckboxIndicatorProps extends Omit<
+  GetProps<typeof CheckboxBox>,
+  "size" | "tone" | "disabled"
+> {
   /** Determines whether the indicator shows the checked styles. */
   checked?: boolean;
   /** Indeterminate state; when set, `checked` is ignored for display. */
@@ -493,7 +516,8 @@ export interface CheckboxIndicatorProps extends Omit<GetProps<typeof CheckboxBox
   disabled?: boolean;
 }
 
-const CheckboxIndicator = CheckboxBox.styleable<CheckboxIndicatorProps>(
+const CheckboxIndicator = styleable<CheckboxIndicatorProps>(
+  CheckboxBox,
   function CheckboxIndicator(props, ref) {
     const {
       checked,
@@ -522,7 +546,7 @@ const CheckboxIndicator = CheckboxBox.styleable<CheckboxIndicatorProps>(
         variant={variant}
         icon={icon}
         iconColor={iconColor}
-        opacity={disabled ? 0.6 : undefined}
+        disabled={!!disabled}
         {...rest}
       />
     );
@@ -534,16 +558,22 @@ const CheckboxIndicator = CheckboxBox.styleable<CheckboxIndicatorProps>(
 /* -------------------------------------------------------------------------- */
 
 const CheckboxCardFrame = styled(Box, {
-  name: "CheckboxCard",
-  padding: "$md",
+  displayName: "CheckboxCard",
+  padding: "md",
   ...webCursor("pointer"),
+  // The card is always keyboard-focusable (`useKeyboardActions`), so the ring
+  // lives on its base.
+  ...focusRingStyle,
 
   variants: {
     withBorder: {
-      true: { borderWidth: 1, borderColor: "$borderColor" },
+      true: { borderWidth: 1, borderColor: "borderColor" },
     },
     checked: {
-      true: { borderColor: "$color9" },
+      true: { borderColor: "color9" },
+    },
+    disabled: {
+      true: { opacity: 0.6, pointerEvents: "none" },
     },
     radius: radiusVariant,
     shadow: shadowVariant,
@@ -552,7 +582,10 @@ const CheckboxCardFrame = styled(Box, {
   defaultVariants: { withBorder: true },
 });
 
-export interface CheckboxCardProps extends Omit<GetProps<typeof CheckboxCardFrame>, "onChange"> {
+export interface CheckboxCardProps extends Omit<
+  GetProps<typeof CheckboxCardFrame>,
+  "onChange" | "checked" | "withBorder" | "disabled" | "role"
+> {
   /** Controlled checked state. */
   checked?: boolean;
   /** Initial checked state for the uncontrolled case. @default false */
@@ -569,7 +602,8 @@ export interface CheckboxCardProps extends Omit<GetProps<typeof CheckboxCardFram
   disabled?: boolean;
 }
 
-const CheckboxCard = CheckboxCardFrame.styleable<CheckboxCardProps>(
+const CheckboxCard = styleable<CheckboxCardProps>(
+  CheckboxCardFrame,
   function CheckboxCard(props, ref) {
     const {
       checked,
@@ -579,7 +613,6 @@ const CheckboxCard = CheckboxCardFrame.styleable<CheckboxCardProps>(
       value,
       children,
       disabled,
-      role: _role,
       "aria-label": ariaLabel,
       ...rest
     } = props;
@@ -613,13 +646,15 @@ const CheckboxCard = CheckboxCardFrame.styleable<CheckboxCardProps>(
     }, [resolvedDisabled, inGroup, ctx, value, setOn, isOn]);
 
     const focusProps = useKeyboardActions({ onActivate: toggle }, { disabled: resolvedDisabled });
+    const cardContext = React.useMemo(() => ({ checked: isOn }), [isOn]);
 
     return (
-      <CheckboxCardContext.Provider value={{ checked: isOn }}>
+      <CheckboxCardContext.Provider value={cardContext}>
         <CheckboxCardFrame
           ref={ref}
           withBorder={withBorder}
           checked={isOn}
+          disabled={resolvedDisabled}
           onPress={toggle}
           {...ariaProps}
           {...focusProps}

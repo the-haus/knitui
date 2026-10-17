@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { allCssRules } from "../__tests__/css-rules.test.helper";
 import { Box } from "../Box";
 import { fireEvent, render, screen } from "../test-utils";
 import { Text } from "../Text";
@@ -747,7 +748,7 @@ describe("VirtualList component", () => {
           // Both of these are fresh identities on every render — the idiomatic way
           // callers write them — and both live on the outer wrapper only.
           ItemSeparatorComponent={<Box height={1} />}
-          styles={{ content: CONTENT_SLOT, item: { paddingHorizontal: "$xs" } }}
+          styles={{ content: CONTENT_SLOT, item: { paddingHorizontal: "xs" } }}
           // An unrelated frame prop, to force a real parent re-render.
           borderWidth={n}
         />
@@ -822,5 +823,40 @@ describe("VirtualList component", () => {
     expect(typeof ref.current?.scrollToEnd).toBe("function");
     expect(typeof ref.current?.getScrollOffset).toBe("function");
     expect(ref.current?.getScrollOffset()).toBe(0);
+  });
+});
+
+describe("VirtualList v3 web output", () => {
+  const DATA_200 = Array.from({ length: 200 }, (_, i) => ({ id: `r${i}`, label: `Item ${i}` }));
+
+  it("positions rows and the spacer with inline styles, not one CSS rule per offset", () => {
+    const before = allCssRules().filter((r) => /\{top: \d+px;\}/.test(r)).length;
+    render(
+      <VirtualList
+        data={DATA_200}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <Text>{item.label}</Text>}
+        estimatedItemSize={40}
+        height={300}
+        styles={{ content: { testID: "vl-content" } }}
+      />,
+    );
+    const row = screen.getByText("Item 3").parentElement as HTMLElement;
+    expect(row.style.top).toBe("120px");
+    expect(screen.getByTestId("vl-content").style.height).toBe(`${200 * 40}px`);
+    // No `top: Npx` atomic rule was injected for the row offsets.
+    expect(allCssRules().filter((r) => /\{top: \d+px;\}/.test(r)).length).toBe(before);
+  });
+
+  it("does not leak styled frame names onto the DOM", () => {
+    const { container } = render(
+      <VirtualList
+        data={DATA_200}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <Text>{item.label}</Text>}
+        height={300}
+      />,
+    );
+    expect(container.querySelector("[name]")).toBeNull();
   });
 });

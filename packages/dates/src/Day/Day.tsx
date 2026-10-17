@@ -3,12 +3,18 @@ import * as React from "react";
 import dayjs, { type Dayjs } from "dayjs";
 
 import { Text, UnstyledButton } from "@knitui/components";
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
-import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
+import { type CalendarSize, cellFontVariant, cellSquareVariant } from "../cell-metrics";
 import { DatesProviderContext } from "../DatesProvider";
 import { controlA11yProps } from "../internal/a11y";
-import { webCursor } from "../internal/web-cursor";
+import { isCanonicalDateString } from "../internal/date-string-fast-path";
 import type { DateStringValue } from "../types";
 
 /** Day cell size — the kit's shared control size scale. */
@@ -29,41 +35,24 @@ export type RenderDay = (date: DateStringValue) => React.ReactNode;
 // an UNCONSTRAINED parent (no calendar height set) resolves that percentage to
 // "auto" and the cell would otherwise collapse to its label's line-height — the
 // `minHeight` keeps it at the square size in that case.
-const daySizeVariant = {
-  xxs: { width: CELL_WIDTH.xxs, height: CELL_WIDTH.xxs, minHeight: CELL_WIDTH.xxs },
-  xs: { width: CELL_WIDTH.xs, height: CELL_WIDTH.xs, minHeight: CELL_WIDTH.xs },
-  sm: { width: CELL_WIDTH.sm, height: CELL_WIDTH.sm, minHeight: CELL_WIDTH.sm },
-  md: { width: CELL_WIDTH.md, height: CELL_WIDTH.md, minHeight: CELL_WIDTH.md },
-  lg: { width: CELL_WIDTH.lg, height: CELL_WIDTH.lg, minHeight: CELL_WIDTH.lg },
-  xl: { width: CELL_WIDTH.xl, height: CELL_WIDTH.xl, minHeight: CELL_WIDTH.xl },
-  xxl: { width: CELL_WIDTH.xxl, height: CELL_WIDTH.xxl, minHeight: CELL_WIDTH.xxl },
-} as const;
-
-const dayFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 const DayContext = createStyledContext<{ size: DaySize }>({ size: "md" });
 
 /**
- * Whether `day` falls on today's LOCAL calendar date, compared without
- * allocating a single extra dayjs instance.
- *
- * `day.isSame(new Date(), "day")` — the obvious spelling — costs a `Date`, a
- * dayjs instance wrapping it, and two more clones for dayjs' internal
- * `startOf`/`endOf` bracket, i.e. ~4 allocations PER CELL (×42 cells, every
- * render). Reading the three calendar fields off the instance we already have
- * is exact (`year`/`month`/`date` are plain field reads, no clone) and costs
- * only the one `Date` for "now".
+ * Whether `date` falls on today's LOCAL calendar date, compared without
+ * allocating a single dayjs instance: a canonical `YYYY-MM-DD` string is
+ * compared field-by-field against `new Date()`; anything else falls back to
+ * the parsed instance's plain field reads (`year`/`month`/`date`, no clone).
  */
-function isSameDayAsToday(day: Dayjs): boolean {
+function isSameDayAsToday(date: DateStringValue, parse: () => Dayjs): boolean {
   const now = new Date();
+  if (isCanonicalDateString(date)) {
+    return (
+      Number(date.slice(8, 10)) === now.getDate() &&
+      Number(date.slice(5, 7)) === now.getMonth() + 1 &&
+      Number(date.slice(0, 4)) === now.getFullYear()
+    );
+  }
+  const day = parse();
   return (
     day.date() === now.getDate() &&
     day.month() === now.getMonth() &&
@@ -71,36 +60,38 @@ function isSameDayAsToday(day: Dayjs): boolean {
   );
 }
 
+/** `type="button"` for the interactive host — one frozen object, not one per cell render. */
+const BUTTON_TYPE: { type: string } = Object.freeze({ type: "button" });
+
 /**
  * The atomic calendar cell — an `UnstyledButton`-based control composed via
  * `styled`. Accent comes from the active theme's palette ramp via the `theme`
- * prop (no Mantine `color` prop): a selected day fills with `$color9`/`$color1`
- * text; in-range days take a `$color4` tint with the range edges rounded by the
+ * prop (no Mantine `color` prop): a selected day fills with `color9`/`color1`
+ * text; in-range days take a `color4` tint with the range edges rounded by the
  * `firstInRange`/`lastInRange` corner variants (the `inRange` base squares all
  * four corners, the edge variants round their own two — so a single-day range
- * gets all four back). States use `hoverStyle`/`pressStyle` + a `disabled`
+ * gets all four back). States use `hover:`/`press:` clauses + a `disabled`
  * variant, never a runtime hover flag or a `Pressable`.
  *
- * Variant precedence relies on Tamagui applying active variants in declaration
- * order (later wins): `inRange` is declared before `firstInRange`/`lastInRange`
- * so the edges win on radius, and before `selected` so a selected endpoint wins
- * on background.
+ * Variant precedence: Tamagui v3 applies active variants in the order the
+ * props are PASSED (later wins), not in declaration order — so the `Day`
+ * wrapper passes `inRange` before `firstInRange`/`lastInRange` (the edges win
+ * on radius) and `selected` last (a selected endpoint wins on background). A
+ * consumer composing `Day.Frame` directly must keep the same prop order.
  */
 const DayFrame = styled(UnstyledButton.Frame, {
-  name: "Day",
+  displayName: "Day",
   context: DayContext,
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 0,
   borderColor: "transparent",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
-    size: daySizeVariant,
+    size: cellSquareVariant,
 
     /**
      * Day fills its grid cell in BOTH axes. `width: "100%"` stretches it across
@@ -126,34 +117,30 @@ const DayFrame = styled(UnstyledButton.Frame, {
     /** Day within a selected range — tinted background, squared corners. */
     inRange: {
       true: {
-        backgroundColor: "$color4",
+        backgroundColor: "color4 hover:color5 press:color5",
         borderRadius: 0,
-        hoverStyle: { backgroundColor: "$color5" },
-        pressStyle: { backgroundColor: "$color5" },
       },
     },
 
     /** First day of a range — round the inline-start corners. */
     firstInRange: {
-      true: { borderTopLeftRadius: "$sm", borderBottomLeftRadius: "$sm" },
+      true: { borderTopLeftRadius: "sm", borderBottomLeftRadius: "sm" },
     },
 
     /** Last day of a range — round the inline-end corners. */
     lastInRange: {
-      true: { borderTopRightRadius: "$sm", borderBottomRightRadius: "$sm" },
+      true: { borderTopRightRadius: "sm", borderBottomRightRadius: "sm" },
     },
 
     /** Today's border highlight (only when not selected / in range). */
     today: {
-      true: { borderWidth: 1, borderColor: "$color7" },
+      true: { borderWidth: 1, borderColor: "color7" },
     },
 
     /** Selected day — solid accent fill. */
     selected: {
       true: {
-        backgroundColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
       },
     },
 
@@ -167,7 +154,7 @@ const DayFrame = styled(UnstyledButton.Frame, {
       true: {
         opacity: 0.5,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
+        cursor: "web:not-allowed",
       },
     },
 
@@ -175,9 +162,8 @@ const DayFrame = styled(UnstyledButton.Frame, {
     static: {
       true: {
         userSelect: "auto",
-        ...webCursor("default"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:default",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -189,31 +175,32 @@ const DayFrame = styled(UnstyledButton.Frame, {
  * The day-of-month label — shares `size` via context.
  *
  * Colour is expressed as boolean VARIANTS, never a per-render dynamic `color`
- * style prop: the idle label is the neutral `$color`, a `weekend` label flips to
- * `$red9`, and on the solid accent fill a `selected` label flips to the contrast
- * `$color1`. `selected` is declared after `weekend` so a selected weekend takes
- * the contrast colour (the variants apply in declaration order — later wins,
+ * style prop: the idle label is the neutral `color`, a `weekend` label flips to
+ * `red9`, and on the solid accent fill a `selected` label flips to the contrast
+ * `color1`. `selected` is declared after `weekend` so a selected weekend takes
+ * the contrast colour (v3 applies variants in prop order — later wins — and the
+ * wrapper passes `selected` after `weekend`,
  * mirroring `DayFrame`). Keeping colour in variants — not a runtime ternary —
  * keeps the cell compiler-safe (no dynamic style prop for the optimiser to fold).
  */
 const DayLabel = styled(Text, {
-  name: "DayLabel",
+  displayName: "DayLabel",
   context: DayContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
   variants: {
     size: {
-      ...dayFontVariant,
+      ...cellFontVariant,
     },
 
     /** Weekend day — accent-error text colour. */
     weekend: {
-      true: { color: "$red9" },
+      true: { color: "red9" },
     },
 
     /** Selected day — contrast text on the solid accent fill. */
     selected: {
-      true: { color: "$color1" },
+      true: { color: "color1" },
     },
   } as const,
 });
@@ -281,7 +268,7 @@ export interface DayProps extends Omit<
   locale?: string;
 }
 
-const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
+const DayComponent = styleable<DayProps>(DayFrame, function Day(props, ref) {
   const {
     date,
     size = "md",
@@ -311,11 +298,17 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
   // (`getLocale = (input) => input || ctx.locale`), so a standalone `<Day>`
   // resolves its locale exactly as before.
   const ctx = React.useContext(DatesProviderContext);
-  const day = dayjs(date);
+
+  // dayjs is parsed LAZILY and at most once: the grid path (`Month` passes an
+  // explicit `aria-label`, a canonical `YYYY-MM-DD` date and no `renderDay`)
+  // never needs an instance at all — the day-of-month is the string's last two
+  // digits — so 42 cells × every render allocate no dayjs/Date for content.
+  let parsed: Dayjs | undefined;
+  const parse = (): Dayjs => (parsed ??= dayjs(date));
 
   // Only the `highlightToday` border consults "is this today", so the comparison
   // is skipped entirely when the border is off (the default).
-  const isToday = highlightToday && isSameDayAsToday(day);
+  const isToday = highlightToday && isSameDayAsToday(date, parse);
 
   // Locale-aware default label, read from `DatesProvider`. A static (display-only)
   // day announces nothing — it is not an interactive date.
@@ -331,7 +324,10 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
   const explicitAriaLabel = props["aria-label"];
   const ariaLabel = isStatic
     ? undefined
-    : (explicitAriaLabel ?? day.locale(locale || ctx.locale).format("D MMMM YYYY"));
+    : (explicitAriaLabel ??
+      parse()
+        .locale(locale || ctx.locale)
+        .format("D MMMM YYYY"));
 
   // Mirror Mantine's data-attribute gating: a disabled day shows none of the
   // selection/range/weekend/outside styling, and today's border is suppressed
@@ -344,13 +340,12 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
   const isLastInRange = !disabled && lastInRange;
   const showToday = isToday && highlightToday && !isSelected && !isInRange && !disabled;
 
-  const content = renderDay ? renderDay(date) : day.date();
+  const content = renderDay
+    ? renderDay(date)
+    : isCanonicalDateString(date)
+      ? Number(date.slice(8, 10))
+      : parse().date();
   const isTextContent = typeof content === "string" || typeof content === "number";
-
-  // `type` is a runtime-only `<button>` attribute outside Tamagui's style types;
-  // narrow via a precise local object (spread → no excess-prop check). Only on
-  // the interactive (button) host, not the static `div`.
-  const elementProps: { type: string } = { type: "button" };
 
   return (
     <DayFrame
@@ -359,11 +354,16 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
       static={isStatic}
       weekend={isWeekend}
       outside={isOutside}
-      selected={isSelected}
+      // v3 applies active variants in PROP ORDER at the call site (not in the
+      // order they are declared in `variants`), so this order IS the precedence:
+      // `inRange` squares the corners, the edge flags round their own two after
+      // it, and `selected` comes last so a selected range endpoint keeps the
+      // solid accent over the in-range tint.
       inRange={isInRange}
       firstInRange={isFirstInRange}
       lastInRange={isLastInRange}
       today={showToday}
+      selected={isSelected}
       hidden={hidden}
       fullWidth={fullWidth}
       disabled={disabled}
@@ -381,7 +381,10 @@ const DayComponent = DayFrame.styleable<DayProps>(function Day(props, ref) {
         disabled,
       })}
       render={isStatic ? "div" : "button"}
-      {...(isStatic ? {} : elementProps)}
+      // `type` is a runtime-only `<button>` attribute outside Tamagui's style
+      // types; spread from a frozen module constant (no excess-prop check, no
+      // per-render object). Only on the interactive (button) host.
+      {...(isStatic ? null : BUTTON_TYPE)}
       {...rest}
     >
       {isTextContent ? (

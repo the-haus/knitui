@@ -42,7 +42,7 @@ const meta = {
     },
     spacing: {
       control: "text",
-      description: "Gap between items — Tamagui token (e.g. `$sm`) or number.",
+      description: "Gap between items — Tamagui token (e.g. `sm`) or number.",
     },
     center: {
       control: "boolean",
@@ -82,10 +82,10 @@ export const Playground: Story = {
 /** Seven sizes from xxs to xxl — item text scales accordingly. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-start">
       {SIZES.map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="xs" color="color11">
             {size}
           </Text>
           <List {...args} size={size}>
@@ -102,9 +102,9 @@ export const Sizes: Story = {
 /** Unordered list uses bullet markers; ordered list uses auto-incremented numbers. */
 export const OrderedVsUnordered: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           unordered
         </Text>
         <List {...args} type="unordered">
@@ -113,8 +113,8 @@ export const OrderedVsUnordered: Story = {
           <List.Item>Pears</List.Item>
         </List>
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           ordered
         </Text>
         <List {...args} type="ordered">
@@ -130,10 +130,10 @@ export const OrderedVsUnordered: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
           <List {...args} shadow={shadow} style={{ padding: 12 }}>
@@ -150,9 +150,9 @@ export const Shadows: Story = {
 /** A list-level icon replaces the default bullet for every item; a per-item icon overrides only that item. */
 export const WithIcons: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           list-level icon
         </Text>
         <List {...args} icon={<Text>⭐</Text>}>
@@ -161,8 +161,8 @@ export const WithIcons: Story = {
           <List.Item>Starred item three</List.Item>
         </List>
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           per-item icon override
         </Text>
         <List {...args} icon={<Text>⭐</Text>}>
@@ -178,10 +178,10 @@ export const WithIcons: Story = {
 /** `spacing` controls the gap between items using Tamagui tokens. */
 export const Spacing: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
-      {(["$xs", "$sm", "$md", "$lg"] as const).map((spacing) => (
-        <Box key={spacing} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
+      {(["xs", "sm", "md", "lg"] as const).map((spacing) => (
+        <Box key={spacing} gap="xs">
+          <Text fontSize="xs" color="color11">
             {spacing}
           </Text>
           <List {...args} spacing={spacing}>
@@ -198,23 +198,23 @@ export const Spacing: Story = {
 /** `center` aligns the marker vertically with the label — useful for multi-line items or icon markers. */
 export const CenteredMarkers: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           center=false (top-aligned)
         </Text>
-        <List {...args} center={false} spacing="$sm" style={{ maxWidth: 220 }}>
+        <List {...args} center={false} spacing="sm" style={{ maxWidth: 220 }}>
           <List.Item>Short item</List.Item>
           <List.Item>
             A longer item that wraps onto multiple lines so the alignment difference is visible
           </List.Item>
         </List>
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           center=true (vertically centered)
         </Text>
-        <List {...args} center spacing="$sm" style={{ maxWidth: 220 }}>
+        <List {...args} center spacing="sm" style={{ maxWidth: 220 }}>
           <List.Item>Short item</List.Item>
           <List.Item>
             A longer item that wraps onto multiple lines so the alignment difference is visible
@@ -228,9 +228,9 @@ export const CenteredMarkers: Story = {
 /** Ordered list with `start` and `reversed` — numbering starts at 5 and counts down. */
 export const OrderedStartAndReversed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           start=5
         </Text>
         <List {...args} type="ordered" start={5}>
@@ -239,8 +239,8 @@ export const OrderedStartAndReversed: Story = {
           <List.Item>Seventh</List.Item>
         </List>
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           reversed
         </Text>
         <List {...args} type="ordered" reversed>
@@ -256,14 +256,14 @@ export const OrderedStartAndReversed: Story = {
 /** `withPadding` adds inline-start padding, useful for visually nested sub-lists. */
 export const NestedWithPadding: Story = {
   render: (args) => (
-    <List {...args} spacing="$xs">
+    <List {...args} spacing="xs">
       <List.Item>Fruits</List.Item>
-      <List withPadding spacing="$xs">
+      <List withPadding spacing="xs">
         <List.Item>Apples</List.Item>
         <List.Item>Oranges</List.Item>
       </List>
       <List.Item>Vegetables</List.Item>
-      <List withPadding spacing="$xs">
+      <List withPadding spacing="xs">
         <List.Item>Carrots</List.Item>
         <List.Item>Broccoli</List.Item>
       </List>
@@ -276,17 +276,17 @@ export const Styles: Story = {
   render: (args) => (
     <List {...args}>
       <List.Item
-        styles={{ marker: { color: "$red9" }, label: { color: "$blue9", fontWeight: "700" } }}
+        styles={{ marker: { color: "red9" }, label: { color: "blue9", fontWeight: "700" } }}
       >
         Apples
       </List.Item>
       <List.Item
-        styles={{ marker: { color: "$red9" }, label: { color: "$blue9", fontWeight: "700" } }}
+        styles={{ marker: { color: "red9" }, label: { color: "blue9", fontWeight: "700" } }}
       >
         Oranges
       </List.Item>
       <List.Item
-        styles={{ marker: { color: "$red9" }, label: { color: "$blue9", fontWeight: "700" } }}
+        styles={{ marker: { color: "red9" }, label: { color: "blue9", fontWeight: "700" } }}
       >
         Pears
       </List.Item>

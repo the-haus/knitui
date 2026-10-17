@@ -1,9 +1,20 @@
 import * as Colors from "@tamagui/colors";
-import { createFont, createTamagui, createTokens } from "@tamagui/core";
-import { createThemes } from "@tamagui/theme-builder";
+// The v5 theme builder (v3 dropped `@tamagui/theme-builder`). Only this module
+// imports it: the stock config ships precomputed themes (`../themes.generated`),
+// so apps that never call `createTheme` never execute the builder, and bundlers
+// that honour `sideEffects: false` drop it entirely.
+import { createThemes } from "@tamagui/config-v5/builder";
+import {
+  createFont,
+  createTamagui,
+  type CreateTamaguiProps,
+  createTokens,
+  type InferTamaguiConfig,
+} from "@tamagui/core";
 
 import { animations } from "../animations";
-import { toFontUnits } from "../font-units";
+import { FOCUS_RING_VARIABLES, withFocusRingColor } from "../focus-ring";
+import { toFontUnits, toLineHeightUnits } from "../font-units";
 import { media as defaultMedia } from "../media";
 import { OVER_MEDIA } from "../over-media";
 import {
@@ -12,6 +23,7 @@ import {
   monoFontFamily,
   systemFontFamily,
 } from "../scales";
+import { KNIT_SETTINGS } from "../settings";
 import { shorthands as defaultShorthands } from "../shorthands";
 import { deepMerge } from "./merge";
 import type { FontInput, ThemeOptions } from "./options";
@@ -48,11 +60,6 @@ const DEFAULT_ZINDEX: Record<string | number, number> = {
   5: 500,
 };
 
-const DEFAULT_SETTINGS = {
-  allowedStyleValues: "somewhat-strict-web" as const,
-  autocompleteSpecificTokens: "except-special" as const,
-};
-
 /* ------------------------------------------------------------------ */
 /* Scales                                                              */
 /* ------------------------------------------------------------------ */
@@ -71,7 +78,7 @@ const resolveScale = (
   return input ? { ...base, ...input } : base;
 };
 
-/** Turn a scale into a Tamagui token map (adds `0` and `true` aliases). */
+/** Turn a scale into a Tamagui token map (adds the `0` step; v3 reserves `true`). */
 const scaleToTokens = (scale: Scale): Record<string | number, number> => ({
   0: 0,
   xxs: scale.xxs,
@@ -81,7 +88,6 @@ const scaleToTokens = (scale: Scale): Record<string | number, number> => ({
   lg: scale.lg,
   xl: scale.xl,
   xxl: scale.xxl,
-  true: scale.sm,
 });
 
 /* ------------------------------------------------------------------ */
@@ -97,8 +103,6 @@ const buildFontScales = (fontScale: Scale) => {
     size[key] = fontScale[key];
     lineHeight[key] = Math.round(fontScale[key] * lineHeightRatios[key]);
   }
-  size.true = fontScale.md;
-  lineHeight.true = Math.round(fontScale.md * lineHeightRatios.md);
   return { size, lineHeight };
 };
 
@@ -111,23 +115,24 @@ const buildFonts = (
 ): Record<string, ReturnType<typeof createFont>> => {
   const { size, lineHeight } = buildFontScales(fontScale);
 
-  const stock: Record<string, { family: string; trueWeight: string }> = {
-    body: { family: systemFontFamily, trueWeight: "400" },
-    heading: { family: systemFontFamily, trueWeight: "700" },
-    mono: { family: monoFontFamily, trueWeight: "400" },
+  const stock: Record<string, { family: string }> = {
+    body: { family: systemFontFamily },
+    heading: { family: systemFontFamily },
+    mono: { family: monoFontFamily },
   };
 
   const names = new Set<string>([...Object.keys(stock), ...Object.keys(overrides ?? {})]);
   const out: Record<string, ReturnType<typeof createFont>> = {};
 
   for (const name of names) {
-    const defaults = stock[name] ?? { family: systemFontFamily, trueWeight: "400" };
+    const defaults = stock[name] ?? { family: systemFontFamily };
     let config: FontConfig = {
       family: defaults.family,
       size,
       lineHeight,
-      weight: { ...BASE_WEIGHT, true: defaults.trueWeight },
-      letterSpacing: { true: 0 },
+      weight: { ...BASE_WEIGHT },
+      // declared on the first step; `createFont` fills the other size keys
+      letterSpacing: { xxs: 0 },
     };
 
     const override = overrides?.[name];
@@ -149,7 +154,7 @@ const buildFonts = (
     config = {
       ...config,
       size: toFontUnits(config.size),
-      ...(config.lineHeight ? { lineHeight: toFontUnits(config.lineHeight) } : {}),
+      ...(config.lineHeight ? { lineHeight: toLineHeightUnits(config.lineHeight) } : {}),
     };
 
     out[name] = createFont(config);
@@ -236,7 +241,7 @@ const buildMedia = (bp: Record<string, number>) => ({
  * `createTheme()` with no arguments reproduces the kit's stock look. See the
  * package README for the full option reference.
  */
-export const createTheme = (options: ThemeOptions = {}) => {
+export const createTheme = (options: ThemeOptions = {}): KnitTamaguiConfig => {
   validateThemeOptions(options);
 
   // Scales. `size` defaults to whatever `space` preset was chosen.
@@ -251,7 +256,6 @@ export const createTheme = (options: ThemeOptions = {}) => {
     color: {
       white: "#ffffff",
       black: "#000000",
-      transparent: "rgba(0,0,0,0)",
       ...options.colors,
     },
     space: scaleToTokens(spaceScale),
@@ -281,7 +285,14 @@ export const createTheme = (options: ThemeOptions = {}) => {
     } as Record<string, unknown>,
     (options.themeBuilder ?? {}) as Record<string, unknown>,
   );
-  const themes = options.themes ?? createThemes(themeProps as Parameters<typeof createThemes>[0]);
+  const themes =
+    options.themes ??
+    withFocusRingColor(
+      createThemes(themeProps as Parameters<typeof createThemes>[0]) as Record<
+        string,
+        Record<string, string>
+      >,
+    );
 
   // Media.
   const bp = { ...defaultBreakpoints, ...options.breakpoints };
@@ -297,13 +308,24 @@ export const createTheme = (options: ThemeOptions = {}) => {
       themes,
       shorthands: { ...defaultShorthands, ...options.shorthands },
       media,
-      defaultFont: options.defaultFont ?? "body",
-      settings: { ...DEFAULT_SETTINGS, ...options.settings },
+      variables: FOCUS_RING_VARIABLES,
+      // v3 reads `defaultFont` from `settings` only.
+      settings: {
+        ...KNIT_SETTINGS,
+        defaultFont: options.defaultFont ?? KNIT_SETTINGS.defaultFont,
+        ...options.settings,
+      },
     } as Record<string, unknown>,
     (options.tamagui ?? {}) as Record<string, unknown>,
   );
 
-  return createTamagui(tamaguiProps as Parameters<typeof createTamagui>[0]);
+  return createTamagui(tamaguiProps as CreateTamaguiProps);
 };
 
-export type KnitTamaguiConfig = ReturnType<typeof createTheme>;
+/**
+ * What {@link createTheme} returns: a full Tamagui config, typed generically
+ * (its token / theme names come from runtime options, so they cannot be known
+ * statically). Spelled out as a named type (rather than inferred) so the emitted
+ * declarations never need to name Tamagui's internal types (TS2883).
+ */
+export type KnitTamaguiConfig = InferTamaguiConfig<CreateTamaguiProps>;

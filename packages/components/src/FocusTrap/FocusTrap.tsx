@@ -31,9 +31,10 @@ export interface FocusTrapProps {
  */
 function FocusTrapBase({ children, active = true, refProp = "ref", innerRef }: FocusTrapProps) {
   const focusTrapRef = useFocusTrap(active);
-  // Read the child's own existing ref (under `refProp`, or the `ref` slot when
-  // `refProp` is the default) so cloning doesn't clobber it.
-  const childRef = children.props[refProp] ?? (children as { ref?: React.Ref<TamaguiElement> }).ref;
+  // Read the child's own existing ref so cloning doesn't clobber it. React 19
+  // carries `ref` as a regular prop, so `children.props[refProp]` covers the
+  // default `"ref"` too — never touch the removed `element.ref` (it warns).
+  const childRef = children.props[refProp];
   const ref = useMergedRef<TamaguiElement>(focusTrapRef, innerRef, childRef);
   const refProps: FocusTrapChildProps = { [refProp]: ref };
   return React.cloneElement(children, refProps);

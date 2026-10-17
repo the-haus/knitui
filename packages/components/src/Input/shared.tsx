@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import type { GetProps, TamaguiElement } from "@knitui/core";
-import { getTokenValue, styled, Theme } from "@knitui/core";
+import { resolveToken, styleable, styled, Theme } from "@knitui/core";
 import { useCallbackRef, useId } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -11,53 +11,23 @@ import { controlMetrics as M } from "../internal/control-metrics";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
 import {
   fieldHeightVariant,
+  fontSizeOf,
   fontSizePassthroughVariant,
   radiusVariant,
   type SizeKey,
+  tableVariant,
   webCursor,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Loader } from "../Loader";
 import { Text } from "../Text";
 
-export const defaultStyles = {
-  size: "$true",
-  fontFamily: "$body",
-  borderWidth: 1,
-  outlineWidth: 0,
-  color: "$color",
-
-  tabIndex: 0 as const,
-
-  borderColor: "$borderColor",
-  backgroundColor: "$background",
-
-  // this fixes a flex bug where it overflows container
-  minWidth: 0,
-
-  hoverStyle: {
-    borderColor: "$borderColorHover",
-  },
-
-  focusStyle: {
-    borderColor: "$borderColorFocus",
-  },
-
-  focusVisibleStyle: {
-    outlineColor: "$outlineColor",
-    outlineWidth: 2,
-    outlineStyle: "solid",
-  },
-} as const;
-
 export const INPUT_NAME = "Input";
-export const DEFAULT_PLACEHOLDER_COLOR = "$color8";
-// Tamagui emits `.is_Input::selection { background-color: var(--t_selectionColor) }`
-// with no fallback. If we never set the var, the value is invalid at
-// computed-value time and `background-color` resolves to its initial value
-// (`transparent`) — making the selection highlight invisible on web. So we
-// always provide a visible default, the same way we do for the placeholder.
-export const DEFAULT_SELECTION_COLOR = "$blue5";
+export const DEFAULT_PLACEHOLDER_COLOR = "color8";
+// The host's default selection highlight. v3 resolves `selectionColor` like any
+// colour style prop (web: a `::selection` rule on the host's atomic class; native:
+// the resolved value handed to `TextInput`), so a theme name tracks the theme.
+export const DEFAULT_SELECTION_COLOR = "blue5";
 
 type InputTokenSize = SizeKey;
 type InputLegacyHostSize = "xs" | "sm" | "md" | "lg" | "xl";
@@ -128,7 +98,7 @@ export const toInputSizeKey = (size: InputSize | undefined): InputLegacyHostSize
  * (change it here to retune all inputs at once); the per-instance `radius` prop
  * overrides it. Replaces the old per-size radius that lived in the size variant.
  */
-export const INPUT_DEFAULT_RADIUS = "$sm" as const;
+export const INPUT_DEFAULT_RADIUS = "sm" as const;
 
 // Horizontal text inset per size (space scale) — the gap between the typed text /
 // placeholder and the field border (and any adornment section). Without it the
@@ -138,17 +108,18 @@ export const INPUT_DEFAULT_RADIUS = "$sm" as const;
 // an input's text size and edge gap match a Button of the same key. The
 // `:string`/`:number` catch-alls size font only (height is set separately from the
 // token map above).
-export const inputHostSizeVariant = {
-  xxs: { fontSize: M.xxs.fontSize, paddingHorizontal: M.xxs.paddingHorizontal },
-  xs: { fontSize: M.xs.fontSize, paddingHorizontal: M.xs.paddingHorizontal },
-  sm: { fontSize: M.sm.fontSize, paddingHorizontal: M.sm.paddingHorizontal },
-  md: { fontSize: M.md.fontSize, paddingHorizontal: M.md.paddingHorizontal },
-  lg: { fontSize: M.lg.fontSize, paddingHorizontal: M.lg.paddingHorizontal },
-  xl: { fontSize: M.xl.fontSize, paddingHorizontal: M.xl.paddingHorizontal },
-  xxl: { fontSize: M.xxl.fontSize, paddingHorizontal: M.xxl.paddingHorizontal },
-  ":string": fontSizePassthroughVariant[":string"],
-  ":number": fontSizePassthroughVariant[":number"],
-} as const;
+export const inputHostSizeVariant = tableVariant(
+  {
+    xxs: { fontSize: M.xxs.fontSize, paddingHorizontal: M.xxs.paddingHorizontal },
+    xs: { fontSize: M.xs.fontSize, paddingHorizontal: M.xs.paddingHorizontal },
+    sm: { fontSize: M.sm.fontSize, paddingHorizontal: M.sm.paddingHorizontal },
+    md: { fontSize: M.md.fontSize, paddingHorizontal: M.md.paddingHorizontal },
+    lg: { fontSize: M.lg.fontSize, paddingHorizontal: M.lg.paddingHorizontal },
+    xl: { fontSize: M.xl.fontSize, paddingHorizontal: M.xl.paddingHorizontal },
+    xxl: { fontSize: M.xxl.fontSize, paddingHorizontal: M.xxl.paddingHorizontal },
+  },
+  fontSizeOf,
+);
 
 // A textarea shares the single-line host's HORIZONTAL padding, font and height
 // tokens (so the family scales as one unit), but its VERTICAL inset is its own
@@ -161,18 +132,18 @@ export const inputHostSizeVariant = {
 // NUMBER at render via the token system and folds it into the row-height math so N
 // rows renders as N full lines PLUS this inset on both platforms (see `Input.native.tsx`).
 const TEXTAREA_INSET_TOKEN = {
-  xxs: "$xs",
-  xs: "$xs",
-  sm: "$sm",
-  md: "$sm",
-  lg: "$sm",
-  xl: "$md",
-  xxl: "$md",
-} as const satisfies Record<InputTokenSize, `$${string}`>;
+  xxs: "xs",
+  xs: "xs",
+  sm: "sm",
+  md: "sm",
+  lg: "sm",
+  xl: "md",
+  xxl: "md",
+} as const satisfies Record<InputTokenSize, `${string}`>;
 
 export const getTextareaPaddingVertical = (size: InputSize | undefined): number => {
   const token = TEXTAREA_INSET_TOKEN[toInputTokenSizeKey(size)];
-  const resolved = getTokenValue(token as Parameters<typeof getTokenValue>[0], "space");
+  const resolved = resolveToken(token, "space");
   return typeof resolved === "number" ? resolved : 0;
 };
 
@@ -190,52 +161,53 @@ export const getTextareaPaddingVertical = (size: InputSize | undefined): number 
 // matches the native host's `getNativeLineHeight` and a textarea row is the same
 // height on web, iOS and Android — and, being a token, it is `rem` on the web, so
 // browser text zoom grows the line box together with the text.
-const textareaHostSizeVariant = {
-  xxs: {
-    fontSize: M.xxs.fontSize,
-    lineHeight: M.xxs.fontSize,
-    paddingHorizontal: M.xxs.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.xxs,
+const textareaHostSizeVariant = tableVariant(
+  {
+    xxs: {
+      fontSize: M.xxs.fontSize,
+      lineHeight: M.xxs.fontSize,
+      paddingHorizontal: M.xxs.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.xxs,
+    },
+    xs: {
+      fontSize: M.xs.fontSize,
+      lineHeight: M.xs.fontSize,
+      paddingHorizontal: M.xs.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.xs,
+    },
+    sm: {
+      fontSize: M.sm.fontSize,
+      lineHeight: M.sm.fontSize,
+      paddingHorizontal: M.sm.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.sm,
+    },
+    md: {
+      fontSize: M.md.fontSize,
+      lineHeight: M.md.fontSize,
+      paddingHorizontal: M.md.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.md,
+    },
+    lg: {
+      fontSize: M.lg.fontSize,
+      lineHeight: M.lg.fontSize,
+      paddingHorizontal: M.lg.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.lg,
+    },
+    xl: {
+      fontSize: M.xl.fontSize,
+      lineHeight: M.xl.fontSize,
+      paddingHorizontal: M.xl.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.xl,
+    },
+    xxl: {
+      fontSize: M.xxl.fontSize,
+      lineHeight: M.xxl.fontSize,
+      paddingHorizontal: M.xxl.paddingHorizontal,
+      paddingVertical: TEXTAREA_INSET_TOKEN.xxl,
+    },
   },
-  xs: {
-    fontSize: M.xs.fontSize,
-    lineHeight: M.xs.fontSize,
-    paddingHorizontal: M.xs.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.xs,
-  },
-  sm: {
-    fontSize: M.sm.fontSize,
-    lineHeight: M.sm.fontSize,
-    paddingHorizontal: M.sm.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.sm,
-  },
-  md: {
-    fontSize: M.md.fontSize,
-    lineHeight: M.md.fontSize,
-    paddingHorizontal: M.md.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.md,
-  },
-  lg: {
-    fontSize: M.lg.fontSize,
-    lineHeight: M.lg.fontSize,
-    paddingHorizontal: M.lg.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.lg,
-  },
-  xl: {
-    fontSize: M.xl.fontSize,
-    lineHeight: M.xl.fontSize,
-    paddingHorizontal: M.xl.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.xl,
-  },
-  xxl: {
-    fontSize: M.xxl.fontSize,
-    lineHeight: M.xxl.fontSize,
-    paddingHorizontal: M.xxl.paddingHorizontal,
-    paddingVertical: TEXTAREA_INSET_TOKEN.xxl,
-  },
-  ":string": fontSizePassthroughVariant[":string"],
-  ":number": fontSizePassthroughVariant[":number"],
-} as const;
+  fontSizeOf,
+);
 
 // The loading `Loader` stands in for a section icon, so it takes the SAME
 // canonical in-control icon px (`controlIconSize`) rather than the full input
@@ -244,13 +216,13 @@ const toInputLoaderSize = (size: InputSize | undefined) =>
   controlIconSize(toInputTokenSizeKey(size));
 
 export const InputRootFrame = styled(Box, {
-  name: "InputRoot",
+  displayName: "InputRoot",
   flexDirection: "row",
   alignItems: "center",
   minWidth: 0,
   borderWidth: 1,
-  borderColor: "$borderColor",
-  backgroundColor: "$background",
+  borderColor: "borderColor",
+  backgroundColor: "background",
   borderRadius: INPUT_DEFAULT_RADIUS,
   ...webCursor("text"),
   overflow: "hidden",
@@ -261,7 +233,7 @@ export const InputRootFrame = styled(Box, {
     variant: {
       default: {},
       filled: {
-        backgroundColor: "$color2",
+        backgroundColor: "color2",
       },
       unstyled: {
         borderWidth: 0,
@@ -270,16 +242,18 @@ export const InputRootFrame = styled(Box, {
     },
     focused: {
       true: {
-        borderColor: "$borderColorFocus",
+        // The accent-aware focus key (each theme's color8). The generated
+        // `borderColorFocus` equals `borderColor`, so it showed no change.
+        borderColor: "focusRingColor",
       },
     },
-    // Error border stays red under every accent theme. `$red9` is a raw palette
+    // Error border stays red under every accent theme. `red9` is a raw palette
     // token exposed on every theme via the base theme's `extra` (see
     // core/config/themes.ts), so it reads red without a hardcoded hex and
     // without theming the frame (which would tint the background and children).
     error: {
       true: {
-        borderColor: "$red9",
+        borderColor: "red9",
       },
     },
     disabled: {
@@ -308,7 +282,7 @@ export const InputRootFrame = styled(Box, {
 });
 
 export const InputSectionFrame = styled(Box, {
-  name: "InputSection",
+  displayName: "InputSection",
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
@@ -478,11 +452,18 @@ export const getInputSectionInsets = (
     defaultSection: options.__defaultRightSection,
   });
 
-  return {
-    ...(left ? { paddingLeft: 0 as const } : null),
-    ...(right ? { paddingRight: 0 as const } : null),
-  };
+  // Shared constant objects: the result is spread onto the host on every
+  // keystroke-driven render, so it must not allocate.
+  return left ? (right ? INSET_BOTH : INSET_LEFT) : right ? INSET_RIGHT : INSET_NONE;
 };
+
+const INSET_NONE: { paddingLeft?: 0; paddingRight?: 0 } = Object.freeze({});
+const INSET_LEFT: { paddingLeft: 0 } = Object.freeze({ paddingLeft: 0 as const });
+const INSET_RIGHT: { paddingRight: 0 } = Object.freeze({ paddingRight: 0 as const });
+const INSET_BOTH: { paddingLeft: 0; paddingRight: 0 } = Object.freeze({
+  paddingLeft: 0 as const,
+  paddingRight: 0 as const,
+});
 
 const getSectionPointerEvents = (
   value: InputSectionPointerEvents,
@@ -574,11 +555,14 @@ export function InputChrome(props: InputChromeProps) {
       size={size}
       radius={radius as InputRootFrameProps["radius"]}
       variant={variant}
+      pointer={pointer}
+      multiline={multiline}
+      // v3 resolves overlapping variants in CALL-SITE prop order (last wins), so
+      // the state flags go weakest → strongest: a focused field in error keeps
+      // its red border, and disabled caps everything.
+      focused={focused}
       error={!!error}
       disabled={disabled}
-      pointer={pointer}
-      focused={focused}
-      multiline={multiline}
       onPress={disabled ? undefined : handleRootPress}
     >
       {leftContent ? (
@@ -587,7 +571,7 @@ export function InputChrome(props: InputChromeProps) {
           sectionPointerEvents={getSectionPointerEvents(leftSectionPointerEvents)}
           {...mergedLeftSectionProps}
         >
-          <ControlIconProvider size={sectionIconSize} color="$color">
+          <ControlIconProvider size={sectionIconSize} color="color">
             {leftContent}
           </ControlIconProvider>
         </InputSectionFrame>
@@ -601,7 +585,7 @@ export function InputChrome(props: InputChromeProps) {
           sectionPointerEvents={getSectionPointerEvents(effectiveRightSectionPointerEvents)}
           {...mergedRightSectionProps}
         >
-          <ControlIconProvider size={sectionIconSize} color="$color">
+          <ControlIconProvider size={sectionIconSize} color="color">
             {rightContent}
           </ControlIconProvider>
         </InputSectionFrame>
@@ -611,15 +595,15 @@ export function InputChrome(props: InputChromeProps) {
 }
 
 export const InputWrapperFrame = styled(Box, {
-  name: "InputWrapper",
+  displayName: "InputWrapper",
   flexDirection: "column",
   minWidth: 0,
   gap: 4,
 });
 
 export const InputLabelFrame = styled(Text, {
-  name: "InputLabel",
-  color: "$color",
+  displayName: "InputLabel",
+  color: "color",
   fontWeight: "500",
   userSelect: "none",
 
@@ -633,7 +617,7 @@ export const InputLabelFrame = styled(Text, {
 });
 
 const InputMetaText = styled(Text, {
-  color: "$color",
+  color: "color",
   opacity: 0.65,
 
   variants: {
@@ -645,20 +629,34 @@ const InputMetaText = styled(Text, {
   },
 });
 
+// The three meta parts only map props to styles, so they are plain `styled()`
+// frames (flatten-first): the host tag rides `render` in the base, the error
+// colour is the theme-independent `red9` (exposed on every theme, see
+// core/config/themes.source.ts `extra`), and the placeholder's error tint is a
+// static variant.
 export const InputDescriptionFrame = styled(InputMetaText, {
-  name: "InputDescription",
+  displayName: "InputDescription",
+  render: "p",
 });
 
 export const InputErrorFrame = styled(InputMetaText, {
-  name: "InputError",
+  displayName: "InputError",
+  render: "p",
   opacity: 1,
-  color: "$color9",
+  color: "red9",
 });
 
 export const InputPlaceholderFrame = styled(Text, {
-  name: "InputPlaceholder",
-  color: "$color",
+  displayName: "InputPlaceholder",
+  render: "span",
+  color: "color",
   opacity: 0.55,
+
+  variants: {
+    error: {
+      true: { color: "color10" },
+    },
+  } as const,
 });
 
 export type InputWrapperOrderItem = "label" | "description" | "input" | "error";
@@ -684,7 +682,8 @@ type InputLabelMouseDownEvent = Parameters<
   NonNullable<GetProps<typeof InputLabelFrame>["onMouseDown"]>
 >[0];
 
-export const InputLabel = InputLabelFrame.styleable<InputLabelProps>(
+export const InputLabel = styleable<InputLabelProps>(
+  InputLabelFrame,
   function InputLabel(props, ref) {
     const {
       children,
@@ -712,7 +711,7 @@ export const InputLabel = InputLabelFrame.styleable<InputLabelProps>(
         {children}
         {required ? (
           <Theme name="red">
-            <Text aria-hidden color="$color" {...requiredProps}>
+            <Text aria-hidden color="color" {...requiredProps}>
               {" *"}
             </Text>
           </Theme>
@@ -723,38 +722,13 @@ export const InputLabel = InputLabelFrame.styleable<InputLabelProps>(
 );
 
 export type InputDescriptionProps = GetProps<typeof InputDescriptionFrame>;
-
-export const InputDescription = InputDescriptionFrame.styleable<InputDescriptionProps>(
-  function InputDescription(props, ref) {
-    return <InputDescriptionFrame ref={ref} render="p" {...props} />;
-  },
-);
+export const InputDescription = InputDescriptionFrame;
 
 export type InputErrorProps = GetProps<typeof InputErrorFrame>;
+export const InputError = InputErrorFrame;
 
-export const InputError = InputErrorFrame.styleable<InputErrorProps>(
-  function InputError(props, ref) {
-    return <InputErrorFrame ref={ref} render="p" {...props} theme={"red"} />;
-  },
-);
-
-export interface InputPlaceholderProps extends GetProps<typeof InputPlaceholderFrame> {
-  error?: React.ReactNode;
-}
-
-export const InputPlaceholder = InputPlaceholderFrame.styleable<InputPlaceholderProps>(
-  function InputPlaceholder(props, ref) {
-    const { error, ...rest } = props;
-    return (
-      <InputPlaceholderFrame
-        ref={ref}
-        color={error ? "$color10" : undefined}
-        render="span"
-        {...rest}
-      />
-    );
-  },
-);
+export type InputPlaceholderProps = GetProps<typeof InputPlaceholderFrame>;
+export const InputPlaceholder = InputPlaceholderFrame;
 
 export type InputClearButtonProps = CloseButtonProps;
 export const InputClearButton = CloseButton;
@@ -830,7 +804,8 @@ export interface InputWrapperProps extends GetProps<typeof InputWrapperFrame> {
 
 export type InputRootRef = TamaguiElement;
 
-export const InputWrapper = InputWrapperFrame.styleable<InputWrapperProps>(
+export const InputWrapper = styleable<InputWrapperProps>(
+  InputWrapperFrame,
   function InputWrapper(props, ref) {
     const {
       label,
@@ -934,136 +909,68 @@ export const InputWrapper = InputWrapperFrame.styleable<InputWrapperProps>(
   },
 );
 
-export const styledTextareaBody = [
-  {
-    name: INPUT_NAME,
-    render: "textarea",
-    // Anchor the font family on the host itself (not only in `defaultStyles`).
-    // The host is always rendered `unstyled`, so the `unstyled: { false: … }`
-    // branch never runs — without a family here, a `fontSize` TOKEN (`"$md"`)
-    // has no font scale to resolve against and the per-size font size is lost.
-    // (The `button` host sets the same family inline for the same reason.)
-    fontFamily: "$body",
-    // Same reason: `defaultStyles.color` only applies in the never-run
-    // `unstyled: { false: … }` branch, and a bare `<textarea>` doesn't inherit
-    // `color` from ancestors — so the typed text would fall back to the browser
-    // default and ignore the theme. A consumer-passed `color` prop still wins.
-    color: "$color",
-    variants: {
-      unstyled: {
-        true: {
-          outlineWidth: 0,
-          outlineStyle: "none" as const,
-          outlineColor: "transparent",
-          borderWidth: 0,
-          borderColor: "transparent",
-          backgroundColor: "transparent",
-          boxShadow: "none",
-          focusStyle: {
-            outlineWidth: 0,
-            outlineStyle: "none" as const,
-            borderWidth: 0,
-            borderColor: "transparent",
-            boxShadow: "none",
-          },
-          focusVisibleStyle: {
-            outlineWidth: 0,
-            outlineStyle: "none" as const,
-            borderWidth: 0,
-            borderColor: "transparent",
-            boxShadow: "none",
-          },
-        },
-        false: defaultStyles,
-      },
-      size: textareaHostSizeVariant,
-      disabled: {
-        true: {},
-      },
-    } as const,
-    defaultVariants: {
-      unstyled: process.env.TAMAGUI_HEADLESS === "1",
-    },
+/**
+ * The bare text-host skin shared by the single-line and multiline hosts (web
+ * `<input>`/`<textarea>`, native `TextInput`). The wrapper (`InputChrome`) owns all
+ * field chrome — border, background, focus border, sections — so the host itself
+ * only resets the platform chrome and carries the text styles:
+ *
+ * - `fontFamily` / `color` sit on the host itself: a bare `<input>` doesn't inherit
+ *   `color`, and a `fontSize` token needs a font family to resolve against.
+ * - `placeholderTextColor` / `selectionColor` are v3 INPUT colour style props
+ *   (`isInput: true` below opts the frame into them): on web they compile to
+ *   `::placeholder` / `::selection` rules on the host's atomic classes, on native
+ *   they resolve against the theme and reach `TextInput` as props. A call-site
+ *   `placeholderTextColor="red9"` simply overrides the base value — no CSS custom
+ *   property bridge, no `useTheme()`, nothing allocated per render.
+ */
+const INPUT_HOST_SKIN = {
+  fontFamily: "body",
+  color: "color",
+  outlineWidth: 0,
+  outlineStyle: "none",
+  outlineColor: "transparent",
+  borderWidth: 0,
+  borderColor: "transparent",
+  backgroundColor: "transparent",
+  boxShadow: "none",
+  placeholderTextColor: DEFAULT_PLACEHOLDER_COLOR,
+  selectionColor: DEFAULT_SELECTION_COLOR,
+} as const;
+
+/**
+ * `styled()` config of the single-line text host:
+ * `styled(Box, { ...INPUT_HOST_CONFIG, render: "input" }, INPUT_HOST_STATIC)` on web,
+ * `styled(TextInput, INPUT_HOST_CONFIG, INPUT_HOST_STATIC)` on native (no `render`:
+ * the host IS the RN `TextInput`).
+ */
+export const INPUT_HOST_CONFIG = {
+  displayName: INPUT_NAME,
+  ...INPUT_HOST_SKIN,
+  variants: {
+    size: inputHostSizeVariant,
+  } as const,
+  defaultVariants: {
+    size: "md",
   },
-  {
-    isInput: true,
-    accept: {
-      placeholderTextColor: "color",
-      selectionColor: "color",
-      cursorColor: "color",
-      selectionHandleColor: "color",
-      underlineColorAndroid: "color",
-    } as const,
-    validStyles: Text.staticConfig.validStyles,
+} as const;
+
+/** `styled()` config of the web multiline host (`<textarea>`). */
+export const TEXTAREA_HOST_CONFIG = {
+  displayName: "InputTextarea",
+  render: "textarea",
+  ...INPUT_HOST_SKIN,
+  variants: {
+    size: textareaHostSizeVariant,
+  } as const,
+  defaultVariants: {
+    size: "md",
   },
-] as const;
+} as const;
 
-export const styledBody = [
-  {
-    name: INPUT_NAME,
-    render: "input",
-    // Anchor the font family on the host itself (not only in `defaultStyles`).
-    // The host is always rendered `unstyled`, so the `unstyled: { false: … }`
-    // branch never runs — without a family here, a `fontSize` TOKEN (`"$md"`)
-    // has no font scale to resolve against and the per-size font size is lost.
-    // (The `button` host sets the same family inline for the same reason.)
-    fontFamily: "$body",
-    // Same reason: `defaultStyles.color` only applies in the never-run
-    // `unstyled: { false: … }` branch, and a bare `<input>` doesn't inherit
-    // `color` from ancestors — so the typed text would fall back to the browser
-    // default and ignore the theme. A consumer-passed `color` prop still wins.
-    color: "$color",
-    variants: {
-      unstyled: {
-        true: {
-          // The wrapper owns all input chrome; the host control should stay visually bare.
-          outlineWidth: 0,
-          outlineStyle: "none",
-          outlineColor: "transparent",
-          borderWidth: 0,
-          borderColor: "transparent",
-          backgroundColor: "transparent",
-          boxShadow: "none",
-          focusStyle: {
-            outlineWidth: 0,
-            outlineStyle: "none",
-            borderWidth: 0,
-            borderColor: "transparent",
-            boxShadow: "none",
-          },
-          focusVisibleStyle: {
-            outlineWidth: 0,
-            outlineStyle: "none",
-            borderWidth: 0,
-            borderColor: "transparent",
-            boxShadow: "none",
-          },
-        },
-        false: defaultStyles,
-      },
-
-      size: inputHostSizeVariant,
-
-      disabled: {
-        true: {},
-      },
-    } as const,
-
-    defaultVariants: {
-      unstyled: process.env.TAMAGUI_HEADLESS === "1",
-    },
-  },
-
-  {
-    isInput: true,
-    accept: {
-      placeholderTextColor: "color",
-      selectionColor: "color",
-      cursorColor: "color",
-      selectionHandleColor: "color",
-      underlineColorAndroid: "color",
-    } as const,
-
-    validStyles: Text.staticConfig.validStyles,
-  },
-] as const;
+/**
+ * Static config of both text hosts: `isInput` gives the frame v3's input style
+ * surface (text styles + the input colour props) and forwards `disabled` to the
+ * real element.
+ */
+export const INPUT_HOST_STATIC = { isInput: true } as const;

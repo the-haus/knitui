@@ -5,7 +5,7 @@ import { useDebouncedCallback, useMergedRef, useMove } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { useReducedTransition } from "../internal/motion";
-import { animateOnlyProps, hoverProps } from "../internal/style-props";
+import { scopeTransition } from "../internal/style-props";
 import { slotStyles } from "../internal/styles";
 import { themeColorToCssVar } from "../internal/theme-color-web";
 import {
@@ -74,7 +74,7 @@ const injectHideNativeScrollbarStyle = (): void => {
   document.head.appendChild(style);
 };
 
-/* Hoisted `animateOnly` property lists — scoping the CSS transition keeps the
+/* Hoisted transition `properties` lists — scoping the CSS transition keeps the
    along-axis thumb position (top/left) instant while only the perpendicular
    inset + opacity animate. Module-level so they are not reallocated per render. */
 const ANIMATE_OPACITY = ["opacity"];
@@ -96,7 +96,7 @@ const ANIMATE_X_THUMB = ["top", "bottom", "opacity"];
  * variable's own fallback, so a document with no theme variables still fades.
  */
 const EDGE_SHADOW_FALLBACK = "rgba(0,0,0,0.15)";
-const themeBackgroundVar = themeColorToCssVar("$background");
+const themeBackgroundVar = themeColorToCssVar("background");
 const DEFAULT_EDGE_SHADOW_COLOR = themeBackgroundVar.startsWith("var(")
   ? `${themeBackgroundVar.slice(0, -1)}, ${EDGE_SHADOW_FALLBACK})`
   : themeBackgroundVar;
@@ -120,51 +120,49 @@ const DEFAULT_EDGE_SHADOW_COLOR = themeBackgroundVar.startsWith("var(")
  * keyboard scrolling, and a hover-grow thumb (`idleScrollbarSize`).
  */
 const ScrollAreaFrame = styled(Box, {
-  name: "ScrollArea",
+  displayName: "ScrollArea",
   position: "relative",
   overflow: "hidden",
 });
 
 /** The scrollable element. Native scrollbars are hidden via {@link HIDE_NATIVE_CLASS}. */
 const ScrollAreaViewport = styled(Box, {
-  name: "ScrollAreaViewport",
+  displayName: "ScrollAreaViewport",
   width: "100%",
   height: "100%",
 });
 
 /** A scrollbar rail. Positioned along an edge; holds the thumb. */
 const ScrollAreaScrollbar = styled(Box, {
-  name: "ScrollAreaScrollbar",
+  displayName: "ScrollAreaScrollbar",
   position: "absolute",
-  backgroundColor: "$colorTransparent",
+  backgroundColor: "colorTransparent",
   padding: 2,
   zIndex: 2,
 });
 
 /** The draggable thumb. */
 const ScrollAreaThumb = styled(Box, {
-  name: "ScrollAreaThumb",
+  displayName: "ScrollAreaThumb",
   position: "absolute",
-  backgroundColor: "$color8",
+  backgroundColor: "color8",
   borderRadius: 9999,
-  opacity: 0.7,
-  hoverStyle: { opacity: 1 },
-  pressStyle: { opacity: 1 },
+  opacity: "0.7 hover:1 press:1",
 });
 
 /** The square where the two scrollbars meet. */
 const ScrollAreaCorner = styled(Box, {
-  name: "ScrollAreaCorner",
+  displayName: "ScrollAreaCorner",
   position: "absolute",
   right: 0,
   bottom: 0,
-  backgroundColor: "$colorTransparent",
+  backgroundColor: "colorTransparent",
   zIndex: 2,
 });
 
 /** A single edge fade overlay (web paints a CSS gradient into it). */
 const ScrollAreaShadow = styled(Box, {
-  name: "ScrollAreaShadow",
+  displayName: "ScrollAreaShadow",
   position: "absolute",
   zIndex: 1,
   pointerEvents: "none",
@@ -277,6 +275,8 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     // re-renders React or restyles the Tamagui thumb (the old per-frame `setState`).
     const [size, setSize] = React.useState<Size>(ZERO_SIZE);
     const [hovered, setHovered] = React.useState(false);
+    const handleMouseEnter = React.useCallback(() => setHovered(true), []);
+    const handleMouseLeave = React.useCallback(() => setHovered(false), []);
 
     // Live scroll offset + the DOM nodes we paint imperatively each frame.
     const scrollRef = React.useRef<ScrollPosition>({ x: 0, y: 0 });
@@ -844,8 +844,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
         <ScrollAreaShadow
           key={edge}
           opacity={edgeOverflow[edge] ? 1 : 0}
-          {...fade}
-          {...animateOnlyProps(ANIMATE_OPACITY)}
+          {...scopeTransition(fade, ANIMATE_OPACITY)}
           {...shadowBoxProps(edge, shadowSize)}
           style={
             custom ? undefined : { backgroundImage: edgeGradientCss(edge, resolvedShadowColor) }
@@ -861,10 +860,16 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     return (
       <ScrollAreaFrame
         {...rest}
-        {...hoverProps({
-          onHoverIn: () => setHovered(true),
-          onHoverOut: () => setHovered(false),
-        })}
+        // v3 web only wires hover listeners for `onMouseEnter`/`onMouseLeave`
+        // (`onHoverIn`/`onHoverOut` alone attach nothing), so use the DOM pair.
+        onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
+          handleMouseEnter();
+          rest.onMouseEnter?.(e as never);
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
+          handleMouseLeave();
+          rest.onMouseLeave?.(e as never);
+        }}
       >
         <ScrollAreaViewport
           ref={composedViewportRef}
@@ -895,8 +900,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             width={scrollbarSize}
             opacity={showY ? 1 : 0}
             pointerEvents={showY ? "auto" : "none"}
-            {...fade}
-            {...animateOnlyProps(ANIMATE_OPACITY)}
+            {...scopeTransition(fade, ANIMATE_OPACITY)}
             {...mergedScrollbarProps}
           >
             <ScrollAreaThumb
@@ -906,9 +910,10 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
               left={thumbInset}
               right={thumbInset}
               top={0}
-              height={yBar.size}
-              {...fade}
-              {...animateOnlyProps(ANIMATE_Y_THUMB)}
+              // Content-tracking geometry stays inline: a style prop would compile
+              // one atomic CSS rule per distinct thumb length.
+              style={{ height: yBar.size }}
+              {...scopeTransition(fade, ANIMATE_Y_THUMB)}
               {...mergedThumbProps}
             />
           </ScrollAreaScrollbar>
@@ -923,8 +928,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             height={scrollbarSize}
             opacity={showX ? 1 : 0}
             pointerEvents={showX ? "auto" : "none"}
-            {...fade}
-            {...animateOnlyProps(ANIMATE_OPACITY)}
+            {...scopeTransition(fade, ANIMATE_OPACITY)}
             {...mergedScrollbarProps}
           >
             <ScrollAreaThumb
@@ -934,9 +938,8 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
               top={thumbInset}
               bottom={thumbInset}
               left={0}
-              width={xBar.size}
-              {...fade}
-              {...animateOnlyProps(ANIMATE_X_THUMB)}
+              style={{ width: xBar.size }}
+              {...scopeTransition(fade, ANIMATE_X_THUMB)}
               {...mergedThumbProps}
             />
           </ScrollAreaScrollbar>
@@ -947,8 +950,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             width={scrollbarSize}
             height={scrollbarSize}
             opacity={showX && showY ? 1 : 0}
-            {...fade}
-            {...animateOnlyProps(ANIMATE_OPACITY)}
+            {...scopeTransition(fade, ANIMATE_OPACITY)}
             {...mergedCornerProps}
           />
         )}

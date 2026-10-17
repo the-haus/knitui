@@ -46,9 +46,9 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <MiniCalendar {...args} defaultDate="2026-06-15" value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -100,8 +100,8 @@ export const StylesSugar: Story = {
         value={value}
         onChange={setValue}
         styles={{
-          day: { borderRadius: "$lg" },
-          control: { borderRadius: "$lg", backgroundColor: "$color2" },
+          day: { borderRadius: "lg" },
+          control: { borderRadius: "lg", backgroundColor: "color2" },
           dayMonth: { fontWeight: "600" },
         }}
       />
@@ -126,10 +126,10 @@ export const Sizes: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$lg">
+      <Box gap="lg">
         {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-          <Box key={size} gap="$xs">
-            <Text fontSize="$sm" color="$color11">
+          <Box key={size} gap="xs">
+            <Text fontSize="sm" color="color11">
               {size}
             </Text>
             <MiniCalendar size={size} defaultDate="2026-06-15" value={value} onChange={setValue} />

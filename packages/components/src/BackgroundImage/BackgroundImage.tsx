@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, isWeb, styled } from "@knitui/core";
+import { type GetProps, isWeb, styleable, styled } from "@knitui/core";
 
 import { Box } from "../Box";
 import { Image, type ImageProps } from "../Image";
@@ -24,7 +24,7 @@ type WebRepeatStyle = {
  * Mantine: full width, cover fit, no radius.
  */
 const BackgroundImageFrame = styled(Box, {
-  name: "BackgroundImage",
+  displayName: "BackgroundImage",
   position: "relative",
   // Establish a stacking context so the `zIndex: -1` backing image (below) is
   // contained within the frame and paints behind the in-flow `children` rather
@@ -104,7 +104,8 @@ const getWebRepeatStyle = (src: string): WebRepeatStyle => ({
  * full `Box` style surface (width, height, padding, ...) is inherited for sizing
  * the area; the image fills it behind `children`.
  */
-export const BackgroundImage = BackgroundImageFrame.styleable<BackgroundImageProps>(
+export const BackgroundImage = styleable<BackgroundImageProps>(
+  BackgroundImageFrame,
   function BackgroundImage(props, ref) {
     const { src, fit, objectPosition, resizeMode, imageProps, styles, children, ...rest } = props;
     // `repeat` has no CSS `object-fit` / expo-image equivalent, so it stays a
@@ -142,9 +143,11 @@ export const BackgroundImage = BackgroundImageFrame.styleable<BackgroundImagePro
             {...s.get("image")}
             {...imageProps}
             src={src}
-            fit={fit}
-            objectPosition={objectPosition}
-            resizeMode={resizeMode}
+            // Only an explicit value claims these: an absent one must not wipe
+            // the `imageProps` / `styles.image` value spread above.
+            {...(fit !== undefined ? { fit } : null)}
+            {...(objectPosition !== undefined ? { objectPosition } : null)}
+            {...(resizeMode !== undefined ? { resizeMode } : null)}
             position="absolute"
             inset={0}
             // Sit one layer behind the in-flow `children`. Without this, the
