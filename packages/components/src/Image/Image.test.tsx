@@ -1,4 +1,7 @@
 import * as React from "react";
+import type * as ReactDOMServer from "react-dom/server";
+
+import { Provider } from "@knitui/core";
 
 import { act, fireEvent, render, screen, waitFor } from "../test-utils";
 import { createImage, type resolveRadiusValue } from "./createImage";
@@ -238,16 +241,13 @@ describe("Image on web: an image the browser already had (KIT-01)", () => {
   };
   afterEach(() => jest.restoreAllMocks());
 
-  it("reports a complete <img> as loaded after mount, so the fade shows it", async () => {
-    // React drops a `load` that fires before the commit; expo-image's fade then
-    // holds the <img> at its start class (opacity 0) forever.
+  it("reports a complete <img> as loaded after mount", async () => {
+    // React drops a `load` that fires before the commit; a consumer waiting on
+    // `onLoad` (or `Image.Placeholder`) would then wait forever.
     stubImg(true, 640);
     const onLoad = jest.fn();
     render(<Image src="https://example.com/cached.png" alt="C" transition={300} onLoad={onLoad} />);
     await waitFor(() => expect(onLoad).toHaveBeenCalledTimes(1));
-    await waitFor(() =>
-      expect(screen.getByRole("img").className).not.toMatch(/cross-dissolve-start/),
-    );
   });
 
   it("leaves an <img> that is still loading to its own load event", async () => {
@@ -268,5 +268,47 @@ describe("Image on web: an image the browser already had (KIT-01)", () => {
     stubImg(true, 640);
     await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
     expect(onLoad).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Image on web: shown as soon as the browser can", () => {
+  it("is in the first render, so the server HTML carries the <img>", () => {
+    // expo-image's web build added its <img> from an effect: an empty box in the
+    // SSR markup, and a blank frame on every client mount.
+    // The Node build: the browser one needs a MessageChannel, which jsdom lacks.
+    const { renderToString } = jest.requireActual<typeof ReactDOMServer>("react-dom/server.node");
+    const html = renderToString(
+      <Provider defaultColorScheme="light">
+        <Image src="https://example.com/ssr.png" alt="S" transition={300} />
+      </Provider>,
+    );
+    const img = html.match(/<img[^>]*>/)?.[0];
+    expect(img).toContain('src="https://example.com/ssr.png"');
+    expect(img).not.toMatch(/opacity/);
+  });
+
+  it("never holds the <img> hidden for a fade, even with a transition", () => {
+    // `transition` is a native fade: on the web a remount (virtualized row,
+    // revisited page, hydration) would replay it and blink a cached image.
+    render(<Image src="https://example.com/a.png" alt="A" transition={300} />);
+    const img = screen.getByRole("img");
+    // Neither inline nor through a start class (expo-image's `cross-dissolve-start`).
+    expect(img.style.opacity).toBe("");
+    expect(img.style.transition).toBe("");
+    expect(img.className).not.toMatch(/start/);
+  });
+
+  it("drops the previous <img> when the source changes", () => {
+    const { rerender } = render(<Image src="https://example.com/a.png" alt="A" />);
+    const first = screen.getByRole("img");
+    rerender(<Image src="https://example.com/b.png" alt="A" />);
+    const second = screen.getByRole("img");
+    expect(second).not.toBe(first);
+    expect(second).toHaveAttribute("src", "https://example.com/b.png");
+  });
+
+  it("lazy-loads by default, so the browser fetches it as it nears the viewport", () => {
+    render(<Image src="https://example.com/a.png" alt="A" />);
+    expect(screen.getByRole("img")).toHaveAttribute("loading", "lazy");
   });
 });

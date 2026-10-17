@@ -207,14 +207,17 @@ const CACHED_LOAD_MAX_FRAMES = 10;
 
 /**
  * Find the rendered `<img>` behind a backend instance on web: the instance itself
- * (a plain `<img>` backend), or expo-image's container `<div>` (the LAST `<img>`
- * in it is the current source; a placeholder node, when any, comes first).
+ * (a plain `<img>` backend), or the backend's container element — the kit's web
+ * `Image` wrapper, or expo-image's `containerViewRef` — whose LAST `<img>` is the
+ * current source (a placeholder node, when any, comes first).
  */
 const findWebImg = (instance: unknown): HTMLImageElement | null => {
   if (typeof HTMLElement === "undefined" || instance == null) return null;
   if (instance instanceof HTMLImageElement) return instance;
-  const container = (instance as { containerViewRef?: { current?: unknown } }).containerViewRef
-    ?.current;
+  const container =
+    instance instanceof HTMLElement
+      ? instance
+      : (instance as { containerViewRef?: { current?: unknown } }).containerViewRef?.current;
   if (container instanceof HTMLElement) {
     const imgs = container.querySelectorAll("img");
     return imgs.length ? imgs[imgs.length - 1]! : null;
