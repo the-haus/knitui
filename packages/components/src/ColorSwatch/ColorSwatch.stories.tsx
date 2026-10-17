@@ -73,7 +73,7 @@ export const Playground: Story = {};
 /** Multiple color swatches side by side — the most common use-case. */
 export const Colors: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {COLORS.map((color) => (
         <ColorSwatch key={color} {...args} color={color} />
       ))}
@@ -84,7 +84,7 @@ export const Colors: Story = {
 /** Full seven-step token size scale. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <ColorSwatch key={size} {...args} size={size} />
       ))}
@@ -95,7 +95,7 @@ export const Sizes: Story = {
 /** Border radius from square (0) to fully rounded pill (9999). */
 export const Radii: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RADII.map((radius) => (
         <ColorSwatch key={radius} {...args} radius={radius} />
       ))}
@@ -109,7 +109,7 @@ export const Radii: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <ColorSwatch key={shadow} {...args} size="xl" shadow={shadow} />
       ))}
@@ -120,7 +120,7 @@ export const Shadows: Story = {
 /** Shadow overlay disabled — the inset ring that outlines the swatch is removed. */
 export const NoShadow: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {COLORS.slice(0, 4).map((color) => (
         <ColorSwatch key={color} {...args} color={color} withShadow={false} />
       ))}
@@ -131,19 +131,19 @@ export const NoShadow: Story = {
 /** Children rendered inside the swatch — useful for check marks or labels. */
 export const WithChildren: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <ColorSwatch {...args} color="#2f9e44" size="lg">
-        <Text fontSize="$md" color="$white">
+        <Text fontSize="md" color="white">
           ✓
         </Text>
       </ColorSwatch>
       <ColorSwatch {...args} color="#1971c2" size="lg">
-        <Text fontSize="$md" color="$white">
+        <Text fontSize="md" color="white">
           ★
         </Text>
       </ColorSwatch>
       <ColorSwatch {...args} color="#e03131" size="lg">
-        <Text fontSize="$md" color="$white">
+        <Text fontSize="md" color="white">
           ✕
         </Text>
       </ColorSwatch>
@@ -154,7 +154,7 @@ export const WithChildren: Story = {
 /** A palette strip — large swatches at square radius to act as color cells. */
 export const PaletteStrip: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$xs" alignItems="center">
+    <Box flexDirection="row" gap="xs" alignItems="center">
       {COLORS.map((color) => (
         <ColorSwatch key={color} {...args} color={color} size="md" radius="sm" />
       ))}
@@ -169,7 +169,7 @@ export const Styles: Story = {
     size: "xxl",
     withShadow: true,
     styles: {
-      overlay: { borderColor: "$red9", borderWidth: 3 },
+      overlay: { borderColor: "red9", borderWidth: 3 },
     },
   },
 };

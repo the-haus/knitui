@@ -81,10 +81,10 @@ export const Playground: Story = {};
 /** All seven sizes rendered side-by-side, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
-          <Text width="$xl" fontSize="$xs" color="$color11">
+        <Box key={size} flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
+          <Text width="xl" fontSize="xs" color="color11">
             {size}
           </Text>
           <Pagination {...args} size={size} total={7} defaultValue={3} />
@@ -97,10 +97,10 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the pagination row. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} flexDirection="row" gap="$md" alignItems="center">
-          <Text width="$xl" fontSize="$xs" color="$color11">
+        <Box key={shadow} flexDirection="row" gap="md" alignItems="center">
+          <Text width="xl" fontSize="xs" color="color11">
             {shadow}
           </Text>
           <Pagination {...args} shadow={shadow} total={7} defaultValue={3} />
@@ -127,21 +127,21 @@ export const WithEdges: Story = {
  */
 export const Grouped: Story = {
   render: (args) => (
-    <Box gap="$lg">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+    <Box gap="lg">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           Pages only
         </Text>
         <Pagination {...args} grouped total={10} defaultValue={4} />
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           With prev / next + first / last edges
         </Text>
         <Pagination {...args} grouped withEdges total={20} defaultValue={10} />
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           Grouped across sizes
         </Text>
         {SIZES.map((size) => (
@@ -155,21 +155,21 @@ export const Grouped: Story = {
 /** Wider siblings and boundaries values reduce dots truncation. */
 export const SiblingsAndBoundaries: Story = {
   render: (args) => (
-    <Box gap="$lg">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+    <Box gap="lg">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           siblings=1 boundaries=1 (default)
         </Text>
         <Pagination {...args} total={20} defaultValue={10} siblings={1} boundaries={1} />
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           siblings=2 boundaries=2
         </Text>
         <Pagination {...args} total={20} defaultValue={10} siblings={2} boundaries={2} />
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
+      <Box gap="xs">
+        <Text fontSize="xs" color="color11">
           siblings=3 boundaries=1
         </Text>
         <Pagination {...args} total={20} defaultValue={10} siblings={3} boundaries={1} />
@@ -197,9 +197,9 @@ export const Controlled: Story = {
   render: (args) => {
     const [page, setPage] = React.useState(1);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Pagination {...args} total={10} value={page} onChange={setPage} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Active page: {page}
         </Text>
       </Box>
@@ -213,42 +213,52 @@ export const CompoundAPI: Story = {
     size: "xs",
   },
 
-  render: (args) => (
-    <Box gap="$lg">
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
-          Only numbers (no step controls)
-        </Text>
-        <Pagination.Root {...args} total={5} defaultValue={2} size="md">
-          <Pagination.Items />
-        </Pagination.Root>
-      </Box>
+  render: (args) => {
+    // The composite-only toggles (`withControls`, …) aren't `Pagination.Root` props.
+    const {
+      withControls: _withControls,
+      withEdges: _withEdges,
+      withPages: _withPages,
+      hideWithOnePage: _hideWithOnePage,
+      ...rootArgs
+    } = args;
+    return (
+      <Box gap="lg">
+        <Box gap="xs">
+          <Text fontSize="xs" color="color11">
+            Only numbers (no step controls)
+          </Text>
+          <Pagination.Root {...rootArgs} total={5} defaultValue={2} size="md">
+            <Pagination.Items />
+          </Pagination.Root>
+        </Box>
 
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
-          Custom arrangement: First · Prev · Items · Next · Last
-        </Text>
-        <Pagination.Root {...args} total={8} defaultValue={4} size="md">
-          <Pagination.First />
-          <Pagination.Previous />
-          <Pagination.Items />
-          <Pagination.Next />
-          <Pagination.Last />
-        </Pagination.Root>
-      </Box>
+        <Box gap="xs">
+          <Text fontSize="xs" color="color11">
+            Custom arrangement: First · Prev · Items · Next · Last
+          </Text>
+          <Pagination.Root {...rootArgs} total={8} defaultValue={4} size="md">
+            <Pagination.First />
+            <Pagination.Previous />
+            <Pagination.Items />
+            <Pagination.Next />
+            <Pagination.Last />
+          </Pagination.Root>
+        </Box>
 
-      <Box gap="$xs">
-        <Text fontSize="$xs" color="$color11">
-          Standalone controls with custom children
-        </Text>
-        <Pagination.Root total={5} defaultValue={1} size="md">
-          <Pagination.Previous icon={<Text>⬅</Text>} />
-          <Pagination.Items />
-          <Pagination.Next icon={<Text>➡</Text>} />
-        </Pagination.Root>
+        <Box gap="xs">
+          <Text fontSize="xs" color="color11">
+            Standalone controls with custom children
+          </Text>
+          <Pagination.Root total={5} defaultValue={1} size="md">
+            <Pagination.Previous icon={<Text>⬅</Text>} />
+            <Pagination.Items />
+            <Pagination.Next icon={<Text>➡</Text>} />
+          </Pagination.Root>
+        </Box>
       </Box>
-    </Box>
-  ),
+    );
+  },
 };
 
 /** Per-slot `styles` targets individual parts — here the `item` page controls and the `control` step controls. */
@@ -258,9 +268,9 @@ export const Styles: Story = {
     defaultValue: 5,
     withEdges: true,
     styles: {
-      item: { borderColor: "$blue7", borderWidth: 2 },
-      control: { backgroundColor: "$blue3" },
-      dots: { backgroundColor: "$yellow3" },
+      item: { borderColor: "blue7", borderWidth: 2 },
+      control: { backgroundColor: "blue3" },
+      dots: { backgroundColor: "red3" },
     },
   },
 };

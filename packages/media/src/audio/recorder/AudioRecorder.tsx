@@ -98,7 +98,7 @@ function AudioRecorderRoot(props: AudioRecorderProps): React.ReactElement {
         ref={setFrameRef}
         testID={testID}
         width={width}
-        maxWidth={maxWidth}
+        {...(maxWidth != null ? { maxWidth } : null)}
         {...accessor.get("root")}
       >
         {controls === false ? null : (

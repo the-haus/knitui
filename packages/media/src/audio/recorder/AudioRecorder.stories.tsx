@@ -65,7 +65,7 @@ export const CustomLayout: Story = {
   args: {
     controls: (
       <Group justify="space-between" align="center" width="100%">
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           <AudioRecorder.Record />
           <AudioRecorder.PauseResume />
         </Group>
@@ -80,9 +80,9 @@ export const Styles: Story = {
   args: {
     meteringEnabled: true,
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue6" },
-      meterFill: { backgroundColor: "$blue9" },
-      duration: { color: "$blue11" },
+      root: { backgroundColor: "blue3", borderColor: "blue6" },
+      meterFill: { backgroundColor: "blue9" },
+      duration: { color: "blue11" },
     },
   },
 };

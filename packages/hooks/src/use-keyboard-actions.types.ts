@@ -1,5 +1,23 @@
 import type { KeyboardEventHandler } from "react";
-import type { AccessibilityActionEvent, AccessibilityActionInfo } from "react-native";
+
+/**
+ * Accessibility action descriptor (`{ name, label? }`) — structurally RN's
+ * `AccessibilityActionInfo`, without importing `react-native`.
+ */
+export interface AccessibilityActionInfo {
+  readonly name: string;
+  readonly label?: string;
+}
+
+/**
+ * `onAccessibilityAction` payload — the one field the hook reads. Structural (like
+ * core's `LayoutChangeEvent`) so the handler is accepted both by RN views and by
+ * Tamagui v3 frames, whose event has a wider `currentTarget` than RN's
+ * `AccessibilityActionEvent`.
+ */
+export interface AccessibilityActionEvent {
+  nativeEvent: { readonly actionName: string };
+}
 
 /**
  * Semantic interactions for a host that is NOT a native `<button>` (a styled

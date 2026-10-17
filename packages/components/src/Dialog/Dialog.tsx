@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { AnimatePresence, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  AnimatePresence,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
 import { Affix, type AffixPosition } from "../Affix";
 import { Box } from "../Box";
@@ -30,22 +36,22 @@ export type DialogSize = SizeKey;
  */
 const DEFAULT_DIALOG_MOTION: MotionPreset = {
   transition: "medium",
-  enterStyle: { opacity: 0, y: DISTANCES.nudge },
-  exitStyle: { opacity: 0, y: DISTANCES.nudge },
-  animateOnly: ["transform", "opacity"],
+  enter: { opacity: 0, y: DISTANCES.nudge },
+  exit: { opacity: 0, y: DISTANCES.nudge },
+  properties: "transform, opacity",
 };
 
 const DialogFrame = styled(Box, {
-  name: "Dialog",
+  displayName: "Dialog",
   position: "relative",
-  backgroundColor: "$background",
-  padding: "$md",
+  backgroundColor: "background",
+  padding: "md",
 
   variants: {
     radius: radiusVariant,
     shadow: shadowVariant,
     withBorder: {
-      true: { borderWidth: 1, borderColor: "$borderColor" },
+      true: { borderWidth: 1, borderColor: "borderColor" },
     },
     size: panelWidthVariant,
   } as const,
@@ -55,8 +61,8 @@ const DialogFrame = styled(Box, {
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ content: { padding: "$lg" } }}` is
- * sugar for `<Dialog.Content padding="$lg" />`. Vocabulary matches the shared
+ * of the styled part it targets, so `styles={{ content: { padding: "lg" } }}` is
+ * sugar for `<Dialog.Content padding="lg" />`. Vocabulary matches the shared
  * modal chrome (`content`/`closeButton`); Dialog has no overlay/header/title.
  *
  * `closeButton` is low-precedence sugar: it layers UNDER the explicit
@@ -77,7 +83,11 @@ const DIALOG_SLOT_KEYS = [
 
 // `position` is Omit-ed from the inherited Box style props: it clashes with the
 // CSS `position` keyword type, and here it carries Mantine's `AffixPosition`.
-export interface DialogProps extends Omit<GetProps<typeof DialogFrame>, "position" | "size"> {
+// `animation` likewise: v3's CSS `animation` style prop vs. our motion recipe.
+export interface DialogProps extends Omit<
+  GetProps<typeof DialogFrame>,
+  "animation" | "position" | "size"
+> {
   /** Opened state. */
   opened: boolean;
   /** Called when the close button is pressed. */
@@ -93,7 +103,7 @@ export interface DialogProps extends Omit<GetProps<typeof DialogFrame>, "positio
   closeButtonProps?: CloseButtonProps;
   /** Per-slot style sugar — props spread onto the matching styled part. */
   styles?: SlotStyles<DialogStyles>;
-  /** Viewport corner to pin to. @default { bottom: "$xl", right: "$xl" } */
+  /** Viewport corner to pin to. @default { bottom: "xl", right: "xl" } */
   position?: AffixPosition;
   /** Content width — key (xxs–xxl), px number, or CSS string. @default "md" */
   size?: DialogSize | number | string;
@@ -123,7 +133,7 @@ export interface DialogProps extends Omit<GetProps<typeof DialogFrame>, "positio
  * pinned to a viewport corner via `Affix` (no overlay scrim). Accent comes from
  * the `theme` prop + palette ramp, never a Mantine `color` prop.
  */
-const DialogComponent = DialogFrame.styleable<DialogProps>(function Dialog(props, ref) {
+const DialogComponent = styleable<DialogProps>(DialogFrame, function Dialog(props, ref) {
   const {
     opened,
     onClose,
@@ -131,7 +141,7 @@ const DialogComponent = DialogFrame.styleable<DialogProps>(function Dialog(props
     withCloseButton = true,
     closeButtonProps,
     styles,
-    position = { bottom: "$xl", right: "$xl" },
+    position = { bottom: "xl", right: "xl" },
     size = "md",
     withBorder = true,
     keepMounted = false,
@@ -155,8 +165,8 @@ const DialogComponent = DialogFrame.styleable<DialogProps>(function Dialog(props
         <CloseButton
           size="sm"
           position="absolute"
-          top="$xs"
-          right="$xs"
+          top="xs"
+          right="xs"
           aria-label="Close dialog"
           onPress={onClose}
           // `closeButtonProps` is the explicit per-part prop and wins over the

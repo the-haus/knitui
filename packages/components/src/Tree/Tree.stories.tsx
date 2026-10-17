@@ -83,7 +83,7 @@ const meta = {
     expandOnClick: true,
     selectOnClick: false,
     withLines: false,
-    levelOffset: "$lg",
+    levelOffset: "lg",
   },
   argTypes: {
     expandOnClick: {
@@ -100,7 +100,7 @@ const meta = {
     },
     levelOffset: {
       control: "select",
-      options: ["$xxs", "$xs", "$sm", "$md", "$lg", "$xl", "$xxl"],
+      options: ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"],
       description: "Horizontal indent added per nesting level.",
     },
     renderNode: { control: false },
@@ -129,10 +129,10 @@ export const Playground: Story = {};
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {(["xs", "sm", "md", "lg", "xl"] as const).map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
           <Tree {...args} data={SIMPLE_TREE} shadow={shadow} />
@@ -162,7 +162,7 @@ export const SelectOnClick: Story = {
 export const DeepLevelOffset: Story = {
   args: {
     data: FILE_TREE,
-    levelOffset: "$xl",
+    levelOffset: "xl",
     withLines: true,
   },
 };
@@ -180,20 +180,19 @@ export const CustomRenderNode: Story = {
         {...elementProps}
         flexDirection="row"
         alignItems="center"
-        gap="$xs"
-        paddingVertical="$xs"
-        paddingHorizontal="$xs"
-        borderRadius="$xs"
-        backgroundColor={selected ? "$color4" : "transparent"}
-        hoverStyle={{ backgroundColor: "$color3" }}
+        gap="xs"
+        paddingVertical="xs"
+        paddingHorizontal="xs"
+        borderRadius="xs"
+        backgroundColor={selected ? "color4 hover:color3" : "transparent hover:color3"}
       >
-        <Text width="$xxs" textAlign="center" fontSize="$xs">
+        <Text width="xxs" textAlign="center" fontSize="xs">
           {hasChildren ? (expanded ? "▼" : "▶") : "·"}
         </Text>
-        <Text fontSize="$xs">{hasChildren ? "📁" : "📄"}</Text>
+        <Text fontSize="xs">{hasChildren ? "📁" : "📄"}</Text>
         <Text
-          fontSize="$sm"
-          color={selected ? "$color11" : "$color"}
+          fontSize="sm"
+          color={selected ? "color11" : "color"}
           fontWeight={selected ? "600" : "400"}
         >
           {node.label}
@@ -212,35 +211,35 @@ export const ControlledWithActions: Story = {
     const tree = useTree();
 
     return (
-      <Box gap="$md">
-        <Box flexDirection="row" gap="$sm" flexWrap="wrap">
+      <Box gap="md">
+        <Box flexDirection="row" gap="sm" flexWrap="wrap">
           <Box
-            paddingHorizontal="$sm"
-            paddingVertical="$xs"
-            borderRadius="$xs"
+            paddingHorizontal="sm"
+            paddingVertical="xs"
+            borderRadius="xs"
             borderWidth={1}
-            borderColor="$color7"
+            borderColor="color7"
             onPress={() => tree.expandAllNodes()}
-            hoverStyle={{ backgroundColor: "$color3" }}
+            backgroundColor="hover:color3"
           >
-            <Text fontSize="$sm">Expand all</Text>
+            <Text fontSize="sm">Expand all</Text>
           </Box>
           <Box
-            paddingHorizontal="$sm"
-            paddingVertical="$xs"
-            borderRadius="$xs"
+            paddingHorizontal="sm"
+            paddingVertical="xs"
+            borderRadius="xs"
             borderWidth={1}
-            borderColor="$color7"
+            borderColor="color7"
             onPress={() => tree.collapseAllNodes()}
-            hoverStyle={{ backgroundColor: "$color3" }}
+            backgroundColor="hover:color3"
           >
-            <Text fontSize="$sm">Collapse all</Text>
+            <Text fontSize="sm">Collapse all</Text>
           </Box>
         </Box>
 
         <Tree {...args} data={FILE_TREE} tree={tree} selectOnClick withLines />
 
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {tree.selectedState.join(", ") || "—"}
         </Text>
       </Box>
@@ -272,7 +271,7 @@ export const CheckedNodes: Story = {
     const tree = useTree({ initialCheckedState: ["apple"] });
 
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <Tree
           {...args}
           data={SIMPLE_TREE}
@@ -286,8 +285,8 @@ export const CheckedNodes: Story = {
                 {...elementProps}
                 flexDirection="row"
                 alignItems="center"
-                gap="$xs"
-                paddingVertical="$xs"
+                gap="xs"
+                paddingVertical="xs"
                 paddingLeft={(level - 1) * 20}
               >
                 <Checkbox
@@ -300,7 +299,7 @@ export const CheckedNodes: Story = {
                   }
                   aria-label={node.value}
                 />
-                <Text fontSize="$sm" onPress={() => hasChildren && tree.toggleExpanded(node.value)}>
+                <Text fontSize="sm" onPress={() => hasChildren && tree.toggleExpanded(node.value)}>
                   {hasChildren ? (expanded ? "▼ " : "▶ ") : ""}
                   {node.label}
                 </Text>
@@ -308,7 +307,7 @@ export const CheckedNodes: Story = {
             );
           }}
         />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           checked: {tree.checkedState.join(", ") || "—"}
         </Text>
       </Box>
@@ -326,9 +325,9 @@ export const MultipleSelection: Story = {
     const tree = useTree({ multiple: true });
 
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <Tree {...args} data={SIMPLE_TREE} tree={tree} selectOnClick expandOnClick />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {tree.selectedState.join(", ") || "—"}
         </Text>
       </Box>
@@ -341,8 +340,8 @@ export const Styles: Story = {
   args: {
     data: SIMPLE_TREE,
     styles: {
-      label: { color: "$blue9", fontWeight: "700" },
-      chevron: { color: "$blue9" },
+      label: { color: "blue9", fontWeight: "700" },
+      chevron: { color: "blue9" },
     },
   },
 };

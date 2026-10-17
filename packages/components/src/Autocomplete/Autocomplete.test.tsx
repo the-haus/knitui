@@ -110,4 +110,64 @@ describe("Autocomplete", () => {
       expect(screen.queryByText("Vue")).not.toBeInTheDocument();
     });
   });
+
+  describe("filtering + keyboard", () => {
+    const DATA = ["React", "Redux", "Vue", "Svelte"];
+    const field = () => screen.getByRole("combobox");
+    const activeOption = () => {
+      const id = field().getAttribute("aria-activedescendant");
+      return id ? document.getElementById(id) : null;
+    };
+    const labels = () => screen.queryAllByRole("option").map((o) => o.textContent);
+
+    it("filters suggestions by the typed text (case-insensitive substring)", () => {
+      render(<Autocomplete data={DATA} placeholder="Search" />);
+      fireEvent.change(field(), { target: { value: "re" } });
+      expect(labels()).toEqual(["React", "Redux"]);
+      fireEvent.change(field(), { target: { value: "VEL" } });
+      expect(labels()).toEqual(["Svelte"]);
+    });
+
+    it("shows nothingFoundMessage when no suggestion matches", () => {
+      render(<Autocomplete data={DATA} nothingFoundMessage="No match" placeholder="Search" />);
+      fireEvent.change(field(), { target: { value: "zzz" } });
+      expect(labels()).toEqual([]);
+      expect(screen.getByText("No match")).toBeInTheDocument();
+    });
+
+    it("hands the limit to a custom filter", () => {
+      render(
+        <Autocomplete
+          data={DATA}
+          limit={1}
+          filter={({ options, limit }) => [...options].reverse().slice(0, limit)}
+          placeholder="Search"
+        />,
+      );
+      fireEvent.focus(field());
+      expect(labels()).toEqual(["Svelte"]);
+    });
+
+    it("navigates with arrows, points aria-activedescendant, and commits on Enter", () => {
+      const onChange = jest.fn();
+      render(<Autocomplete data={DATA} onChange={onChange} placeholder="Search" />);
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      expect(field()).toHaveAttribute("aria-expanded", "true");
+      expect(activeOption()).toHaveTextContent("React");
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      expect(activeOption()).toHaveTextContent("Redux");
+      fireEvent.keyDown(field(), { key: "Enter" });
+      expect(onChange).toHaveBeenLastCalledWith("Redux");
+      expect(field()).toHaveAttribute("aria-expanded", "false");
+      expect(field()).not.toHaveAttribute("aria-activedescendant");
+    });
+
+    it("closes on Escape", () => {
+      render(<Autocomplete data={DATA} placeholder="Search" />);
+      fireEvent.focus(field());
+      expect(field()).toHaveAttribute("aria-expanded", "true");
+      fireEvent.keyDown(field(), { key: "Escape" });
+      expect(field()).toHaveAttribute("aria-expanded", "false");
+    });
+  });
 });

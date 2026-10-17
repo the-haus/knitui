@@ -1,13 +1,13 @@
 import * as React from "react";
 
-import { type GetProps, isWeb, styled, withStaticProperties } from "@knitui/core";
-import { useMergedRef, useUncontrolled } from "@knitui/hooks";
+import { type GetProps, isWeb, styleable, styled, withStaticProperties } from "@knitui/core";
+import { useCallbackRef, useMergedRef, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { INPUT_WRAPPER_SLOTS, type InputWrapperSlots } from "../Input/shared";
 import { InputBase, type InputBaseProps } from "../InputBase";
 import { clampOptional, roundTo } from "../internal/number-utils";
-import { focusRingStyle, type SizeKey, webCursor } from "../internal/style-props";
+import { focusRingResetStyle, type SizeKey, webCursor } from "../internal/style-props";
 import { pick, slotStyles, type SlotStyles } from "../internal/styles";
 import { Text } from "../Text";
 
@@ -115,6 +115,11 @@ export interface NumberInputProps extends NumberInputBaseProps {
   styles?: SlotStyles<NumberInputStyles>;
 }
 
+/** The event parameter of an optional handler prop. */
+type EventOf<K extends "onFocus" | "onBlur" | "onKeyDown" | "onKeyUp"> = Parameters<
+  NonNullable<InputBaseProps[K]>
+>[0];
+
 const decimalPlaces = (n: number | string): number => {
   const m = String(n).match(/\.(\d+)$/);
   return m ? m[1].length : 0;
@@ -182,19 +187,20 @@ const STEPPER_COLUMN_WIDTH: Record<NumberInputControlSize, number> = {
 // Glyph size for the ▲/▼ controls. Deliberately much smaller than the field's
 // text size (a `md` field uses an 18px font; a 9px triangle reads as a control
 // affordance, not a character). `lineHeight` is pinned to the font size so the
-// glyph centers exactly in its half of the column.
+// glyph centers exactly in its half of the column. It is a px STRING: a bare
+// number is a font-size RATIO in v3.
 const stepperIconSizeVariant = {
-  xxs: { fontSize: 6, lineHeight: 6 },
-  xs: { fontSize: 7, lineHeight: 7 },
-  sm: { fontSize: 8, lineHeight: 8 },
-  md: { fontSize: 9, lineHeight: 9 },
-  lg: { fontSize: 11, lineHeight: 11 },
-  xl: { fontSize: 13, lineHeight: 13 },
-  xxl: { fontSize: 15, lineHeight: 15 },
+  xxs: { fontSize: 6, lineHeight: "6px" },
+  xs: { fontSize: 7, lineHeight: "7px" },
+  sm: { fontSize: 8, lineHeight: "8px" },
+  md: { fontSize: 9, lineHeight: "9px" },
+  lg: { fontSize: 11, lineHeight: "11px" },
+  xl: { fontSize: 13, lineHeight: "13px" },
+  xxl: { fontSize: 15, lineHeight: "15px" },
 } as const;
 
 const StepperColumn = styled(Box, {
-  name: "NumberInputControls",
+  displayName: "NumberInputControls",
   flexDirection: "column",
   alignSelf: "stretch",
   // Fill the section's full height so the two `flex: 1` controls split it evenly
@@ -202,11 +208,11 @@ const StepperColumn = styled(Box, {
   // to the glyph height and the buttons render as thin slivers).
   height: "100%",
   borderLeftWidth: 1,
-  borderColor: "$borderColor",
+  borderColor: "borderColor",
 });
 
 const StepControl = styled(Box, {
-  name: "NumberInputControl",
+  displayName: "NumberInputControl",
   flex: 1,
   minHeight: 0,
   alignItems: "center",
@@ -215,17 +221,14 @@ const StepControl = styled(Box, {
   padding: 0,
   borderWidth: 0,
   borderColor: "transparent",
-  outlineWidth: 0,
-  outlineStyle: "none",
   boxShadow: "none",
-  backgroundColor: "transparent",
+  backgroundColor: "transparent hover:color3 press:color5",
   ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color3" },
-  pressStyle: { backgroundColor: "$color5" },
-  ...focusRingStyle,
+
+  ...focusRingResetStyle,
   variants: {
     type: {
-      up: { borderBottomWidth: 1, borderColor: "$borderColor" },
+      up: { borderBottomWidth: 1, borderColor: "borderColor" },
       down: {},
     },
     disabled: {
@@ -235,8 +238,8 @@ const StepControl = styled(Box, {
 });
 
 const StepControlIcon = styled(Text, {
-  name: "NumberInputControlIcon",
-  color: "$color11",
+  displayName: "NumberInputControlIcon",
+  color: "color11",
   userSelect: "none",
   variants: {
     size: stepperIconSizeVariant,
@@ -256,8 +259,8 @@ const StepControlIcon = styled(Text, {
  * are inherited from `Input.Wrapper`'s vocabulary and forwarded through
  * `InputBase`, so `styles={{ label }}` means the same thing here as on a
  * `TextInput`. The remaining slots reach `NumberInput`'s own stepper parts, so
- * `styles={{ increment: { backgroundColor: "$color5" } }}` is sugar for
- * `<NumberInput.Increment backgroundColor="$color5" />`.
+ * `styles={{ increment: { backgroundColor: "color5" } }}` is sugar for
+ * `<NumberInput.Increment backgroundColor="color5" />`.
  */
 export interface NumberInputStyles extends InputWrapperSlots {
   /** Props for the stepper column (`NumberInput.Controls`). */
@@ -284,7 +287,8 @@ const stepControlElementProps: { type: string } = { type: "button" };
  * Built on `InputBase`; the numeric value is controlled via `useUncontrolled`.
  * Accent/theme comes from the Tamagui `theme` prop + palette ramp.
  */
-const NumberInputComponent = InputBase.styleable<NumberInputProps>(
+const NumberInputComponent = styleable<NumberInputProps>(
+  InputBase,
   function NumberInput(props, ref) {
     const {
       value,
@@ -403,12 +407,16 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
       [doStep, useHold, stepHoldInterval],
     );
 
-    const startHold = (sign: 1 | -1) => {
+    const startHold = useCallbackRef((sign: 1 | -1) => {
       doStep(sign);
       if (useHold && stepHoldDelay !== undefined) {
         holdTimeout.current = setTimeout(() => stepLoop(sign), stepHoldDelay);
       }
-    };
+    });
+    // Stable press handlers: the stepper re-renders with the field on every
+    // keystroke, so inline arrows would re-bind both controls each time.
+    const startIncrement = useCallbackRef(() => startHold(1));
+    const startDecrement = useCallbackRef(() => startHold(-1));
 
     const endHold = React.useCallback(() => {
       if (holdTimeout.current) clearTimeout(holdTimeout.current);
@@ -418,7 +426,7 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
 
     React.useEffect(() => endHold, [endHold]);
 
-    const handleText = (text: string) => {
+    const handleText = useCallbackRef((text: string) => {
       let sanitized = sanitize(text, allowNegative, allowDecimal);
       if (!allowLeadingZeros) sanitized = stripLeadingZeros(sanitized);
       if (clampBehavior === "strict" && COMPLETE_NUMBER.test(sanitized)) {
@@ -432,15 +440,15 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
       } else {
         setValue(COMPLETE_NUMBER.test(sanitized) ? Number(sanitized) : sanitized);
       }
-    };
+    });
 
-    const handleFocus: InputBaseProps["onFocus"] = (event) => {
+    const handleFocus = useCallbackRef<[EventOf<"onFocus">], void>((event) => {
       const el = event.currentTarget;
       if (selectAllOnFocus && isWeb && hasSelectMethod(el)) el.select();
       onFocus?.(event);
-    };
+    });
 
-    const handleBlur: InputBaseProps["onBlur"] = (event) => {
+    const handleBlur = useCallbackRef<[EventOf<"onBlur">], void>((event) => {
       onBlur?.(event);
       if (clampBehavior === "blur") {
         const numeric = typeof _value === "number" ? _value : Number(_value);
@@ -460,19 +468,19 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
       ) {
         setValue(Number(_value));
       }
-    };
+    });
 
-    const handleKeyDown: InputBaseProps["onKeyDown"] = (event) => {
+    const handleKeyDown = useCallbackRef<[EventOf<"onKeyDown">], void>((event) => {
       onKeyDown?.(event);
       if (readOnly || !withKeyboardEvents) return;
       if (event.key === "ArrowUp") startHold(1);
       if (event.key === "ArrowDown") startHold(-1);
-    };
+    });
 
-    const handleKeyUp: InputBaseProps["onKeyUp"] = (event) => {
+    const handleKeyUp = useCallbackRef<[EventOf<"onKeyUp">], void>((event) => {
       onKeyUp?.(event);
       if (event.key === "ArrowUp" || event.key === "ArrowDown") endHold();
-    };
+    });
 
     const numericValue = typeof _value === "number" ? _value : Number(_value);
     const hasNumeric = _value !== "" && Number.isFinite(numericValue);
@@ -492,7 +500,7 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
             disabled={upDisabled}
             aria-label="Increment value"
             aria-disabled={upDisabled || undefined}
-            onPressIn={() => startHold(1)}
+            onPressIn={startIncrement}
             onPressOut={endHold}
           >
             <StepControlIcon size={controlSize}>▲</StepControlIcon>
@@ -505,7 +513,7 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
             disabled={downDisabled}
             aria-label="Decrement value"
             aria-disabled={downDisabled || undefined}
-            onPressIn={() => startHold(-1)}
+            onPressIn={startDecrement}
             onPressOut={endHold}
           >
             <StepControlIcon size={controlSize}>▼</StepControlIcon>
@@ -529,8 +537,10 @@ const NumberInputComponent = InputBase.styleable<NumberInputProps>(
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         rightSection={rightSection ?? controls}
-        rightSectionWidth={controls ? STEPPER_COLUMN_WIDTH[controlSize] : undefined}
-        rightSectionPointerEvents={rightSectionPointerEvents ?? (controls ? "all" : undefined)}
+        {...(controls ? { rightSectionWidth: STEPPER_COLUMN_WIDTH[controlSize] } : null)}
+        {...(rightSectionPointerEvents || controls
+          ? { rightSectionPointerEvents: rightSectionPointerEvents ?? "all" }
+          : null)}
         {...others}
       />
     );

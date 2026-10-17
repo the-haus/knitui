@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { DURATIONS, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { DURATIONS, type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useDidUpdate, useElementSize, useReducedMotion } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -14,7 +14,7 @@ import { slotStyles, type SlotStyles } from "../internal/styles";
 /** Outer clip box — its `height`/`width` is animated between 0 and the
  *  measured content size. `overflow: hidden` hides the content as it shrinks. */
 const CollapseRoot = styled(Box, {
-  name: "Collapse",
+  displayName: "Collapse",
   overflow: "hidden",
 });
 
@@ -27,7 +27,7 @@ const CollapseRoot = styled(Box, {
  *  native). Pinning `flexShrink: 0` forces it to overflow the clip at its natural
  *  height so the measurement is always correct. */
 const CollapseContent = styled(Box, {
-  name: "CollapseContent",
+  displayName: "CollapseContent",
   flexShrink: 0,
 });
 
@@ -51,7 +51,12 @@ export interface CollapseStyles {
 
 const COLLAPSE_SLOT_KEYS = ["root", "content"] as const satisfies readonly (keyof CollapseStyles)[];
 
-export interface CollapseProps extends Omit<GetProps<typeof CollapseRoot>, "onLayout"> {
+// `transitionDuration` / `transitionTimingFunction` are Collapse's own (ms number,
+// CSS curve) props, so the same-named v3 style props are Omit-ed.
+export interface CollapseProps extends Omit<
+  GetProps<typeof CollapseRoot>,
+  "onLayout" | "transitionDuration" | "transitionTimingFunction"
+> {
   /**
    * Expanded state — the canonical Mantine prop name (newer Mantine renamed
    * `in`→`expanded`). Takes precedence over the {@link CollapseProps.in} /
@@ -93,7 +98,7 @@ export interface CollapseProps extends Omit<GetProps<typeof CollapseRoot>, "onLa
 /* Collapse                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const CollapseComponent = CollapseRoot.styleable<CollapseProps>(function Collapse(props, ref) {
+const CollapseComponent = styleable<CollapseProps>(CollapseRoot, function Collapse(props, ref) {
   const {
     expanded: expandedProp,
     in: inProp,
@@ -204,7 +209,7 @@ const CollapseComponent = CollapseRoot.styleable<CollapseProps>(function Collaps
       Frame={CollapseRoot}
       axis={horizontal ? "width" : "height"}
       size={target}
-      crossSize={crossSize > 0 ? crossSize : undefined}
+      {...(crossSize > 0 ? { crossSize } : null)}
       animate={animate}
       durationMs={transitionDuration}
       timingFunction={transitionTimingFunction}

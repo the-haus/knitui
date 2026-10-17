@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
-import { useCallbackRef, useUncontrolled } from "@knitui/hooks";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
+import { useCallbackRef, useId, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import {
@@ -36,32 +36,32 @@ import {
 /* -------------------------------------------------------------------------- */
 
 const NodeRow = styled(Box, {
-  name: "TreeSelectNode",
+  displayName: "TreeSelectNode",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$xs",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$xs",
-  borderRadius: "$xs",
+  gap: "xs",
+  paddingVertical: "xs",
+  paddingHorizontal: "xs",
+  borderRadius: "xs",
   ...webCursor("pointer"),
   userSelect: "none",
-  hoverStyle: { backgroundColor: "$color3" },
-  pressStyle: { backgroundColor: "$color4" },
+  backgroundColor: "hover:color3 press:color4",
+
   ...focusRingStyle,
 
   variants: {
     selected: {
-      true: { backgroundColor: "$color4" },
+      true: { backgroundColor: "color4" },
     },
   } as const,
 });
 
 const NodeChevron = styled(Text, {
-  name: "TreeSelectChevron",
-  width: "$xxs",
-  fontSize: "$xxs",
+  displayName: "TreeSelectChevron",
+  width: "xxs",
+  fontSize: "xxs",
   textAlign: "center",
-  color: "$color",
+  color: "color",
   userSelect: "none",
 
   variants: {
@@ -73,15 +73,15 @@ const NodeChevron = styled(Text, {
 });
 
 const NodeLabel = styled(Text, {
-  name: "TreeSelectLabel",
-  fontSize: "$sm",
-  color: "$color",
+  displayName: "TreeSelectLabel",
+  fontSize: "sm",
+  color: "color",
   userSelect: "none",
   flexShrink: 1,
 
   variants: {
     selected: {
-      true: { color: "$color11", fontWeight: "600" },
+      true: { color: "color11", fontWeight: "600" },
     },
   } as const,
 });
@@ -116,7 +116,7 @@ type TreeSelectInputProps = Omit<
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the
  * TreeSelect part surface. Each key maps to the props of the part it targets, so
- * `styles={{ node: { bg: "$color3" } }}` is sugar for `<TreeSelect.Node bg="$color3" />`.
+ * `styles={{ node: { bg: "color3" } }}` is sugar for `<TreeSelect.Node bg="color3" />`.
  */
 export interface TreeSelectStyles {
   /** Props for the state-machine root (`TreeSelect.Root` → `<Combobox>`). */
@@ -175,6 +175,7 @@ interface TreeSelectContextValue {
   /** Already-filtered hierarchical data for the dropdown. */
   filteredData: TreeNodeData[];
   /** id wiring `aria-controls` (trigger) ↔ the dropdown surface. */
+  dropdownId: string;
   nothingFoundMessage?: React.ReactNode;
   withScrollArea: boolean;
   maxDropdownHeight: number;
@@ -432,6 +433,7 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
     __triggerProps?.onClick?.(event);
   });
 
+  const dropdownId = useId(__triggerProps?.id ? `${__triggerProps.id}-dropdown` : undefined);
   const canClear = clearable && _value != null && !disabled && !readOnly;
   const inputValue = searchable && combobox.opened ? search : nodeLabelText(selectedNode);
 
@@ -447,6 +449,7 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
       value: _value,
       inputValue,
       filteredData,
+      dropdownId,
       nothingFoundMessage,
       withScrollArea,
       maxDropdownHeight,
@@ -472,6 +475,7 @@ function TreeSelectRoot(props: TreeSelectRootProps) {
       _value,
       inputValue,
       filteredData,
+      dropdownId,
       nothingFoundMessage,
       withScrollArea,
       maxDropdownHeight,
@@ -574,6 +578,12 @@ const TreeSelectTrigger = React.forwardRef<TreeSelectRef, TreeSelectTriggerProps
           {...funneledChrome}
           ref={mergedRef}
           id={id}
+          // A combobox whose popup is the `role="tree"` dropdown body.
+          role="combobox"
+          aria-haspopup="tree"
+          aria-autocomplete={ctx.searchable ? "list" : "none"}
+          aria-controls={ctx.dropdownId}
+          aria-expanded={ctx.combobox.opened}
           size={ctx.size}
           disabled={ctx.disabled}
           placeholder={placeholder}
@@ -613,11 +623,17 @@ function TreeSelectNode(props: TreeSelectNodePartProps) {
   const { payload, ...rest } = props;
   const { node, expanded, hasChildren, elementProps } = payload;
   const selected = node.value === ctx.value;
+  // `useKeyboardActions` types its native a11y handler with RN's own
+  // `AccessibilityActionEvent`; Tamagui v3 types it structurally. Same runtime
+  // event, so re-type it at the boundary.
+  const { onAccessibilityAction, ...rowProps } = elementProps;
+  const a11yAction = onAccessibilityAction as TreeSelectNodeProps["onAccessibilityAction"];
 
   return (
     <NodeRow
       {...s.get("node")}
-      {...elementProps}
+      {...rowProps}
+      {...(a11yAction ? { onAccessibilityAction: a11yAction } : null)}
       {...rest}
       selected={selected}
       aria-selected={selected}
@@ -675,7 +691,16 @@ function TreeSelectTree(props: TreeSelectTreeProps) {
   );
 
   return ctx.withScrollArea ? (
-    <ScrollArea.Autosize maxHeight={ctx.maxDropdownHeight}>{treeNode}</ScrollArea.Autosize>
+    // `scrollbars="y"` keeps node rows full width on native; `"handled"` lets a tap
+    // on a node land while a searchable field's soft keyboard is up (see
+    // `Combobox.OptionsDropdown`).
+    <ScrollArea.Autosize
+      maxHeight={ctx.maxDropdownHeight}
+      scrollbars="y"
+      keyboardShouldPersistTaps="handled"
+    >
+      {treeNode}
+    </ScrollArea.Autosize>
   ) : (
     <Box maxHeight={ctx.maxDropdownHeight} overflow="hidden">
       {treeNode}
@@ -695,9 +720,9 @@ const TreeSelectDropdown = React.forwardRef<
 >(function TreeSelectDropdown(props, ref) {
   const ctx = useTreeSelectContext();
   const s = slotStyles<TreeSelectStyles>(ctx.styles, TREE_SELECT_SLOT_KEYS, "TreeSelect");
-  const { children, ...rest } = props;
+  const { id = ctx.dropdownId, children, ...rest } = props;
   return (
-    <Combobox.Dropdown ref={ref} {...s.get("dropdown")} {...rest}>
+    <Combobox.Dropdown ref={ref} id={id} {...s.get("dropdown")} {...rest}>
       {children ?? <TreeSelectTree />}
     </Combobox.Dropdown>
   );
@@ -776,7 +801,7 @@ export type TreeSelectRef = React.ComponentRef<typeof InputBase>;
  * first pass, mirroring how `Select` preceded `MultiSelect`); web-only keyboard
  * navigation.
  */
-const TreeSelectComponent = InputBase.styleable<TreeSelectProps>(function TreeSelect(props, ref) {
+const TreeSelectComponent = styleable<TreeSelectProps>(InputBase, function TreeSelect(props, ref) {
   const {
     // Field-chrome / trigger props (everything that is NOT a Root behavior prop).
     clearSectionMode,

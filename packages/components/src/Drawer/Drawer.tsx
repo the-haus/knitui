@@ -2,7 +2,13 @@ import * as React from "react";
 import { GestureDetector } from "react-native-gesture-handler";
 import { useSharedValue, type WithSpringConfig } from "react-native-reanimated";
 
-import { type GetProps, styled, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import {
+  type GetProps,
+  styleable,
+  styled,
+  type TamaguiElement,
+  withStaticProperties,
+} from "@knitui/core";
 import { useElementSize, useId } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
@@ -14,12 +20,7 @@ import {
   useMotionPreset,
 } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
-import {
-  panelWidthVariant,
-  radiusVariant,
-  shadowVariant,
-  type SizeKey,
-} from "../internal/style-props";
+import { PANEL_WIDTH, radiusVariant, shadowVariant, type SizeKey } from "../internal/style-props";
 import { type DragAxis, DragDismissHost, DragDismissOverlay, useDragDismiss } from "../Modal/drag";
 import {
   ModalBase,
@@ -45,8 +46,8 @@ type PanelWidthKey = "xxs" | "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
  */
 function resolveExtent(size: DrawerSize | number | string): DrawerExtent {
   if (typeof size === "number") return size;
-  if (size in panelWidthVariant) {
-    return panelWidthVariant[size as PanelWidthKey].width;
+  if (size in PANEL_WIDTH) {
+    return PANEL_WIDTH[size as PanelWidthKey].width;
   }
   return size as DrawerExtent;
 }
@@ -58,6 +59,24 @@ const ENTER_OFFSET: Record<DrawerPosition, { x?: number; y?: number }> = {
   top: { y: -DISTANCES.enter },
   bottom: { y: DISTANCES.enter },
 };
+
+/**
+ * Default enter/exit recipe per edge: a fade plus a 16px slide from (and back
+ * toward) the anchored edge. Built ONCE at module scope so `useMotionPreset` /
+ * `compileMotion` see a stable recipe identity (an inline recipe would recompile
+ * the clause program on every render).
+ */
+const DEFAULT_DRAWER_MOTION: Record<DrawerPosition, MotionPreset> = {
+  left: edgeMotion("left"),
+  right: edgeMotion("right"),
+  top: edgeMotion("top"),
+  bottom: edgeMotion("bottom"),
+};
+
+function edgeMotion(position: DrawerPosition): MotionPreset {
+  const snapshot = { opacity: 0, ...ENTER_OFFSET[position] };
+  return { transition: "fast", enter: snapshot, exit: snapshot, properties: "transform, opacity" };
+}
 
 /**
  * Drag-to-dismiss axis + the screen sign that travels OFF-SCREEN (toward the
@@ -76,10 +95,10 @@ const DRAG: Record<DrawerPosition, { axis: DragAxis; sign: 1 | -1 }> = {
 /* -------------------------------------------------------------------------- */
 
 const DrawerContentFrame = styled(Box, {
-  name: "DrawerContent",
+  displayName: "DrawerContent",
   position: "relative",
   zIndex: 1,
-  backgroundColor: "$background",
+  backgroundColor: "background",
   overflow: "hidden",
   flexDirection: "column",
   // Fill the cross axis (full height for left/right, full width for top/bottom)
@@ -98,25 +117,25 @@ const DrawerContentFrame = styled(Box, {
 });
 
 const DrawerHeader = styled(Box, {
-  name: "DrawerHeader",
+  displayName: "DrawerHeader",
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingHorizontal: "$md",
-  paddingVertical: "$sm",
-  backgroundColor: "$background",
+  paddingHorizontal: "md",
+  paddingVertical: "sm",
+  backgroundColor: "background",
 });
 
 const DrawerTitle = styled(Text, {
-  name: "DrawerTitle",
-  fontSize: "$lg",
+  displayName: "DrawerTitle",
+  fontSize: "lg",
   fontWeight: "600",
-  color: "$color",
+  color: "color",
 });
 
 const DrawerBody = styled(Box, {
-  name: "DrawerBody",
-  padding: "$md",
+  displayName: "DrawerBody",
+  padding: "md",
   flex: 1,
 });
 
@@ -130,8 +149,12 @@ type DrawerContentFrameProps = Omit<
   | "aria-label"
   | "aria-labelledby"
   | "aria-modal"
+  // v3 has CSS `animation` / `offset` style props; ours are the motion recipe
+  // and the viewport gap.
+  | "animation"
   | "children"
   | "height"
+  | "offset"
   | "position"
   | "role"
   | "size"
@@ -172,7 +195,7 @@ export interface DrawerProps extends ModalBaseSharedProps, DrawerContentFramePro
   size?: DrawerSize | number | string;
   /** Panel corner radius. */
   radius?: DrawerContentProps["radius"];
-  /** Gap between the panel and the viewport edge. Prefer `$space` tokens. @default "$0" */
+  /** Gap between the panel and the viewport edge. Prefer space tokens (`"md"`). @default 0 */
   offset?: BoxProps["padding"];
   /**
    * Enter/exit animation — a motion preset name, an inline {@link MotionPreset},
@@ -213,7 +236,7 @@ const ModalBaseInnerLayout: Record<
   bottom: { direction: "column", justify: "flex-end" },
 };
 
-const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(props, ref) {
+const DrawerBase = styleable<DrawerProps>(DrawerContentFrame, function Drawer(props, ref) {
   const {
     "aria-describedby": describedBy,
     "aria-label": ariaLabel,
@@ -224,7 +247,7 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
     position = "left",
     size = "md",
     radius,
-    offset = "$0",
+    offset = 0,
     animation,
     duration,
     dragToDismiss = false,
@@ -256,15 +279,9 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
   const hasHeader = !!title || withCloseButton;
 
   // Default to a subtle edge slide-in keyed to the anchored side; `animation`
-  // overrides it (a preset name, inline preset, or `false`). `?? defaultMotion`
+  // overrides it (a preset name, inline preset, or `false`). `?? DEFAULT_…`
   // keeps an explicit `false` (disable) intact since `??` only fills null/undefined.
-  const defaultMotion: MotionPreset = {
-    transition: "fast",
-    enterStyle: { opacity: 0, ...ENTER_OFFSET[position] },
-    exitStyle: { opacity: 0, ...ENTER_OFFSET[position] },
-    animateOnly: ["transform", "opacity"],
-  };
-  const motion = useMotionPreset(animation ?? defaultMotion, { duration });
+  const motion = useMotionPreset(animation ?? DEFAULT_DRAWER_MOTION[position], { duration });
 
   const layout = ModalBaseInnerLayout[position];
   const extent = resolveExtent(size);
@@ -332,8 +349,9 @@ const DrawerBase = DrawerContentFrame.styleable<DrawerProps>(function Drawer(pro
       {...contentProps}
       radius={radius}
       shadow={shadow}
-      width={isHorizontal ? extent : undefined}
-      height={isHorizontal ? undefined : extent}
+      // Only the main axis is pinned; the cross axis stretches. Spread so the
+      // other dimension is never claimed with an explicit `undefined` (v3 §5).
+      {...(isHorizontal ? { width: extent } : { height: extent })}
       role="dialog"
       aria-label={titleId ? undefined : (ariaLabel ?? "Drawer")}
       aria-labelledby={titleId}

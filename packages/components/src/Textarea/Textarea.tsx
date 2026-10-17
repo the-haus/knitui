@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { isWeb } from "@knitui/core";
+import { isWeb, styleable } from "@knitui/core";
 import { useMergedRef } from "@knitui/hooks";
 
 import { InputBase, type InputBaseProps } from "../InputBase";
@@ -56,7 +56,7 @@ const asTextarea = (node: TextareaRef | null): HTMLTextAreaElement | null =>
  * `autosize` grows the field from `minRows` up to `maxRows` on both platforms; the
  * CSS `resize` handle is web-only (a no-op on native).
  */
-export const Textarea = InputBase.styleable<TextareaProps>(function Textarea(props, ref) {
+export const Textarea = styleable<TextareaProps>(InputBase, function Textarea(props, ref) {
   const {
     autosize = false,
     // A Textarea always opens at two text lines unless the consumer narrows it.

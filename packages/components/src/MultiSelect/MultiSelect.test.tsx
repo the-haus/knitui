@@ -106,4 +106,83 @@ describe("MultiSelect", () => {
       expect(document.querySelectorAll(".tabler-icon-x")).toHaveLength(2);
     });
   });
+
+  describe("keyboard, pills + aria", () => {
+    const field = () => screen.getByRole("combobox");
+    const activeOption = () => {
+      const id = field().getAttribute("aria-activedescendant");
+      return id ? document.getElementById(id) : null;
+    };
+
+    it("toggles values from the keyboard and keeps the dropdown open", () => {
+      const onChange = jest.fn();
+      render(<MultiSelect data={data} onChange={onChange} placeholder="Pick" />);
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      expect(field()).toHaveAttribute("aria-expanded", "true");
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      expect(activeOption()).toHaveTextContent("React");
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      expect(activeOption()).toHaveTextContent("Vue");
+      fireEvent.keyDown(field(), { key: "Enter" });
+      expect(onChange).toHaveBeenLastCalledWith(["Vue"]);
+      expect(field()).toHaveAttribute("aria-expanded", "true");
+      // Enter on a picked option deselects it.
+      fireEvent.keyDown(field(), { key: "Enter" });
+      expect(onChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it("marks every picked option aria-selected", () => {
+      render(<MultiSelect data={data} defaultValue={["React", "Svelte"]} placeholder="Pick" />);
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      const selected = screen
+        .getAllByRole("option")
+        .filter((o) => o.getAttribute("aria-selected") === "true")
+        .map((o) => o.textContent?.replace("✓", ""));
+      expect(selected).toEqual(["React", "Svelte"]);
+    });
+
+    it("removes the last pill on Backspace in an empty field", () => {
+      const onRemove = jest.fn();
+      render(
+        <MultiSelect data={data} searchable defaultValue={["React", "Vue"]} onRemove={onRemove} />,
+      );
+      fireEvent.keyDown(field(), { key: "Backspace" });
+      expect(onRemove).toHaveBeenCalledWith("Vue");
+      expect(document.querySelectorAll(".tabler-icon-x")).toHaveLength(1);
+    });
+
+    it("stops at maxValues and reports onMaxValues", () => {
+      const onMaxValues = jest.fn();
+      const onChange = jest.fn();
+      render(
+        <MultiSelect
+          data={data}
+          maxValues={1}
+          defaultValue={["React"]}
+          onChange={onChange}
+          onMaxValues={onMaxValues}
+          placeholder="Pick"
+        />,
+      );
+      fireEvent.click(field());
+      fireEvent.click(screen.getByText("Vue"));
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onMaxValues).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides picked options when hidePickedOptions is set", () => {
+      render(
+        <MultiSelect data={data} hidePickedOptions defaultValue={["Vue"]} placeholder="Pick" />,
+      );
+      fireEvent.keyDown(field(), { key: "ArrowDown" });
+      expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["React", "Svelte"]);
+    });
+
+    it("filters by search and highlights the first match", () => {
+      render(<MultiSelect data={data} searchable selectFirstOptionOnChange placeholder="Pick" />);
+      fireEvent.change(field(), { target: { value: "sv" } });
+      expect(screen.getAllByRole("option")).toHaveLength(1);
+      expect(activeOption()).toHaveTextContent("Svelte");
+    });
+  });
 });

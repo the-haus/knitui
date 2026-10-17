@@ -89,11 +89,11 @@ export const Playground: Story = {};
 /** All object-fit values side by side; each image is constrained to the same box. */
 export const FitModes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {FIT_VALUES.map((fit) => (
-        <Box key={fit} gap="$xs" alignItems="center">
+        <Box key={fit} gap="xs" alignItems="center">
           <Image {...args} fit={fit} width={160} height={120} />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {fit}
           </Text>
         </Box>
@@ -105,11 +105,11 @@ export const FitModes: Story = {
 /** Border-radius applied via a raw CSS value — from sharp to fully rounded. */
 export const Radius: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RADIUS_VALUES.map((radius) => (
-        <Box key={radius} gap="$xs" alignItems="center">
+        <Box key={radius} gap="xs" alignItems="center">
           <Image {...args} radius={radius} width={140} height={140} src={PLACEHOLDER_SQUARE} />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {radius}
           </Text>
         </Box>
@@ -226,9 +226,9 @@ export const Blurred: Story = {
  */
 export const ObjectPosition: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["top", "center", "bottom"] as const).map((position) => (
-        <Box key={position} gap="$xs" alignItems="center">
+        <Box key={position} gap="xs" alignItems="center">
           <Image
             {...args}
             src={PLACEHOLDER_WIDE}
@@ -237,7 +237,7 @@ export const ObjectPosition: Story = {
             width={160}
             height={160}
           />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {position}
           </Text>
         </Box>
@@ -252,11 +252,11 @@ export const ObjectPosition: Story = {
  */
 export const RadiusTokens: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RADIUS_TOKENS.map((radius) => (
-        <Box key={radius} gap="$xs" alignItems="center">
+        <Box key={radius} gap="xs" alignItems="center">
           <Image {...args} radius={radius} width={96} height={96} src={PLACEHOLDER_SQUARE} />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {radius}
           </Text>
         </Box>
@@ -271,9 +271,9 @@ export const RadiusTokens: Story = {
  */
 export const Tinted: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box flexDirection="row" gap="md" alignItems="center">
       {[undefined, "#e64980", "#228be6", "#12b886"].map((tint) => (
-        <Box key={tint ?? "none"} gap="$xs" alignItems="center">
+        <Box key={tint ?? "none"} gap="xs" alignItems="center">
           <Image
             {...args}
             src={PLACEHOLDER_SQUARE}
@@ -282,7 +282,7 @@ export const Tinted: Story = {
             height={96}
             radius="md"
           />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {tint ?? "none"}
           </Text>
         </Box>
@@ -313,9 +313,9 @@ export const ContentPositionObject: Story = {
  */
 export const Priorities: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box flexDirection="row" gap="md" alignItems="center">
       {PRIORITIES.map((priority, i) => (
-        <Box key={priority} gap="$xs" alignItems="center">
+        <Box key={priority} gap="xs" alignItems="center">
           <Image
             {...args}
             src={`https://picsum.photos/seed/knitui-priority-${priority}/240/180`}
@@ -324,7 +324,7 @@ export const Priorities: Story = {
             height={105}
             radius="md"
           />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {priority}
             {i === 1 ? " (default)" : ""}
           </Text>
@@ -337,11 +337,11 @@ export const Priorities: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs" alignItems="center">
+        <Box key={shadow} gap="xs" alignItems="center">
           <Image {...args} shadow={shadow} width={120} height={120} src={PLACEHOLDER_SQUARE} />
-          <Text fontSize="$xs" color="$gray9">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
         </Box>
@@ -362,8 +362,8 @@ export const Styles: Story = {
     <Image
       {...args}
       styles={{
-        root: { backgroundColor: "$blue3", padding: "$sm" },
-        image: { borderColor: "$red9", borderWidth: 4, radius: "lg" },
+        root: { backgroundColor: "blue3", padding: "sm" },
+        image: { borderColor: "red9", borderWidth: 4, radius: "lg" },
       }}
     />
   ),

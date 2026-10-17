@@ -25,7 +25,7 @@ import { useSystemColorScheme } from "./useSystemColorScheme";
  * `<TamaguiProvider config={…}>` does **not** register what it is handed; it only
  * reads `config.getCSS()` and `config.animations`. So passing a config to a
  * provider does not make it active: the config that actually resolves every
- * `$token` is whichever module called `createTamagui` LAST.
+ * token is whichever module called `createTamagui` LAST.
  *
  * That is a module-evaluation race, and it is one a consumer cannot reliably win.
  * The kit ships its own `createTamagui` call (`../config/config`, named below as
@@ -44,9 +44,9 @@ import { useSystemColorScheme } from "./useSystemColorScheme";
  *   and clobbered the app's config mid-render.
  *
  * Only RAW tokens break, which is what makes it so slow to notice: theme values
- * (`$background`, `$color10`, `$borderColor`) resolve through the theme and both
+ * (`background`, `color10`, `borderColor`) resolve through the theme and both
  * configs carry the same theme names, so the app looks fine while every
- * `$myBrandColor` quietly resolves to nothing.
+ * `myBrandColor` quietly resolves to nothing.
  *
  * Registering here removes the question — the provider is the point where the
  * consumer states which config is theirs, so it is the point where that should
@@ -76,7 +76,7 @@ export function SharedProvider({
   defaultColorScheme = "system",
   forceColorScheme,
   config = defaultConfig,
-  backgroundColor = "$background",
+  backgroundColor = "background",
   children,
   ...rest
 }: ProviderProps) {
@@ -109,7 +109,7 @@ export function SharedProvider({
       <TamaguiProvider config={config} defaultTheme={colorScheme} {...rest}>
         {/*
          * Full-screen themed background. Sitting just inside `TamaguiProvider`,
-         * it paints `$background` across the entire window — behind every route,
+         * it paints `background` across the entire window — behind every route,
          * the navigator header, and the OS safe areas — so the theme color is
          * never clipped to route content and switching color scheme repaints the
          * whole screen (including the status-bar/home-indicator regions).

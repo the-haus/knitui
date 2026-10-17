@@ -2,10 +2,11 @@ import * as React from "react";
 
 import {
   type GetProps,
-  getTokenValue,
   isWeb,
   type RadiusTokens,
+  resolveToken,
   type SpaceTokens,
+  styleable,
   styled,
   type TamaguiElement,
   Theme,
@@ -66,13 +67,12 @@ export type PopoverOffset = PopoverAxisOffset | PopoverAxesOffsets;
 
 /** The vendored `useFloating` return — carries the typed reference/floating refs. */
 export type FloatingReturn = ReturnType<typeof useFloating>;
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
 
-const DEFAULT_OFFSET: SpaceTokens = "$xs";
+const DEFAULT_OFFSET: SpaceTokens = "xs";
 /** Stable empty transition config so an unset `transitionProps` keeps context identity. */
 const EMPTY_TRANSITION: OverlayTransitionConfig = {};
-const DEFAULT_SHIFT_PADDING: SpaceTokens = "$xxs";
-const DEFAULT_ARROW_OFFSET: SpaceTokens = "$xxs";
+const DEFAULT_SHIFT_PADDING: SpaceTokens = "xxs";
+const DEFAULT_ARROW_OFFSET: SpaceTokens = "xxs";
 
 /* -------------------------------------------------------------------------- */
 /* Context                                                                    */
@@ -145,15 +145,15 @@ export const useDropdownDismiss = (ctx: PopoverContextValue): (() => void) => {
 /* -------------------------------------------------------------------------- */
 
 export const PopoverDropdownFrame = styled(Box, {
-  name: "PopoverDropdown",
+  displayName: "PopoverDropdown",
   // `fixed` is viewport-relative positioning that only exists on web; React
   // Native supports `absolute`/`relative`/`static` only. The instance overrides
   // this with the platform-correct value (`fixed` on web, `absolute` on native).
   position: isWeb ? ("fixed" as const) : ("absolute" as const),
-  backgroundColor: "$background",
+  backgroundColor: "background",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  borderRadius: "$sm",
+  borderColor: "borderColor",
+  borderRadius: "sm",
 
   variants: {
     hidden: { true: { display: "none" } },
@@ -220,7 +220,7 @@ export interface PopoverProps {
   /**
    * Gap between target and dropdown. A space token or `number` sets the main-axis
    * gutter; object form skids per axis (`{ mainAxis; crossAxis; alignmentAxis }`).
-   * @default '$xs'
+   * @default 'xs'
    */
   offset?: PopoverOffset;
   /** Dropdown width; `'target'` matches the target width. @default 'max-content' */
@@ -292,7 +292,7 @@ export interface PopoverProps {
   withArrow?: boolean;
   /** Arrow square edge length in px. @default 7 */
   arrowSize?: number;
-  /** Arrow distance from the start/end edge when `arrowPosition="side"`. @default '$xxs' */
+  /** Arrow distance from the start/end edge when `arrowPosition="side"`. @default 'xxs' */
   arrowOffset?: PopoverArrowOffset;
   /** Corner radius of the arrow's outward corner in px. @default 0 */
   arrowRadius?: number;
@@ -309,7 +309,7 @@ const referenceWidthMiddleware: Middleware = {
 };
 
 const resolveSpaceOffset = (value: SpaceTokens): number => {
-  const resolved = getTokenValue(value as TokenValueInput, "space");
+  const resolved = resolveToken(value, "space");
   return typeof resolved === "number" ? resolved : 0;
 };
 
@@ -413,7 +413,7 @@ export function PopoverRoot(props: PopoverProps) {
               position: arrowPosition,
               offset: resolvedArrowOffset,
               padding: resolvedArrowOffset,
-              // The dropdown frame's default radius is `$sm` (see PopoverDropdownFrame).
+              // The dropdown frame's default radius is `sm` (see PopoverDropdownFrame).
               cornerRadius: resolveRadiusPx(radius),
             }),
           ]
@@ -576,7 +576,8 @@ export function PopoverTarget({
 }: PopoverTargetProps) {
   const ctx = usePopoverContext();
   const { setReference } = ctx.floating.refs;
-  const childRef = (children as { ref?: React.Ref<TamaguiElement> }).ref;
+  // React 19 carries `ref` as a regular prop; the removed `element.ref` getter warns.
+  const childRef = (children.props as { ref?: React.Ref<TamaguiElement> }).ref;
   // floating-ui's web `setReference` is typed for DOM nodes (`ReferenceType`),
   // while Tamagui refs carry `TamaguiElement` (`HTMLElement | View`). On web the
   // mounted node is always the DOM element, so narrow to the setter's own param
@@ -681,7 +682,8 @@ export interface PopoverDropdownViewProps extends PopoverDropdownProps {
  * (`Popover.tsx` / `Popover.native.tsx`) own only the close/dismiss wiring and
  * feed it a `scrim` + `frameProps`, so the presentation stays in one place.
  */
-export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdownViewProps>(
+export const PopoverDropdownView = styleable<PopoverDropdownViewProps>(
+  PopoverDropdownFrame,
   function PopoverDropdownView({ hidden, children, scrim, frameProps, ...rest }, ref) {
     const ctx = usePopoverContext();
     const open = ctx.opened;
@@ -709,7 +711,7 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
 
     // Re-apply the active theme inside the portal: portaling to `document.body`
     // moves the dropdown out of the theme's DOM ancestor on web, so its CSS theme
-    // variables ($background/$color/…) would otherwise resolve to the root theme.
+    // variables (`background`/`color`/…) would otherwise resolve to the root theme.
     // (Mirrors `@tamagui/portal` wrapping its portal in `<TamaguiRoot theme={…}>`.)
     const themeName = useThemeName();
     // The nearest scoped `OverlayHost` (a native modal screen), else "root".
@@ -735,8 +737,8 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
 
     // The transition style wins on opacity/transform; consumer/slot styles apply
     // underneath. `top`/`left` come from floating-ui as props and stay instant —
-    // the transition only animates the keys in `animateOnly` (native) / the inline
-    // `transitionProperty` (web), never position.
+    // the transition only animates the scoped `transition.properties` (native) /
+    // the inline `transitionProperty` (web), never position.
     const { style: restStyle, ...frameRest } = rest;
     const transitionStyle = waitingForPosition ? { ...t.style, opacity: 0 } : t.style;
 
@@ -754,9 +756,9 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
           <PopoverDropdownFrame
             ref={dropdownRef}
             hidden={hidden || t.hidden}
-            top={y}
-            left={x}
-            width={ctx.resolvedWidth}
+            // Conditional spreads, never `prop={undefined}`: an explicit undefined
+            // style prop CLEARS the base value in v3 (the frame's `borderRadius: "sm"`).
+            {...(ctx.resolvedWidth !== undefined ? { width: ctx.resolvedWidth } : null)}
             // The teleport host is `pointer-events: none` so its full-screen box
             // never swallows page clicks — re-enable events on the dropdown itself
             // so it stays interactive (disabled while pre-measuring and while it
@@ -764,7 +766,7 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
             pointerEvents={open && !waitingForPosition ? "auto" : "none"}
             zIndex={ctx.zIndex}
             shadow={ctx.shadow}
-            borderRadius={ctx.radius}
+            {...(ctx.radius !== undefined ? { borderRadius: ctx.radius } : null)}
             {...roleProps}
             // `dropdown` slot sugar layers UNDER the explicit `frameProps`/`rest`.
             {...ctx.slots.dropdown}
@@ -774,7 +776,10 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
             // last so positioning stays instant and consumer styles can't clobber
             // the transition. Styles merge left→right: slot < consumer < transition.
             {...t.animation}
-            style={[ctx.slots.dropdown?.style, restStyle, transitionStyle]}
+            // `top`/`left` track the floating engine continuously (scroll, resize):
+            // inline style, because a style PROP injects one CSS rule per value on
+            // v3 web. Positioning beats consumer styles; the transition wins last.
+            style={[ctx.slots.dropdown?.style, restStyle, { top: y, left: x }, transitionStyle]}
           >
             {children}
             {ctx.withArrow ? (
@@ -784,7 +789,7 @@ export const PopoverDropdownView = PopoverDropdownFrame.styleable<PopoverDropdow
                 offset={ctx.arrowOffset}
                 position={ctx.arrowPosition}
                 radius={ctx.arrowRadius}
-                background="$background"
+                background="background"
                 arrowX={middlewareData.arrow?.x}
                 arrowY={middlewareData.arrow?.y}
                 // Appearance sugar overrides the defaults above; the slot type

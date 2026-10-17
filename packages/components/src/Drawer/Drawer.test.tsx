@@ -2,10 +2,32 @@ import * as React from "react";
 
 import { type GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen } from "../test-utils";
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
+import { fireEvent, render, screen, waitFor } from "../test-utils";
 import { Drawer } from "./Drawer";
 
-const SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
+const SIZES = [
+  ["xxs", 160],
+  ["xs", 200],
+  ["sm", 280],
+  ["md", 340],
+  ["lg", 400],
+  ["xl", 480],
+  ["xxl", 560],
+] as const;
+
+/** Every CSS rule that targets `el` (v3 emits hashed atomic classes). */
+const css = (el: Element) => cssRulesOf(el).join("\n");
+/** The drawer's full-cover positioning layer (the dialog's parent; scrim first). */
+const layerOf = (dialog: HTMLElement) => dialog.parentElement as HTMLElement;
+
+/** Expected layer flex + the panel's enter/exit translate per edge. */
+const EDGES = [
+  ["left", "row", "flex-start", "--t-x: -16px"],
+  ["right", "row", "flex-end", "--t-x: 16px"],
+  ["top", "column", "flex-start", "--t-y: -16px"],
+  ["bottom", "column", "flex-end", "--t-y: 16px"],
+] as const;
 
 describe("Drawer", () => {
   it("renders nothing when closed and not kept mounted", () => {
@@ -112,25 +134,129 @@ describe("Drawer", () => {
     expect(screen.queryByRole("button", { name: "Close drawer" })).not.toBeInTheDocument();
   });
 
-  it.each(["left", "right", "top", "bottom"] as const)(
-    "renders anchored to the %s edge",
-    (position) => {
+  it.each(EDGES)(
+    "anchors to the %s edge (layer %s / %s) and slides in from it",
+    (position, direction, justify, enterTranslate) => {
       render(
         <Drawer opened onClose={() => {}} position={position}>
           {`pos-${position}`}
         </Drawer>,
       );
-      expect(screen.getByText(`pos-${position}`)).toBeInTheDocument();
+      const dialog = screen.getByRole("dialog");
+      const layer = css(layerOf(dialog));
+      expect(layer).toContain(`flex-direction: ${direction};`);
+      expect(layer).toContain(`justify-content: ${justify};`);
+      expect(layer).toContain("align-items: stretch;");
+      // Enter AND exit clauses carry the same edge offset (exit retraces enter).
+      const panel = css(dialog);
+      expect(panel).toContain(`.t_unmounted *) {${enterTranslate};}`);
+      expect(panel).toContain(`.t_exiting *) {${enterTranslate};}`);
+      expect(panel).toContain(".t_exiting *) {opacity: 0;}");
     },
   );
 
-  it.each(SIZES)("renders the %s size", (size) => {
-    render(
-      <Drawer opened onClose={() => {}} size={size}>
+  it.each(SIZES)("pins the main axis to the %s size (%ipx)", (size, px) => {
+    const { unmount } = render(
+      <Drawer opened onClose={() => {}} size={size} position="left">
         sized drawer
       </Drawer>,
     );
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    let rules = css(screen.getByRole("dialog"));
+    expect(rules).toContain(`width: ${px}px;`);
+    expect(rules).not.toMatch(/[^-]height: /);
+    unmount();
+    // Top/bottom drawers pin the HEIGHT to the same scale instead.
+    render(
+      <Drawer opened onClose={() => {}} size={size} position="bottom">
+        sized drawer
+      </Drawer>,
+    );
+    rules = css(screen.getByRole("dialog"));
+    expect(rules).toContain(`height: ${px}px;`);
+    expect(rules).not.toMatch(/[^-]width: /);
+  });
+
+  it("passes a raw size and a viewport offset through", () => {
+    render(
+      <Drawer opened onClose={() => {}} size={300} offset="md">
+        raw
+      </Drawer>,
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(css(dialog)).toContain("width: 300px;");
+    expect(css(layerOf(dialog))).toContain("padding: var(--t-space-md);");
+  });
+
+  it("unmounts once the exit animation completes", async () => {
+    const { rerender } = render(
+      <Drawer opened onClose={() => {}} title="Exit">
+        exit body
+      </Drawer>,
+    );
+    rerender(
+      <Drawer opened={false} onClose={() => {}} title="Exit">
+        exit body
+      </Drawer>,
+    );
+    expect(screen.getByRole("dialog").className).toContain("t_exiting");
+    await waitFor(() => expect(screen.queryByText("exit body")).not.toBeInTheDocument());
+  });
+
+  it("removes immediately on close when animation is disabled", () => {
+    const { rerender } = render(
+      <Drawer opened onClose={() => {}} animation={false}>
+        no-anim
+      </Drawer>,
+    );
+    rerender(
+      <Drawer opened={false} onClose={() => {}} animation={false}>
+        no-anim
+      </Drawer>,
+    );
+    expect(screen.queryByText("no-anim")).not.toBeInTheDocument();
+  });
+
+  it("closes on Escape and on a scrim click", () => {
+    const onClose = jest.fn();
+    render(
+      <Drawer opened onClose={onClose} title="Dismiss">
+        body
+      </Drawer>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(layerOf(screen.getByRole("dialog")).firstElementChild as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("traps focus inside the panel and restores it to the trigger on close", () => {
+    const trigger = document.createElement("button");
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const { rerender } = render(
+      <Drawer opened onClose={() => {}} animation={false} title="Focus">
+        body
+      </Drawer>,
+    );
+    expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+    rerender(
+      <Drawer opened={false} onClose={() => {}} animation={false} title="Focus">
+        body
+      </Drawer>,
+    );
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it("is an aria-modal dialog", () => {
+    render(
+      <Drawer opened onClose={() => {}} title="Modal drawer">
+        body
+      </Drawer>,
+    );
+    expect(screen.getByRole("dialog", { name: "Modal drawer" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
   });
 
   it("stays mounted while closed when keepMounted is set", () => {
@@ -155,16 +281,13 @@ describe("Drawer", () => {
   // Regression: panels must fill the cross axis via flex stretch (full height
   // for left/right, full width for top/bottom) rather than a percentage size —
   // RN/Yoga resolves percentage dimensions unreliably here.
-  it("fills the cross axis via stretch for each edge", () => {
-    for (const position of ["left", "right", "top", "bottom"] as const) {
-      const { unmount } = render(
-        <Drawer opened position={position} onClose={() => {}}>
-          body
-        </Drawer>,
-      );
-      expect(screen.getByRole("dialog").className).toMatch(/_alignSelf-stretch\b/);
-      unmount();
-    }
+  it.each(EDGES)("fills the cross axis via stretch for the %s edge", (position) => {
+    render(
+      <Drawer opened position={position} onClose={() => {}}>
+        body
+      </Drawer>,
+    );
+    expect(css(screen.getByRole("dialog"))).toContain("align-self: stretch;");
   });
 
   // Regression: the teleport host is `pointer-events: none`, so the drawer's
@@ -172,17 +295,17 @@ describe("Drawer", () => {
   // interactive) and the scrim must be clickable (`auto`); otherwise every click
   // inside (close button, overlay scrim) is dropped and the drawer can't dismiss.
   it("makes the portal layer interactive while opened", () => {
-    const { baseElement } = render(
+    render(
       <Drawer opened onClose={() => {}} title="Interactive">
         body
       </Drawer>,
     );
-    const layer = baseElement.querySelector<HTMLElement>(".is_ModalBaseInner");
-    expect(layer).not.toBeNull();
-    expect(layer?.className).toContain("_pos-fixed");
-    expect(layer?.className).toContain("_pe-boxnone");
-    const overlay = baseElement.querySelector<HTMLElement>(".is_Overlay");
-    expect(overlay?.className).toContain("_pointerEvents-auto");
+    const layer = layerOf(screen.getByRole("dialog"));
+    const layerCss = css(layer);
+    expect(layerCss).toContain("position: fixed;");
+    expect(layerCss).toContain("pointer-events: none;");
+    expect(layerCss).toMatch(/>\* \{pointer-events: auto;\}/);
+    expect(css(layer.firstElementChild as HTMLElement)).toContain("pointer-events: auto;");
   });
 
   it("distributes the styles map onto its slots", () => {
@@ -220,5 +343,25 @@ describe("Drawer", () => {
     );
     expect(screen.getByText("Static drawer title")).toBeInTheDocument();
     expect(screen.getByText("Static drawer body")).toBeInTheDocument();
+  });
+});
+
+/** `name` attributes on the page that came from a styled() config (v3 forwards unknown options). */
+const leakedNames = (prefix: string) =>
+  Array.from(document.querySelectorAll("[name]"))
+    .map((el) => el.getAttribute("name") ?? "")
+    .filter((n) => n.startsWith(prefix));
+
+describe("Drawer DOM attributes", () => {
+  // v3 has no `name` styled() option: it becomes a default prop and lands in the
+  // DOM (and in FormData). Frames use `displayName`; nothing may leak.
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(
+      <Drawer opened onClose={() => {}} title="T">
+        body
+      </Drawer>,
+    );
+    expect(leakedNames("Drawer")).toEqual([]);
+    expect(leakedNames("Modal")).toEqual([]);
   });
 });

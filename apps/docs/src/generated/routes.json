@@ -116,6 +116,7 @@
   "/docs/dates/day": "dates/day",
   "/docs/dates/decade-level": "dates/decade-level",
   "/docs/dates/decade-level-group": "dates/decade-level-group",
+  "/docs/dates/internal/inline-date-time-picker": "dates/internal/inline-date-time-picker",
   "/docs/dates/levels-group": "dates/levels-group",
   "/docs/dates/mini-calendar": "dates/mini-calendar",
   "/docs/dates/month": "dates/month",

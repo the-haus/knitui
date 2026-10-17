@@ -110,7 +110,7 @@ export const Sizes: Story = {
       xxl: ["React"],
     });
     return (
-      <Box gap="$lg">
+      <Box gap="lg">
         {SIZES.map((size) => (
           <MultiSelect
             key={size}
@@ -130,7 +130,7 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the field frame. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
         <MultiSelect
           key={shadow}
@@ -230,7 +230,7 @@ export const CustomRenderOption: Story = {
   args: {
     label: "Custom options",
     renderOption: ({ option }) => (
-      <Box flexDirection="row" gap="$sm" alignItems="center">
+      <Box flexDirection="row" gap="sm" alignItems="center">
         <Text>⭐</Text>
         <Text>{option.label}</Text>
       </Box>
@@ -250,8 +250,8 @@ export const Styles: Story = {
         label="Styled MultiSelect"
         defaultDropdownOpened
         styles={{
-          pill: { backgroundColor: "$blue4" },
-          option: { backgroundColor: "$red3" },
+          pill: { backgroundColor: "blue4" },
+          option: { backgroundColor: "red3" },
         }}
       />
     );
@@ -263,7 +263,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string[]>(["React"]);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <MultiSelect
           {...args}
           value={value}

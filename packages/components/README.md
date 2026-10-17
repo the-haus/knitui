@@ -142,8 +142,8 @@ import { Card } from "@knitui/components";
 
 <Card
   styles={{
-    root: { borderColor: "$borderColor" },
-    header: { gap: "$md" },
+    root: { borderColor: "borderColor" },
+    header: { gap: "md" },
   }}
 />;
 ```

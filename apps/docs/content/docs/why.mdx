@@ -29,7 +29,7 @@ tokens and variants.
 ## When it does not
 
 - **Web only, and performance is everything.** A DOM-native library will ship less
-  JavaScript. Most kit components use `.styleable()`, so they cannot fully flatten
+  JavaScript. Most kit components are `styleable()` behaviour wrappers, so they cannot fully flatten
   to static CSS — that is the price of slot-level composability.
 - **You want unstyled primitives.** This kit is opinionated: it has a look, a
   scale and a ramp. Headless libraries exist for a reason.

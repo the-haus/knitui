@@ -1,15 +1,22 @@
 import * as React from "react";
 import type { SharedValue } from "react-native-reanimated";
 
-import type { GetProps, ViewStyle } from "@knitui/core";
+import type { GetProps } from "@knitui/core";
 
 import { sanitizeAnimationStyle } from "../layouts";
+import type { LayoutStyle } from "../style";
 import { type DeckCardBox, DeckStamp, DeckStampText, type DeckStampTone } from "./chrome";
 import type { DeckEffect, SwipeDirection } from "./types";
 import type { TopCardApi } from "./useSwipeDeck";
 
 /** Absolute fill: every card overlaps at the deck origin; its effect transforms it. */
-export const CARD_BASE: ViewStyle = { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 };
+export const CARD_BASE: LayoutStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+};
 
 /** Coerce a non-finite `zIndex` (native crashes on it) — reuse the layout sanitizer. */
 export const sanitizeDeckStyle = sanitizeAnimationStyle;
@@ -23,7 +30,7 @@ export const STAMP_TONE: Record<SwipeDirection, DeckStampTone> = {
 };
 
 /** Where a direction's stamp sits on the card, tilted like a rubber stamp. */
-export function stampPosition(direction: SwipeDirection): ViewStyle {
+export function stampPosition(direction: SwipeDirection): LayoutStyle {
   switch (direction) {
     case "right":
       return { position: "absolute", top: 24, left: 24, transform: [{ rotate: "-14deg" }] };
@@ -74,7 +81,7 @@ export function stampContentFor(
   const tone = STAMP_TONE[direction];
   return (
     <DeckStamp tone={tone} {...stampStyle}>
-      <DeckStampText tone={tone}>{label}</DeckStampText>
+      <DeckStampText>{label}</DeckStampText>
     </DeckStamp>
   );
 }

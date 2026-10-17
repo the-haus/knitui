@@ -34,11 +34,11 @@ Each cell is a **token key**, resolved per property (see
 
 Two decisions in that table are deliberate and worth knowing:
 
-**Font size is clamped at the bottom.** `xxs` and `xs` borrow the 12px `$xxs`
+**Font size is clamped at the bottom.** `xxs` and `xs` borrow the 12px `xxs`
 font instead of their own step, so tiny controls are not dominated by their
 label. From `sm` up, the text-to-height ratio holds flat at about 0.42–0.45.
 
-**Radius is capped at `$lg`.** Large controls stay rectangles rather than
+**Radius is capped at `lg`.** Large controls stay rectangles rather than
 becoming accidental pills. The pill family (`Badge`, `Chip`, `Pill`) opts into a
 different look through `paddingHorizontalPill` — the standard padding bumped one
 space step — which is the one sanctioned divergence.

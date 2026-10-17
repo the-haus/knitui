@@ -1,5 +1,5 @@
 // Internal cross-platform helper — NOT exported from the public `src/index.ts`
-// barrel (same discipline as `web-cursor`/`focus-element`/`picker-presets`).
+// barrel (same discipline as `focus-element`/`picker-presets`).
 // Shared by the `*PickerInput` wrappers so the inline picker's `defaultDate`
 // computation lives in one place instead of being copied per wrapper.
 

@@ -98,6 +98,7 @@ export const nav = [
     label: "Guides",
     collapsed: true,
     items: [
+      ["Upgrading to 1.0 (Tamagui v3)", "/docs/guides/upgrading-to-v1"],
       ["Cross-platform authoring", "/docs/guides/cross-platform-authoring"],
       ["Theming an app", "/docs/guides/theming-an-app"],
       ["Composing components", "/docs/guides/composing-components"],

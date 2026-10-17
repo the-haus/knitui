@@ -88,7 +88,7 @@ createTheme({
 });
 ```
 
-Named fonts beyond `body`/`heading` are registered too, so `fontFamily="$mono"`
+Named fonts beyond `body`/`heading` are registered too, so `fontFamily="mono"`
 works.
 
 ## Responsive and motion
@@ -129,6 +129,29 @@ Bad input fails loudly rather than rendering something odd —
 `validateThemeOptions` runs inside `createTheme` and reports which key was wrong
 and what it accepts. That matters because a mistyped ramp silently falls back to
 grey otherwise.
+
+## What the config contains (Tamagui v3)
+
+`createTheme` returns a full Tamagui v3 config. A few things about its shape are
+worth knowing when you pass raw options through:
+
+- **No `true` keys.** v3 reserves `true`, so no scale has a `true` step; component
+  defaults come from [`controlMetrics`](/docs/foundations/sizing).
+- **No CSS-keyword token names.** `createTamagui` rejects a colour token called
+  `transparent`, `inherit`, `currentColor` and so on. The kit's raw colours are
+  `white` and `black`; write the keyword `transparent` directly in a style value.
+- **`defaultFont` is a setting.** v3 reads it from `settings` only; the
+  `defaultFont` option is still accepted and moved there for you.
+- **Ramps come from `@tamagui/config-v5/builder`** (v3 dropped
+  `@tamagui/theme-builder`). `themeBuilder` options go to it unchanged. The stock
+  config ships precomputed themes, so an app that never calls `createTheme` never
+  runs the builder.
+- **Focus ring.** Every generated theme gets a `focusRingColor` key (that theme's
+  own `color8`, so `theme="blue"` recolours the ring), and the config carries the
+  `focusRingWidth` / `focusRingOffset` variables. See
+  [Theming an app](/docs/guides/theming-an-app).
+- **Theme key names stay camelCase** (`backgroundHover`, `borderColorFocus`,
+  `dropShadowColor`). The kit does not adopt Tamagui v6's kebab-case names.
 
 ## Where to put it
 

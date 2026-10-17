@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
@@ -14,6 +20,7 @@ import {
   radiusVariant,
   type SizeKey,
   surfaceColorVariant,
+  tableVariant,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { useSlotTextWrapper } from "../internal/use-slot-text-wrapper";
@@ -29,13 +36,41 @@ const BadgeContext = createStyledContext<{ size: BadgeSize | number; variant: Ba
 });
 
 /**
+ * Label font size: the shared control font ladder, plus a numeric fallthrough
+ * (`size={40}` → half the px, floored at 10). Built at module scope (§11).
+ */
+const badgeTextSize = tableVariant(controlFontVariant, (val: number) => ({
+  fontSize: Math.max(10, Math.round(val * 0.5)),
+}));
+
+/**
+ * Accent-dot size — intentionally non-1:1: the dot is smaller than the badge
+ * size key so it reads as an accent, not a full-height glyph. Numbers fall
+ * through to half the px, floored at 16.
+ */
+const BADGE_DOT_SIZES = {
+  xxs: { width: "xxs", height: "xxs" },
+  xs: { width: "xxs", height: "xxs" },
+  sm: { width: "xxs", height: "xxs" },
+  md: { width: "xs", height: "xs" },
+  lg: { width: "xs", height: "xs" },
+  xl: { width: "sm", height: "sm" },
+  xxl: { width: "md", height: "md" },
+} as const;
+
+const badgeDotSize = tableVariant(BADGE_DOT_SIZES, (val: number) => {
+  const px = Math.max(16, Math.round(val * 0.5));
+  return { width: px, height: px };
+});
+
+/**
  * Compact status label — mirrors Mantine's `Badge`. Accent comes from the
  * `theme` prop (palette ramp), not a `color` prop. `variant` picks the fill,
  * `size` the metrics, `radius` the rounding (pill by default), `circle` makes a
  * square-aspect badge for a single glyph, plus `leftSection`/`rightSection`.
  */
 const BadgeFrame = styled(Box, {
-  name: "Badge",
+  displayName: "Badge",
   context: BadgeContext,
   flexDirection: "row",
   alignItems: "center",
@@ -75,7 +110,7 @@ const BadgeFrame = styled(Box, {
 });
 
 const BadgeText = styled(Text, {
-  name: "BadgeText",
+  displayName: "BadgeText",
   context: BadgeContext,
   fontWeight: "700",
   textTransform: "uppercase",
@@ -95,41 +130,24 @@ const BadgeText = styled(Text, {
         "gradient",
       ]),
     },
-    size: {
-      ...controlFontVariant,
-      ":number": (val: number) => ({ fontSize: Math.max(10, Math.round(val * 0.5)) }),
-    },
+    size: badgeTextSize,
   } as const,
 });
 
 const BadgeDot = styled(Box, {
-  name: "BadgeDot",
+  displayName: "BadgeDot",
   context: BadgeContext,
   borderRadius: 999,
-  backgroundColor: "$color9",
+  backgroundColor: "color9",
   variants: {
-    // Intentional non-1:1 mapping — the dot is deliberately smaller than the
-    // badge size key so it reads as an accent, not a full-height glyph.
-    size: {
-      xxs: { width: "$xxs", height: "$xxs" },
-      xs: { width: "$xxs", height: "$xxs" },
-      sm: { width: "$xxs", height: "$xxs" },
-      md: { width: "$xs", height: "$xs" },
-      lg: { width: "$xs", height: "$xs" },
-      xl: { width: "$sm", height: "$sm" },
-      xxl: { width: "$md", height: "$md" },
-      ":number": (val: number) => ({
-        width: Math.max(16, Math.round(val * 0.5)),
-        height: Math.max(16, Math.round(val * 0.5)),
-      }),
-    },
+    size: badgeDotSize,
   } as const,
 });
 
 /**
  * Named slots for {@link BadgeStyles} (Pillar B / `internal/styles.ts`). Each key
  * maps to the props of the styled part it targets, so
- * `styles={{ text: { color: "$red9" } }}` is sugar for `<Badge.Text color="$red9" />`.
+ * `styles={{ text: { color: "red9" } }}` is sugar for `<Badge.Text color="red9" />`.
  * Note: `leftSection`/`rightSection` are CONTENT slots (ReactNode), not style
  * slots — they stay on the props API (same family as Button's sections).
  */
@@ -144,7 +162,14 @@ export interface BadgeStyles {
 
 const BADGE_SLOT_KEYS = ["root", "text", "dot"] as const satisfies readonly (keyof BadgeStyles)[];
 
-export interface BadgeProps extends GetProps<typeof BadgeFrame> {
+export interface BadgeProps extends Omit<GetProps<typeof BadgeFrame>, "size" | "variant"> {
+  /**
+   * Size key or px. A single value (not a v3 clause program): the render reads it
+   * as DATA for the dot and the section icons. @default "md"
+   */
+  size?: BadgeSize | number;
+  /** Fill style. @default "light" */
+  variant?: BadgeVariant;
   leftSection?: React.ReactNode;
   rightSection?: React.ReactNode;
   /** Per-slot style sugar — props spread onto the matching styled part. */
@@ -152,12 +177,12 @@ export interface BadgeProps extends GetProps<typeof BadgeFrame> {
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
 
-const BadgeComponent = BadgeFrame.styleable<BadgeProps>(function Badge(props, ref) {
+const BadgeComponent = styleable<BadgeProps>(BadgeFrame, function Badge(props, ref) {
   const {
     children,
     variant = "light",

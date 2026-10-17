@@ -16,63 +16,25 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 
-import { type CalendarSize, CELL_WIDTH } from "../cell-metrics";
+import {
+  type CalendarSize,
+  cellHeightVariant,
+  cellSquareVariant,
+  headerFontVariant,
+  iconFontVariant,
+} from "../cell-metrics";
 import { controlA11yProps } from "../internal/a11y";
 import { hasPreventDefault } from "../internal/has-prevent-default";
-import { webCursor } from "../internal/web-cursor";
 
 // ── Sizing derived from the shared `cell-metrics` ladder ──────────────────────
 // Never hard-code pixels: the header controls scale on the shared `CELL_WIDTH`
 // ladder (the calendar twin of components' `controlMetrics`), so retuning the
 // ladder moves every grid component together. Values resolve at module-load.
-
-/** Square prev/next control size per `size`, from the shared `CELL_WIDTH` ladder. */
-const controlSquareVariant = {
-  xxs: { width: CELL_WIDTH.xxs, height: CELL_WIDTH.xxs },
-  xs: { width: CELL_WIDTH.xs, height: CELL_WIDTH.xs },
-  sm: { width: CELL_WIDTH.sm, height: CELL_WIDTH.sm },
-  md: { width: CELL_WIDTH.md, height: CELL_WIDTH.md },
-  lg: { width: CELL_WIDTH.lg, height: CELL_WIDTH.lg },
-  xl: { width: CELL_WIDTH.xl, height: CELL_WIDTH.xl },
-  xxl: { width: CELL_WIDTH.xxl, height: CELL_WIDTH.xxl },
-} as const;
-
-/** Level (label) control height per `size`, from the shared `CELL_WIDTH` ladder. */
-const levelHeightVariant = {
-  xxs: { height: CELL_WIDTH.xxs },
-  xs: { height: CELL_WIDTH.xs },
-  sm: { height: CELL_WIDTH.sm },
-  md: { height: CELL_WIDTH.md },
-  lg: { height: CELL_WIDTH.lg },
-  xl: { height: CELL_WIDTH.xl },
-  xxl: { height: CELL_WIDTH.xxl },
-} as const;
-
-/** Level label font per `size` (≈ control size / 2.6, capitalized month/year text). */
-const levelFontVariant = {
-  xxs: { fontSize: Math.round(CELL_WIDTH.xxs / 2.6) },
-  xs: { fontSize: Math.round(CELL_WIDTH.xs / 2.6) },
-  sm: { fontSize: Math.round(CELL_WIDTH.sm / 2.6) },
-  md: { fontSize: Math.round(CELL_WIDTH.md / 2.6) },
-  lg: { fontSize: Math.round(CELL_WIDTH.lg / 2.6) },
-  xl: { fontSize: Math.round(CELL_WIDTH.xl / 2.6) },
-  xxl: { fontSize: Math.round(CELL_WIDTH.xxl / 2.6) },
-} as const;
-
-/** Chevron glyph font per `size` (≈ 55% of the control size). */
-const iconFontVariant = {
-  xxs: { fontSize: Math.round(CELL_WIDTH.xxs * 0.55) },
-  xs: { fontSize: Math.round(CELL_WIDTH.xs * 0.55) },
-  sm: { fontSize: Math.round(CELL_WIDTH.sm * 0.55) },
-  md: { fontSize: Math.round(CELL_WIDTH.md * 0.55) },
-  lg: { fontSize: Math.round(CELL_WIDTH.lg * 0.55) },
-  xl: { fontSize: Math.round(CELL_WIDTH.xl * 0.55) },
-  xxl: { fontSize: Math.round(CELL_WIDTH.xxl * 0.55) },
-} as const;
 
 // ── Shared context ────────────────────────────────────────────────────────────
 // One `createStyledContext` carries `size` to every styled part so the leaf
@@ -83,12 +45,12 @@ const CalendarHeaderContext = createStyledContext<{ size: CalendarSize }>({ size
 
 /** The header bar — a flex row; level control flexes to fill between prev/next. */
 const CalendarHeaderFrame = styled(Box, {
-  name: "CalendarHeader",
+  displayName: "CalendarHeader",
   context: CalendarHeaderContext,
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "space-between",
-  marginBottom: "$xs",
+  marginBottom: "xs",
 
   variants: {
     /** Header (and its level control) stretch to the full width of the container. */
@@ -102,30 +64,27 @@ const CalendarHeaderFrame = styled(Box, {
 const headerControlBase = {
   alignItems: "center",
   justifyContent: "center",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 } as const;
 
 /** Prev/next square control — chevron button. */
 const CalendarHeaderControl = styled(UnstyledButton.Frame, {
-  name: "CalendarHeaderControl",
+  displayName: "CalendarHeaderControl",
   context: CalendarHeaderContext,
   ...headerControlBase,
 
   variants: {
-    size: controlSquareVariant,
+    size: cellSquareVariant,
 
     /** Disabled control — strongly dimmed, non-interactive (Mantine parity: 0.2). */
     disabled: {
       true: {
         opacity: 0.2,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -135,20 +94,19 @@ const CalendarHeaderControl = styled(UnstyledButton.Frame, {
 
 /** Level (label) control — flexes to fill, switches to a static `div` at the top level. */
 const CalendarHeaderLevel = styled(UnstyledButton.Frame, {
-  name: "CalendarHeaderLevel",
+  displayName: "CalendarHeaderLevel",
   context: CalendarHeaderContext,
   ...headerControlBase,
   flex: 1,
 
   variants: {
-    size: levelHeightVariant,
+    size: cellHeightVariant,
 
     /** Non-interactive display label (top level) — default cursor, no hover. */
     static: {
       true: {
-        ...webCursor("default"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:default",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
 
@@ -156,9 +114,8 @@ const CalendarHeaderLevel = styled(UnstyledButton.Frame, {
     disabled: {
       true: {
         opacity: 0.2,
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -168,15 +125,15 @@ const CalendarHeaderLevel = styled(UnstyledButton.Frame, {
 
 /** Level label text — capitalized, shares `size` via context. */
 const CalendarHeaderLevelLabel = styled(Text, {
-  name: "CalendarHeaderLevelLabel",
+  displayName: "CalendarHeaderLevelLabel",
   context: CalendarHeaderContext,
-  color: "$color",
+  color: "color",
   fontWeight: "500",
   textTransform: "capitalize",
   userSelect: "none",
 
   variants: {
-    size: levelFontVariant,
+    size: headerFontVariant,
   } as const,
 
   defaultVariants: { size: "md" },
@@ -184,9 +141,9 @@ const CalendarHeaderLevelLabel = styled(Text, {
 
 /** Default chevron glyph — shares `size` via context. */
 const CalendarHeaderIcon = styled(Text, {
-  name: "CalendarHeaderControlIcon",
+  displayName: "CalendarHeaderControlIcon",
   context: CalendarHeaderContext,
-  color: "$color",
+  color: "color",
   userSelect: "none",
 
   variants: {
@@ -309,9 +266,9 @@ export interface CalendarHeaderProps
  * `hasNextLevel` is true, and a static, dimmed `div` at the topmost level.
  * `__preventFocus` is ported via `onPressIn` + a cross-platform `preventDefault`
  * guard, NOT a DOM `onMouseDown` handler. Forwards its ref + style props to the
- * root via `.styleable`.
+ * root via `styleable()`.
  *
- * Per-slot style sugar: `styles={{ control: { borderRadius: "$lg" } }}` spreads
+ * Per-slot style sugar: `styles={{ control: { borderRadius: "lg" } }}` spreads
  * onto the matching part; precedence is fixed (`defaults < styles[slot]`).
  *
  * a11y: prev/next/level each expose their `aria-label`s and `aria-disabled`;
@@ -325,7 +282,8 @@ export interface CalendarHeaderProps
  *   onLevelClick={zoomOut}
  * />
  */
-const CalendarHeaderComponent = CalendarHeaderFrame.styleable<CalendarHeaderProps>(
+const CalendarHeaderComponent = styleable<CalendarHeaderProps>(
+  CalendarHeaderFrame,
   function CalendarHeader(props, ref) {
     const {
       __preventFocus,

@@ -15,7 +15,7 @@ import { type GetProps, styled, type TamaguiElement, View } from "@knitui/core";
  * doesn't understand.
  */
 const Frame = styled(View, {
-  name: "ModalBaseInner",
+  displayName: "ModalBaseInner",
   top: 0,
   left: 0,
   right: 0,

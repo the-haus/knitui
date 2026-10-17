@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { restingCss } from "../__tests__/css-rules.test.helper";
 import { Box } from "../Box";
 import { fireEvent, render, screen } from "../test-utils";
 import { Text } from "../Text";
@@ -123,5 +124,34 @@ describe("Notification", () => {
     );
     expect(screen.getByTestId("notif-content")).toBeInTheDocument();
     expect(screen.getByTestId("notif-action")).toBeInTheDocument();
+  });
+
+  const resting = restingCss;
+
+  it("draws the accent line only without an icon badge", () => {
+    const { unmount } = render(<Notification>Body</Notification>);
+    expect(resting(screen.getByRole("alert"))).toMatch(/border-left-color: var\(--color9\)/);
+    unmount();
+    render(<Notification icon="!">Body</Notification>);
+    expect(resting(screen.getByRole("alert"))).not.toMatch(/border-left-color: var\(--color9\)/);
+  });
+
+  it("resolves the default md radius, a withBorder colour and the md shadow", () => {
+    render(<Notification withBorder>Body</Notification>);
+    const rules = resting(screen.getByRole("alert"));
+    expect(rules).toMatch(/border-radius: var\(--t-radius-md\)/);
+    expect(rules).toMatch(/var\(--color7\)/);
+    expect(rules).toMatch(/box-shadow: .*var\(--dropShadowColor\)/);
+  });
+
+  it("does not leak styled frame names onto the DOM", () => {
+    render(
+      <Notification title="T" icon="!">
+        Body
+      </Notification>,
+    );
+    const el = screen.getByRole("alert");
+    expect(el).not.toHaveAttribute("name");
+    expect(el.querySelector("[name]")).toBeNull();
   });
 });

@@ -2,17 +2,23 @@ import type { ComponentProps } from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { Box } from "../Box";
+import { Box, type BoxProps } from "../Box";
 import { Text } from "../Text";
 import { Grid } from "./Grid";
 
 const GUTTERS = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 
 /** Shared cell helper — gives each column a visible background so the layout is obvious. */
-function Cell({ children, color = "$color5" }: { children: React.ReactNode; color?: string }) {
+function Cell({
+  children,
+  color = "color5",
+}: {
+  children: React.ReactNode;
+  color?: BoxProps["backgroundColor"];
+}) {
   return (
-    <Box background={color} padding="$md" borderRadius="$sm">
-      <Text textAlign="center" fontSize="$xs" fontWeight="600">
+    <Box backgroundColor={color} padding="md" borderRadius="sm">
+      <Text textAlign="center" fontSize="xs" fontWeight="600">
         {children}
       </Text>
     </Box>
@@ -44,7 +50,7 @@ const meta = {
     gutter: {
       control: "inline-radio",
       options: GUTTERS,
-      description: "Space between columns — a space key (xxs–xxl), `$space` token, or px number.",
+      description: "Space between columns — a space token (xxs–xxl) or a px number.",
     },
     grow: {
       control: "boolean",
@@ -103,7 +109,7 @@ export const Playground: Story = {
 /** Classic 12-column span combinations: 12, 6+6, 4+4+4, 3+3+3+3. */
 export const BasicSpans: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Grid {...args}>
         <Grid.Col span={12}>
           <Cell>12</Cell>
@@ -149,10 +155,10 @@ export const BasicSpans: Story = {
 /** All gutter sizes from xxs to xxl, keeping the column layout identical. */
 export const Gutters: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {GUTTERS.map((gutter) => (
-        <Box key={gutter} gap="$xs">
-          <Text fontSize="$xs" color="$color11" marginBottom="$xs">
+        <Box key={gutter} gap="xs">
+          <Text fontSize="xs" color="color11" marginBottom="xs">
             gutter="{gutter}"
           </Text>
           <Grid gutter={gutter}>
@@ -175,8 +181,8 @@ export const Gutters: Story = {
 /** `span="auto"` fills remaining row space; `span="content"` shrinks to fit content. */
 export const AutoAndContentSpan: Story = {
   render: (args) => (
-    <Box gap="$lg">
-      <Text fontSize="$xs" color="$color11">
+    <Box gap="lg">
+      <Text fontSize="xs" color="color11">
         Fixed 3 + auto fills rest
       </Text>
       <Grid {...args}>
@@ -191,7 +197,7 @@ export const AutoAndContentSpan: Story = {
         </Grid.Col>
       </Grid>
 
-      <Text fontSize="$xs" color="$color11">
+      <Text fontSize="xs" color="color11">
         Content-sized + auto fills rest
       </Text>
       <Grid {...args}>
@@ -212,7 +218,7 @@ export const AutoAndContentSpan: Story = {
 /** `offset` pushes a column right by N columns without occupying the space. */
 export const ColumnOffset: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Grid {...args}>
         <Grid.Col span={6}>
           <Cell>span 6, no offset</Cell>
@@ -244,8 +250,8 @@ export const ColumnOffset: Story = {
 export const GrowColumns: Story = {
   args: { grow: true },
   render: (args) => (
-    <Box gap="$lg">
-      <Text fontSize="$xs" color="$color11">
+    <Box gap="lg">
+      <Text fontSize="xs" color="color11">
         grow=true — last row fills the track
       </Text>
       <Grid {...args}>
@@ -263,7 +269,7 @@ export const GrowColumns: Story = {
         </Grid.Col>
       </Grid>
 
-      <Text fontSize="$xs" color="$color11">
+      <Text fontSize="xs" color="color11">
         grow=false — last row stays natural width
       </Text>
       <Grid {...args} grow={false}>
@@ -298,8 +304,8 @@ export const ColumnAlignment: Story = {
         <Cell>flex-end</Cell>
       </Grid.Col>
       <Grid.Col span={3} align="stretch">
-        <Box backgroundColor="$color3" padding="$xl" borderRadius="$sm" height="100%">
-          <Text textAlign="center" fontSize="$xs" fontWeight="600">
+        <Box backgroundColor="color3" padding="xl" borderRadius="sm" height="100%">
+          <Text textAlign="center" fontSize="xs" fontWeight="600">
             stretch (tall)
           </Text>
         </Box>
@@ -312,8 +318,8 @@ export const ColumnAlignment: Story = {
 export const CustomColumnCount: Story = {
   args: { columns: 24 },
   render: (args) => (
-    <Box gap="$md">
-      <Text fontSize="$xs" color="$color11">
+    <Box gap="md">
+      <Text fontSize="xs" color="color11">
         columns=24 — finer-grained layout
       </Text>
       <Grid {...args}>

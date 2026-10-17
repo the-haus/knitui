@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { resolveTransition } from "../internal/style-props";
+import { timedTransition, type TransitionValue } from "../internal/style-props";
 import {
   getTransitionStyles,
   type MantineTransition,
@@ -42,7 +42,9 @@ export interface TransitionProps {
 const ALL_ANIMATED_KEYS = ["transform", "opacity"];
 
 /**
- * Hand `child` the Tamagui `transition` prop (and what it animates).
+ * Hand `child` the Tamagui `transition` prop — a v3 `{ duration, easing,
+ * properties }` object scoped to what the styles animate (v2's separate
+ * `animateOnly` prop is gone; the scope rides inside the transition).
  *
  * EVERY element this component returns goes through here, the hidden
  * `keepMounted` frame and the reduced-motion frames included, with `null` when
@@ -51,22 +53,14 @@ const ALL_ANIMATED_KEYS = ["transform", "opacity"];
  * driver's) for an animated one. A child that mounted without the key and got it
  * a render later — `keepMounted` with `mounted={false}`, then `mounted` — changed
  * its hook order: React threw "Rendered more hooks than during the previous
- * render" on native. With the key always there the hooks never change.
+ * render" on native. With the key always there the hooks never change. A
+ * `transition` the child set itself wins.
  */
-const withTransition = (
-  child: React.ReactElement,
-  value: unknown,
-  keys: string[] = ALL_ANIMATED_KEYS,
-): React.ReactElement => {
+const withTransition = (child: React.ReactElement, value: TransitionValue): React.ReactElement => {
   if (!React.isValidElement(child) || child.type === React.Fragment) return child;
-  const childProps = child.props as {
-    transition?: unknown;
-    animateOnly?: string[];
-  };
-  return React.cloneElement(child, {
-    transition: "transition" in childProps ? childProps.transition : value,
-    animateOnly: childProps.animateOnly ?? keys,
-  } as Partial<typeof childProps>);
+  const childProps = child.props as { transition?: unknown };
+  if ("transition" in childProps) return child;
+  return React.cloneElement(child, { transition: value } as Partial<typeof childProps>);
 };
 
 /**
@@ -107,11 +101,14 @@ export function Transition({
     return keepMounted ? withTransition(children({ display: "none" }), null) : null;
   }
 
-  const timed = [resolveTransition(transitionTimingFunction), { duration: transitionDuration }];
+  const timed = (keys: string[]) =>
+    timedTransition(transitionDuration, transitionTimingFunction, keys);
   const isExited = transitionStatus === "exited";
 
   if (isExited && !mounted) {
-    return keepMounted ? withTransition(children({ display: "none" }), timed) : null;
+    return keepMounted
+      ? withTransition(children({ display: "none" }), timed(ALL_ANIMATED_KEYS))
+      : null;
   }
 
   const styles = getTransitionStyles({
@@ -122,5 +119,5 @@ export function Transition({
   });
   const keys = animatedKeys(styles);
 
-  return withTransition(children(styles), timed, keys.length > 0 ? keys : ALL_ANIMATED_KEYS);
+  return withTransition(children(styles), timed(keys.length > 0 ? keys : ALL_ANIMATED_KEYS));
 }

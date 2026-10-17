@@ -4,6 +4,7 @@ import {
   createStyledContext,
   DURATIONS,
   type GetProps,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -13,6 +14,7 @@ import { clamp } from "../internal/number-utils";
 import { renderTextChild } from "../internal/render-text-child";
 import {
   fontSizeVariant,
+  PROGRESS_THICKNESS,
   progressThicknessVariant,
   radiusVariant,
   type SizeKey,
@@ -36,17 +38,17 @@ const ProgressContext = createStyledContext<{
 
 /**
  * Track that holds one or more filled sections — mirrors Mantine's `Progress`.
- * Accent comes from the active theme's palette ramp (`$color9` fill on a
- * `$color4` track) via the `theme` prop, never a Mantine `color` prop. Use the
+ * Accent comes from the active theme's palette ramp (`color9` fill on a
+ * `color4` track) via the `theme` prop, never a Mantine `color` prop. Use the
  * simple `<Progress value={60} />` form for a single bar, or the compound
  * `<Progress.Root><Progress.Section value={…}>…` form for stacked sections.
  * `orientation="vertical"` rotates the track; pair with an explicit `height`.
  */
 const ProgressRootFrame = styled(Box, {
-  name: "Progress",
+  displayName: "Progress",
   context: ProgressContext,
   overflow: "hidden",
-  backgroundColor: "$color4",
+  backgroundColor: "color4",
 
   variants: {
     orientation: {
@@ -74,7 +76,7 @@ const STRIPE_PERIOD = 20;
 const STRIPE_DURATION_MS = DURATIONS.deliberate;
 
 const ProgressStripesOverlay = styled(Box, {
-  name: "ProgressStripes",
+  displayName: "ProgressStripes",
   position: "absolute",
   pointerEvents: "none",
   top: 0,
@@ -93,31 +95,36 @@ const ProgressStripesOverlay = styled(Box, {
  */
 const STRIPE_ROW_STYLE = { flexDirection: "row", flexGrow: 1 } as const;
 
+/** Vertical tracks turn the thickness ladder into a WIDTH (module constants). */
+const VERTICAL_THICKNESS = Object.fromEntries(
+  Object.entries(PROGRESS_THICKNESS).map(([key, { height }]) => [key, { width: height }]),
+) as { readonly [K in ProgressSize]: { width: number } };
+
 const ProgressStripe = styled(Box, {
-  name: "ProgressStripe",
+  displayName: "ProgressStripe",
   width: 10,
   marginRight: 10,
   height: "200%",
   marginTop: "-50%",
-  backgroundColor: "$color1",
+  backgroundColor: "color1",
   opacity: 0.18,
   rotate: "20deg",
 });
 
 const ProgressSectionFrame = styled(Box, {
-  name: "ProgressSection",
+  displayName: "ProgressSection",
   context: ProgressContext,
   position: "relative",
   alignItems: "center",
   justifyContent: "center",
   overflow: "hidden",
-  backgroundColor: "$color9",
+  backgroundColor: "color9",
 });
 
 const ProgressLabel = styled(Text, {
-  name: "ProgressLabel",
+  displayName: "ProgressLabel",
   context: ProgressContext,
-  color: "$color1",
+  color: "color1",
   fontWeight: "700",
   numberOfLines: 1,
   userSelect: "none",
@@ -162,7 +169,8 @@ export interface ProgressSectionProps extends ProgressSectionFrameProps {
   "aria-label"?: string;
 }
 
-const ProgressSection = ProgressSectionFrame.styleable<ProgressSectionProps>(
+const ProgressSection = styleable<ProgressSectionProps>(
+  ProgressSectionFrame,
   function ProgressSection(props, ref) {
     const {
       children,
@@ -193,7 +201,10 @@ const ProgressSection = ProgressSectionFrame.styleable<ProgressSectionProps>(
       enabled: Boolean(animated),
     });
 
-    const pct = `${Math.max(0, Math.min(100, value))}%`;
+    // One stable `style` array per loop style (the hook memoises `loop`).
+    const stripeRowStyle = React.useMemo(() => [STRIPE_ROW_STYLE, loop.style], [loop.style]);
+
+    const pct = `${clampValue(value)}%`;
     const sizeStyle: Pick<BoxProps, "width" | "height"> =
       orientation === "vertical"
         ? { height: pct as BoxProps["height"], width: "100%" }
@@ -203,7 +214,7 @@ const ProgressSection = ProgressSectionFrame.styleable<ProgressSectionProps>(
       <ProgressSectionFrame
         ref={ref}
         {...sizeStyle}
-        {...(withAria ? ariaProps(value, ariaLabel) : {})}
+        {...(withAria ? ariaProps(value, ariaLabel) : null)}
         {...rest}
       >
         {showStripes ? (
@@ -216,7 +227,7 @@ const ProgressSection = ProgressSectionFrame.styleable<ProgressSectionProps>(
               static layout first, the animated transform last. When not
               `animated` the hook's `distance` is 0, so it yields a still frame.
             */}
-            <LoopView style={[STRIPE_ROW_STYLE, loop.style]}>
+            <LoopView style={stripeRowStyle}>
               {STRIPES.map((i) => (
                 <ProgressStripe key={i} />
               ))}
@@ -231,35 +242,34 @@ const ProgressSection = ProgressSectionFrame.styleable<ProgressSectionProps>(
 
 export interface ProgressLabelProps extends GetProps<typeof ProgressLabel> {}
 
-type ProgressRootFrameProps = Omit<GetProps<typeof ProgressRootFrame>, "size">;
+type ProgressRootFrameProps = Omit<GetProps<typeof ProgressRootFrame>, "size" | "orientation">;
 
 export interface ProgressRootProps extends ProgressRootFrameProps {
   /** Track thickness — a size key (`xxs`–`xxl`) or a px number. @default "md" */
   size?: ProgressSize | number;
+  /** Track axis (read as data by the sections). @default "horizontal" */
+  orientation?: "horizontal" | "vertical";
 }
 
-const ProgressRoot = ProgressRootFrame.styleable<ProgressRootProps>(
+const ProgressRoot = styleable<ProgressRootProps>(
+  ProgressRootFrame,
   function ProgressRoot(props, ref) {
     const { size = DEFAULT_SIZE, orientation = "horizontal", ...rest } = props;
-    // The `size` variants always set `height`. For vertical, translate the size
-    // to a `width` and skip the variant so we don't apply conflicting heights.
-    const thicknessStyle: Pick<BoxProps, "width" | "height"> =
+    // The `size` variant always sets `height`. For vertical, translate the size
+    // to a `width` and skip the variant so we don't apply conflicting heights
+    // (spread, never `size={undefined}` / `width={undefined}`).
+    const thickness =
       orientation === "vertical"
-        ? { width: typeof size === "number" ? size : progressThicknessVariant[size].height }
-        : {};
+        ? typeof size === "number"
+          ? { width: size }
+          : VERTICAL_THICKNESS[size]
+        : { size };
 
     const ctxSize: ProgressSize = typeof size === "string" ? size : DEFAULT_SIZE;
-    const frameSize = orientation === "horizontal" ? size : undefined;
 
     return (
       <ProgressContext.Provider size={ctxSize} orientation={orientation}>
-        <ProgressRootFrame
-          ref={ref}
-          size={frameSize}
-          orientation={orientation}
-          {...thicknessStyle}
-          {...rest}
-        />
+        <ProgressRootFrame ref={ref} orientation={orientation} {...thickness} {...rest} />
       </ProgressContext.Provider>
     );
   },
@@ -272,7 +282,7 @@ type ProgressRootComponentProps = Omit<ProgressRootProps, "aria-label" | "role">
  * `internal/styles.ts`). The compound `Progress.Root`/`Progress.Section` form
  * styles every part inline; this map gives the terse single-bar form a handle on
  * the inner `Section`/`Label` it composes. Each key maps to the props of the
- * styled part it targets — `styles={{ section: { backgroundColor: "$red9" } }}`
+ * styled part it targets — `styles={{ section: { backgroundColor: "red9" } }}`
  * is sugar for `<Progress.Section …/>`.
  */
 export interface ProgressStyles {
@@ -307,39 +317,42 @@ export interface ProgressProps extends ProgressRootComponentProps {
   styles?: SlotStyles<ProgressStyles>;
 }
 
-const ProgressComponent = ProgressRootFrame.styleable<ProgressProps>(function Progress(props, ref) {
-  const {
-    value,
-    striped,
-    animated,
-    label,
-    size,
-    orientation,
-    "aria-label": ariaLabel = "Progress",
-    role = "progressbar",
-    styles,
-    ...rest
-  } = props;
+const ProgressComponent = styleable<ProgressProps>(
+  ProgressRootFrame,
+  function Progress(props, ref) {
+    const {
+      value,
+      striped,
+      animated,
+      label,
+      size,
+      orientation,
+      "aria-label": ariaLabel = "Progress",
+      role = "progressbar",
+      styles,
+      ...rest
+    } = props;
 
-  // Per-slot style sugar, distributed onto the parts below.
-  const s = slotStyles<ProgressStyles>(styles, PROGRESS_SLOT_KEYS, "Progress");
+    // Per-slot style sugar, distributed onto the parts below.
+    const s = slotStyles<ProgressStyles>(styles, PROGRESS_SLOT_KEYS, "Progress");
 
-  return (
-    <ProgressRoot
-      ref={ref}
-      size={size}
-      orientation={orientation}
-      {...ariaProps(value, ariaLabel)}
-      role={role}
-      {...s.get("root")}
-      {...rest}
-    >
-      <ProgressSection value={value} striped={striped} animated={animated} {...s.get("section")}>
-        {label != null ? <ProgressLabel {...s.get("label")}>{label}</ProgressLabel> : null}
-      </ProgressSection>
-    </ProgressRoot>
-  );
-});
+    return (
+      <ProgressRoot
+        ref={ref}
+        size={size}
+        orientation={orientation}
+        {...ariaProps(value, ariaLabel)}
+        role={role}
+        {...s.get("root")}
+        {...rest}
+      >
+        <ProgressSection value={value} striped={striped} animated={animated} {...s.get("section")}>
+          {label != null ? <ProgressLabel {...s.get("label")}>{label}</ProgressLabel> : null}
+        </ProgressSection>
+      </ProgressRoot>
+    );
+  },
+);
 
 /**
  * `Progress` is the simple single-section wrapper; `Progress.Root` is the

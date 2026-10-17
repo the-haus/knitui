@@ -106,9 +106,9 @@ export const Playground: Story = {
       {(styles) => (
         <Box
           style={styles}
-          backgroundColor="$blue8"
-          padding="$lg"
-          borderRadius="$sm"
+          backgroundColor="blue8"
+          padding="lg"
+          borderRadius="sm"
           alignItems="center"
           justifyContent="center"
           width={180}
@@ -128,14 +128,14 @@ export const Controlled: Story = {
   render: (args) => {
     const [mounted, setMounted] = React.useState(true);
     return (
-      <Box gap="$lg" alignItems="center">
+      <Box gap="lg" alignItems="center">
         <Box
           render="button"
           onPress={() => setMounted((m) => !m)}
-          backgroundColor="$gray5"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
-          borderRadius="$sm"
+          backgroundColor="color5"
+          paddingHorizontal="md"
+          paddingVertical="sm"
+          borderRadius="sm"
           style={{ cursor: "pointer" }}
         >
           <Text>{mounted ? "Hide" : "Show"}</Text>
@@ -144,9 +144,9 @@ export const Controlled: Story = {
           {(styles) => (
             <Box
               style={styles}
-              backgroundColor="$blue8"
-              padding="$lg"
-              borderRadius="$sm"
+              backgroundColor="blue8"
+              padding="lg"
+              borderRadius="sm"
               alignItems="center"
               justifyContent="center"
               width={180}
@@ -168,33 +168,33 @@ export const AllPresets: Story = {
   render: (args) => {
     const [mounted, setMounted] = React.useState(true);
     return (
-      <Box gap="$lg" alignItems="flex-start">
+      <Box gap="lg" alignItems="flex-start">
         <Box
           render="button"
           onPress={() => setMounted((m) => !m)}
-          backgroundColor="$gray5"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
-          borderRadius="$sm"
+          backgroundColor="color5"
+          paddingHorizontal="md"
+          paddingVertical="sm"
+          borderRadius="sm"
           style={{ cursor: "pointer" }}
         >
           <Text>{mounted ? "Hide all" : "Show all"}</Text>
         </Box>
-        <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+        <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
           {TRANSITIONS.map((name) => (
             <Transition key={name} {...args} mounted={mounted} transition={name}>
               {(styles) => (
                 <Box
                   style={styles}
-                  backgroundColor="$blue8"
-                  padding="$sm"
-                  borderRadius="$xs"
+                  backgroundColor="blue8"
+                  padding="sm"
+                  borderRadius="xs"
                   alignItems="center"
                   justifyContent="center"
                   width={110}
-                  height="$xl"
+                  height="xl"
                 >
-                  <Text color="white" fontSize="$xs" textAlign="center">
+                  <Text color="white" fontSize="xs" textAlign="center">
                     {name}
                   </Text>
                 </Box>
@@ -212,14 +212,14 @@ export const KeepMounted: Story = {
   render: (args) => {
     const [mounted, setMounted] = React.useState(true);
     return (
-      <Box gap="$lg" alignItems="center">
+      <Box gap="lg" alignItems="center">
         <Box
           render="button"
           onPress={() => setMounted((m) => !m)}
-          backgroundColor="$gray5"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
-          borderRadius="$sm"
+          backgroundColor="color5"
+          paddingHorizontal="md"
+          paddingVertical="sm"
+          borderRadius="sm"
           style={{ cursor: "pointer" }}
         >
           <Text>{mounted ? "Hide (stays in DOM)" : "Show"}</Text>
@@ -228,9 +228,9 @@ export const KeepMounted: Story = {
           {(styles) => (
             <Box
               style={styles}
-              backgroundColor="$green8"
-              padding="$lg"
-              borderRadius="$sm"
+              backgroundColor="accent8"
+              padding="lg"
+              borderRadius="sm"
               alignItems="center"
               justifyContent="center"
               width={220}
@@ -253,19 +253,19 @@ export const WithDelays: Story = {
   render: (args) => {
     const [mounted, setMounted] = React.useState(false);
     return (
-      <Box gap="$lg" alignItems="flex-start">
+      <Box gap="lg" alignItems="flex-start">
         <Box
           render="button"
           onPress={() => setMounted((m) => !m)}
-          backgroundColor="$gray5"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
-          borderRadius="$sm"
+          backgroundColor="color5"
+          paddingHorizontal="md"
+          paddingVertical="sm"
+          borderRadius="sm"
           style={{ cursor: "pointer" }}
         >
           <Text>{mounted ? "Hide" : "Show (staggered)"}</Text>
         </Box>
-        <Box gap="$sm">
+        <Box gap="sm">
           {[0, 100, 200, 300].map((delay, i) => (
             <Transition
               key={delay}
@@ -278,10 +278,10 @@ export const WithDelays: Story = {
               {(styles) => (
                 <Box
                   style={styles}
-                  backgroundColor="$blue8"
-                  padding="$sm"
-                  paddingHorizontal="$md"
-                  borderRadius="$sm"
+                  backgroundColor="blue8"
+                  padding="sm"
+                  paddingHorizontal="md"
+                  borderRadius="sm"
                   width={200}
                 >
                   <Text color="white">Item {i + 1}</Text>
@@ -301,14 +301,14 @@ export const SlowMotion: Story = {
   render: (args) => {
     const [mounted, setMounted] = React.useState(true);
     return (
-      <Box gap="$lg" alignItems="center">
+      <Box gap="lg" alignItems="center">
         <Box
           render="button"
           onPress={() => setMounted((m) => !m)}
-          backgroundColor="$gray5"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
-          borderRadius="$sm"
+          backgroundColor="color5"
+          paddingHorizontal="md"
+          paddingVertical="sm"
+          borderRadius="sm"
           style={{ cursor: "pointer" }}
         >
           <Text>{mounted ? "Hide (slow)" : "Show (slow)"}</Text>
@@ -317,9 +317,9 @@ export const SlowMotion: Story = {
           {(styles) => (
             <Box
               style={styles}
-              backgroundColor="$yellow8"
-              padding="$lg"
-              borderRadius="$sm"
+              backgroundColor="blue8"
+              padding="lg"
+              borderRadius="sm"
               alignItems="center"
               justifyContent="center"
               width={200}

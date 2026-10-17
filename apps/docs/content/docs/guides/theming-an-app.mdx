@@ -1,6 +1,6 @@
 export const meta = {
   title: "Theming an app",
-  description: "End to end: brand ramps, accents, tokens, fonts, and where to put the config.",
+  description: "End to end: brand ramps, accents, tokens, local overrides with ThemeUpdate, fonts, and where to put the config.",
 };
 
 # Theming an app
@@ -40,9 +40,9 @@ import { config } from "./theme";
 In app code, reference the ramp and the semantic aliases:
 
 ```tsx
-<Box bg="$background" borderColor="$borderColor" borderWidth={1} p="$lg">
+<Box bg="background" borderColor="borderColor" borderWidth={1} p="lg">
   <Title order={3}>Invoice</Title>
-  <Text c="$color11">Due in 14 days</Text>
+  <Text c="color11">Due in 14 days</Text>
 </Box>
 ```
 
@@ -51,15 +51,48 @@ Never a hex. A hard-coded colour is the one thing dark mode cannot fix.
 ## 4. Theme regions, not components
 
 ```tsx
-<Box theme="red" p="$md" gap="$sm">
-  <Text c="$color11">Danger zone</Text>
+<Box theme="red" p="md" gap="sm">
+  <Text c="color11">Danger zone</Text>
   <Button>Delete account</Button>
 </Box>
 ```
 
 Everything below inherits, so hover, press, border and focus stay coherent.
 
-## 5. Load the fonts
+## 5. Local overrides without a re-render
+
+`<Theme name="…">` (or the `theme` prop) mounts a whole sub-theme. When you only
+need to change a key or two for a subtree — an error state, a re-coloured focus
+ring — use `ThemeUpdate`:
+
+```tsx
+import { ThemeUpdate } from "@knitui/core";
+
+<ThemeUpdate focusRingColor="red9" borderColor="red8 dark:red7">
+  <TextInput label="Email" error="Required" />
+</ThemeUpdate>;
+```
+
+On the web it restyles through CSS variables with **no React re-render**, which
+makes it the fast path for local overrides. Values are flat values, so `dark:` /
+`light:` clauses work.
+
+Configuration that is not a design token lives in the config's `variables` and is
+read as a bare name. The kit ships the focus ring this way:
+
+| Name | Kind | Default | Use |
+| --- | --- | --- | --- |
+| `focusRingColor` | theme key in every theme | that theme's `color8` | `outlineColor="focus-visible:focusRingColor"` |
+| `focusRingWidth` | config variable | `2` | `outlineWidth` |
+| `focusRingOffset` | config variable | `0` | `outlineOffset` |
+
+`focusRingColor` is a theme key rather than a variable so it follows accents:
+`theme="blue"` gives a blue ring with no per-component logic. Width and offset
+are scheme-independent numbers. In Tamagui 3.0.x only colour props accept these
+names in their types, so author width and offset as numbers from
+`FOCUS_RING_VARIABLES` (exported by `@knitui/core`).
+
+## 6. Load the fonts
 
 Registering `fonts: { body: "Inter" }` names a family; it does not install one. On
 native, load the file:
@@ -73,15 +106,15 @@ if (!loaded) return null;
 
 On the web, use `next/font` or a `@font-face`. Names must match what you registered.
 
-## 6. Semantic aliases of your own
+## 7. Semantic aliases of your own
 
 For product concepts, map to the ramp once rather than repeating a choice:
 
 ```tsx title="theme.ts"
 export const semantic = {
-  overdue: "$red10",
-  paid: "$green10",
-  draft: "$color9",
+  overdue: "red10",
+  paid: "green10",
+  draft: "color9",
 } as const;
 ```
 
@@ -92,7 +125,7 @@ export const semantic = {
 Prefer `theme` where a whole component should recolour, and a token where a single
 value should.
 
-## 7. Check both schemes and both platforms
+## 8. Check both schemes and both platforms
 
 The usual failures: a hex that disappears in dark mode, a shadow that vanishes on a
 dark background, a brand colour whose 9-step fill has poor contrast with white

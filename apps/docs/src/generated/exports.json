@@ -12,12 +12,13 @@
         "@tamagui/animations-css",
         "@tamagui/animations-reanimated",
         "@tamagui/colors",
+        "@tamagui/config-v5",
         "@tamagui/core",
         "@tamagui/element",
         "@tamagui/focusable",
         "@tamagui/native",
         "@tamagui/react-native-media-driver",
-        "@tamagui/theme-builder",
+        "@tamagui/web",
         "react-native-teleport"
       ],
       "peerDependencies": [
@@ -34,7 +35,7 @@
         "./config",
         "./package.json"
       ],
-      "exportCount": 126,
+      "exportCount": 158,
       "hasStories": false
     },
     {
@@ -69,7 +70,7 @@
         "./control-system",
         "./package.json"
       ],
-      "exportCount": 559,
+      "exportCount": 571,
       "hasStories": true
     },
     {
@@ -93,7 +94,7 @@
         ".",
         "./package.json"
       ],
-      "exportCount": 88,
+      "exportCount": 90,
       "hasStories": false
     },
     {
@@ -366,8 +367,7 @@
       "description": "Pre-configured Tamagui build-tool plugins for the knitui UI kit (babel, metro, next, vite, webpack) plus the Next.js SSR provider.",
       "private": false,
       "dependencies": [
-        "@knitui/core",
-        "@tamagui/babel-plugin"
+        "@knitui/core"
       ],
       "peerDependencies": [
         "next",
@@ -391,6 +391,18 @@
     }
   ],
   "exports": [
+    {
+      "name": "AccessibilityActionEvent",
+      "kind": "type",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
+    {
+      "name": "AccessibilityActionInfo",
+      "kind": "type",
+      "package": "@knitui/hooks",
+      "packageSlug": "hooks"
+    },
     {
       "name": "AccessibilityRole",
       "kind": "type",
@@ -535,6 +547,12 @@
     },
     {
       "name": "AlertVariant",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "AlignValue",
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
@@ -960,6 +978,12 @@
     },
     {
       "name": "BOUNCY_BEZIER",
+      "kind": "component",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "BOUNCY_SPRING",
       "kind": "component",
       "package": "@knitui/core",
       "packageSlug": "core"
@@ -1930,6 +1954,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "createStyledHOC",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "createTheme",
       "kind": "function",
       "package": "@knitui/core",
@@ -1946,6 +1976,12 @@
       "kind": "component",
       "package": "@knitui/core",
       "packageSlug": "core"
+    },
+    {
+      "name": "CssString",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
     },
     {
       "name": "CubeConfig",
@@ -2455,6 +2491,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "DynamicVariant",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
       "name": "EasingPoints",
       "kind": "type",
       "package": "@knitui/core",
@@ -2737,11 +2779,23 @@
       "packageSlug": "graphics"
     },
     {
+      "name": "FlatStyleValue",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "Flex",
       "kind": "component",
       "package": "@knitui/components",
       "packageSlug": "components",
       "route": "/docs/components/layout/flex"
+    },
+    {
+      "name": "FlexDirection",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
     },
     {
       "name": "FlexProps",
@@ -2766,6 +2820,18 @@
       "kind": "component",
       "package": "@knitui/components",
       "packageSlug": "components"
+    },
+    {
+      "name": "FOCUS_RING_COLOR_KEY",
+      "kind": "component",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "FOCUS_RING_VARIABLES",
+      "kind": "component",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "FocusableControl",
@@ -2872,6 +2938,12 @@
       "packageSlug": "components"
     },
     {
+      "name": "getComboboxOptionId",
+      "kind": "function",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
       "name": "getConfig",
       "kind": "function",
       "package": "@knitui/core",
@@ -2894,6 +2966,12 @@
       "kind": "function",
       "package": "@knitui/dates",
       "packageSlug": "dates"
+    },
+    {
+      "name": "getExpandedShorthand",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "getFontSize",
@@ -3602,10 +3680,22 @@
       "packageSlug": "map"
     },
     {
+      "name": "isToken",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "isWeb",
       "kind": "function",
       "package": "@knitui/core",
       "packageSlug": "core"
+    },
+    {
+      "name": "JustifyValue",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
     },
     {
       "name": "Kbd",
@@ -3663,6 +3753,12 @@
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
+    },
+    {
+      "name": "KNIT_SETTINGS",
+      "kind": "component",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "KnitTamaguiConfig",
@@ -4321,6 +4417,12 @@
       "packageSlug": "dates"
     },
     {
+      "name": "MOTION_PRESETS",
+      "kind": "component",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "MotionConfig",
       "kind": "component",
       "package": "@knitui/components",
@@ -4349,6 +4451,12 @@
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
+    },
+    {
+      "name": "MotionPresetName",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "motionPresets",
@@ -4572,6 +4680,12 @@
       "kind": "type",
       "package": "@knitui/carousel",
       "packageSlug": "carousel"
+    },
+    {
+      "name": "OnTransition",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "openAppSettings",
@@ -5315,6 +5429,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "RadiusValue",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
       "name": "rampFromHex",
       "kind": "function",
       "package": "@knitui/core",
@@ -5494,6 +5614,18 @@
       "kind": "function",
       "package": "@knitui/map",
       "packageSlug": "map"
+    },
+    {
+      "name": "resolveToken",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "ResolveTokenOptions",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "resolveVariant",
@@ -5771,6 +5903,12 @@
       "packageSlug": "graphics"
     },
     {
+      "name": "ShadowKey",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
       "name": "ShadowOverrides",
       "kind": "type",
       "package": "@knitui/core",
@@ -5955,12 +6093,6 @@
     },
     {
       "name": "SizeTokens",
-      "kind": "type",
-      "package": "@knitui/core",
-      "packageSlug": "core"
-    },
-    {
-      "name": "SizeVariantSpreadFunction",
       "kind": "type",
       "package": "@knitui/core",
       "packageSlug": "core"
@@ -6192,6 +6324,24 @@
       "packageSlug": "dates"
     },
     {
+      "name": "splitStyleProps",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "SplitStylePropsOptions",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "SplitStylePropsResult",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "splitTimeString",
       "kind": "function",
       "package": "@knitui/dates",
@@ -6321,8 +6471,50 @@
       "packageSlug": "components"
     },
     {
+      "name": "style",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "styleable",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "StyleableComponent",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "StyleableOptions",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "StyleableReceiver",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "styled",
       "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "StyleFragment",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "StylePiece",
+      "kind": "type",
       "package": "@knitui/core",
       "packageSlug": "core"
     },
@@ -6659,6 +6851,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "TamaguiComponent",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "TamaguiElement",
       "kind": "type",
       "package": "@knitui/core",
@@ -6741,6 +6939,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "TextWrap",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
       "name": "Theme",
       "kind": "component",
       "package": "@knitui/core",
@@ -6778,6 +6982,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "ThemeLike",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "ThemeName",
       "kind": "type",
       "package": "@knitui/core",
@@ -6804,6 +7014,18 @@
     {
       "name": "themes",
       "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "ThemeUpdate",
+      "kind": "component",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "ThemeUpdateProps",
+      "kind": "type",
       "package": "@knitui/core",
       "packageSlug": "core"
     },
@@ -7017,6 +7239,12 @@
       "packageSlug": "dates"
     },
     {
+      "name": "TokenCategory",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "tokens",
       "kind": "function",
       "package": "@knitui/core",
@@ -7097,13 +7325,37 @@
       "packageSlug": "map"
     },
     {
+      "name": "TransitionEvent",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "TransitionKeys",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "TransitionName",
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
     },
     {
+      "name": "TransitionProp",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "TransitionProps",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "TransitionSpec",
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
@@ -7116,6 +7368,12 @@
     },
     {
       "name": "TransitionStyles",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "TransitionValue",
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
@@ -7190,6 +7448,12 @@
       "packageSlug": "components"
     },
     {
+      "name": "UniversalAnimatedNumber",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
       "name": "UnstyledButton",
       "kind": "component",
       "package": "@knitui/components",
@@ -7201,6 +7465,30 @@
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
+    },
+    {
+      "name": "useAnimatedNumber",
+      "kind": "hook",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "useAnimatedNumberReaction",
+      "kind": "hook",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "useAnimatedNumbersStyle",
+      "kind": "hook",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "useAnimatedNumberStyle",
+      "kind": "hook",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "useAppState",
@@ -7653,18 +7941,6 @@
       "route": "/docs/hooks/use-previous"
     },
     {
-      "name": "useProps",
-      "kind": "hook",
-      "package": "@knitui/core",
-      "packageSlug": "core"
-    },
-    {
-      "name": "usePropsAndStyle",
-      "kind": "hook",
-      "package": "@knitui/core",
-      "packageSlug": "core"
-    },
-    {
       "name": "useQueue",
       "kind": "hook",
       "package": "@knitui/hooks",
@@ -7916,12 +8192,6 @@
       "packageSlug": "graphics"
     },
     {
-      "name": "VariantSpreadFunction",
-      "kind": "type",
-      "package": "@knitui/core",
-      "packageSlug": "core"
-    },
-    {
       "name": "VectorSourceProps",
       "kind": "type",
       "package": "@knitui/map",
@@ -8152,6 +8422,12 @@
       "kind": "type",
       "package": "@knitui/carousel",
       "packageSlug": "carousel"
+    },
+    {
+      "name": "withFocusRingColor",
+      "kind": "function",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "withStaticProperties",

@@ -47,9 +47,9 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<DateStringValue | null>("2026-06-15");
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <ExampleControl {...args} data={WEEK} value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -93,7 +93,7 @@ export const Composed: Story = {
         styles={{ label: { fontWeight: "600" } }}
       >
         <ExampleControl.Lead>
-          <Text fontSize="$sm" color="$color11">
+          <Text fontSize="sm" color="color11">
             Wk 25
           </Text>
         </ExampleControl.Lead>
@@ -107,10 +107,10 @@ export const Sizes: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>("2026-06-16");
     return (
-      <Box gap="$lg">
+      <Box gap="lg">
         {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-          <Box key={size} gap="$xs">
-            <Text fontSize="$sm" color="$color11">
+          <Box key={size} gap="xs">
+            <Text fontSize="sm" color="color11">
               {size}
             </Text>
             <ExampleControl size={size} data={WEEK} value={value} onChange={setValue} />

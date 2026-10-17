@@ -17,7 +17,7 @@ import { Box } from "../Box";
  * container. Pass an explicit `width`/`height` or `flex` to override.
  */
 const AspectRatioFrame = styled(Box, {
-  name: "AspectRatio",
+  displayName: "AspectRatio",
   alignSelf: "stretch",
   overflow: "hidden",
   // Square by default; the `ratio` variant overrides for any other fraction.
@@ -25,20 +25,17 @@ const AspectRatioFrame = styled(Box, {
 
   variants: {
     /** Width / height fraction, e.g. `16 / 9`. @default 1 */
-    ratio: {
-      ":number": (val: number) => ({ aspectRatio: val }),
-    },
+    ratio: styled.dynamic<number>((ratio) => ({ aspectRatio: ratio })),
   } as const,
 });
 
-export interface AspectRatioProps extends GetProps<typeof AspectRatioFrame> {}
+export type AspectRatioProps = GetProps<typeof AspectRatioFrame>;
 
-const AspectRatioComponent = AspectRatioFrame.styleable<AspectRatioProps>(
-  function AspectRatio(props, ref) {
-    return <AspectRatioFrame ref={ref} {...props} />;
-  },
-);
-
-export const AspectRatio = withStaticProperties(AspectRatioComponent, {
+/**
+ * A plain `styled()` component (flattenable): `ratio` is a pure prop → style
+ * mapping. `AspectRatio.Frame` is kept for API compatibility and is the same
+ * component.
+ */
+export const AspectRatio = withStaticProperties(AspectRatioFrame, {
   Frame: AspectRatioFrame,
 });

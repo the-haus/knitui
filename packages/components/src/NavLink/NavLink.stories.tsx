@@ -57,7 +57,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side at default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$xs" width={280}>
+    <Box flexDirection="column" gap="xs" width={280}>
       {VARIANTS.map((variant) => (
         <NavLink key={variant} {...args} variant={variant} label={variant} />
       ))}
@@ -72,7 +72,7 @@ export const Active: Story = {
   },
 
   render: (args) => (
-    <Box flexDirection="column" gap="$xs" width={280}>
+    <Box flexDirection="column" gap="xs" width={280}>
       {VARIANTS.map((variant) => (
         <NavLink key={variant} {...args} variant={variant} active label={`${variant} (active)`} />
       ))}
@@ -83,7 +83,7 @@ export const Active: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the NavLink row. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md" width={280}>
+    <Box flexDirection="column" gap="md" width={280}>
       {SHADOWS.map((shadow) => (
         <NavLink key={shadow} {...args} shadow={shadow} label={shadow} />
       ))}
@@ -110,14 +110,14 @@ export const WithDescription: Story = {
 /** Left and right sections hold icons or badges. */
 export const WithSections: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$xs" width={280}>
+    <Box flexDirection="column" gap="xs" width={280}>
       <NavLink {...args} label="Home" leftSection={<Text>🏠</Text>} />
       <NavLink
         {...args}
         label="Notifications"
         leftSection={<Text>🔔</Text>}
         rightSection={
-          <Text fontSize="$xs" fontWeight="bold">
+          <Text fontSize="xs" fontWeight="bold">
             3
           </Text>
         }
@@ -154,8 +154,8 @@ export const Controlled: Story = {
   render: (args) => {
     const [isOpen, setOpen] = React.useState(false);
     return (
-      <Box width={280} gap="$sm">
-        <Text fontSize="$sm" color="$color">
+      <Box width={280} gap="sm">
+        <Text fontSize="sm" color="color">
           Nested section is {isOpen ? "open" : "closed"}
         </Text>
         <NavLink
@@ -180,9 +180,9 @@ export const Styles: Story = {
     label: "Settings",
     description: "Manage your account and preferences",
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      label: { color: "$red9", fontWeight: "700" },
-      description: { color: "$blue11" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      label: { color: "red9", fontWeight: "700" },
+      description: { color: "blue11" },
     },
   },
 };
@@ -190,7 +190,7 @@ export const Styles: Story = {
 /** A realistic navigation sidebar built from NavLink items. */
 export const Sidebar: Story = {
   render: () => (
-    <Box width={260} padding="$sm" gap="$xs" borderRadius="$sm" backgroundColor="$background">
+    <Box width={260} padding="sm" gap="xs" borderRadius="sm" backgroundColor="background">
       <NavLink label="Dashboard" leftSection={<Text>📊</Text>} active variant="light" />
       <NavLink label="Analytics" leftSection={<Text>📈</Text>} variant="light" />
       <NavLink label="Products" leftSection={<Text>📦</Text>} variant="light" defaultOpened>
@@ -202,7 +202,7 @@ export const Sidebar: Story = {
         <NavLink
           label="New"
           rightSection={
-            <Text fontSize="$xs" fontWeight="bold">
+            <Text fontSize="xs" fontWeight="bold">
               5
             </Text>
           }
@@ -218,14 +218,9 @@ export const Sidebar: Story = {
 /** Compound sub-components (NavLink.Root, NavLink.Body, NavLink.Label, etc.) used directly for custom layouts. */
 export const CompoundAPI: Story = {
   render: () => (
-    <Box flexDirection="column" gap="$sm" width={280}>
+    <Box flexDirection="column" gap="sm" width={280}>
       {/* Custom layout using sub-components */}
-      <NavLink.Root
-        variant="light"
-        paddingHorizontal="$sm"
-        paddingVertical="$xs"
-        borderRadius="$xs"
-      >
+      <NavLink.Root variant="light" paddingHorizontal="sm" paddingVertical="xs" borderRadius="xs">
         <NavLink.Section>
           <Text>⭐</Text>
         </NavLink.Section>
@@ -234,23 +229,23 @@ export const CompoundAPI: Story = {
           <NavLink.Description>Built with sub-components</NavLink.Description>
         </NavLink.Body>
         <NavLink.Section>
-          <Text fontSize="$xs">→</Text>
+          <Text fontSize="xs">→</Text>
         </NavLink.Section>
       </NavLink.Root>
 
       <NavLink.Root
         variant="filled"
-        backgroundColor="$color9"
-        paddingHorizontal="$sm"
-        paddingVertical="$xs"
-        borderRadius="$xs"
+        backgroundColor="color9"
+        paddingHorizontal="sm"
+        paddingVertical="xs"
+        borderRadius="xs"
       >
         <NavLink.Section>
           <Text>🔥</Text>
         </NavLink.Section>
         <NavLink.Body>
-          <NavLink.Label color="$color1">Active item</NavLink.Label>
-          <NavLink.Description color="$color1" opacity={0.8}>
+          <NavLink.Label color="color1">Active item</NavLink.Label>
+          <NavLink.Description color="color1" opacity={0.8}>
             Filled variant via sub-components
           </NavLink.Description>
         </NavLink.Body>

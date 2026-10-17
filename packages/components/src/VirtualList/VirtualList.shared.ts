@@ -222,7 +222,7 @@ export interface VirtualListOwnProps<T> {
   onRefresh?: () => void;
   /** Whether the refresh spinner is showing (controlled). @default false */
   refreshing?: boolean;
-  /** Spinner colour — a theme token or concrete colour. @default "$color10" */
+  /** Spinner colour — a theme token or concrete colour. @default "color10" */
   refreshColor?: string;
 
   /* ---- chrome slots ------------------------------------------------------ */

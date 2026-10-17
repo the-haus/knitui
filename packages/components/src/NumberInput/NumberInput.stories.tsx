@@ -72,7 +72,7 @@ export const Playground: Story = {};
 /** Seven sizes displayed side by side, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <NumberInput key={size} {...args} size={size} placeholder={size} />
       ))}
@@ -83,7 +83,7 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the input frame. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <NumberInput key={shadow} {...args} shadow={shadow} label={shadow} defaultValue={42} />
       ))}
@@ -151,7 +151,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<number | string>(0);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <NumberInput
           {...args}
           label="Controlled count"
@@ -173,7 +173,7 @@ export const ExternalHandlers: Story = {
     const [value, setValue] = React.useState<number | string>(5);
     const handlers = React.useRef<NumberInputHandlers>(null);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <NumberInput
           {...args}
           label="Amount"
@@ -182,22 +182,22 @@ export const ExternalHandlers: Story = {
           handlersRef={handlers}
           hideControls
         />
-        <Box flexDirection="row" gap="$sm">
+        <Box flexDirection="row" gap="sm">
           <Box
-            paddingHorizontal="$md"
-            paddingVertical="$xs"
-            backgroundColor="$color4"
-            borderRadius="$sm"
+            paddingHorizontal="md"
+            paddingVertical="xs"
+            backgroundColor="color4"
+            borderRadius="sm"
             style={{ cursor: "pointer" }}
             onPress={() => handlers.current?.decrement()}
           >
             <Text>− Decrement</Text>
           </Box>
           <Box
-            paddingHorizontal="$md"
-            paddingVertical="$xs"
-            backgroundColor="$color4"
-            borderRadius="$sm"
+            paddingHorizontal="md"
+            paddingVertical="xs"
+            backgroundColor="color4"
+            borderRadius="sm"
             style={{ cursor: "pointer" }}
             onPress={() => handlers.current?.increment()}
           >
@@ -228,9 +228,9 @@ export const Styles: Story = {
     label: "Styled stepper",
     defaultValue: 5,
     styles: {
-      label: { color: "$blue9", fontWeight: "700" },
-      increment: { backgroundColor: "$green3" },
-      decrement: { backgroundColor: "$red3" },
+      label: { color: "blue9", fontWeight: "700" },
+      increment: { backgroundColor: "blue3" },
+      decrement: { backgroundColor: "red3" },
     },
   },
 };

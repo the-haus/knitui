@@ -21,7 +21,7 @@
 //   13 — typed `forwardRef`: the ref forwards to the underlying `Text` host
 //        (`TamaguiElement`), and every `TextProps` style prop passes through, so
 //        `styled(TimeValue, …)` (see `TimePresetControlLabel`) and a consumer ref
-//        both work. The dates-norm `.styleable` wrapper is for components that own
+//        both work. The dates-norm `styleable()` wrapper is for components that own
 //        a styled Frame; this leaf renders the shared `Text` directly, so a typed
 //        `forwardRef` is the leaf-appropriate form (same call as `TimeInput`).
 //
@@ -43,7 +43,7 @@
 //            interactive `TimeInput`/`TimePicker`).
 //   11     — a11y axes: a plain text node carries its own accessible text content;
 //            there is no interactive role to wire on either platform.
-//   12     — interaction styling (`hoverStyle`/`pressStyle`/`disabled`): a static
+//   12     — interaction styling (`hover:`/`press:` clauses/`disabled`): a static
 //            label has no interactive state.
 //   14     — `withStaticProperties` parts/slot markers: nothing to expose; there
 //            are no sub-parts or slots.

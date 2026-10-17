@@ -34,7 +34,9 @@ const meta = {
         ...args.style,
       }}
     >
-      <Text style={{ fontWeight: "600", color: "#e2e8f0" }}>{children ?? "View"}</Text>
+      <Text fontWeight="600" color="#e2e8f0">
+        {children ?? "View"}
+      </Text>
     </EffectView>
   ),
 } satisfies Meta<typeof EffectView>;

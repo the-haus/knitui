@@ -3,6 +3,7 @@ import * as React from "react";
 import type { GetRef } from "@knitui/core";
 import { IconStar } from "@knitui/icons";
 
+import { baseValue, declarationsUnder, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { ThemeIcon } from "./ThemeIcon";
 
@@ -77,5 +78,47 @@ describe("ThemeIcon", () => {
       </ThemeIcon>,
     );
     expect(ref.current).not.toBeNull();
+  });
+});
+
+describe("ThemeIcon v3 style resolution (web CSS)", () => {
+  const MATRIX = [
+    ["filled", "var(--color9)"],
+    ["light", "var(--color4)"],
+    ["outline", "transparent"],
+    ["subtle", "transparent"],
+    ["default", "var(--color3)"],
+    ["white", "var(--c-white)"],
+    ["transparent", "transparent"],
+  ] as const;
+
+  it.each(MATRIX)("variant=%s paints a static fill with no hover / press", (variant, bg) => {
+    render(<ThemeIcon variant={variant} testID="ti" />);
+    const el = screen.getByTestId("ti");
+    expect(baseValue(el, "background-color")).toBe(bg);
+    expect(declarationsUnder(el, ":hover")).toEqual([]);
+    expect(declarationsUnder(el, ":active")).toEqual([]);
+  });
+
+  it("outline paints its border", () => {
+    render(<ThemeIcon variant="outline" testID="ti" />);
+    expect(baseValue(screen.getByTestId("ti"), "border-color")).toBe("var(--color7)");
+  });
+
+  it.each(SIZES)("size=%s is a square on the size scale", (size) => {
+    render(<ThemeIcon size={size} testID="ti" />);
+    expect(baseValue(screen.getByTestId("ti"), "height")).toBe(`var(--t-size-${size})`);
+  });
+
+  it("shadow resolves the dropShadowColor theme key inside boxShadow", () => {
+    render(<ThemeIcon shadow="md" testID="ti" />);
+    expect(baseValue(screen.getByTestId("ti"), "box-shadow")).toContain("var(--dropShadowColor)");
+  });
+
+  it("is not interactive (no button role, no focus ring)", () => {
+    render(<ThemeIcon testID="ti" />);
+    const el = screen.getByTestId("ti");
+    expect(el).not.toHaveAttribute("role", "button");
+    expect(hasFocusRing(el)).toBe(false);
   });
 });

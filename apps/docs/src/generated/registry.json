@@ -380,7 +380,7 @@
         },
         "spacing": {
           "control": "text",
-          "description": "Gap between items — Tamagui token (e.g. `$sm`) or number."
+          "description": "Gap between items — Tamagui token (e.g. `sm`) or number."
         },
         "center": {
           "control": "boolean",
@@ -490,7 +490,7 @@
         "repeat": 4,
         "duration": 8000,
         "orientation": "horizontal",
-        "gap": "$md"
+        "gap": "md"
       },
       "argTypes": {
         "orientation": {
@@ -529,11 +529,11 @@
         "gap": {
           "control": "select",
           "options": [
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Gap between repeated groups."
         },
@@ -575,7 +575,7 @@
           "args": {
             "orientation": "vertical",
             "children": {
-              "$expr": "<>\n        {TAGS.map((tag) => (\n          <Box key={tag} paddingVertical=\"$xs\">\n            <Text>{tag}</Text>\n          </Box>\n        ))}\n      </>"
+              "$expr": "<>\n        {TAGS.map((tag) => (\n          <Box key={tag} paddingVertical=\"xs\">\n            <Text>{tag}</Text>\n          </Box>\n        ))}\n      </>"
             }
           },
           "storybookId": "data-display-marquee--vertical"
@@ -657,12 +657,12 @@
             "children": "Breaking news — per-slot styles in action — ",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "text": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -677,7 +677,7 @@
             "duration": 10000,
             "pauseOnHover": true,
             "children": {
-              "$expr": "<>\n        {[\"⭐ Feature A\", \"🔥 Feature B\", \"💡 Feature C\", \"🚀 Feature D\"].map((label) => (\n          <Box\n            key={label}\n            paddingHorizontal=\"$md\"\n            paddingVertical=\"$sm\"\n            backgroundColor=\"$color4\"\n            borderRadius=\"$md\"\n            minWidth={140}\n            alignItems=\"center\"\n          >\n            <Text fontWeight=\"700\">{label}</Text>\n            <Text fontSize=\"$sm\" color=\"$color10\">\n              tap to learn more\n            </Text>\n          </Box>\n        ))}\n      </>"
+              "$expr": "<>\n        {[\"⭐ Feature A\", \"🔥 Feature B\", \"💡 Feature C\", \"🚀 Feature D\"].map((label) => (\n          <Box\n            key={label}\n            paddingHorizontal=\"md\"\n            paddingVertical=\"sm\"\n            backgroundColor=\"color4\"\n            borderRadius=\"md\"\n            minWidth={140}\n            alignItems=\"center\"\n          >\n            <Text fontWeight=\"700\">{label}</Text>\n            <Text fontSize=\"sm\" color=\"color10\">\n              tap to learn more\n            </Text>\n          </Box>\n        ))}\n      </>"
             }
           },
           "storybookId": "data-display-marquee--rich-content"
@@ -864,15 +864,15 @@
             "withTableBorder": true,
             "styles": {
               "table": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "th": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               },
               "td": {
-                "color": "$blue9"
+                "color": "blue9"
               }
             }
           },
@@ -955,7 +955,7 @@
         },
         "radius": {
           "control": "text",
-          "description": "Theme radius token (e.g. `$sm`) or any CSS value."
+          "description": "Theme radius token (e.g. `sm`) or any CSS value."
         },
         "shadow": {
           "control": "select",
@@ -1018,7 +1018,7 @@
         },
         {
           "name": "Gradient",
-          "description": "`variant=\"gradient\"` fills the chip with a linear gradient. With no `gradient` prop it falls back to the theme ramp; otherwise pass a two-color shorthand, `$colorN` tokens, or a multi-step `stops` array. The icon auto-colors white.",
+          "description": "`variant=\"gradient\"` fills the chip with a linear gradient. With no `gradient` prop it falls back to the theme ramp; otherwise pass a two-color shorthand, `colorN` ramp names, or a multi-step `stops` array. The icon auto-colors white.",
           "hasRender": true,
           "storybookId": "data-display-theme-icon--gradient"
         },
@@ -1103,7 +1103,7 @@
         "expandOnClick": true,
         "selectOnClick": false,
         "withLines": false,
-        "levelOffset": "$lg"
+        "levelOffset": "lg"
       },
       "argTypes": {
         "expandOnClick": {
@@ -1121,13 +1121,13 @@
         "levelOffset": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
           "description": "Horizontal indent added per nesting level."
         },
@@ -1316,7 +1316,7 @@
                 "label": "tsconfig.json"
               }
             ],
-            "levelOffset": "$xl",
+            "levelOffset": "xl",
             "withLines": true
           },
           "storybookId": "data-display-tree--deep-level-offset"
@@ -1379,7 +1379,7 @@
               }
             ],
             "renderNode": {
-              "$fn": "({ node, expanded, hasChildren, selected, elementProps }) => (\n      <Box\n        {...elementProps}\n        flexDirection=\"row\"\n        alignItems=\"center\"\n        gap=\"$xs\"\n        paddingVertical=\"$xs\"\n        paddingHorizontal=\"$xs\"\n        borderRadius=\"$xs\"\n        backgroundColor={selected ? \"$color4\" : \"transparent\"}\n        hoverStyle={{ backgroundColor: \"$color3\" }}\n      >\n        <Text width=\"$xxs\" textAlign=\"center\" fontSize=\"$xs\">\n          {hasChildren ? (expanded ? \"▼\" : \"▶\") : \"·\"}\n        </Text>\n        <Text fontSize=\"$xs\">{hasChildren ? \"📁\" : \"📄\"}</Text>\n        <Text\n          fontSize=\"$sm\"\n          color={selected ? \"$color11\" : \"$color\"}\n          fontWeight={selected ? \"600\" : \"400\"}\n        >\n          {node.label}\n        </Text>\n      </Box>\n    )"
+              "$fn": "({ node, expanded, hasChildren, selected, elementProps }) => (\n      <Box\n        {...elementProps}\n        flexDirection=\"row\"\n        alignItems=\"center\"\n        gap=\"xs\"\n        paddingVertical=\"xs\"\n        paddingHorizontal=\"xs\"\n        borderRadius=\"xs\"\n        backgroundColor={selected ? \"color4 hover:color3\" : \"transparent hover:color3\"}\n      >\n        <Text width=\"xxs\" textAlign=\"center\" fontSize=\"xs\">\n          {hasChildren ? (expanded ? \"▼\" : \"▶\") : \"·\"}\n        </Text>\n        <Text fontSize=\"xs\">{hasChildren ? \"📁\" : \"📄\"}</Text>\n        <Text\n          fontSize=\"sm\"\n          color={selected ? \"color11\" : \"color\"}\n          fontWeight={selected ? \"600\" : \"400\"}\n        >\n          {node.label}\n        </Text>\n      </Box>\n    )"
             }
           },
           "storybookId": "data-display-tree--custom-render-node"
@@ -1453,11 +1453,11 @@
             ],
             "styles": {
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               },
               "chevron": {
-                "color": "$blue9"
+                "color": "blue9"
               }
             }
           },
@@ -1761,11 +1761,11 @@
             "defaultValue": "apple",
             "styles": {
               "trigger": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "chevron": {
-                "color": "$blue9"
+                "color": "blue9"
               }
             }
           },
@@ -2055,12 +2055,12 @@
             "size": "xl",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "text": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -2149,7 +2149,7 @@
           "args": {
             "width": 400,
             "height": 220,
-            "padding": "$lg",
+            "padding": "lg",
             "justifyContent": "flex-end"
           },
           "storybookId": "display-background-image--with-overlay"
@@ -2168,7 +2168,7 @@
             "radius": "xl",
             "width": 400,
             "height": 200,
-            "padding": "$lg",
+            "padding": "lg",
             "justifyContent": "center",
             "alignItems": "center"
           },
@@ -2205,7 +2205,7 @@
           "args": {
             "width": "100%",
             "height": 180,
-            "padding": "$xl",
+            "padding": "xl",
             "justifyContent": "center",
             "alignItems": "center"
           },
@@ -2218,14 +2218,14 @@
           "args": {
             "width": 400,
             "height": 200,
-            "padding": "$lg",
+            "padding": "lg",
             "justifyContent": "center",
             "alignItems": "center",
             "styles": {
               "root": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 4,
-                "borderRadius": "$xl"
+                "borderRadius": "xl"
               },
               "image": {
                 "opacity": 0.5
@@ -2404,7 +2404,7 @@
         },
         {
           "name": "Gradient",
-          "description": "The `gradient` variant fills the badge with a linear gradient. With no `gradient` prop it follows the theme ramp; otherwise it accepts a two-color shorthand, `$colorN` tokens, or a multi-step `stops` list. Text renders white.",
+          "description": "The `gradient` variant fills the badge with a linear gradient. With no `gradient` prop it follows the theme ramp; otherwise it accepts a two-color shorthand, `colorN` names, or a multi-step `stops` list. Text renders white.",
           "hasRender": true,
           "storybookId": "display-badge--gradient"
         },
@@ -2434,12 +2434,12 @@
             "children": "Badge",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "text": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               }
             }
@@ -2470,7 +2470,7 @@
       "args": {
         "withBorder": false,
         "orientation": "vertical",
-        "padding": "$lg"
+        "padding": "lg"
       },
       "argTypes": {
         "withBorder": {
@@ -2512,11 +2512,11 @@
         "padding": {
           "control": "select",
           "options": [
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Inner padding token."
         }
@@ -2574,14 +2574,14 @@
           "args": {
             "styles": {
               "header": {
-                "backgroundColor": "$blue3",
-                "padding": "$sm",
-                "borderRadius": "$sm"
+                "backgroundColor": "blue3",
+                "padding": "sm",
+                "borderRadius": "sm"
               },
               "footer": {
-                "backgroundColor": "$red3",
-                "padding": "$sm",
-                "borderRadius": "$sm"
+                "backgroundColor": "red3",
+                "padding": "sm",
+                "borderRadius": "sm"
               }
             }
           },
@@ -2711,7 +2711,7 @@
             "withShadow": true,
             "styles": {
               "overlay": {
-                "borderColor": "$red9",
+                "borderColor": "red9",
                 "borderWidth": 3
               }
             }
@@ -3169,7 +3169,7 @@
         },
         {
           "name": "Sizes",
-          "description": "The seven named sizes resolve against the `$size` token scale.",
+          "description": "The seven named sizes resolve against the `size` token scale.",
           "hasRender": true,
           "storybookId": "display-indicator--sizes"
         },
@@ -3549,7 +3549,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "Pill is a small rounded label, optionally with a remove button. Use `Pill.Group` to lay out multiple pills and inherit `size`/`disabled`. The `contrast` variant uses the active theme's solid accent (`$color9`); colour comes from the `theme` prop + palette ramp.",
+      "description": "Pill is a small rounded label, optionally with a remove button. Use `Pill.Group` to lay out multiple pills and inherit `size`/`disabled`. The `contrast` variant uses the active theme's solid accent (`color9`); colour comes from the `theme` prop + palette ramp.",
       "importPath": "@knitui/components/src/Pill/Pill.stories",
       "sourcePath": "packages/components/src/Pill/Pill.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Pill/Pill.stories.tsx",
@@ -3685,7 +3685,7 @@
         },
         {
           "name": "GradientThemed",
-          "description": "Themed gradient (no `gradient` prop) — the `$color5`→`$color9` ramp follows the active theme.",
+          "description": "Themed gradient (no `gradient` prop) — the `color5`→`color9` ramp follows the active theme.",
           "hasRender": true,
           "storybookId": "display-pill--gradient-themed"
         },
@@ -3713,11 +3713,11 @@
             },
             "styles": {
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               },
               "removeButton": {
-                "backgroundColor": "$red3"
+                "backgroundColor": "red3"
               }
             }
           },
@@ -3883,10 +3883,10 @@
             "label": "65%",
             "styles": {
               "section": {
-                "backgroundColor": "$red9"
+                "backgroundColor": "red9"
               },
               "label": {
-                "color": "$color1",
+                "color": "color1",
                 "fontWeight": "700"
               }
             }
@@ -4060,11 +4060,11 @@
             "value": 1234,
             "styles": {
               "digitViewport": {
-                "backgroundColor": "$blue3",
-                "borderRadius": "$xs"
+                "backgroundColor": "blue3",
+                "borderRadius": "xs"
               },
               "digitText": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               }
             }
@@ -4224,10 +4224,10 @@
             "labelPosition": "center",
             "styles": {
               "line": {
-                "borderColor": "$blue7"
+                "borderColor": "blue7"
               },
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               }
             }
@@ -4260,7 +4260,7 @@
         "circle": false,
         "animate": true,
         "width": 200,
-        "height": "$xs"
+        "height": "xs"
       },
       "argTypes": {
         "visible": {
@@ -4339,7 +4339,7 @@
           "args": {
             "animate": false,
             "width": 200,
-            "height": "$xs"
+            "height": "xs"
           },
           "storybookId": "display-skeleton--no-animation"
         },
@@ -4505,7 +4505,7 @@
         },
         "radius": {
           "control": "text",
-          "description": "Theme radius token (e.g. `$sm`) or any CSS value."
+          "description": "Theme radius token (e.g. `sm`) or any CSS value."
         },
         "shadow": {
           "control": "select",
@@ -4608,7 +4608,7 @@
           "description": "Rounded corners via the `radius` prop.",
           "hasRender": false,
           "args": {
-            "radius": "$xl",
+            "radius": "xl",
             "title": "Rounded",
             "children": "Extra-large corner radius."
           },
@@ -4628,7 +4628,7 @@
         },
         {
           "name": "Gradient",
-          "description": "The `gradient` variant fills the panel with a linear gradient. With no `gradient` prop it follows the theme ramp; otherwise it accepts a two-color shorthand, `$colorN` tokens, or a multi-step `stops` list. Text renders white.",
+          "description": "The `gradient` variant fills the panel with a linear gradient. With no `gradient` prop it follows the theme ramp; otherwise it accepts a two-color shorthand, `colorN` names, or a multi-step `stops` list. Text renders white.",
           "hasRender": true,
           "storybookId": "feedback-alert--gradient"
         },
@@ -4665,11 +4665,11 @@
             "children": "The title and message are styled independently.",
             "styles": {
               "title": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               },
               "message": {
-                "color": "$blue11"
+                "color": "blue11"
               }
             }
           },
@@ -4800,7 +4800,7 @@
             "visible": true,
             "styles": {
               "overlay": {
-                "backgroundColor": "$blue3",
+                "backgroundColor": "blue3",
                 "backgroundOpacity": 0.8
               },
               "loader": {
@@ -4965,7 +4965,7 @@
         },
         {
           "name": "WithBorder",
-          "description": "withBorder adds a subtle $color7 border around the tile.",
+          "description": "withBorder adds a subtle color7 border around the tile.",
           "hasRender": false,
           "args": {
             "title": "Bordered tile",
@@ -5004,13 +5004,13 @@
             },
             "styles": {
               "icon": {
-                "backgroundColor": "$blue9"
+                "backgroundColor": "blue9"
               },
               "title": {
-                "color": "$red9"
+                "color": "red9"
               },
               "message": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               }
             }
@@ -5204,10 +5204,10 @@
             "children": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
             "styles": {
               "region": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "control": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -5275,7 +5275,7 @@
         },
         "radius": {
           "control": "text",
-          "description": "Theme radius token (e.g. `$sm`) or any CSS value."
+          "description": "Theme radius token (e.g. `sm`) or any CSS value."
         },
         "gradient": {
           "control": "object",
@@ -5394,7 +5394,7 @@
         },
         {
           "name": "Gradient",
-          "description": "`variant=\"gradient\"` fills the square with a linear gradient. With no `gradient` prop it falls back to the theme ramp; otherwise pass a two-color shorthand, `$colorN` tokens, or a multi-step `stops` array. The icon auto-colors white on the gradient.",
+          "description": "`variant=\"gradient\"` fills the square with a linear gradient. With no `gradient` prop it falls back to the theme ramp; otherwise pass a two-color shorthand, `colorN` ramp names, or a multi-step `stops` array. The icon auto-colors white on the gradient.",
           "hasRender": true,
           "storybookId": "inputs-action-icon--gradient"
         },
@@ -5457,7 +5457,7 @@
             "xl",
             "xxl"
           ],
-          "description": "Diameter token from the $size scale. Numeric px values are also supported."
+          "description": "Diameter key from the `size` token scale. Numeric px values are also supported."
         },
         "step": {
           "control": {
@@ -5628,7 +5628,7 @@
             "size": 80,
             "defaultValue": 90,
             "formatLabel": {
-              "$fn": "(v) => (\n      <Text fontSize=\"$xs\" fontWeight=\"700\">\n        {v}°\n      </Text>\n    )"
+              "$fn": "(v) => (\n      <Text fontSize=\"xs\" fontWeight=\"700\">\n        {v}°\n      </Text>\n    )"
             }
           },
           "storybookId": "inputs-angle-slider--custom-label"
@@ -5658,13 +5658,13 @@
             "defaultValue": 45,
             "styles": {
               "frame": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "thumbKnob": {
-                "backgroundColor": "$red9"
+                "backgroundColor": "red9"
               },
               "label": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               }
             }
@@ -5910,7 +5910,7 @@
           "hasRender": false,
           "args": {
             "renderOption": {
-              "$fn": "({ option }) => (\n      <Box flexDirection=\"row\" gap=\"$sm\" alignItems=\"center\">\n        <Text>⭐</Text>\n        <Text>{option.label}</Text>\n      </Box>\n    )"
+              "$fn": "({ option }) => (\n      <Box flexDirection=\"row\" gap=\"sm\" alignItems=\"center\">\n        <Text>⭐</Text>\n        <Text>{option.label}</Text>\n      </Box>\n    )"
             },
             "placeholder": "Pick a starred framework…",
             "nothingFoundMessage": "Nothing here"
@@ -5926,11 +5926,11 @@
             "defaultValue": "React",
             "styles": {
               "trigger": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "dropdown": {
-                "backgroundColor": "$blue2",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue2",
+                "borderColor": "blue7",
                 "borderWidth": 2
               }
             }
@@ -6189,11 +6189,11 @@
             },
             "styles": {
               "label": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               },
               "right": {
-                "backgroundColor": "$red3"
+                "backgroundColor": "red3"
               }
             }
           },
@@ -6397,12 +6397,12 @@
             "defaultChecked": true,
             "styles": {
               "box": {
-                "backgroundColor": "$blue9",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue9",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "label": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -6583,15 +6583,15 @@
             "defaultChecked": true,
             "styles": {
               "root": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               },
               "icon": {
-                "color": "$blue9"
+                "color": "blue9"
               }
             }
           },
@@ -6757,7 +6757,7 @@
         },
         {
           "name": "GradientThemed",
-          "description": "Themed gradient (no `gradient` prop) — the `$color5`→`$color9` ramp follows the active theme.",
+          "description": "Themed gradient (no `gradient` prop) — the `color5`→`color9` ramp follows the active theme.",
           "hasRender": true,
           "storybookId": "inputs-close-button--gradient-themed"
         },
@@ -6776,7 +6776,7 @@
             "size": "md",
             "styles": {
               "icon": {
-                "color": "$red9"
+                "color": "red9"
               }
             }
           },
@@ -7037,11 +7037,11 @@
             "placeholder": "Pick a color",
             "styles": {
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               },
               "preview": {
-                "radius": "$lg",
+                "radius": "lg",
                 "withShadow": false
               }
             }
@@ -7246,13 +7246,13 @@
             "size": "md",
             "styles": {
               "saturation": {
-                "borderRadius": "$lg"
+                "borderRadius": "lg"
               },
               "hueSlider": {
-                "borderRadius": "$sm"
+                "borderRadius": "sm"
               },
               "thumb": {
-                "borderColor": "$red9",
+                "borderColor": "red9",
                 "borderWidth": 3
               }
             }
@@ -7672,7 +7672,7 @@
             "legend": "Disabled group",
             "disabled": true,
             "children": {
-              "$expr": "<Box gap=\"$sm\">\n        <Text>These controls are all disabled</Text>\n        <Text>They cannot be interacted with</Text>\n      </Box>"
+              "$expr": "<Box gap=\"sm\">\n        <Text>These controls are all disabled</Text>\n        <Text>They cannot be interacted with</Text>\n      </Box>"
             }
           },
           "storybookId": "inputs-fieldset--disabled"
@@ -7724,7 +7724,7 @@
           "args": {
             "legend": "Billing information",
             "children": {
-              "$expr": "<Box gap=\"$md\">\n        <Fieldset legend=\"Card details\" variant=\"filled\">\n          <Text>Card number, expiry, CVV</Text>\n        </Fieldset>\n        <Fieldset legend=\"Billing address\" variant=\"filled\">\n          <Text>Street, city, postcode</Text>\n        </Fieldset>\n      </Box>"
+              "$expr": "<Box gap=\"md\">\n        <Fieldset legend=\"Card details\" variant=\"filled\">\n          <Text>Card number, expiry, CVV</Text>\n        </Fieldset>\n        <Fieldset legend=\"Billing address\" variant=\"filled\">\n          <Text>Street, city, postcode</Text>\n        </Fieldset>\n      </Box>"
             }
           },
           "storybookId": "inputs-fieldset--nested"
@@ -7740,12 +7740,12 @@
             },
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "legend": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -8063,7 +8063,7 @@
             "placeholder": "Pick any file",
             "clearable": true,
             "valueComponent": {
-              "$fn": "({ value }: { value: FileInputValue }) => {\n      if (!value) return null;\n      const files = Array.isArray(value) ? value : [value];\n      return (\n        <Box flexDirection=\"row\" gap=\"$xs\" alignItems=\"center\">\n          <Text>📄</Text>\n          <Text>{files.map((f) => f.name).join(\", \")}</Text>\n          <Text opacity={0.5}>\n            ({files.length} file{files.length !== 1 ? \"s\" : \"\"})\n          </Text>\n        </Box>\n      );\n    }"
+              "$fn": "({ value }: { value: FileInputValue }) => {\n      if (!value) return null;\n      const files = Array.isArray(value) ? value : [value];\n      return (\n        <Box flexDirection=\"row\" gap=\"xs\" alignItems=\"center\">\n          <Text>📄</Text>\n          <Text>{files.map((f) => f.name).join(\", \")}</Text>\n          <Text opacity={0.5}>\n            ({files.length} file{files.length !== 1 ? \"s\" : \"\"})\n          </Text>\n        </Box>\n      );\n    }"
             }
           },
           "storybookId": "inputs-file-input--custom-value-component"
@@ -8083,16 +8083,16 @@
             "placeholder": "Pick a file",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "label": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               },
               "placeholder": {
-                "color": "$blue9"
+                "color": "blue9"
               }
             }
           },
@@ -8153,7 +8153,7 @@
         },
         "radius": {
           "control": "text",
-          "description": "Theme radius token (e.g. `$sm`) or any CSS value."
+          "description": "Theme radius token (e.g. `sm`) or any CSS value."
         },
         "disabled": {
           "control": "boolean"
@@ -8259,7 +8259,7 @@
           "hasRender": false,
           "args": {
             "error": true,
-            "value": "invalid@",
+            "defaultValue": "invalid@",
             "placeholder": "email"
           },
           "storybookId": "inputs-input--error"
@@ -8674,12 +8674,12 @@
             "alwaysShowMask": true,
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "label": {
-                "color": "$blue11"
+                "color": "blue11"
               }
             }
           },
@@ -8965,7 +8965,7 @@
           "args": {
             "label": "Custom options",
             "renderOption": {
-              "$fn": "({ option }) => (\n      <Box flexDirection=\"row\" gap=\"$sm\" alignItems=\"center\">\n        <Text>⭐</Text>\n        <Text>{option.label}</Text>\n      </Box>\n    )"
+              "$fn": "({ option }) => (\n      <Box flexDirection=\"row\" gap=\"sm\" alignItems=\"center\">\n        <Text>⭐</Text>\n        <Text>{option.label}</Text>\n      </Box>\n    )"
             }
           },
           "storybookId": "inputs-multi-select--custom-render-option"
@@ -9396,14 +9396,14 @@
             "defaultValue": 5,
             "styles": {
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               },
               "increment": {
-                "backgroundColor": "$green3"
+                "backgroundColor": "blue3"
               },
               "decrement": {
-                "backgroundColor": "$red3"
+                "backgroundColor": "red3"
               }
             }
           },
@@ -9557,7 +9557,7 @@
           "args": {
             "label": "Password",
             "error": "Password must be at least 8 characters.",
-            "value": "abc"
+            "defaultValue": "abc"
           },
           "storybookId": "inputs-password-input--with-error"
         },
@@ -9599,7 +9599,7 @@
             "placeholder": "Enter password…",
             "styles": {
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               },
               "visibilityToggle": {
@@ -9948,8 +9948,8 @@
             "styles": {
               "field": {
                 "wrapperProps": {
-                  "backgroundColor": "$blue3",
-                  "borderColor": "$blue7",
+                  "backgroundColor": "blue3",
+                  "borderColor": "blue7",
                   "borderWidth": 2
                 }
               }
@@ -10151,11 +10151,11 @@
             "defaultChecked": true,
             "styles": {
               "circle": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               }
             }
@@ -10401,12 +10401,12 @@
             "defaultValue": 3,
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "padding": "$xs",
-                "borderRadius": "$sm"
+                "backgroundColor": "blue3",
+                "padding": "xs",
+                "borderRadius": "sm"
               },
               "symbol": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 1
               }
             }
@@ -10646,10 +10646,10 @@
             "defaultValue": "React",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "label": {
-                "color": "$blue9",
+                "color": "blue9",
                 "fontWeight": "700"
               }
             }
@@ -10946,11 +10946,11 @@
             "placeholder": "Pick a fruit",
             "styles": {
               "trigger": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7"
+                "backgroundColor": "blue3",
+                "borderColor": "blue7"
               },
               "dropdown": {
-                "backgroundColor": "$blue2"
+                "backgroundColor": "blue2"
               }
             }
           },
@@ -10970,7 +10970,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "Slider captures a single numeric value within a range by dragging a thumb. Accent comes from the theme ramp (`$color9`); recolor via the `theme` prop. `RangeSlider` is also exported for two-thumb ranges.",
+      "description": "Slider captures a single numeric value within a range by dragging a thumb. Accent comes from the theme ramp; recolor via the `theme` prop. `RangeSlider` is also exported for two-thumb ranges.",
       "importPath": "@knitui/components/src/Slider/Slider.stories",
       "sourcePath": "packages/components/src/Slider/Slider.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Slider/Slider.stories.tsx",
@@ -11169,13 +11169,13 @@
             "defaultValue": 50,
             "styles": {
               "track": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "bar": {
-                "backgroundColor": "$red9"
+                "backgroundColor": "red9"
               },
               "thumb": {
-                "borderColor": "$red9",
+                "borderColor": "red9",
                 "borderWidth": 3
               }
             }
@@ -11357,13 +11357,13 @@
             "defaultChecked": true,
             "styles": {
               "track": {
-                "backgroundColor": "$blue7"
+                "backgroundColor": "blue7"
               },
               "thumb": {
-                "backgroundColor": "$red9"
+                "backgroundColor": "red9"
               },
               "label": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -11573,10 +11573,10 @@
             "placeholder": "Add tag…",
             "styles": {
               "pill": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "trigger": {
-                "borderColor": "$blue7"
+                "borderColor": "blue7"
               }
             }
           },
@@ -12198,7 +12198,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "`Affix` pins its children to a fixed position on the viewport (or nearest filling ancestor on React Native). Pass a `position` object with `top`, `right`, `bottom`, and/or `left` offsets — `$`-space tokens (`'$md'`) or raw numbers are accepted. By default the layer renders through a `Portal` so it escapes `overflow:hidden` / transformed ancestors.",
+      "description": "`Affix` pins its children to a fixed position on the viewport (or nearest filling ancestor on React Native). Pass a `position` object with `top`, `right`, `bottom`, and/or `left` offsets — `$`-space tokens (`'md'`) or raw numbers are accepted. By default the layer renders through a `Portal` so it escapes `overflow:hidden` / transformed ancestors.",
       "importPath": "@knitui/components/src/Affix/Affix.stories",
       "sourcePath": "packages/components/src/Affix/Affix.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Affix/Affix.stories.tsx",
@@ -12224,7 +12224,7 @@
         },
         "position": {
           "control": "object",
-          "description": "Edge offsets — top, right, bottom, left. Accepts `$`-space tokens ('$md') or raw numbers."
+          "description": "Edge offsets — top, right, bottom, left. Accepts space tokens ('md') or raw numbers."
         },
         "shadow": {
           "control": "select",
@@ -12246,7 +12246,7 @@
           "hasRender": false,
           "args": {
             "children": {
-              "$expr": "<Box\n        backgroundColor=\"$color8\"\n        paddingHorizontal=\"$md\"\n        paddingVertical=\"$sm\"\n        borderRadius=\"$md\"\n      >\n        <Text color=\"white\">Pinned content</Text>\n      </Box>"
+              "$expr": "<Box backgroundColor=\"color8\" paddingHorizontal=\"md\" paddingVertical=\"sm\" borderRadius=\"md\">\n        <Text color=\"white\">Pinned content</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-affix--playground"
@@ -12257,11 +12257,11 @@
           "hasRender": false,
           "args": {
             "position": {
-              "bottom": "$lg",
-              "right": "$lg"
+              "bottom": "lg",
+              "right": "lg"
             },
             "children": {
-              "$expr": "<Box\n        backgroundColor=\"$color8\"\n        paddingHorizontal=\"$md\"\n        paddingVertical=\"$sm\"\n        borderRadius=\"$md\"\n      >\n        <Text color=\"white\">Bottom right</Text>\n      </Box>"
+              "$expr": "<Box backgroundColor=\"color8\" paddingHorizontal=\"md\" paddingVertical=\"sm\" borderRadius=\"md\">\n        <Text color=\"white\">Bottom right</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-affix--bottom-right"
@@ -12272,11 +12272,11 @@
           "hasRender": false,
           "args": {
             "position": {
-              "top": "$md",
-              "left": "$md"
+              "top": "md",
+              "left": "md"
             },
             "children": {
-              "$expr": "<Box\n        backgroundColor=\"$color8\"\n        paddingHorizontal=\"$md\"\n        paddingVertical=\"$sm\"\n        borderRadius=\"$md\"\n      >\n        <Text color=\"white\">Top left</Text>\n      </Box>"
+              "$expr": "<Box backgroundColor=\"color8\" paddingHorizontal=\"md\" paddingVertical=\"sm\" borderRadius=\"md\">\n        <Text color=\"white\">Top left</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-affix--top-left"
@@ -12287,11 +12287,11 @@
           "hasRender": false,
           "args": {
             "position": {
-              "bottom": "$md",
-              "right": "$md"
+              "bottom": "md",
+              "right": "md"
             },
             "children": {
-              "$expr": "<Box\n        backgroundColor=\"$color9\"\n        paddingHorizontal=\"$lg\"\n        paddingVertical=\"$md\"\n        borderRadius=\"$lg\"\n      >\n        <Text color=\"white\">Token offsets (md)</Text>\n      </Box>"
+              "$expr": "<Box backgroundColor=\"color9\" paddingHorizontal=\"lg\" paddingVertical=\"md\" borderRadius=\"lg\">\n        <Text color=\"white\">Token offsets (md)</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-affix--token-offsets"
@@ -12303,11 +12303,11 @@
           "args": {
             "withinPortal": false,
             "position": {
-              "bottom": "$md",
-              "right": "$md"
+              "bottom": "md",
+              "right": "md"
             },
             "children": {
-              "$expr": "<Box\n        backgroundColor=\"$color7\"\n        paddingHorizontal=\"$md\"\n        paddingVertical=\"$sm\"\n        borderRadius=\"$md\"\n      >\n        <Text color=\"white\">No portal</Text>\n      </Box>"
+              "$expr": "<Box backgroundColor=\"color7\" paddingHorizontal=\"md\" paddingVertical=\"sm\" borderRadius=\"md\">\n        <Text color=\"white\">No portal</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-affix--without-portal"
@@ -12372,7 +12372,7 @@
           "hasRender": false,
           "args": {
             "children": {
-              "$expr": "<Box flex={1} backgroundColor=\"$color5\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>16 / 9</Text>\n      </Box>"
+              "$expr": "<Box flex={1} backgroundColor=\"color5\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>16 / 9</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-aspect-ratio--playground"
@@ -12384,7 +12384,7 @@
           "args": {
             "ratio": 1,
             "children": {
-              "$expr": "<Box flex={1} backgroundColor=\"$color5\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>1 : 1</Text>\n      </Box>"
+              "$expr": "<Box flex={1} backgroundColor=\"color5\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>1 : 1</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-aspect-ratio--square"
@@ -12396,7 +12396,7 @@
           "args": {
             "ratio": 1.7777777777777777,
             "children": {
-              "$expr": "<Box flex={1} backgroundColor=\"$color6\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>16 : 9</Text>\n      </Box>"
+              "$expr": "<Box flex={1} backgroundColor=\"color6\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>16 : 9</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-aspect-ratio--widescreen"
@@ -12408,7 +12408,7 @@
           "args": {
             "ratio": 0.5625,
             "children": {
-              "$expr": "<Box flex={1} backgroundColor=\"$color7\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>9 : 16</Text>\n      </Box>"
+              "$expr": "<Box flex={1} backgroundColor=\"color7\" alignItems=\"center\" justifyContent=\"center\">\n        <Text>9 : 16</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-aspect-ratio--portrait"
@@ -12432,7 +12432,7 @@
           "args": {
             "ratio": 1.7777777777777777,
             "children": {
-              "$expr": "<Box\n        width={640}\n        height={640}\n        backgroundColor=\"$color8\"\n        alignItems=\"center\"\n        justifyContent=\"center\"\n      >\n        <Text>⭐ Oversized content — clipped by AspectRatio</Text>\n      </Box>"
+              "$expr": "<Box\n        width={640}\n        height={640}\n        backgroundColor=\"color8\"\n        alignItems=\"center\"\n        justifyContent=\"center\"\n      >\n        <Text>⭐ Oversized content — clipped by AspectRatio</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-aspect-ratio--overflow-clipped"
@@ -12444,7 +12444,7 @@
           "args": {
             "ratio": 1.7777777777777777,
             "children": {
-              "$expr": "<Box flex={1} backgroundColor=\"$color4\" alignItems=\"center\" justifyContent=\"center\" gap=\"$sm\">\n        <Text fontSize={32}>🖼</Text>\n        <Text>Image placeholder</Text>\n      </Box>"
+              "$expr": "<Box flex={1} backgroundColor=\"color4\" alignItems=\"center\" justifyContent=\"center\" gap=\"sm\">\n        <Text fontSize={32}>🖼</Text>\n        <Text>Image placeholder</Text>\n      </Box>"
             }
           },
           "storybookId": "layout-aspect-ratio--with-image-placeholder"
@@ -12471,18 +12471,18 @@
       "componentPath": "packages/components/src/Box/Box.tsx",
       "testPath": "packages/components/src/Box/Box.test.tsx",
       "args": {
-        "padding": "$md",
-        "backgroundColor": "$background"
+        "padding": "md",
+        "backgroundColor": "background"
       },
       "argTypes": {
         "padding": {
           "control": "select",
           "options": [
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Inner spacing — maps to a Tamagui space token."
         },
@@ -12490,11 +12490,11 @@
           "control": "select",
           "options": [
             null,
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Outer spacing — maps to a Tamagui space token."
         },
@@ -12506,13 +12506,13 @@
           "control": "select",
           "options": [
             null,
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
           "description": "Border radius token from the radius scale."
         },
@@ -12557,7 +12557,7 @@
         },
         {
           "name": "SpacingTokens",
-          "description": "Spacing tokens applied as padding and margin — $xs through $xl.",
+          "description": "Spacing tokens applied as padding and margin — xs through xl.",
           "hasRender": true,
           "storybookId": "layout-box--spacing-tokens"
         },
@@ -12627,10 +12627,10 @@
             "children": {
               "$expr": "<Text>Center</Text>"
             },
-            "width": "$xxl",
-            "height": "$xxl",
-            "backgroundColor": "$color3",
-            "borderRadius": "$md"
+            "width": "xxl",
+            "height": "xxl",
+            "backgroundColor": "color3",
+            "borderRadius": "md"
           },
           "storybookId": "layout-center--playground"
         },
@@ -12777,7 +12777,7 @@
         "align": "flex-start",
         "justify": "flex-start",
         "wrap": "nowrap",
-        "gap": "$md"
+        "gap": "md"
       },
       "argTypes": {
         "direction": {
@@ -12825,11 +12825,11 @@
         "gap": {
           "control": "select",
           "options": [
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Gap between flex items (Tamagui token)."
         },
@@ -12837,11 +12837,11 @@
           "control": "select",
           "options": [
             null,
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Row gap override when items wrap."
         },
@@ -12849,11 +12849,11 @@
           "control": "select",
           "options": [
             null,
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Column gap override."
         }
@@ -12951,7 +12951,7 @@
             "xl",
             "xxl"
           ],
-          "description": "Space between columns — a space key (xxs–xxl), `$space` token, or px number."
+          "description": "Space between columns — a space token (xxs–xxl) or a px number."
         },
         "grow": {
           "control": "boolean",
@@ -13057,7 +13057,7 @@
       "componentPath": "packages/components/src/Group/Group.tsx",
       "testPath": "packages/components/src/Group/Group.test.tsx",
       "args": {
-        "gap": "$md",
+        "gap": "md",
         "align": "center",
         "justify": "flex-start",
         "wrap": "wrap",
@@ -13068,11 +13068,11 @@
         "gap": {
           "control": "select",
           "options": [
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Space between children — a Tamagui spacing token."
         },
@@ -13156,7 +13156,7 @@
         },
         {
           "name": "GapSizes",
-          "description": "Different gap sizes — from tight `$xs` to spacious `$xl`.",
+          "description": "Different gap sizes — from tight `xs` to spacious `xl`.",
           "hasRender": true,
           "storybookId": "layout-group--gap-sizes"
         }
@@ -13297,7 +13297,7 @@
       "args": {
         "radius": "md",
         "withBorder": false,
-        "padding": "$md"
+        "padding": "md"
       },
       "argTypes": {
         "shadow": {
@@ -13325,7 +13325,7 @@
         },
         "withBorder": {
           "control": "boolean",
-          "description": "When true, renders a 1 px border using the $borderColor token."
+          "description": "When true, renders a 1 px border using the `borderColor` theme key."
         }
       },
       "stories": [
@@ -13337,7 +13337,7 @@
             "children": {
               "$expr": "<Text>Paper surface</Text>"
             },
-            "padding": "$lg",
+            "padding": "lg",
             "width": 280
           },
           "storybookId": "layout-paper--playground"
@@ -13356,11 +13356,11 @@
         },
         {
           "name": "WithBorder",
-          "description": "Border variant — a 1 px outline using the active theme's $borderColor token.",
+          "description": "Border variant — a 1 px outline using the active theme's `borderColor` theme key.",
           "hasRender": false,
           "args": {
             "withBorder": true,
-            "padding": "$lg",
+            "padding": "lg",
             "width": 280,
             "children": {
               "$expr": "<Text>Bordered surface</Text>"
@@ -13375,7 +13375,7 @@
           "args": {
             "shadow": "md",
             "withBorder": true,
-            "padding": "$lg",
+            "padding": "lg",
             "width": 280,
             "children": {
               "$expr": "<Text>Shadow + border</Text>"
@@ -13391,10 +13391,10 @@
             "shadow": "sm",
             "withBorder": true,
             "radius": "md",
-            "padding": "$lg",
+            "padding": "lg",
             "width": 320,
             "children": {
-              "$expr": "<Box gap=\"$sm\">\n        <Text fontWeight=\"700\" fontSize=\"$md\">\n          Card title\n        </Text>\n        <Text fontSize=\"$sm\" color=\"$colorSubtitle\">\n          This is a short description rendered inside a Paper surface acting as a card.\n        </Text>\n      </Box>"
+              "$expr": "<Box gap=\"sm\">\n        <Text fontWeight=\"700\" fontSize=\"md\">\n          Card title\n        </Text>\n        <Text fontSize=\"sm\" color=\"color11\">\n          This is a short description rendered inside a Paper surface acting as a card.\n        </Text>\n      </Box>"
             }
           },
           "storybookId": "layout-paper--card-layout"
@@ -13451,7 +13451,7 @@
             "xl",
             "xxl"
           ],
-          "description": "Gap between columns — space key, `$space` token, or raw px number."
+          "description": "Gap between columns — a space token (xxs–xxl) or a raw px number."
         },
         "verticalSpacing": {
           "control": "inline-radio",
@@ -13548,8 +13548,8 @@
             "cols": 3,
             "styles": {
               "cell": {
-                "backgroundColor": "$blue3",
-                "borderRadius": "$sm"
+                "backgroundColor": "blue3",
+                "borderRadius": "sm"
               }
             }
           },
@@ -13577,47 +13577,47 @@
       "componentPath": "packages/components/src/Spacer/Spacer.tsx",
       "testPath": "packages/components/src/Spacer/Spacer.test.tsx",
       "args": {
-        "w": "$md",
-        "h": "$md"
+        "w": "md",
+        "h": "md"
       },
       "argTypes": {
         "w": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
-          "description": "Width of the spacer from the $size scale (also sets `miw` by default)."
+          "description": "Width of the spacer from the `size` token scale (also sets `miw` by default)."
         },
         "h": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
-          "description": "Height of the spacer from the $size scale (also sets `mih` by default)."
+          "description": "Height of the spacer from the `size` token scale (also sets `mih` by default)."
         },
         "miw": {
           "control": "select",
           "options": [
             null,
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
           "description": "Override the minimum width (defaults to `w`)."
         },
@@ -13625,13 +13625,13 @@
           "control": "select",
           "options": [
             null,
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
           "description": "Override the minimum height (defaults to `h`)."
         }
@@ -13657,7 +13657,7 @@
         },
         {
           "name": "SpacerSizes",
-          "description": "Multiple spacer sizes using Tamagui $size tokens — shows how spacing scales across a row.",
+          "description": "Multiple spacer sizes using `size` tokens — shows how spacing scales across a row.",
           "hasRender": true,
           "storybookId": "layout-spacer--spacer-sizes"
         },
@@ -13695,7 +13695,7 @@
       "componentPath": "packages/components/src/Stack/Stack.tsx",
       "testPath": "packages/components/src/Stack/Stack.test.tsx",
       "args": {
-        "gap": "$md",
+        "gap": "md",
         "align": "stretch",
         "justify": "flex-start"
       },
@@ -13703,13 +13703,13 @@
         "gap": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
           "description": "Spacing between children — a Tamagui space token."
         },
@@ -13956,7 +13956,7 @@
       "args": {
         "aria-label": "Breadcrumb",
         "separator": "/",
-        "separatorMargin": "$xs"
+        "separatorMargin": "xs"
       },
       "argTypes": {
         "aria-label": {
@@ -14010,7 +14010,7 @@
           "description": "Wider spacing around each separator via a larger token.",
           "hasRender": true,
           "args": {
-            "separatorMargin": "$lg"
+            "separatorMargin": "lg"
           },
           "storybookId": "navigation-breadcrumbs--large-separator-margin"
         },
@@ -14054,11 +14054,11 @@
           "args": {
             "styles": {
               "label": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               },
               "separator": {
-                "color": "$red9"
+                "color": "red9"
               }
             }
           },
@@ -14222,10 +14222,10 @@
             },
             "styles": {
               "line": {
-                "backgroundColor": "$red9"
+                "backgroundColor": "red9"
               },
               "text": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               }
             }
@@ -14374,16 +14374,16 @@
             "description": "Manage your account and preferences",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "label": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               },
               "description": {
-                "color": "$blue11"
+                "color": "blue11"
               }
             }
           },
@@ -14621,14 +14621,14 @@
             "withEdges": true,
             "styles": {
               "item": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "control": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "dots": {
-                "backgroundColor": "$yellow3"
+                "backgroundColor": "red3"
               }
             }
           },
@@ -15140,15 +15140,15 @@
             "active": 1,
             "styles": {
               "bubble": {
-                "borderColor": "$red9",
+                "borderColor": "red9",
                 "borderWidth": 3
               },
               "label": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               },
               "connector": {
-                "backgroundColor": "$blue7"
+                "backgroundColor": "blue7"
               }
             }
           },
@@ -15209,7 +15209,7 @@
         "variant": "light",
         "size": "md",
         "defaultActive": 0,
-        "depthOffset": "$lg",
+        "depthOffset": "lg",
         "minDepthToOffset": 1
       },
       "argTypes": {
@@ -15246,13 +15246,13 @@
         "depthOffset": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl"
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl"
           ],
           "description": "Left-padding added per depth level."
         },
@@ -15339,7 +15339,7 @@
                 "depth": 2
               }
             ],
-            "depthOffset": "$xl",
+            "depthOffset": "xl",
             "minDepthToOffset": 1,
             "defaultActive": 2,
             "width": 280
@@ -15412,7 +15412,7 @@
             "defaultActive": 1,
             "width": 260,
             "getControlProps": {
-              "$fn": "({ data: item }) => ({\n      children: (\n        <Text size=\"sm\" color=\"$color11\">\n          <Text>⭐ </Text>\n          {item.value}\n        </Text>\n      ),\n    })"
+              "$fn": "({ data: item }) => ({\n      children: (\n        <Text size=\"sm\" color=\"color11\">\n          <Text>⭐ </Text>\n          {item.value}\n        </Text>\n      ),\n    })"
             }
           },
           "storybookId": "navigation-table-of-contents--custom-control-props"
@@ -15462,11 +15462,11 @@
             "width": 260,
             "styles": {
               "control": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "text": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -15659,14 +15659,14 @@
           "args": {
             "styles": {
               "tab": {
-                "backgroundColor": "$blue3"
+                "backgroundColor": "blue3"
               },
               "label": {
-                "color": "$red9",
+                "color": "red9",
                 "fontWeight": "700"
               },
               "panel": {
-                "backgroundColor": "$blue2"
+                "backgroundColor": "blue2"
               }
             }
           },
@@ -15823,13 +15823,13 @@
             "expanded": true,
             "styles": {
               "root": {
-                "borderColor": "$blue7",
+                "borderColor": "blue7",
                 "borderWidth": 2,
-                "borderRadius": "$md"
+                "borderRadius": "md"
               },
               "content": {
-                "backgroundColor": "$blue3",
-                "padding": "$md"
+                "backgroundColor": "blue3",
+                "padding": "md"
               }
             }
           },
@@ -15872,8 +15872,8 @@
         "withinPortal": false,
         "zIndex": 300,
         "position": {
-          "bottom": "$xl",
-          "right": "$xl"
+          "bottom": "xl",
+          "right": "xl"
         },
         "children": "This is a dialog message."
       },
@@ -15995,19 +15995,19 @@
             "opened": true,
             "withinPortal": false,
             "position": {
-              "bottom": "$xl",
-              "right": "$xl"
+              "bottom": "xl",
+              "right": "xl"
             },
             "styles": {
               "content": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue7",
+                "backgroundColor": "blue3",
+                "borderColor": "blue7",
                 "borderWidth": 2
               },
               "closeButton": {
                 "styles": {
                   "icon": {
-                    "color": "$red9"
+                    "color": "red9"
                   }
                 }
               }
@@ -16089,7 +16089,7 @@
         },
         "offset": {
           "control": "text",
-          "description": "Gap between the panel and the viewport edge. Prefer `$space` tokens."
+          "description": "Gap between the panel and the viewport edge. Prefer space tokens (`md`)."
         },
         "radius": {
           "control": "text"
@@ -16891,7 +16891,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "Configurable, preset-driven animation. `useMotionPreset(name, { transition?, duration? })` resolves a named recipe (or an inline preset, or `false`) into spreadable `{ transition, enterStyle, exitStyle, animateOnly }` props. Spread them onto any frame and wrap it in `AnimatePresence` for enter + exit. Reduced motion is honoured automatically. Presets use cross-platform Tamagui shorthand transforms, so they render identically on web and native.",
+      "description": "Configurable, preset-driven animation. `useMotionPreset(name, { transition?, duration? })` resolves a named recipe (or an inline preset, or `false`) into spreadable v3 props (`{ transition, opacity: 'enter:0 exit:0', y: 'enter:30px exit:30px', … }`). Spread them onto any frame and wrap it in `AnimatePresence` for enter + exit. Reduced motion is honoured automatically. Presets use cross-platform Tamagui shorthand transforms, so they render identically on web and native.",
       "importPath": "@knitui/components/src/Transition/Motion.stories",
       "sourcePath": "packages/components/src/Transition/Motion.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Transition/Motion.stories.tsx",
@@ -16947,7 +16947,7 @@
       "nativePath": "packages/components/src/Popover/Popover.native.tsx",
       "args": {
         "position": "bottom-start",
-        "offset": "$xs",
+        "offset": "xs",
         "withArrow": false,
         "withOverlay": false,
         "trapFocus": false,
@@ -16980,13 +16980,13 @@
         "offset": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl",
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl",
             4,
             8,
             12
@@ -17004,13 +17004,13 @@
         "arrowOffset": {
           "control": "select",
           "options": [
-            "$xxs",
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl",
-            "$xxl",
+            "xxs",
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl",
             4,
             5,
             8
@@ -17629,7 +17629,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "`Typography` is a content-column wrapper that establishes a consistent vertical rhythm between stacked block children via `gap=\"$md\"`. It forwards every `Box` prop and inherits text color from the active theme. Compose the kit's own `Title`, `Paragraph`, `List`, `Anchor`, `Blockquote`, and `Code` components inside it — they already carry their own styling.",
+      "description": "`Typography` is a content-column wrapper that establishes a consistent vertical rhythm between stacked block children via `gap=\"md\"`. It forwards every `Box` prop and inherits text color from the active theme. Compose the kit's own `Title`, `Paragraph`, `List`, `Anchor`, `Blockquote`, and `Code` components inside it — they already carry their own styling.",
       "importPath": "@knitui/components/src/Typography/Typography.stories",
       "sourcePath": "packages/components/src/Typography/Typography.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Typography/Typography.stories.tsx",
@@ -17645,11 +17645,11 @@
         "gap": {
           "control": "select",
           "options": [
-            "$xs",
-            "$sm",
-            "$md",
-            "$lg",
-            "$xl"
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ],
           "description": "Vertical gap between stacked block children."
         },
@@ -17721,7 +17721,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "Anchor is link text built on `Text`. It renders an `<a>` (`role=\"link\"`), inherits the full `Text` surface (`size`, `truncate`, `lineClamp`, `inline`, `inherit`) and adds `underline`, which controls WHEN the underline shows. The default link color is the theme accent ramp (`$color11`); recolor via the `theme` prop, never a `color` prop.",
+      "description": "Anchor is link text built on `Text`. It renders an `<a>` (`role=\"link\"`), inherits the full `Text` surface (`size`, `truncate`, `lineClamp`, `inline`, `inherit`) and adds `underline`, which controls WHEN the underline shows. The default link color is the theme accent ramp (`color11`); recolor via the `theme` prop, never a `color` prop.",
       "importPath": "@knitui/components/src/Anchor/Anchor.stories",
       "sourcePath": "packages/components/src/Anchor/Anchor.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Anchor/Anchor.stories.tsx",
@@ -17890,7 +17890,7 @@
             "xl",
             "xxl"
           ],
-          "description": "Width and height of the icon badge from the `$size` scale. Numbers are also supported."
+          "description": "Width and height of the icon badge from the `size` token scale. Numbers are also supported."
         },
         "theme": {
           "control": "select",
@@ -17985,7 +17985,7 @@
           "args": {
             "children": "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle.",
             "cite": {
-              "$expr": "<Box flexDirection=\"row\" alignItems=\"center\" gap=\"$sm\" marginTop=\"$md\">\n        <Text>⭐</Text>\n        <Text fontSize=\"$sm\" opacity={0.7}>\n          Custom attribution node\n        </Text>\n      </Box>"
+              "$expr": "<Box flexDirection=\"row\" alignItems=\"center\" gap=\"sm\" marginTop=\"md\">\n        <Text>⭐</Text>\n        <Text fontSize=\"sm\" opacity={0.7}>\n          Custom attribution node\n        </Text>\n      </Box>"
             }
           },
           "storybookId": "typography-blockquote--custom-cite-node"
@@ -18005,11 +18005,11 @@
             "cite": "Steve Jobs, Stanford Commencement 2005",
             "styles": {
               "text": {
-                "color": "$blue11",
+                "color": "blue11",
                 "fontWeight": "700"
               },
               "cite": {
-                "color": "$red9"
+                "color": "red9"
               }
             }
           },
@@ -18029,7 +18029,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "Inline or block-level monospace code. Tint comes from the active theme ramp (`$color3` surface, `$color12` text), so the `theme` prop recolors it with no per-component logic. `block` switches from inline `<code>` to a full-width `<pre>`.",
+      "description": "Inline or block-level monospace code. Tint comes from the active theme ramp (`color3` surface, `color12` text), so the `theme` prop recolors it with no per-component logic. `block` switches from inline `<code>` to a full-width `<pre>`.",
       "importPath": "@knitui/components/src/Code/Code.stories",
       "sourcePath": "packages/components/src/Code/Code.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Code/Code.stories.tsx",
@@ -18273,8 +18273,8 @@
             "highlight": "changes",
             "styles": {
               "mark": {
-                "backgroundColor": "$blue3",
-                "color": "$red9",
+                "backgroundColor": "blue3",
+                "color": "red9",
                 "fontWeight": "700"
               }
             }
@@ -18398,7 +18398,7 @@
       "internal": false,
       "render": "stack",
       "graphicsRuntime": false,
-      "description": "Mark renders highlighted inline text — a semantic `<mark>` on web with a tinted fill. The tint comes from the active theme ramp (`$color5` fill, `$color12` text), so the `theme` prop recolors it with no per-component logic. Inherits the full `Text` surface (`size`, `fw`, `truncate`, …).",
+      "description": "Mark renders highlighted inline text — a semantic `<mark>` on web with a tinted fill. The tint comes from the active theme ramp (`color5` fill, `color12` text), so the `theme` prop recolors it with no per-component logic. Inherits the full `Text` surface (`size`, `fw`, `truncate`, …).",
       "importPath": "@knitui/components/src/Mark/Mark.stories",
       "sourcePath": "packages/components/src/Mark/Mark.stories.tsx",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/components/src/Mark/Mark.stories.tsx",
@@ -19228,7 +19228,7 @@
           "args": {
             "defaultDate": "2026-06-15",
             "renderDay": {
-              "$fn": "(date) => {\n      const day = new Date(date).getUTCDay();\n      const isWeekend = day === 0 || day === 6;\n      return (\n        <Box alignItems=\"center\">\n          <Text>{new Date(date).getUTCDate()}</Text>\n          {isWeekend && (\n            <Box width={4} height={4} borderRadius={2} backgroundColor=\"$color9\" marginTop={2} />\n          )}\n        </Box>\n      );\n    }"
+              "$fn": "(date) => {\n      const day = new Date(date).getUTCDay();\n      const isWeekend = day === 0 || day === 6;\n      return (\n        <Box alignItems=\"center\">\n          <Text>{new Date(date).getUTCDate()}</Text>\n          {isWeekend && (\n            <Box width={4} height={4} borderRadius={2} backgroundColor=\"color9\" marginTop={2} />\n          )}\n        </Box>\n      );\n    }"
             }
           },
           "storybookId": "dates-calendar--custom-render-day"
@@ -19249,10 +19249,10 @@
           "hasRender": false,
           "args": {
             "defaultDate": "2026-06-15",
-            "padding": "$md",
+            "padding": "md",
             "borderWidth": 1,
-            "borderColor": "$borderColor",
-            "borderRadius": "$md"
+            "borderColor": "borderColor",
+            "borderRadius": "md"
           },
           "storybookId": "dates-calendar--framed-surface"
         },
@@ -19798,7 +19798,7 @@
         },
         {
           "name": "Range",
-          "description": "A selected range across a week strip: the edges round their outer corners (`firstInRange`/`lastInRange`), the middle is a squared `$color4` tint, and the endpoints are `selected`. Cells sit flush so the tint reads as one band.",
+          "description": "A selected range across a week strip: the edges round their outer corners (`firstInRange`/`lastInRange`), the middle is a squared `color4` tint, and the endpoints are `selected`. Cells sit flush so the tint reads as one band.",
           "hasRender": true,
           "storybookId": "dates-day--range"
         },
@@ -19808,7 +19808,7 @@
           "hasRender": false,
           "args": {
             "renderDay": {
-              "$fn": "(date) => (\n      <Box alignItems=\"center\">\n        <Text>{new Date(date).getUTCDate()}</Text>\n        <Box width={4} height={4} borderRadius={2} backgroundColor=\"$color9\" marginTop={2} />\n      </Box>\n    )"
+              "$fn": "(date) => (\n      <Box alignItems=\"center\">\n        <Text>{new Date(date).getUTCDate()}</Text>\n        <Box width={4} height={4} borderRadius={2} backgroundColor=\"color9\" marginTop={2} />\n      </Box>\n    )"
             }
           },
           "storybookId": "dates-day--custom-render-day"
@@ -20012,6 +20012,76 @@
             }
           },
           "storybookId": "dates-decade-level-group--per-year-props"
+        }
+      ]
+    },
+    {
+      "id": "dates/internal/inline-date-time-picker",
+      "package": "dates",
+      "packageName": "@knitui/dates",
+      "title": "Dates/_Internal/InlineDateTimePicker",
+      "group": "_Internal",
+      "name": "InlineDateTimePicker",
+      "componentName": "InlineDateTimePicker",
+      "route": "/docs/dates/internal/inline-date-time-picker",
+      "internal": true,
+      "render": "stack",
+      "graphicsRuntime": false,
+      "description": "`InlineDateTimePicker` is the always-open body of `DateTimePicker`: a `DatePicker` plus one (or, with `type=\"range\"`, two) `TimePicker`s and a submit button, with no popover. Picking a day assigns the current time (or `defaultTimeValue`) and focuses the hours segment; editing the time re-assigns it onto the selected date. The time row only shows on the month level. Values round-trip as `YYYY-MM-DD HH:mm:ss` strings.",
+      "importPath": "@knitui/dates/src/InlineDateTimePicker/InlineDateTimePicker.stories",
+      "sourcePath": "packages/dates/src/InlineDateTimePicker/InlineDateTimePicker.stories.tsx",
+      "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/dates/src/InlineDateTimePicker/InlineDateTimePicker.stories.tsx",
+      "storybookUrl": "https://the-haus.github.io/knitui/dates/?path=/docs/dates-internal-inline-date-time-picker",
+      "componentPath": "packages/dates/src/InlineDateTimePicker/InlineDateTimePicker.tsx",
+      "testPath": "packages/dates/src/InlineDateTimePicker/InlineDateTimePicker.test.tsx",
+      "stories": [
+        {
+          "name": "Default",
+          "description": "Single date + time, controlled.",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--default"
+        },
+        {
+          "name": "WithSeconds",
+          "description": "Seconds segment in the time row.",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--with-seconds"
+        },
+        {
+          "name": "DefaultTimeValue",
+          "description": "A newly picked day starts at 09:00 instead of midnight.",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--default-time-value"
+        },
+        {
+          "name": "Range",
+          "description": "`type=\"range\"` — a start and an end time plus the formatted range summary.",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--range"
+        },
+        {
+          "name": "MinMax",
+          "description": "Bounds: days outside `[minDate, maxDate]` are disabled; the time row clamps on those days.",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--min-max"
+        },
+        {
+          "name": "Submit",
+          "description": "`onSubmit` fires from the check button (and Enter in a time input via the wrapper).",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--submit"
+        },
+        {
+          "name": "Themed",
+          "description": "Accent from the active theme.",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--themed"
+        },
+        {
+          "name": "Styles",
+          "description": "Per-slot `styles` sugar over the wrapper parts (explicit `*Props` still win).",
+          "hasRender": true,
+          "storybookId": "dates-internal-inline-date-time-picker--styles"
         }
       ]
     },
@@ -20796,7 +20866,7 @@
         },
         {
           "name": "Range",
-          "description": "A selected range across a month strip: the edges round their outer corners (`firstInRange`/`lastInRange`), the middle is a squared `$color4` tint, and the endpoints are `selected`. Cells sit flush so the tint reads as one band.",
+          "description": "A selected range across a month strip: the edges round their outer corners (`firstInRange`/`lastInRange`), the middle is a squared `color4` tint, and the endpoints are `selected`. Cells sit flush so the tint reads as one band.",
           "hasRender": true,
           "storybookId": "dates-picker-control--range"
         },
@@ -20806,7 +20876,7 @@
           "hasRender": false,
           "args": {
             "children": {
-              "$expr": "<Box alignItems=\"center\">\n        <Text>2026</Text>\n        <Box width={4} height={4} borderRadius={2} backgroundColor=\"$color9\" marginTop={2} />\n      </Box>"
+              "$expr": "<Box alignItems=\"center\">\n        <Text>2026</Text>\n        <Box width={4} height={4} borderRadius={2} backgroundColor=\"color9\" marginTop={2} />\n      </Box>"
             }
           },
           "storybookId": "dates-picker-control--custom-content"
@@ -24502,7 +24572,7 @@
           "hasRender": false,
           "args": {
             "controls": {
-              "$expr": "<Group justify=\"space-between\" align=\"center\" width=\"100%\">\n        <Group gap=\"$xs\" align=\"center\" wrap=\"nowrap\">\n          <Audio.PlayPause />\n          <Audio.Time />\n        </Group>\n        <Group gap=\"$xs\" align=\"center\" wrap=\"nowrap\">\n          <Audio.Mute />\n          <Audio.PlaybackRate />\n        </Group>\n      </Group>"
+              "$expr": "<Group justify=\"space-between\" align=\"center\" width=\"100%\">\n        <Group gap=\"xs\" align=\"center\" wrap=\"nowrap\">\n          <Audio.PlayPause />\n          <Audio.Time />\n        </Group>\n        <Group gap=\"xs\" align=\"center\" wrap=\"nowrap\">\n          <Audio.Mute />\n          <Audio.PlaybackRate />\n        </Group>\n      </Group>"
             }
           },
           "storybookId": "media-audio--custom-control-bar"
@@ -24528,11 +24598,11 @@
             "artwork": "https://picsum.photos/seed/styled/200",
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue6"
+                "backgroundColor": "blue3",
+                "borderColor": "blue6"
               },
               "title": {
-                "color": "$blue11"
+                "color": "blue11"
               }
             }
           },
@@ -24540,7 +24610,7 @@
         },
         {
           "name": "Themed",
-          "description": "Theme-driven recolor. The whole player is built on `$colorN` ramp tokens, so dropping it under a `<Theme>` recolors it with zero per-component logic — the same property that themes Button/ActionIcon. No hardcoded colors anywhere.",
+          "description": "Theme-driven recolor. The whole player is built on `colorN` ramp tokens, so dropping it under a `<Theme>` recolors it with zero per-component logic — the same property that themes Button/ActionIcon. No hardcoded colors anywhere.",
           "hasRender": true,
           "args": {
             "artwork": "https://picsum.photos/seed/themed/200"
@@ -24686,11 +24756,11 @@
           "args": {
             "styles": {
               "root": {
-                "backgroundColor": "$green3",
-                "borderColor": "$green6"
+                "backgroundColor": "blue3",
+                "borderColor": "blue6"
               },
               "trackRow": {
-                "borderRadius": "$lg"
+                "borderRadius": "lg"
               }
             }
           },
@@ -24765,7 +24835,7 @@
           "hasRender": false,
           "args": {
             "controls": {
-              "$expr": "<Group justify=\"space-between\" align=\"center\" width=\"100%\">\n        <Group gap=\"$xs\" align=\"center\" wrap=\"nowrap\">\n          <AudioRecorder.Record />\n          <AudioRecorder.PauseResume />\n        </Group>\n        <AudioRecorder.Duration />\n      </Group>"
+              "$expr": "<Group justify=\"space-between\" align=\"center\" width=\"100%\">\n        <Group gap=\"xs\" align=\"center\" wrap=\"nowrap\">\n          <AudioRecorder.Record />\n          <AudioRecorder.PauseResume />\n        </Group>\n        <AudioRecorder.Duration />\n      </Group>"
             }
           },
           "storybookId": "media-audio-recorder--custom-layout"
@@ -24778,14 +24848,14 @@
             "meteringEnabled": true,
             "styles": {
               "root": {
-                "backgroundColor": "$blue3",
-                "borderColor": "$blue6"
+                "backgroundColor": "blue3",
+                "borderColor": "blue6"
               },
               "meterFill": {
-                "backgroundColor": "$blue9"
+                "backgroundColor": "blue9"
               },
               "duration": {
-                "color": "$blue11"
+                "color": "blue11"
               }
             }
           },
@@ -25100,7 +25170,7 @@
           "args": {
             "aspectRatio": 1.7777777777777777,
             "controls": {
-              "$expr": "<Group justify=\"space-between\" align=\"center\" width=\"100%\">\n        <Group gap=\"$xs\" align=\"center\" wrap=\"nowrap\">\n          <Video.PlayPause />\n          <Video.Time />\n        </Group>\n        <Group gap=\"$xs\" align=\"center\" wrap=\"nowrap\">\n          <Video.Mute />\n          <Video.Fullscreen />\n        </Group>\n      </Group>"
+              "$expr": "<Group justify=\"space-between\" align=\"center\" width=\"100%\">\n        <Group gap=\"xs\" align=\"center\" wrap=\"nowrap\">\n          <Video.PlayPause />\n          <Video.Time />\n        </Group>\n        <Group gap=\"xs\" align=\"center\" wrap=\"nowrap\">\n          <Video.Mute />\n          <Video.Fullscreen />\n        </Group>\n      </Group>"
             }
           },
           "storybookId": "media-video--custom-control-bar"
@@ -25142,12 +25212,12 @@
             "styles": {
               "captions": {
                 "backgroundColor": "rgba(20,20,40,0.85)",
-                "borderRadius": "$lg"
+                "borderRadius": "lg"
               },
               "captionText": {
                 "fontSize": 22,
                 "fontWeight": "700",
-                "color": "$yellow9"
+                "color": "#f5d90a"
               }
             }
           },
@@ -25180,9 +25250,9 @@
             "aspectRatio": 1.7777777777777777,
             "styles": {
               "root": {
-                "borderRadius": "$xl",
+                "borderRadius": "xl",
                 "borderWidth": 2,
-                "borderColor": "$blue9"
+                "borderColor": "blue9"
               },
               "controlBar": {
                 "backgroundColor": "rgba(0,0,0,0.55)"

@@ -139,4 +139,40 @@ describe("MaskInput", () => {
     fireEvent.change(input, { target: { value: "1X" } });
     expect(input.value).toBe("1-X");
   });
+
+  it("shows the slot template on focus and drops it on blur", () => {
+    render(<MaskInput mask="99-99" />);
+    const input = getInput();
+    fireEvent.focus(input);
+    expect(input.value).toBe("__-__");
+    fireEvent.change(input, { target: { value: "1" } });
+    expect(input.value).toBe("1_-__");
+    fireEvent.blur(input);
+    expect(input.value).toBe("1");
+  });
+
+  it("clears an incomplete value on blur with autoClear", () => {
+    const onChangeRaw = jest.fn();
+    render(<MaskInput mask="99-99" autoClear onChangeRaw={onChangeRaw} />);
+    const input = getInput();
+    fireEvent.change(input, { target: { value: "12" } });
+    fireEvent.blur(input);
+    expect(input.value).toBe("");
+    expect(onChangeRaw).toHaveBeenLastCalledWith("", "");
+  });
+
+  it("uses a custom slotChar and custom tokens", () => {
+    render(<MaskInput mask="HH" tokens={{ H: /[0-9a-f]/ }} slotChar="#" alwaysShowMask />);
+    const input = getInput();
+    expect(input.value).toBe("##");
+    fireEvent.change(input, { target: { value: "fz" } });
+    expect(input.value).toBe("f#");
+  });
+
+  it("carries the field chrome: label, error and aria-invalid", () => {
+    render(<MaskInput mask="999" label="Code" error="Bad" />);
+    const input = screen.getByLabelText("Code");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).not.toHaveAttribute("name");
+  });
 });

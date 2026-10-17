@@ -105,7 +105,7 @@ function BasicTabs(props: React.ComponentProps<typeof Tabs>) {
         ))}
       </Tabs.List>
       {TABS.map((t) => (
-        <Tabs.Panel key={t.value} value={t.value} padding="$md">
+        <Tabs.Panel key={t.value} value={t.value} padding="md">
           <Text>{t.body}</Text>
         </Tabs.Panel>
       ))}
@@ -125,10 +125,10 @@ export const Playground: Story = {
 /** All three visual variants side by side. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={variant} gap="xs">
+          <Text fontSize="sm" color="color11">
             {variant}
           </Text>
           <BasicTabs {...args} variant={variant} defaultValue="general" />
@@ -145,10 +145,10 @@ export const Sizes: Story = {
   },
 
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SIZES.map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <BasicTabs {...args} size={size} defaultValue="general" />
@@ -161,10 +161,10 @@ export const Sizes: Story = {
 /** The shadow elevation prop, inherited from Box, applied to the Tabs root. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="sm" color="color11">
             {shadow}
           </Text>
           <BasicTabs {...args} shadow={shadow} defaultValue="general" />
@@ -177,7 +177,7 @@ export const Shadows: Story = {
 /** Accent theme comes from Tamagui's `theme` prop. */
 export const Themed: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["blue", "red", "green"] as const).map((theme) => (
         <BasicTabs key={theme} {...args} theme={theme} variant="pills" defaultValue="general" />
       ))}
@@ -196,13 +196,13 @@ export const WithDisabledTab: Story = {
           Billing
         </Tabs.Tab>
       </Tabs.List>
-      <Tabs.Panel value="general" padding="$md">
+      <Tabs.Panel value="general" padding="md">
         <Text>General settings content.</Text>
       </Tabs.Panel>
-      <Tabs.Panel value="security" padding="$md">
+      <Tabs.Panel value="security" padding="md">
         <Text>Security settings content.</Text>
       </Tabs.Panel>
-      <Tabs.Panel value="billing" padding="$md">
+      <Tabs.Panel value="billing" padding="md">
         <Text>Billing content (unreachable).</Text>
       </Tabs.Panel>
     </Tabs>
@@ -224,13 +224,13 @@ export const WithSections: Story = {
           Settings
         </Tabs.Tab>
       </Tabs.List>
-      <Tabs.Panel value="profile" padding="$md">
+      <Tabs.Panel value="profile" padding="md">
         <Text>Profile panel content.</Text>
       </Tabs.Panel>
-      <Tabs.Panel value="activity" padding="$md">
+      <Tabs.Panel value="activity" padding="md">
         <Text>Activity panel content.</Text>
       </Tabs.Panel>
-      <Tabs.Panel value="settings" padding="$md">
+      <Tabs.Panel value="settings" padding="md">
         <Text>Settings panel content.</Text>
       </Tabs.Panel>
     </Tabs>
@@ -268,7 +268,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [active, setActive] = React.useState<string | null>("general");
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Tabs {...args} value={active} onChange={setActive}>
           <Tabs.List>
             {TABS.map((t) => (
@@ -278,12 +278,12 @@ export const Controlled: Story = {
             ))}
           </Tabs.List>
           {TABS.map((t) => (
-            <Tabs.Panel key={t.value} value={t.value} padding="$md">
+            <Tabs.Panel key={t.value} value={t.value} padding="md">
               <Text>{t.body}</Text>
             </Tabs.Panel>
           ))}
         </Tabs>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Active tab: {active ?? "—"}
         </Text>
       </Box>
@@ -303,7 +303,7 @@ export const GrowingTabs: Story = {
         ))}
       </Tabs.List>
       {TABS.map((t) => (
-        <Tabs.Panel key={t.value} value={t.value} padding="$md">
+        <Tabs.Panel key={t.value} value={t.value} padding="md">
           <Text>{t.body}</Text>
         </Tabs.Panel>
       ))}
@@ -315,9 +315,9 @@ export const GrowingTabs: Story = {
 export const Styles: Story = {
   args: {
     styles: {
-      tab: { backgroundColor: "$blue3" },
-      label: { color: "$red9", fontWeight: "700" },
-      panel: { backgroundColor: "$blue2" },
+      tab: { backgroundColor: "blue3" },
+      label: { color: "red9", fontWeight: "700" },
+      panel: { backgroundColor: "blue2" },
     },
   },
   render: (args) => <BasicTabs {...args} />,

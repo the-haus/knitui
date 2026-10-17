@@ -15,7 +15,8 @@
  * Sources:
  *   packages/core/src/config/scales.ts        space · radius · size · font · line heights · breakpoints
  *   packages/core/src/config/tokens.ts        zIndex
- *   packages/core/src/config/motion.ts        durations · easings
+ *   packages/core/src/config/media.ts         media keys (the `sm:` / `gtSm:` condition modifiers)
+ *   packages/core/src/config/motion.ts        durations · easings · transition presets (MOTION_PRESETS)
  *   packages/components/src/internal/control-metrics.ts   the size ladder
  *
  * Writes: apps/docs/src/generated/tokens.json
@@ -75,6 +76,61 @@ function readDoc(relativePath, name) {
   return undefined;
 }
 
+/**
+ * `MOTION_PRESETS` — the v3 unified `transition` preset table. Its entries are
+ * `timing(duration, easing)` helper calls (or a spring literal), which the
+ * generic evaluator reports as opaque `$expr` markers, so the one local helper is
+ * folded here: `timing(a, b)` → `{ type: "timing", duration: a, easing: b }`.
+ */
+function readMotionPresets(relativePath) {
+  const path = join(REPO_ROOT, relativePath);
+  const text = readFileSync(path, "utf8");
+  const sourceFile = ts.createSourceFile(
+    path,
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const scope = collectTopLevelConsts(sourceFile);
+  let node = scope.get("MOTION_PRESETS");
+  while (
+    node &&
+    (ts.isAsExpression(node) ||
+      ts.isParenthesizedExpression(node) ||
+      ts.isSatisfiesExpression?.(node))
+  ) {
+    node = node.expression;
+  }
+  if (!node || !ts.isObjectLiteralExpression(node)) return undefined;
+
+  const out = {};
+  for (const prop of node.properties) {
+    if (!ts.isPropertyAssignment(prop)) continue;
+    const key =
+      ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name)
+        ? prop.name.text
+        : prop.name.getText(sourceFile);
+    const init = prop.initializer;
+    if (
+      ts.isCallExpression(init) &&
+      ts.isIdentifier(init.expression) &&
+      init.expression.text === "timing"
+    ) {
+      const [duration, easing] = init.arguments.map((arg) => evalNode(arg, sourceFile, scope));
+      out[key] = { type: "timing", duration, easing };
+    } else {
+      const value = evalNode(init, sourceFile, scope);
+      // A bare spring (`{ damping, mass, stiffness }`) has no `type`; name it.
+      out[key] =
+        value && typeof value === "object" && !("type" in value) && "stiffness" in value
+          ? { type: "spring", ...value }
+          : value;
+    }
+  }
+  return out;
+}
+
 const SCALES = "packages/core/src/config/scales.ts";
 const scales = readConsts(SCALES, [
   "spacing",
@@ -84,6 +140,41 @@ const scales = readConsts(SCALES, [
   "lineHeightRatios",
   "breakpoints",
 ]);
+
+/**
+ * The configured media queries. `media.ts` reads `breakpoints` through an import
+ * alias (`bp.sm + 1`), so the alias is bound to the scales literal before
+ * evaluating; the evaluator then folds the arithmetic.
+ */
+function readMedia() {
+  const parse = (relativePath) => {
+    const path = join(REPO_ROOT, relativePath);
+    const sourceFile = ts.createSourceFile(
+      path,
+      readFileSync(path, "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+    return { sourceFile, scope: collectTopLevelConsts(sourceFile) };
+  };
+  const media = parse("packages/core/src/config/media.ts");
+  const scalesFile = parse(SCALES);
+  const scope = new Map(media.scope);
+  // `import { breakpoints as bp } from "./scales"` — bind every local alias of it.
+  for (const statement of media.sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement)) continue;
+    const bindings = statement.importClause?.namedBindings;
+    if (!bindings || !ts.isNamedImports(bindings)) continue;
+    for (const element of bindings.elements) {
+      const imported = (element.propertyName ?? element.name).text;
+      const node = scalesFile.scope.get(imported);
+      if (node) scope.set(element.name.text, node);
+    }
+  }
+  const node = scope.get("media");
+  return node ? evalNode(node, media.sourceFile, scope) : undefined;
+}
 
 const { tokens } = readConsts("packages/core/src/config/tokens.ts", ["tokens"]);
 const motion = readConsts("packages/core/src/config/motion.ts", ["DURATIONS", "EASINGS"]);
@@ -104,10 +195,12 @@ const data = {
     lineHeight: scales.lineHeightRatios,
   },
   breakpoints: scales.breakpoints,
+  media: readMedia(),
   zIndex: zIndex ?? { 0: 0, 1: 100, 2: 200, 3: 300, 4: 400, 5: 500 },
   motion: {
     durations: motion.DURATIONS,
     easings: motion.EASINGS,
+    presets: readMotionPresets("packages/core/src/config/motion.ts"),
   },
   controlMetrics,
   notes: {
@@ -125,5 +218,5 @@ writeFileSync(OUT, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 const scaleKeys = Object.keys(data.scales).length;
 const sizes = Object.keys(controlMetrics ?? {}).length;
 console.log(
-  `[tokens] ${scaleKeys} scales · ${sizes} control sizes · ${Object.keys(data.motion.durations ?? {}).length} durations`,
+  `[tokens] ${scaleKeys} scales · ${sizes} control sizes · ${Object.keys(data.motion.durations ?? {}).length} durations · ${Object.keys(data.motion.presets ?? {}).length} presets`,
 );

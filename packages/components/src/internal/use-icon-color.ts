@@ -5,7 +5,7 @@ import { themeColorToCssVar } from "./theme-color-web";
  * or CSS (web) can paint — WEB implementation (`use-icon-color.native.ts` is the
  * native twin).
  *
- * On web this needs no theme at all: a `$token` maps to its CSS custom property
+ * On web this needs no theme at all: a theme colour name maps to its CSS custom property
  * by pure string transform (see `theme-color-web.ts`). That matters a lot here,
  * because `ControlIconProvider` is instantiated once per control SECTION — a
  * Button with a left and a right section mounts two, on top of its own frame, at

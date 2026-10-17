@@ -1,7 +1,7 @@
 export const meta = {
   title: "Elevation",
   description:
-    "One shadow ladder, emitted as cross-platform boxShadow, theme-aware through $dropShadowColor.",
+    "One shadow ladder, emitted as cross-platform boxShadow, theme-aware through dropShadowColor.",
 };
 
 # Elevation
@@ -13,7 +13,7 @@ ladder. No component has its own shadow definition.
 
 ```tsx
 <Card shadow="md">Raised surface</Card>
-<Box shadow="xl" p="$lg">Floating panel</Box>
+<Box shadow="xl" p="lg">Floating panel</Box>
 ```
 
 Steps: `xxs`, `xs`, `sm`, `md`, `lg`, `xl`, `xxl`. Nothing has a shadow unless you
@@ -30,7 +30,7 @@ The colour comes from a theme token, so shadows darken correctly in dark mode
 instead of staying black-on-black.
 
 <Callout kind="warning">
-  That token is `$dropShadowColor`. It was originally called `shadowColor`, which
+  That token is `dropShadowColor`. It was originally called `shadowColor`, which
   collides with React Native's reserved style prop and produced washed-out shadows
   on iOS — an own-prop named like a style prop is a trap worth remembering if you
   build your own frames.

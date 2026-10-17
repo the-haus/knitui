@@ -1,14 +1,14 @@
 export const meta = {
   title: "Style props",
   description:
-    "The full inherited style surface every Knit UI component carries, from its Box frame.",
+    "The full inherited style surface every Knit UI component carries, from its Box frame, and the flat-value grammar for states, breakpoints and themes.",
 };
 
 # Style props
 
 Every component in the kit is a `styled(Box)` frame, so every component accepts
-the same style surface — around 500 props, including shorthands and the React
-Native style properties Tamagui maps.
+the same style surface — the React Native style properties, the web CSS
+properties Tamagui types, and the kit's shorthands.
 
 Component pages do not enumerate these; they show a count and link here.
 
@@ -16,32 +16,87 @@ Component pages do not enumerate these; they show a count and link here.
 
 | Shorthand | Property | Takes |
 | --- | --- | --- |
-| `p` `px` `py` `pt` `pr` `pb` `pl` | padding | `$space` token or number |
-| `m` `mx` `my` `mt` `mr` `mb` `ml` | margin | `$space` token or number |
-| `gap` | gap | `$space` token or number |
+| `p` `px` `py` `pt` `pr` `pb` `pl` | padding | `space` token or number |
+| `m` `mx` `my` `mt` `mr` `mb` `ml` | margin | `space` token or number |
+| `gap` | gap | `space` token or number |
 | `bg` | backgroundColor | theme colour token |
 | `c` | color | theme colour token |
-| `br` | borderRadius | `$radius` token or number |
-| `fz` | fontSize | `$fontSize` token or number |
-| `w` `h` | width, height | `$size` token, number, or `"100%"` |
+| `br` | borderRadius | `radius` token or number |
+| `fz` | fontSize | `fontSize` token or number |
+| `w` `h` | width, height | `size` token, number, or `"100%"` |
 | `maw` `miw` `mah` `mih` | max/min width and height | as above |
 
-Plus the state props — `hoverStyle`, `pressStyle`, `focusStyle`, `disabledStyle` —
-which take the same objects:
+## Tokens are bare names
+
+A **string** is a token (or theme key) lookup and a **number** is a raw value:
 
 ```tsx
-<Box bg="$color2" hoverStyle={{ bg: "$color3" }} pressStyle={{ bg: "$color4" }} />
+<Box p="md" bg="color2" br="sm" />   // tokens: space.md, the theme's color2, radius.sm
+<Box p={12} w={120} />               // raw pixels / points
 ```
 
-## Breakpoint objects
+There is no `$` sigil. Theme keys are bare too: `bg="background"`,
+`borderColor="borderColor"`, `c="color11"`. A name the config does not know
+passes through as a literal, so CSS keywords (`"auto"`, `"100%"`, `"transparent"`)
+keep working. When a name exists in more than one scale, qualify it:
+`w="size.md"`.
 
-Any of them accepts a breakpoint map:
+## Conditions live in the value
+
+States, breakpoints, colour schemes and platforms are **clauses inside the value
+of the property they change** — there are no `hoverStyle` / `pressStyle` /
+`focusStyle` objects and no `$sm={{…}}` media props.
 
 ```tsx
-<Box p={{ xxs: "$sm", md: "$lg" }} />
+<Box
+  bg="color2 hover:color3 press:color4"
+  p="sm gtMd:lg"
+  opacity="disabled:0.5"
+  borderColor="borderColor dark:color7"
+/>
 ```
 
-See [Responsive](/docs/foundations/responsive).
+When a base or a clause is computed at runtime, use the object form. Its keys are
+the same modifiers, plus `default` for the base:
+
+```tsx
+<Box bg={{ default: accent, hover: "color3" }} p={{ default: "sm", gtMd: "lg" }} />
+```
+
+Both forms render identically.
+
+| Kind | Modifiers |
+| --- | --- |
+| Interaction | `hover:` `press:` `focus:` `focus-visible:` `focus-within:` `disabled:` |
+| Mount / unmount | `enter:` `exit:` |
+| Colour scheme | `dark:` `light:` |
+| Media | the configured keys — `xs:` … `xl:` (at or below), `gtXs:` … `gtXl:` (above) |
+| Platform | `web:` `native:` `ios:` `android:` |
+| Group | `group-hover:`, named `group-hover/card:` |
+| Container | `@sm:`, named `@sm/layout:` |
+
+Rules worth knowing:
+
+- **Modifiers chain** as an AND: `dark:hover:color4` applies only while both hold.
+- **Clause order does not matter.** State clauses (hover, press, focus, disabled)
+  outrank media clauses, so `bg="color2 hover:color3 gtMd:color1"` still hovers to
+  `color3` on wide screens.
+- **No spaces inside one value.** A space separates clauses, so write
+  `rgba(0,0,0,0.5)`, not `rgba(0, 0, 0, 0.5)`.
+- **Raw lengths in a clause need units:** `y="enter:10px"`, because a bare
+  `10` in a string is a token name.
+- **Shorthands and longhands merge per property.** `<Box p="md gtMd:lg" px="sm" />`
+  gives horizontal padding `sm` at rest and keeps the `gtMd:lg` clause.
+- **Transforms use the flattened family** (`scale="1 hover:1.05"`,
+  `rotate="0deg hover:5deg"`), not clauses inside `transform`.
+
+See [Responsive](/docs/foundations/responsive) for breakpoints and
+[Motion](/docs/foundations/motion) for `enter:` / `exit:` and `transition`.
+
+## `undefined` vs `null`
+
+An explicitly passed `undefined` counts as **absent**, so the default applies.
+Pass `null` to switch a default off.
 
 ## The full surface
 

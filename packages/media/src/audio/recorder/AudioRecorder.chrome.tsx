@@ -19,6 +19,7 @@ import { IconPlayerRecordFilled } from "@knitui/icons/IconPlayerRecordFilled";
 import { IconPlayerStopFilled } from "@knitui/icons/IconPlayerStopFilled";
 
 import { clampMediaSize, mediaIconSize } from "../../control-size";
+import { percentWidth, TABULAR_NUMS } from "../../shared/chrome";
 import { formatMillis } from "../engine";
 import {
   RecorderMeterFill,
@@ -52,9 +53,9 @@ export const RecordButton = React.memo(function RecordButton(): React.ReactEleme
         <IconPlayerStopFilled />
       ) : (
         // The idle record dot reads red regardless of the button fill; the
-        // provider resolves the `$red9` token to a concrete color for the glyph
+        // provider resolves the `red9` theme colour to a concrete color for the glyph
         // while re-asserting the button's icon size (it would otherwise reset).
-        <ControlIconProvider size={clampMediaSize(size)} color="$red9">
+        <ControlIconProvider size={clampMediaSize(size)} color="red9">
           <IconPlayerRecordFilled />
         </ControlIconProvider>
       )}
@@ -126,7 +127,7 @@ export const Duration = React.memo(function Duration(): React.ReactElement {
   const { styles } = useAudioRecorder("Duration");
   const durationMillis = useRecorderState((s) => s.durationMillis);
   return (
-    <Text size="sm" fontVariant={["tabular-nums"]} {...styles?.get("duration")}>
+    <Text size="sm" fontVariant={TABULAR_NUMS} {...styles?.get("duration")}>
       {formatMillis(durationMillis)}
     </Text>
   );
@@ -141,12 +142,11 @@ export const LevelMeter = React.memo(function LevelMeter(): React.ReactElement |
   const { capabilities, styles } = useAudioRecorder("LevelMeter");
   const meteringLevel = useRecorderState((s) => s.meteringLevel);
   if (!capabilities.canMeter) return null;
-  const pct = `${Math.round(Math.max(0, Math.min(1, meteringLevel)) * 100)}%`;
   return (
     <RecorderMeterTrack role="progressbar" aria-label="Input level" {...styles?.get("meterTrack")}>
       <RecorderMeterFill
-        width={pct as never}
-        backgroundColor={meteringLevel > 0.9 ? "$red9" : "$green9"}
+        theme={meteringLevel > 0.9 ? "red" : "green"}
+        style={percentWidth(meteringLevel)}
         {...styles?.get("meterFill")}
       />
     </RecorderMeterTrack>
@@ -167,7 +167,7 @@ export const InputSelect = React.memo(function InputSelect(): React.ReactElement
   if (!capabilities.canSelectInput || inputs.length === 0) return null;
   const data = inputs.map((i) => ({ value: i.uid, label: i.name }));
   return (
-    <Group gap="$xs" align="center" wrap="nowrap">
+    <Group gap="xs" align="center" wrap="nowrap">
       <IconMicrophone size={mediaIconSize(size)} />
       <Select
         size={clampMediaSize(size)}
@@ -190,10 +190,10 @@ export const InputSelect = React.memo(function InputSelect(): React.ReactElement
 
 export const ControlBar = React.memo(function ControlBar(): React.ReactElement {
   return (
-    <Stack gap="$xs" width="100%">
+    <Stack gap="xs" width="100%">
       <LevelMeter />
-      <Group justify="space-between" align="center" gap="$xs" wrap="nowrap">
-        <Group gap="$xxs" align="center" wrap="nowrap">
+      <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <RecordButton />
           <PauseResumeButton />
         </Group>

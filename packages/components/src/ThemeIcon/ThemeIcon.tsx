@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
@@ -36,7 +42,7 @@ const ThemeIconContext = createStyledContext<{
  * never a `color` prop.
  */
 const ThemeIconFrame = styled(Box, {
-  name: "ThemeIcon",
+  displayName: "ThemeIcon",
   context: ThemeIconContext,
   flexDirection: "row",
   alignItems: "center",
@@ -59,9 +65,7 @@ const ThemeIconFrame = styled(Box, {
         "gradient",
       ]),
     },
-    size: {
-      ...squareSizeRoundedVariant,
-    },
+    size: squareSizeRoundedVariant,
     radius: radiusVariant,
     shadow: shadowVariant,
   } as const,
@@ -69,34 +73,45 @@ const ThemeIconFrame = styled(Box, {
   defaultVariants: { variant: "filled", size: "md" },
 });
 
-export interface ThemeIconProps extends GetProps<typeof ThemeIconFrame> {
+/**
+ * `size` / `variant` are narrowed to single values (no v3 clause programs): the
+ * render reads them as DATA (`ControlIconProvider`).
+ */
+export interface ThemeIconProps extends Omit<GetProps<typeof ThemeIconFrame>, "size" | "variant"> {
+  /** Size key, or a raw square edge (px number / CSS length). @default "md" */
+  size?: ThemeIconSize | number | (string & {});
+  /** @default "filled" */
+  variant?: ThemeIconVariant;
   /** The icon to render. A bare `@knitui/icons` icon auto-sizes/colors to the chip. */
   children?: React.ReactNode;
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
 
-const ThemeIconComponent = ThemeIconFrame.styleable<ThemeIconProps>(function ThemeIcon(props, ref) {
-  const { children, variant = "filled", size = "md", gradient, ...rest } = props;
+const ThemeIconComponent = styleable<ThemeIconProps>(
+  ThemeIconFrame,
+  function ThemeIcon(props, ref) {
+    const { children, variant = "filled", size = "md", gradient, ...rest } = props;
 
-  // Gradient fill (only when `variant="gradient"`): web paints a CSS
-  // `backgroundImage`; native renders the `layer` (an SVG fill) behind the icon.
-  const grad = useGradient(variant === "gradient" ? gradient : undefined);
+    // Gradient fill (only when `variant="gradient"`): web paints a CSS
+    // `backgroundImage`; native renders the `layer` (an SVG fill) behind the icon.
+    const grad = useGradient(variant === "gradient" ? gradient : undefined);
 
-  return (
-    <ThemeIconFrame ref={ref} variant={variant} size={size} {...grad.frameProps} {...rest}>
-      {grad.layer}
-      {/* Publish icon context so a bare `@knitui/icons` icon auto-matches the chip. */}
-      <ControlIconProvider size={size} variant={variant}>
-        {children}
-      </ControlIconProvider>
-    </ThemeIconFrame>
-  );
-});
+    return (
+      <ThemeIconFrame ref={ref} variant={variant} size={size} {...grad.frameProps} {...rest}>
+        {grad.layer}
+        {/* Publish icon context so a bare `@knitui/icons` icon auto-matches the chip. */}
+        <ControlIconProvider size={size} variant={variant}>
+          {children}
+        </ControlIconProvider>
+      </ThemeIconFrame>
+    );
+  },
+);
 
 export const ThemeIcon = withStaticProperties(ThemeIconComponent, {
   Frame: ThemeIconFrame,

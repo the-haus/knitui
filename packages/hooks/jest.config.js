@@ -8,6 +8,11 @@
  */
 module.exports = {
   testEnvironment: "jsdom",
+  // Tamagui v3 packages are `type: module`: `browser`/`import` resolve to the
+  // ESM `.mjs` build (babel-jest transforms it, see transformIgnorePatterns) and
+  // `require` to `.cjs`. Pinning the conditions keeps every @tamagui/* package on
+  // the SAME build, so exactly one @tamagui/web (one config registry) loads.
+  testEnvironmentOptions: { customExportConditions: ["browser", "require", "default"] },
   testMatch: ["<rootDir>/src/**/*.test.{ts,tsx}"],
   // Resolve react-native to react-native-web so hooks run as web nodes.
   moduleNameMapper: {

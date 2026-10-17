@@ -6,10 +6,19 @@
  */
 import * as React from "react";
 
-import { ActionIcon, Box, Button, Loader, Text, useMotionPreset } from "@knitui/components";
+import { ActionIcon, Button, Loader, Text, useMotionPreset } from "@knitui/components";
 import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
 
-import { CaptionBubble, CaptionText, shallowEqual, useVideo, useVideoState } from "./Video.shared";
+import {
+  CaptionBubble,
+  CaptionText,
+  shallowEqual,
+  useVideo,
+  useVideoState,
+  VideoCaptionLayer,
+  VideoErrorLayer,
+  VideoLayer,
+} from "./Video.shared";
 
 /* -------------------------------------------------------------------------- */
 /* Captions (rendered cue overlay)                                            */
@@ -28,22 +37,11 @@ export const CaptionOverlay = React.memo(function CaptionOverlay(): React.ReactE
   const motion = useMotionPreset("fade");
   if (!text) return null;
   return (
-    <Box
-      position="absolute"
-      left={0}
-      right={0}
-      bottom={controlsVisible ? 72 : 16}
-      alignItems="center"
-      paddingHorizontal="$md"
-      pointerEvents="none"
-      transition={motion.transition}
-      enterStyle={motion.enterStyle}
-      animateOnly={motion.animateOnly}
-    >
+    <VideoCaptionLayer lifted={controlsVisible} {...motion}>
       <CaptionBubble {...styles?.get("captions")}>
         <CaptionText {...styles?.get("captionText")}>{text}</CaptionText>
       </CaptionBubble>
-    </Box>
+    </VideoCaptionLayer>
   );
 });
 
@@ -52,7 +50,7 @@ export const CaptionOverlay = React.memo(function CaptionOverlay(): React.ReactE
 /* -------------------------------------------------------------------------- */
 
 export const BigPlayButton = React.memo(function BigPlayButton(): React.ReactElement | null {
-  const { controller } = useVideo("BigPlayButton");
+  const { controller, styles } = useVideo("BigPlayButton");
   const { playing, status } = useVideoState(
     (s) => ({ playing: s.playing, status: s.status }),
     shallowEqual,
@@ -60,19 +58,7 @@ export const BigPlayButton = React.memo(function BigPlayButton(): React.ReactEle
   const motion = useMotionPreset("pop");
   if (playing) return null;
   return (
-    <Box
-      position="absolute"
-      top={0}
-      left={0}
-      right={0}
-      bottom={0}
-      alignItems="center"
-      justifyContent="center"
-      pointerEvents="box-none"
-      transition={motion.transition}
-      enterStyle={motion.enterStyle}
-      animateOnly={motion.animateOnly}
-    >
+    <VideoLayer centered pointerEvents="box-none" {...motion} {...styles?.get("bigPlay")}>
       <ActionIcon
         size="xl"
         radius="xl"
@@ -83,7 +69,7 @@ export const BigPlayButton = React.memo(function BigPlayButton(): React.ReactEle
       >
         <IconPlayerPlayFilled />
       </ActionIcon>
-    </Box>
+    </VideoLayer>
   );
 });
 
@@ -92,6 +78,7 @@ export const BigPlayButton = React.memo(function BigPlayButton(): React.ReactEle
 /* -------------------------------------------------------------------------- */
 
 export const BufferingOverlay = React.memo(function BufferingOverlay(): React.ReactElement | null {
+  const { styles } = useVideo("Buffering");
   const { status, playing } = useVideoState(
     (s) => ({ status: s.status, playing: s.playing }),
     shallowEqual,
@@ -103,21 +90,9 @@ export const BufferingOverlay = React.memo(function BufferingOverlay(): React.Re
   // avoid a redundant second one.
   if (status !== "loading" || playing) return null;
   return (
-    <Box
-      position="absolute"
-      top={0}
-      left={0}
-      right={0}
-      bottom={0}
-      alignItems="center"
-      justifyContent="center"
-      pointerEvents="none"
-      transition={motion.transition}
-      enterStyle={motion.enterStyle}
-      animateOnly={motion.animateOnly}
-    >
+    <VideoLayer centered pointerEvents="none" {...motion} {...styles?.get("buffering")}>
       <Loader size="md" aria-label="Buffering" />
-    </Box>
+    </VideoLayer>
   );
 });
 
@@ -134,27 +109,13 @@ export const ErrorOverlay = React.memo(function ErrorOverlay(): React.ReactEleme
   const motion = useMotionPreset("fade");
   if (status !== "error") return null;
   return (
-    <Box
-      position="absolute"
-      top={0}
-      left={0}
-      right={0}
-      bottom={0}
-      alignItems="center"
-      justifyContent="center"
-      gap="$sm"
-      padding="$lg"
-      backgroundColor="$mediaOverlay"
-      transition={motion.transition}
-      enterStyle={motion.enterStyle}
-      animateOnly={motion.animateOnly}
-    >
-      <Text size="sm" fontWeight="600" color="$mediaOnScrim" style={{ textAlign: "center" }}>
+    <VideoErrorLayer {...motion}>
+      <Text size="sm" fontWeight="600" color="mediaOnScrim" textAlign="center">
         {error?.message ?? "This video could not be played."}
       </Text>
       <Button size="sm" variant="white" onPress={() => void controller.retry()}>
         Retry
       </Button>
-    </Box>
+    </VideoErrorLayer>
   );
 });

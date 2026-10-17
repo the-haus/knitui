@@ -12,7 +12,7 @@ Four levels, cheapest first. Use the lowest one that does the job.
 Props win over everything, including a component's own computed styles:
 
 ```tsx
-<Button variant="light" size="lg" px="$xl" br="$xl">
+<Button variant="light" size="lg" px="xl" br="xl">
   Continue
 </Button>
 ```
@@ -26,7 +26,7 @@ For a part you do not render yourself:
   label="Email"
   styles={{
     label: { fontWeight: "700" },
-    input: { fontFamily: "$mono" },
+    input: { fontFamily: "mono" },
     error: { fontStyle: "italic" },
   }}
 />
@@ -97,7 +97,7 @@ export function InlineSubscribe({
   const [email, setEmail] = useState("");
 
   return (
-    <Box flexDirection="row" gap="$sm" alignItems="flex-end" {...rest}>
+    <Box flexDirection="row" gap="sm" alignItems="flex-end" {...rest}>
       <TextInput
         size={size}
         label="Email"

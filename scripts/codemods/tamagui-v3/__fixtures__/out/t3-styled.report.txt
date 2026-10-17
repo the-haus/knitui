@@ -1,0 +1,12 @@
+condition-merged · 7 · styled-base: hoverStyle → backgroundColor
+condition-merged · 9 · styled-base: pressStyle → backgroundColor, scale
+condition-merged · 15 · variant-body: hoverStyle → backgroundColor
+condition-merged · 16 · variant-body: pressStyle → backgroundColor
+condition-merged · 21 · variant-body: hoverStyle → backgroundColor, borderColor
+condition-merged · 25 · variant-body: hoverStyle → backgroundColor
+condition-spread-order · 31 · styled-base: hoverStyle → backgroundColor, but ...someUnknown comes after it
+condition-merged · 39 · styles-slot: hoverStyle → bg
+condition-merged · 35 · plain style object: hoverStyle → backgroundColor
+condition-plain-object · 36 · pressStyle in an object that is not a known style position
+condition-reference · 43 · hoverStyle (PropertySignature)
+token-literal · 31 · $color2

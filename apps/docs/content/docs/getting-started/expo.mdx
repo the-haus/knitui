@@ -1,6 +1,6 @@
 export const meta = {
   title: "Expo",
-  description: "Setting up Knit UI in an Expo app, including the native peers, Babel and Metro.",
+  description: "Setting up Knit UI in an Expo app, including the native peers and the Metro compiler.",
 };
 
 # Expo
@@ -22,18 +22,6 @@ npx expo install @knitui/core @knitui/components \
   first launch. `npx expo install --check` audits an existing project.
 </Callout>
 
-## Babel
-
-```js title="babel.config.js"
-module.exports = (api) => {
-  api.cache(true);
-  return {
-    presets: ["babel-preset-expo"],
-    plugins: [require("@knitui/plugins/babel-plugin")],
-  };
-};
-```
-
 ## Metro
 
 ```js title="metro.config.js"
@@ -42,6 +30,13 @@ const { withKnitui } = require("@knitui/plugins/metro");
 
 module.exports = withKnitui(getDefaultConfig(__dirname));
 ```
+
+On Tamagui v3 the compiler runs inside Metro, so `babel.config.js` stays the
+stock `babel-preset-expo` — no babel plugin. Upgrading an app that still lists
+`@knitui/plugins/babel-plugin`? It is now a no-op that warns; delete the line.
+
+After any change to the theme config, restart with `npx expo start -c` — Metro
+does not invalidate its cache for config edits.
 
 ## Root component
 
@@ -58,7 +53,20 @@ export default function RootLayout() {
 }
 ```
 
-`Provider` mounts `GestureHandlerRootView` for you, so you do not add one.
+`Provider` mounts `GestureHandlerRootView` for you, so you do not add one. If you
+add `SafeAreaProvider` from `react-native-safe-area-context`, it goes **outside**
+`Provider`:
+
+```tsx
+<SafeAreaProvider>
+  <Provider defaultColorScheme="system">
+    <Stack />
+  </Provider>
+</SafeAreaProvider>
+```
+
+Tamagui v3's provider can read safe-area context to publish inset tokens, and the
+inverted order throws `NO_INSETS_ERROR` at startup.
 
 ## Satellite packages with native modules
 

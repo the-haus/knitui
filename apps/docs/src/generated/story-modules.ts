@@ -124,6 +124,7 @@ export const storyModules: Record<string, () => Promise<StoryModule>> = {
   "dates/day": () => import("@knitui/dates/src/Day/Day.stories"),
   "dates/decade-level": () => import("@knitui/dates/src/DecadeLevel/DecadeLevel.stories"),
   "dates/decade-level-group": () => import("@knitui/dates/src/DecadeLevelGroup/DecadeLevelGroup.stories"),
+  "dates/internal/inline-date-time-picker": () => import("@knitui/dates/src/InlineDateTimePicker/InlineDateTimePicker.stories"),
   "dates/levels-group": () => import("@knitui/dates/src/LevelsGroup/LevelsGroup.stories"),
   "dates/mini-calendar": () => import("@knitui/dates/src/MiniCalendar/MiniCalendar.stories"),
   "dates/month": () => import("@knitui/dates/src/Month/Month.stories"),

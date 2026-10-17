@@ -2,7 +2,9 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen } from "../test-utils";
+import { effectiveBaseValue, paddingX, pseudoStyle } from "../__tests__/css-rules.test.helper";
+import { controlMetrics as M } from "../internal/control-metrics";
+import { act, fireEvent, render, screen } from "../test-utils";
 import { Input } from "./Input";
 import { getInputSectionInsets } from "./shared";
 
@@ -19,12 +21,26 @@ describe("Input", () => {
     expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
   });
 
-  it("routes placeholderTextColor to the placeholder var, not a DOM attribute", () => {
-    render(<Input placeholder="Email" placeholderTextColor="$color10" />);
+  it("styles the placeholder through v3's ::placeholder rule (default color8)", () => {
+    render(<Input placeholder="Email" />);
+    const input = screen.getByPlaceholderText("Email");
+    expect(pseudoStyle(input, "::placeholder", "color")).toBe("var(--color8)");
+    expect(pseudoStyle(input, "::selection", "backgroundColor")).toBe("var(--blue5)");
+  });
+
+  it("takes placeholderTextColor as a style prop, not a DOM attribute", () => {
+    render(<Input placeholder="Email" placeholderTextColor="color10" />);
     const input = screen.getByPlaceholderText("Email");
     expect(input).not.toHaveAttribute("placeholderTextColor");
     expect(input).not.toHaveAttribute("placeholdertextcolor");
-    expect(input.style.getPropertyValue("--t_placeholderColor")).toContain("color10");
+    expect(pseudoStyle(input, "::placeholder", "color")).toBe("var(--color10)");
+  });
+
+  it("never leaks a `name` attribute from the styled config", () => {
+    render(<Input placeholder="n" />);
+    expect(screen.getByPlaceholderText("n")).not.toHaveAttribute("name");
+    render(<Input placeholder="m" name="email" />);
+    expect(screen.getByPlaceholderText("m")).toHaveAttribute("name", "email");
   });
 
   it("fires onChangeText with the next value", () => {
@@ -188,36 +204,29 @@ describe("Input", () => {
   // gap on both of its sides, so the host must not add its own inset next to one
   // (it used to: the text sat ~26px from a `md` icon that is 10px from the border).
   describe("section insets", () => {
-    const hostClasses = (placeholder: string) =>
-      Array.from(screen.getByPlaceholderText(placeholder).classList);
-    const padding = (placeholder: string) => {
-      const classes = hostClasses(placeholder);
-      return {
-        left: classes.find((name) => name.startsWith("_pl-")),
-        right: classes.find((name) => name.startsWith("_pr-")),
-      };
-    };
+    const padding = (placeholder: string) => paddingX(screen.getByPlaceholderText(placeholder));
+    const space = (key: string) => `var(--t-space-${key})`;
 
     it("keeps the size inset on both sides without sections", () => {
       render(<Input placeholder="plain" />);
-      expect(padding("plain")).toEqual({ left: "_pl-t-space-md", right: "_pr-t-space-md" });
+      expect(padding("plain")).toEqual({ left: space("md"), right: space("md") });
     });
 
     it("drops only the left inset next to a leftSection", () => {
       render(<Input placeholder="left" leftSection={<span>L</span>} />);
-      expect(padding("left")).toEqual({ left: "_pl-0px", right: "_pr-t-space-md" });
+      expect(padding("left")).toEqual({ left: "0px", right: space("md") });
     });
 
     it("drops only the right inset next to a rightSection", () => {
       render(<Input placeholder="right" rightSection={<span>R</span>} />);
-      expect(padding("right")).toEqual({ left: "_pl-t-space-md", right: "_pr-0px" });
+      expect(padding("right")).toEqual({ left: space("md"), right: "0px" });
     });
 
     it.each(SIZES)("drops the left inset at the %s size", (size) => {
       render(<Input size={size} placeholder={`s-${size}`} leftSection={<span>L</span>} />);
       const { left, right } = padding(`s-${size}`);
-      expect(left).toBe("_pl-0px");
-      expect(right).toBe(`_pr-t-space-${size}`);
+      expect(left).toBe("0px");
+      expect(right).toBe(space(M[size].paddingHorizontal));
     });
 
     it("follows the loader, which stands in for a section", () => {
@@ -227,8 +236,8 @@ describe("Input", () => {
           <Input placeholder="load-right" loading />
         </>,
       );
-      expect(padding("load-left")).toEqual({ left: "_pl-0px", right: "_pr-t-space-md" });
-      expect(padding("load-right")).toEqual({ left: "_pl-t-space-md", right: "_pr-0px" });
+      expect(padding("load-left")).toEqual({ left: "0px", right: space("md") });
+      expect(padding("load-right")).toEqual({ left: space("md"), right: "0px" });
     });
 
     it("applies to the multiline and button hosts too", () => {
@@ -238,13 +247,13 @@ describe("Input", () => {
           <Input component="button" data-testid="button-host" leftSection={<span>L</span>} />
         </>,
       );
-      expect(padding("area").left).toBe("_pl-0px");
-      expect(screen.getByTestId("button-host")).toHaveClass("_pl-0px");
+      expect(padding("area").left).toBe("0px");
+      expect(paddingX(screen.getByTestId("button-host")).left).toBe("0px");
     });
 
     it("lets a consumer-passed padding win", () => {
-      render(<Input placeholder="custom" leftSection={<span>L</span>} paddingLeft="$xs" />);
-      expect(padding("custom").left).toBe("_pl-t-space-xs");
+      render(<Input placeholder="custom" leftSection={<span>L</span>} paddingLeft="xs" />);
+      expect(padding("custom").left).toBe(space("xs"));
     });
 
     it("resolves the right side by the same rule the chrome renders by", () => {
@@ -263,6 +272,179 @@ describe("Input", () => {
       expect(
         getInputSectionInsets({ loading: true, loadingPosition: "left", rightSection: <span /> }),
       ).toEqual({ paddingLeft: 0, paddingRight: 0 });
+    });
+  });
+
+  describe("v3 output", () => {
+    const root = (placeholder: string) =>
+      screen.getByPlaceholderText(placeholder).parentElement as HTMLElement;
+
+    it.each(SIZES)("sizes the %s field from controlMetrics (height, font, inset)", (size) => {
+      render(<Input size={size} placeholder={`m-${size}`} />);
+      const host = screen.getByPlaceholderText(`m-${size}`);
+      expect(effectiveBaseValue(root(`m-${size}`), "height")).toBe(
+        `var(--t-size-${M[size].height})`,
+      );
+      expect(effectiveBaseValue(host, "fontSize")).toBe(`var(--f-size-${M[size].fontSize})`);
+      expect(paddingX(host)).toEqual({
+        left: `var(--t-space-${M[size].paddingHorizontal})`,
+        right: `var(--t-space-${M[size].paddingHorizontal})`,
+      });
+    });
+
+    it("keeps the host bare: the chrome owns the border, the host kills the UA outline", () => {
+      render(<Input placeholder="bare" />);
+      const host = screen.getByPlaceholderText("bare");
+      expect(effectiveBaseValue(host, "outlineStyle")).toBe("none");
+      expect(effectiveBaseValue(host, "borderWidth", ["border"])).toBe("0px");
+      expect(effectiveBaseValue(host, "backgroundColor")).toBe("transparent");
+      expect(effectiveBaseValue(root("bare"), "borderColor", ["border"])).toBe(
+        "var(--borderColor)",
+      );
+    });
+
+    it("swaps the WRAPPER border to the accent focus colour while the input has focus", () => {
+      render(<Input placeholder="focus" />);
+      const host = screen.getByPlaceholderText("focus");
+      act(() => host.focus());
+      expect(effectiveBaseValue(root("focus"), "borderColor", ["border"])).toBe(
+        "var(--focusRingColor)",
+      );
+      act(() => host.blur());
+      expect(effectiveBaseValue(root("focus"), "borderColor", ["border"])).toBe(
+        "var(--borderColor)",
+      );
+    });
+
+    it("paints the error border red and marks the input aria-invalid", () => {
+      render(<Input placeholder="err" error="Required" />);
+      expect(effectiveBaseValue(root("err"), "borderColor", ["border"])).toBe("var(--red9)");
+      expect(screen.getByPlaceholderText("err")).toHaveAttribute("aria-invalid", "true");
+    });
+
+    it("keeps the error border while an errored field has focus (state precedence)", () => {
+      render(<Input placeholder="fe" error="Required" />);
+      act(() => screen.getByPlaceholderText("fe").focus());
+      expect(effectiveBaseValue(root("fe"), "borderColor", ["border"])).toBe("var(--red9)");
+    });
+
+    it("omits aria-invalid when withAria is false", () => {
+      render(<Input placeholder="na" error withAria={false} />);
+      expect(screen.getByPlaceholderText("na")).not.toHaveAttribute("aria-invalid");
+    });
+
+    it("dims and blocks a disabled field on the wrapper; the input is disabled", () => {
+      render(<Input placeholder="dis" disabled />);
+      expect(effectiveBaseValue(root("dis"), "opacity")).toBe("0.6");
+      expect(effectiveBaseValue(root("dis"), "pointerEvents")).toBe("none");
+      expect(screen.getByPlaceholderText("dis")).toBeDisabled();
+    });
+
+    it("marks a readOnly field readonly and keeps it focusable", () => {
+      render(<Input placeholder="ro" readOnly defaultValue="x" />);
+      const host = screen.getByPlaceholderText("ro");
+      expect(host).toHaveAttribute("readonly");
+      act(() => host.focus());
+      expect(host).toHaveFocus();
+    });
+
+    it("focuses the input when the chrome is pressed", () => {
+      render(<Input placeholder="press" leftSection={<span>L</span>} />);
+      fireEvent.click(root("press"));
+      expect(screen.getByPlaceholderText("press")).toHaveFocus();
+    });
+
+    it("is uncontrolled with defaultValue and controlled with value", () => {
+      render(<Input placeholder="u" defaultValue="seed" />);
+      const host = screen.getByPlaceholderText("u") as HTMLInputElement;
+      expect(host).toHaveValue("seed");
+      fireEvent.change(host, { target: { value: "typed" } });
+      expect(host).toHaveValue("typed");
+
+      const onChangeText = jest.fn();
+      render(<Input placeholder="c" value="fixed" onChangeText={onChangeText} />);
+      const controlled = screen.getByPlaceholderText("c");
+      expect(controlled).toHaveValue("fixed");
+      fireEvent.change(controlled, { target: { value: "fixedX" } });
+      expect(onChangeText).toHaveBeenCalledWith("fixedX");
+    });
+
+    it("forwards its ref to the real <input> and <textarea>", () => {
+      const inputRef = React.createRef<GetRef<typeof Input>>();
+      const areaRef = React.createRef<GetRef<typeof Input>>();
+      render(
+        <>
+          <Input ref={inputRef} placeholder="r1" />
+          <Input ref={areaRef} multiline placeholder="r2" />
+        </>,
+      );
+      expect(inputRef.current).toBe(screen.getByPlaceholderText("r1"));
+      expect((inputRef.current as unknown as HTMLElement).tagName).toBe("INPUT");
+      expect((areaRef.current as unknown as HTMLElement).tagName).toBe("TEXTAREA");
+    });
+
+    it("labels the input and wires aria-describedby to description + error", () => {
+      render(
+        <Input.Wrapper label="Email" description="We never share it" error="Invalid">
+          <Input placeholder="a11y" />
+        </Input.Wrapper>,
+      );
+      const host = screen.getByLabelText("Email");
+      expect(host).toBe(screen.getByPlaceholderText("a11y"));
+      const ids = (host.getAttribute("aria-describedby") ?? "").split(" ");
+      expect(ids).toHaveLength(2);
+      expect(document.getElementById(ids[0])).toHaveTextContent("We never share it");
+      expect(document.getElementById(ids[1])).toHaveTextContent("Invalid");
+      expect(host).toHaveAttribute("aria-invalid", "true");
+    });
+
+    it("renders the meta parts as flattenable frames: <p> description/error, red error", () => {
+      render(
+        <>
+          <Input.Description>desc</Input.Description>
+          <Input.Error>err</Input.Error>
+          <Input.Placeholder error>ph</Input.Placeholder>
+        </>,
+      );
+      expect(screen.getByText("desc").tagName).toBe("P");
+      expect(screen.getByText("err").tagName).toBe("P");
+      expect(effectiveBaseValue(screen.getByText("err"), "color")).toBe("var(--red9)");
+      expect(screen.getByText("ph").tagName).toBe("SPAN");
+      expect(effectiveBaseValue(screen.getByText("ph"), "color")).toBe("var(--color10)");
+    });
+
+    it("renders the left and right sections around the host", () => {
+      render(
+        <Input
+          placeholder="sec"
+          leftSection={<span data-testid="ls">L</span>}
+          rightSection={<span data-testid="rs">R</span>}
+        />,
+      );
+      const children = Array.from(root("sec").children);
+      expect(children).toHaveLength(3);
+      expect(children[0]).toContainElement(screen.getByTestId("ls"));
+      expect(children[1]).toBe(screen.getByPlaceholderText("sec"));
+      expect(children[2]).toContainElement(screen.getByTestId("rs"));
+      // A section is a control-height square.
+      expect(effectiveBaseValue(children[0], "width")).toBe("var(--t-size-md)");
+    });
+
+    it("keeps handler identities stable across keystroke re-renders", () => {
+      const seen = new Set<unknown>();
+      function Probe() {
+        const [value, setValue] = React.useState("");
+        return <Input placeholder="stable" value={value} onChangeText={setValue} />;
+      }
+      render(<Probe />);
+      const host = screen.getByPlaceholderText("stable");
+      const propsKey = Object.keys(host).find((k) => k.startsWith("__reactProps"));
+      const read = () => (host as unknown as Record<string, { onChange: unknown }>)[propsKey!];
+      seen.add(read().onChange);
+      fireEvent.change(host, { target: { value: "a" } });
+      fireEvent.change(host, { target: { value: "ab" } });
+      seen.add(read().onChange);
+      expect(seen.size).toBe(1);
     });
   });
 });

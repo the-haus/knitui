@@ -5,7 +5,8 @@
  */
 import * as React from "react";
 
-import { ActionIcon, Box, Group, Slider, Stack, Text } from "@knitui/components";
+import { ActionIcon, Group, Slider, Stack, Text } from "@knitui/components";
+import { styled } from "@knitui/core";
 import { IconPlayerPauseFilled } from "@knitui/icons/IconPlayerPauseFilled";
 import { IconPlayerPlayFilled } from "@knitui/icons/IconPlayerPlayFilled";
 import { IconPlayerTrackNextFilled } from "@knitui/icons/IconPlayerTrackNextFilled";
@@ -15,11 +16,25 @@ import { IconRepeatOff } from "@knitui/icons/IconRepeatOff";
 import { IconRepeatOnce } from "@knitui/icons/IconRepeatOnce";
 
 import { clampMediaSize } from "../../control-size";
+import {
+  formatScrubLabel,
+  percentWidth,
+  ScrubberBuffered,
+  ScrubberFrame,
+  TABULAR_NUMS,
+  useScrubPreview,
+} from "../../shared/chrome";
 import { volumeIconFor } from "../Audio.chrome.internal";
 import { scrubberSizeFor } from "../Audio.shared";
 import type { AudioPlaylistLoopMode } from "../controller/playlist-controller-base";
 import { bufferedFractionOf, formatTime } from "../engine";
-import { shallowEqual, useAudioPlaylistContext, usePlaylistState } from "./AudioPlaylist.shared";
+import {
+  AudioTrackListFrame,
+  AudioTrackRow,
+  shallowEqual,
+  useAudioPlaylistContext,
+  usePlaylistState,
+} from "./AudioPlaylist.shared";
 
 const LOOP_ORDER: AudioPlaylistLoopMode[] = ["none", "all", "single"];
 
@@ -87,28 +102,19 @@ export const LoopButton = React.memo(function LoopButton(): React.ReactElement {
 export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
   const { controller, size } = useAudioPlaylistContext("Scrubber");
   // Reads the per-tick fields — one of the few controls that SHOULD re-render
-  // every frame.
+  // every frame. Everything else it renders is static or stable.
   const { currentTime, duration } = usePlaylistState(
     (s) => ({ currentTime: s.currentTime, duration: s.duration }),
     shallowEqual,
   );
+  const seekTo = React.useCallback((v: number) => void controller.seekTo(v), [controller]);
+  const { preview, onChange, onChangeEnd } = useScrubPreview(seekTo);
   const hasDuration = Number.isFinite(duration) && duration > 0;
-  const bufferedPct = Math.round(bufferedFractionOf({ bufferedPosition: -1, duration }) * 100);
-  const [scrubValue, setScrubValue] = React.useState<number | null>(null);
-  const displayValue = scrubValue ?? (hasDuration ? Math.min(currentTime, duration) : 0);
+  const buffered = percentWidth(bufferedFractionOf({ bufferedPosition: -1, duration }));
+  const displayValue = preview ?? (hasDuration ? Math.min(currentTime, duration) : 0);
   return (
-    <Box position="relative" width="100%" justifyContent="center">
-      <Box
-        position="absolute"
-        top="50%"
-        marginTop={-2}
-        left={0}
-        height={4}
-        borderRadius={4}
-        backgroundColor="$color6"
-        width={`${bufferedPct}%`}
-        pointerEvents="none"
-      />
+    <ScrubberFrame>
+      <ScrubberBuffered style={buffered} />
       <Slider
         value={displayValue}
         min={0}
@@ -116,15 +122,12 @@ export const Scrubber = React.memo(function Scrubber(): React.ReactElement {
         step={0.1}
         size={scrubberSizeFor(size)}
         disabled={!hasDuration}
-        label={(v: number) => formatTime(v)}
+        label={formatScrubLabel}
         aria-label="Seek"
-        onChange={(v: number) => setScrubValue(v)}
-        onChangeEnd={(v: number) => {
-          void controller.seekTo(v);
-          setScrubValue(null);
-        }}
+        onChange={onChange}
+        onChangeEnd={onChangeEnd}
       />
-    </Box>
+    </ScrubberFrame>
   );
 });
 
@@ -140,7 +143,7 @@ export const TimeDisplay = React.memo(function TimeDisplay(): React.ReactElement
     shallowEqual,
   );
   return (
-    <Text size="xs" fontVariant={["tabular-nums"]} {...styles?.get("time")}>
+    <Text size="xs" fontVariant={TABULAR_NUMS} {...styles?.get("time")}>
       {formatTime(currentTime)} / {formatTime(duration)}
     </Text>
   );
@@ -166,68 +169,98 @@ export const VolumeControl = React.memo(function VolumeControl(): React.ReactEle
   );
 });
 
+/** The track-number / now-playing marker cell. */
+const TrackIndex = styled(Text, {
+  displayName: "AudioTrackIndex",
+  width: 20,
+  color: "color10",
+  fontWeight: "500",
+  fontSize: "xs",
+  variants: {
+    active: { true: { color: "color12", fontWeight: "700" } },
+  } as const,
+});
+
+/** The track title cell. */
+const TrackLabel = styled(Text, {
+  displayName: "AudioTrackLabel",
+  flex: 1,
+  fontWeight: "400",
+  fontSize: "sm",
+  variants: {
+    active: { true: { fontWeight: "600" } },
+  } as const,
+});
+
+interface TrackRowProps {
+  index: number;
+  label: string;
+  active: boolean;
+  playing: boolean;
+}
+
+/**
+ * One track row. Memoised on its own primitives, so a track change re-renders the
+ * two rows whose `active` flipped, not the whole list.
+ */
+const TrackRow = React.memo(function TrackRow({
+  index,
+  label,
+  active,
+  playing,
+}: TrackRowProps): React.ReactElement {
+  const { controller, styles } = useAudioPlaylistContext("TrackList");
+  const onPress = React.useCallback(() => controller.skipTo(index), [controller, index]);
+  return (
+    <AudioTrackRow
+      active={active}
+      onPress={onPress}
+      {...(active ? { "aria-current": "true" as const } : null)}
+      role="button"
+      {...styles?.get("trackRow")}
+    >
+      <TrackIndex active={active}>{active && playing ? "▶" : index + 1}</TrackIndex>
+      <TrackLabel active={active} numberOfLines={1} {...styles?.get("trackLabel")}>
+        {label}
+      </TrackLabel>
+    </AudioTrackRow>
+  );
+});
+
 /** The scrollable, clickable list of tracks. */
 export const TrackList = React.memo(function TrackList(): React.ReactElement | null {
-  const { controller, styles } = useAudioPlaylistContext("TrackList");
+  const { styles } = useAudioPlaylistContext("TrackList");
   const { tracks, currentIndex, playing } = usePlaylistState(
     (s) => ({ tracks: s.tracks, currentIndex: s.currentIndex, playing: s.playing }),
     shallowEqual,
   );
   if (tracks.length === 0) return null;
   return (
-    <Stack gap="$xxs" width="100%" {...styles?.get("trackList")}>
-      {tracks.map((track, i) => {
-        const active = i === currentIndex;
-        return (
-          <Group
-            key={`${track.uri ?? "track"}-${i}`}
-            gap="$sm"
-            align="center"
-            paddingHorizontal="$sm"
-            paddingVertical="$xs"
-            borderRadius="$sm"
-            backgroundColor={active ? "$color5" : "transparent"}
-            onPress={() => controller.skipTo(i)}
-            aria-current={active ? "true" : undefined}
-            role="button"
-            cursor="pointer"
-            hoverStyle={{ backgroundColor: active ? "$color5" : "$color4" }}
-          >
-            <Text
-              size="xs"
-              color={active ? "$color12" : "$color10"}
-              fontWeight={active ? "700" : "500"}
-              width={20}
-            >
-              {active && playing ? "▶" : i + 1}
-            </Text>
-            <Text
-              size="sm"
-              flex={1}
-              numberOfLines={1}
-              fontWeight={active ? "600" : "400"}
-              {...styles?.get("trackLabel")}
-            >
-              {track.name ?? track.uri ?? `Track ${i + 1}`}
-            </Text>
-          </Group>
-        );
-      })}
-    </Stack>
+    <AudioTrackListFrame {...styles?.get("trackList")}>
+      {tracks.map((track, i) => (
+        <TrackRow
+          key={`${track.uri ?? "track"}-${i}`}
+          index={i}
+          label={track.name ?? track.uri ?? `Track ${i + 1}`}
+          active={i === currentIndex}
+          playing={i === currentIndex && playing}
+        />
+      ))}
+    </AudioTrackListFrame>
   );
 });
 
 export const ControlBar = React.memo(function ControlBar(): React.ReactElement {
   return (
-    <Stack gap="$xs" width="100%">
+    <Stack gap="xs" width="100%">
       <Scrubber />
-      <Group justify="space-between" align="center" gap="$xs" wrap="nowrap">
-        <Group gap="$xxs" align="center" wrap="nowrap">
+      <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <PreviousButton />
           <PlayPauseButton />
           <NextButton />
         </Group>
-        <Group gap="$xxs" align="center" wrap="nowrap">
+        <Group gap="xxs" align="center" wrap="nowrap">
           <TimeDisplay />
           <VolumeControl />
           <LoopButton />

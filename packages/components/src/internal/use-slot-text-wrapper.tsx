@@ -19,7 +19,7 @@ import * as React from "react";
  * The slot props are compared by SHALLOW VALUE, not by identity. Keying the memo
  * on identity looked correct but defeated the hook's entire purpose: the
  * documented, idiomatic call is an inline literal —
- * `styles={{ label: { color: "$red9" } }}` — which is a new object on every
+ * `styles={{ label: { color: "red9" } }}` — which is a new object on every
  * render, so the memo never hit, the wrapper was a new component type every
  * render, and React unmounted and remounted the wrapped text on every render.
  * That is precisely the failure this hook exists to prevent, and it only showed

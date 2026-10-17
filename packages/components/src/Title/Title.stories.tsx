@@ -62,7 +62,7 @@ export const Playground: Story = {};
 /** All six heading orders rendered together to compare default sizing. */
 export const Orders: Story = {
   render: (args) => (
-    <Box gap="$sm">
+    <Box gap="sm">
       {ORDERS.map((order) => (
         <Title key={order} {...args} order={order}>
           Order {order} — h{order}
@@ -75,7 +75,7 @@ export const Orders: Story = {
 /** Heading-scale size aliases (`h1`–`h6`) applied to a fixed order, showing that size overrides the default. */
 export const HeadingSizes: Story = {
   render: (args) => (
-    <Box gap="$sm">
+    <Box gap="sm">
       {HEADING_SIZES.map((size) => (
         <Title key={size} {...args} order={3} size={size}>
           size="{size}" on order 3
@@ -88,7 +88,7 @@ export const HeadingSizes: Story = {
 /** Font-size tokens (`xxs`–`xxl`) used as a `size` override, showing the token-driven scale. */
 export const TokenSizes: Story = {
   render: (args) => (
-    <Box gap="$sm">
+    <Box gap="sm">
       {TOKEN_SIZES.map((size) => (
         <Title key={size} {...args} order={2} size={size}>
           size="{size}" on order 2
@@ -101,7 +101,7 @@ export const TokenSizes: Story = {
 /** Size override decoupled from semantic order — `order` sets the tag, `size` sets the visual weight. */
 export const SizeOverridesOrder: Story = {
   render: (args) => (
-    <Box gap="$sm">
+    <Box gap="sm">
       <Title {...args} order={1} size="h6">
         h1 tag, h6 size
       </Title>
@@ -138,17 +138,17 @@ export const LineClamp: Story = {
 /** `textWrap="balance"` distributes text evenly across lines (web only). */
 export const TextWrapBalance: Story = {
   render: (args) => (
-    <Box gap="$lg" width={400}>
-      <Box gap="$xs">
-        <Text fontSize="$sm" color="$colorSubtle">
+    <Box gap="lg" width={400}>
+      <Box gap="xs">
+        <Text fontSize="sm" color="color11">
           textWrap="balance"
         </Text>
         <Title {...args} order={2} textWrap="balance">
           A balanced heading that distributes words evenly across lines
         </Title>
       </Box>
-      <Box gap="$xs">
-        <Text fontSize="$sm" color="$colorSubtle">
+      <Box gap="xs">
+        <Text fontSize="sm" color="color11">
           default (wrap)
         </Text>
         <Title {...args} order={2}>

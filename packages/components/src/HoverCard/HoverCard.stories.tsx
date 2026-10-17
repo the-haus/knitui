@@ -120,10 +120,10 @@ export const Playground: Story = {
         <Button>Hover me</Button>
       </HoverCard.Target>
       <HoverCard.Dropdown>
-        <Text fontWeight="600" marginBottom="$xs">
+        <Text fontWeight="600" marginBottom="xs">
           User profile
         </Text>
-        <Text color="$color11" fontSize="$sm">
+        <Text color="color11" fontSize="sm">
           Hover cards reveal extra context without navigation.
         </Text>
       </HoverCard.Dropdown>
@@ -140,8 +140,8 @@ export const Transitions: Story = {
   render: (args) => {
     const [transition, setTransition] = React.useState<(typeof TRANSITIONS)[number]>("pop");
     return (
-      <Box gap="$lg" alignItems="center" padding="$xl">
-        <Box flexDirection="row" flexWrap="wrap" gap="$xs" maxWidth={520} justifyContent="center">
+      <Box gap="lg" alignItems="center" padding="xl">
+        <Box flexDirection="row" flexWrap="wrap" gap="xs" maxWidth={520} justifyContent="center">
           {TRANSITIONS.map((name) => (
             <Button
               key={name}
@@ -158,10 +158,10 @@ export const Transitions: Story = {
             <Button>Hover for “{transition}”</Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
-            <Text fontWeight="600" marginBottom="$xs">
+            <Text fontWeight="600" marginBottom="xs">
               {transition}
             </Text>
-            <Text color="$color11" fontSize="$sm">
+            <Text color="color11" fontSize="sm">
               Hover in and out to watch the “{transition}” transition.
             </Text>
           </HoverCard.Dropdown>
@@ -179,12 +179,12 @@ export const CompoundAPI: Story = {
         <Button variant="outline">@johndoe</Button>
       </HoverCard.Target>
       <HoverCard.Dropdown>
-        <Box gap="$xs">
+        <Box gap="xs">
           <Text fontWeight="700">John Doe</Text>
-          <Text color="$color11" fontSize="$xs">
+          <Text color="color11" fontSize="xs">
             <Text>⭐</Text> 142 stars · <Text>🔀</Text> 18 forks
           </Text>
-          <Text color="$color11" fontSize="$xs">
+          <Text color="color11" fontSize="xs">
             Full-stack developer, open-source enthusiast.
           </Text>
         </Box>
@@ -197,7 +197,7 @@ export const CompoundAPI: Story = {
 export const InitiallyOpened: Story = {
   args: { initiallyOpened: true },
   render: (args) => (
-    <Box padding="$xl">
+    <Box padding="xl">
       <HoverCard {...args}>
         <HoverCard.Target>
           <Button>Already open</Button>
@@ -229,7 +229,7 @@ export const Disabled: Story = {
 export const WithArrow: Story = {
   args: { withArrow: true, position: "top", initiallyOpened: true },
   render: (args) => (
-    <Box padding="$xl">
+    <Box padding="xl">
       <HoverCard {...args}>
         <HoverCard.Target>
           <Button>Arrow above</Button>
@@ -252,7 +252,7 @@ export const WithDelays: Story = {
       </HoverCard.Target>
       <HoverCard.Dropdown>
         <Text fontWeight="600">Delayed hover card</Text>
-        <Text color="$color11" fontSize="$xs">
+        <Text color="color11" fontSize="xs">
           Opens after 300 ms, closes after 500 ms.
         </Text>
       </HoverCard.Dropdown>
@@ -281,7 +281,7 @@ export const KeepMounted: Story = {
 /** All supported placements shown together to compare positioning. */
 export const Positions: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {POSITIONS.map((pos) => (
         <HoverCard key={pos} position={pos} initiallyOpened={false}>
           <HoverCard.Target>
@@ -290,7 +290,7 @@ export const Positions: Story = {
             </Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
-            <Text fontSize="$xs">{pos}</Text>
+            <Text fontSize="xs">{pos}</Text>
           </HoverCard.Dropdown>
         </HoverCard>
       ))}
@@ -305,10 +305,10 @@ export const Positions: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start" padding="$xl">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start" padding="xl">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} position="relative" alignItems="center" gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={shadow} position="relative" alignItems="center" gap="xs">
+          <Text fontSize="sm" color="color11">
             {shadow}
           </Text>
           <HoverCard
@@ -322,7 +322,7 @@ export const Shadows: Story = {
               <Button variant="default">{shadow}</Button>
             </HoverCard.Target>
             <HoverCard.Dropdown>
-              <Text fontSize="$xs">shadow={shadow}</Text>
+              <Text fontSize="xs">shadow={shadow}</Text>
             </HoverCard.Dropdown>
           </HoverCard>
         </Box>
@@ -335,12 +335,12 @@ export const Shadows: Story = {
 export const Styles: Story = {
   args: { withArrow: true, position: "top", initiallyOpened: true },
   render: (args) => (
-    <Box padding="$xl">
+    <Box padding="xl">
       <HoverCard
         {...args}
         styles={{
-          dropdown: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-          arrow: { background: "$blue3", borderColor: "$blue7", borderWidth: 2, radius: 0 },
+          dropdown: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+          arrow: { background: "blue3", borderColor: "blue7", borderWidth: 2, radius: 0 },
         }}
       >
         <HoverCard.Target>
@@ -348,7 +348,7 @@ export const Styles: Story = {
         </HoverCard.Target>
         <HoverCard.Dropdown>
           <Text fontWeight="700">Restyled via styles</Text>
-          <Text color="$color11" fontSize="$xs">
+          <Text color="color11" fontSize="xs">
             The dropdown frame and arrow are recolored.
           </Text>
         </HoverCard.Dropdown>
@@ -364,7 +364,7 @@ export const Callbacks: Story = {
     const [closes, setCloses] = React.useState(0);
 
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <HoverCard
           onOpen={() => setOpens((value) => value + 1)}
           onClose={() => setCloses((value) => value + 1)}
@@ -373,9 +373,9 @@ export const Callbacks: Story = {
             <Button variant="outline">Profile</Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
-            <Box gap="$xs">
+            <Box gap="xs">
               <Text fontWeight="700">Jane Smith</Text>
-              <Text color="$color11" fontSize="$xs">
+              <Text color="color11" fontSize="xs">
                 Opened {opens} times, closed {closes} times.
               </Text>
             </Box>

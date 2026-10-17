@@ -1,48 +1,24 @@
 import { type GetProps, styled } from "@knitui/core";
 
-import { Box, type BoxProps } from "../Box";
-
-const SpacerFrame = styled(Box, {
-  name: "Spacer",
-});
-
-type SpacerFrameProps = Omit<GetProps<typeof SpacerFrame>, "w" | "h" | "miw" | "mih">;
-
-export interface SpacerProps extends SpacerFrameProps {
-  w?: BoxProps["width"];
-  h?: BoxProps["height"];
-  miw?: BoxProps["minWidth"];
-  mih?: BoxProps["minHeight"];
-}
+import { Box } from "../Box";
 
 /**
  * Fixed-size spacer — mirrors Mantine's `Space`. Set token-first `w`/`h` values
- * to reserve room between elements; `minWidth`/`minHeight` default to `w`/`h`
- * so the space can't collapse.
+ * (`w="md"`, `h={24}`, `h="sm md:lg"`) to reserve room between elements;
+ * `minWidth`/`minHeight` default to `w`/`h` so the space can't collapse inside a
+ * shrinking flex parent. Hidden from assistive technology by default.
+ *
+ * A plain `styled()` component (flattenable): the min-size defaults are derived
+ * from the sibling `width`/`height` props by a component resolver, which sits
+ * above variants and BELOW call-site props, so an explicit `miw`/`mih` (or
+ * `minWidth`/`minHeight`) still wins.
  */
-export const Spacer = SpacerFrame.styleable<SpacerProps>(function Spacer(props, ref) {
-  const {
-    w,
-    h,
-    miw,
-    mih,
-    width: widthProp,
-    height: heightProp,
-    minWidth: minWidthProp,
-    minHeight: minHeightProp,
-    "aria-hidden": ariaHidden = true,
-    ...rest
-  } = props;
+export const Spacer = styled(Box, {
+  displayName: "Spacer",
+  "aria-hidden": true,
+}).resolve((props) => ({
+  minWidth: props.w ?? props.width,
+  minHeight: props.h ?? props.height,
+}));
 
-  return (
-    <SpacerFrame
-      ref={ref}
-      {...rest}
-      aria-hidden={ariaHidden}
-      width={widthProp ?? w}
-      height={heightProp ?? h}
-      minWidth={minWidthProp ?? miw ?? w}
-      minHeight={minHeightProp ?? mih ?? h}
-    />
-  );
-});
+export type SpacerProps = GetProps<typeof Spacer>;

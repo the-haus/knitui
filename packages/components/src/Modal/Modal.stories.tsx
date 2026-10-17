@@ -98,7 +98,7 @@ function ModalDemo({
 }: ComponentProps<typeof Modal> & { label?: string }) {
   const [opened, setOpened] = React.useState(false);
   return (
-    <Box gap="$md" alignItems="center">
+    <Box gap="md" alignItems="center">
       <Button onPress={() => setOpened(true)} variant="default">
         {label}
       </Button>
@@ -127,7 +127,7 @@ export const Sizes: Story = {
   render: () => {
     const [openSize, setOpenSize] = React.useState<(typeof SIZES)[number] | null>(null);
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {SIZES.map((size) => (
           <Button key={size} onPress={() => setOpenSize(size)} variant="default">
             Open {size}
@@ -151,7 +151,7 @@ export const Shadows: Story = {
   render: () => {
     const [openShadow, setOpenShadow] = React.useState<(typeof SIZES)[number] | null>(null);
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
         {SIZES.map((shadow) => (
           <Button key={shadow} onPress={() => setOpenShadow(shadow)} variant="default">
             Shadow {shadow}
@@ -221,9 +221,9 @@ export const CustomCloseLabel: Story = {
 export const ScrollableBody: Story = {
   render: (args) => (
     <ModalDemo {...args} label="Open long modal" title="Terms & conditions">
-      <Box gap="$sm">
+      <Box gap="sm">
         {Array.from({ length: 18 }, (_, i) => (
-          <Text key={i} color="$color11">
+          <Text key={i} color="color11">
             {i + 1}. This is a long paragraph of body content used to demonstrate that the modal
             body scrolls vertically when it is taller than the viewport, while the header and close
             button remain pinned in place.
@@ -239,7 +239,7 @@ export const CompoundAPI: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Button onPress={() => setOpened(true)} variant="default">
           Open (compound)
         </Button>
@@ -256,9 +256,9 @@ export const CompoundAPI: Story = {
             <Modal.CloseButton onPress={() => setOpened(false)} aria-label="Close" />
           </Modal.Header>
           <Modal.Body>
-            <Box gap="$sm">
+            <Box gap="sm">
               <Text fontWeight="600">Composed manually</Text>
-              <Text color="$color11">
+              <Text color="color11">
                 Use Modal.Content, Modal.Header, Modal.Title, and Modal.Body to build fully custom
                 layouts while keeping the accessibility wiring intact.
               </Text>
@@ -278,9 +278,9 @@ export const Styles: Story = {
       label="Open (styled)"
       title="Styled modal"
       styles={{
-        overlay: { backgroundColor: "$blue3" },
-        content: { borderColor: "$blue9", borderWidth: 2 },
-        title: { color: "$blue11" },
+        overlay: { backgroundColor: "blue3" },
+        content: { borderColor: "blue9", borderWidth: 2 },
+        title: { color: "blue11" },
       }}
     >
       <Text>The overlay, content border, and title are styled via the per-slot `styles` map.</Text>
@@ -292,9 +292,9 @@ export const Styles: Story = {
 export const WithHeaderDivider: Story = {
   render: (args) => (
     <ModalDemo {...args} label="Open (header divider)" title="Terms & conditions" withHeaderDivider>
-      <Box gap="$sm">
+      <Box gap="sm">
         {Array.from({ length: 14 }, (_, i) => (
-          <Text key={i} color="$color11">
+          <Text key={i} color="color11">
             {i + 1}. Scroll the body — the header stays pinned with a divider beneath it.
           </Text>
         ))}
@@ -306,8 +306,8 @@ export const WithHeaderDivider: Story = {
 /** Roomier `padding` on the header and body for a more spacious layout. */
 export const CustomPadding: Story = {
   render: (args) => (
-    <ModalDemo {...args} label="Open (roomy padding)" padding="$xl" title="Spacious modal">
-      <Text>The header and body use `padding=&quot;$xl&quot;` for extra breathing room.</Text>
+    <ModalDemo {...args} label="Open (roomy padding)" padding="xl" title="Spacious modal">
+      <Text>The header and body use `padding=&quot;xl&quot;` for extra breathing room.</Text>
     </ModalDemo>
   ),
 };
@@ -340,7 +340,7 @@ export const NonDismissable: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Button onPress={() => setOpened(true)} variant="default">
           Open (must confirm)
         </Button>
@@ -355,11 +355,11 @@ export const NonDismissable: Story = {
           centered
           size="sm"
         >
-          <Box gap="$md">
-            <Text color="$color11">
+          <Box gap="md">
+            <Text color="color11">
               You must make a choice — the backdrop and Escape key will not dismiss this dialog.
             </Text>
-            <Box flexDirection="row" gap="$sm" justifyContent="flex-end">
+            <Box flexDirection="row" gap="sm" justifyContent="flex-end">
               <Button variant="default" onPress={() => setOpened(false)}>
                 Decline
               </Button>
@@ -391,11 +391,11 @@ export const WithRichContent: Story = {
           size="sm"
           centered
         >
-          <Box gap="$md">
-            <Text color="$color11">
+          <Box gap="md">
+            <Text color="color11">
               Are you sure you want to delete this item? This action cannot be undone.
             </Text>
-            <Box flexDirection="row" gap="$sm" justifyContent="flex-end">
+            <Box flexDirection="row" gap="sm" justifyContent="flex-end">
               <Button variant="default" onPress={() => setOpened(false)}>
                 Cancel
               </Button>

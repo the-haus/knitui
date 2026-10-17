@@ -16,9 +16,9 @@ interface ChromeStyles {
 
 describe("slotStyles", () => {
   it("returns the props for a known slot", () => {
-    const styles: SlotStyles<DemoStyles> = { title: { color: "$red9" } };
+    const styles: SlotStyles<DemoStyles> = { title: { color: "red9" } };
     const s = slotStyles<DemoStyles>(styles, ["title", "message"]);
-    expect(s.get("title")).toEqual({ color: "$red9" });
+    expect(s.get("title")).toEqual({ color: "red9" });
     expect(s.get("message")).toBeUndefined();
   });
 
@@ -29,25 +29,25 @@ describe("slotStyles", () => {
 
   describe("merge (explicit beats sugar)", () => {
     it("puts explicit last so it wins over the slot sugar", () => {
-      const styles: SlotStyles<DemoStyles> = { title: { color: "$red9" } };
+      const styles: SlotStyles<DemoStyles> = { title: { color: "red9" } };
       const s = slotStyles<DemoStyles>(styles, ["title", "message"]);
       // Explicit color overrides the sugar's color.
-      expect(s.merge("title", { color: "$blue9" })).toEqual({ color: "$blue9" });
+      expect(s.merge("title", { color: "blue9" })).toEqual({ color: "blue9" });
     });
 
     it("keeps slot sugar where explicit doesn't override it", () => {
-      const styles: SlotStyles<DemoStyles> = { title: { color: "$red9" } };
+      const styles: SlotStyles<DemoStyles> = { title: { color: "red9" } };
       const s = slotStyles<DemoStyles>(styles, ["title", "message"]);
-      expect(s.merge("title", {})).toEqual({ color: "$red9" });
+      expect(s.merge("title", {})).toEqual({ color: "red9" });
     });
 
     it("is undefined-safe on both sides", () => {
       const s = slotStyles<DemoStyles>(undefined, ["title", "message"]);
       expect(s.merge("title", undefined)).toEqual({});
-      expect(s.merge("title", { color: "$blue9" })).toEqual({ color: "$blue9" });
+      expect(s.merge("title", { color: "blue9" })).toEqual({ color: "blue9" });
 
-      const withSugar = slotStyles<DemoStyles>({ title: { color: "$red9" } }, ["title", "message"]);
-      expect(withSugar.merge("title", undefined)).toEqual({ color: "$red9" });
+      const withSugar = slotStyles<DemoStyles>({ title: { color: "red9" } }, ["title", "message"]);
+      expect(withSugar.merge("title", undefined)).toEqual({ color: "red9" });
     });
   });
 
@@ -78,13 +78,13 @@ describe("slotStyles", () => {
   describe("pick (forward a slot subset)", () => {
     it("keeps only the requested keys present on the source map", () => {
       const styles: SlotStyles<DemoStyles> = {
-        title: { color: "$red9" },
+        title: { color: "red9" },
         message: { fontSize: 12 },
       };
       // Target vocabulary `ChromeStyles` overlaps `DemoStyles` only on `title`;
       // `footer` is not on the source so it is dropped, `message` is not requested.
       expect(pick<DemoStyles, ChromeStyles>(styles, ["title", "footer"])).toEqual({
-        title: { color: "$red9" },
+        title: { color: "red9" },
       });
     });
 

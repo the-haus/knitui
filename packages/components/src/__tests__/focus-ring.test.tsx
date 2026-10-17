@@ -23,12 +23,14 @@ import { render } from "../test-utils";
 import { Tree } from "../Tree";
 import { TreeSelect } from "../TreeSelect";
 import { UnstyledButton } from "../UnstyledButton";
+import { allCssRules } from "./css-rules.test.helper";
 
 /**
  * THE FOCUS-CONTRACT GUARDRAIL (see `internal/variant-colors.ts` → `FOCUS_RING`).
  *
- * The kit's focus ring is a `:focus-visible` outline (Tamagui `focusVisibleStyle`,
- * the shared `focusRingStyle`). It only ever becomes visible if the element that
+ * The kit's focus ring is a `:focus-visible` outline (v3 flat clauses
+ * `outlineColor: "focus-visible:focusRingColor"`, …, the shared `focusRingStyle` /
+ * `FOCUS_RING` in `internal/focus-ring.ts`). It only ever becomes visible if the element that
  * carries it is ALSO keyboard-focusable — a styled `Box` renders a `<div>`, which
  * the browser will not tab to unless made focusable via `webButton()` (real
  * `<button>`), `useKeyboardActions` (`tabIndex`), or a roving `tabIndex`.
@@ -39,9 +41,10 @@ import { UnstyledButton } from "../UnstyledButton";
  *
  *   every element carrying the focus-visible ring class is keyboard-focusable.
  *
- * Tamagui emits the ring as classes like `_outlineColor-0focus-visible-color8`, so
- * an element opted into the ring is detectable by the `focus-visible` substring in
- * its className.
+ * v3 emits the ring as short hashed atomic classes (`_oc-847342144`) whose injected
+ * rule carries the condition (`._oc-847342144:where(:focus-visible) {outline-color:
+ * var(--focusRingColor)}`), so an element opted into the ring is detected by its
+ * classes' RULES, not by a class-name spelling.
  *
  * Focusability is decided by {@link isFocusable}, NOT by the `tabIndex` property:
  * the property reports `-1` for BOTH a plain `<div>` (truly unfocusable → dead
@@ -51,9 +54,23 @@ import { UnstyledButton } from "../UnstyledButton";
  * attribute (or a natively-focusable host element).
  */
 
-/** Elements whose className opts them into the `:focus-visible` outline ring. */
+/** The atomic classes whose rule paints an outline under `:focus-visible`. */
+function ringClasses(): Set<string> {
+  const out = new Set<string>();
+  for (const rule of allCssRules()) {
+    if (!rule.includes(":focus-visible") || !rule.includes("outline-color")) continue;
+    const cls = /^\.([\w-]+)/.exec(rule.trim())?.[1];
+    if (cls) out.add(cls);
+  }
+  return out;
+}
+
+/** Elements whose classes opt them into the `:focus-visible` outline ring. */
 function ringedElements(root: ParentNode): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>('[class*="focus-visible"]'));
+  const ring = ringClasses();
+  return Array.from(root.querySelectorAll<HTMLElement>("[class]")).filter((el) =>
+    Array.from(el.classList).some((c) => ring.has(c)),
+  );
 }
 
 /**
@@ -164,8 +181,11 @@ const CASES: Array<{ name: string; element: React.ReactElement; expectRing: bool
     expectRing: true,
   },
   {
+    // The ring lives on the dropdown's tree nodes, so the dropdown must be open.
+    // (v2's className-substring check passed here by accident: the closed input's
+    // `outline` RESET carried a `focus-visible` class.)
     name: "TreeSelect",
-    element: <TreeSelect data={[{ value: "a", label: "A" }]} />,
+    element: <TreeSelect defaultDropdownOpened data={[{ value: "a", label: "A" }]} />,
     expectRing: true,
   },
 ];

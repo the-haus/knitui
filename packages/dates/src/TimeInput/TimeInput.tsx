@@ -33,7 +33,7 @@
 //              label→input association are wired by `InputBase` on both platforms;
 //              no extra `accessibility*` axis is needed (unlike the interactive
 //              `Day`/segment leaves).
-//   12/13/14/15 — interaction styling, `.styleable`, slot markers and the
+//   12/13/14/15 — interaction styling, `styleable()`, slot markers and the
 //              compiler-safe show/hide trap all belong to styled parts; this leaf
 //              owns none. Ref forwards to the `InputBase` host via `forwardRef`.
 // ───────────────────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@ import { clampMediaSize, type MediaSize } from "../control-size";
 /**
  * Publish the over-media icon context for a `<Video>` control: glyphs auto-size to
  * the control's size key (canonical ladder) and paint crisp white-on-scrim via the
- * theme-independent `$mediaOnScrim` token. This is the video equivalent of the
+ * theme-independent `mediaOnScrim` token. This is the video equivalent of the
  * icon context `ActionIcon` already provides on a normal surface — used INSIDE the
  * transport `ActionIcon`s, where the surrounding fill is the video, not a theme
  * color, so the variant foreground would be wrong. Replaces the old per-icon
@@ -30,7 +30,7 @@ export function OnScrimIcons({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <ControlIconProvider size={clampMediaSize(size)} color="$mediaOnScrim">
+    <ControlIconProvider size={clampMediaSize(size)} color="mediaOnScrim">
       {children}
     </ControlIconProvider>
   );

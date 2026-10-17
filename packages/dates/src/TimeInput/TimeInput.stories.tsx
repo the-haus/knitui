@@ -60,11 +60,11 @@ export const Default: Story = {
   render: () => {
     const [value, setValue] = React.useState("09:30");
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Frame>
           <TimeInput label="Start time" value={value} onChange={setValue} />
         </Frame>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Value: {value || "empty"}
         </Text>
       </Box>

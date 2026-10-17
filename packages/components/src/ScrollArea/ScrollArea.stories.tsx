@@ -80,7 +80,7 @@ export const Playground: Story = {
   render: (args) => (
     <ScrollArea {...args}>
       {ITEMS.map((item) => (
-        <Text key={item} paddingVertical="$xs">
+        <Text key={item} paddingVertical="xs">
           {item}
         </Text>
       ))}
@@ -94,7 +94,7 @@ export const VerticalOnly: Story = {
   render: (args) => (
     <ScrollArea {...args}>
       {ITEMS.map((item) => (
-        <Text key={item} paddingVertical="$xs">
+        <Text key={item} paddingVertical="xs">
           {item}
         </Text>
       ))}
@@ -107,13 +107,13 @@ export const HorizontalOnly: Story = {
   args: { scrollbars: "x", width: 320, height: 80 },
   render: (args) => (
     <ScrollArea {...args}>
-      <Box flexDirection="row" gap="$md" alignItems="center" flexWrap="nowrap">
+      <Box flexDirection="row" gap="md" alignItems="center" flexWrap="nowrap">
         {Array.from({ length: 30 }, (_, i) => (
           <Box
             key={i}
-            backgroundColor="$color5"
-            borderRadius="$sm"
-            padding="$sm"
+            backgroundColor="color5"
+            borderRadius="sm"
+            padding="sm"
             minWidth={80}
             alignItems="center"
           >
@@ -131,9 +131,9 @@ export const BothAxes: Story = {
   render: (args) => (
     <ScrollArea {...args}>
       {Array.from({ length: 20 }, (_, row) => (
-        <Box key={row} flexDirection="row" gap="$md" flexWrap="nowrap">
+        <Box key={row} flexDirection="row" gap="md" flexWrap="nowrap">
           {Array.from({ length: 20 }, (_, col) => (
-            <Box key={col} minWidth={60} padding="$xs">
+            <Box key={col} minWidth={60} padding="xs">
               <Text>{`${row + 1}×${col + 1}`}</Text>
             </Box>
           ))}
@@ -150,17 +150,17 @@ export const BothAxes: Story = {
 export const Shadows: Story = {
   args: { scrollbars: "y", width: 320, height: 160 },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs" alignItems="center">
+        <Box key={shadow} gap="xs" alignItems="center">
           <ScrollArea {...args} shadow={shadow}>
             {ITEMS.map((item) => (
-              <Text key={item} paddingVertical="$xs">
+              <Text key={item} paddingVertical="xs">
                 {item}
               </Text>
             ))}
           </ScrollArea>
-          <Text fontSize="$xs" color="$color11">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
         </Box>
@@ -176,22 +176,22 @@ export const ScrollbarSizes: Story = {
   },
 
   render: () => (
-    <Box flexDirection="row" gap="$lg" alignItems="flex-start">
-      <Box gap="$xs">
+    <Box flexDirection="row" gap="lg" alignItems="flex-start">
+      <Box gap="xs">
         <Text fontWeight="700">Thick (16 px)</Text>
         <ScrollArea scrollbars="y" scrollbarSize={16} width={200} height={160}>
           {ITEMS.slice(0, 10).map((item) => (
-            <Text key={item} paddingVertical="$xs">
+            <Text key={item} paddingVertical="xs">
               {item}
             </Text>
           ))}
         </ScrollArea>
       </Box>
-      <Box gap="$xs">
+      <Box gap="xs">
         <Text fontWeight="700">Thin (4 px)</Text>
         <ScrollArea scrollbars="y" scrollbarSize={4} width={200} height={160}>
           {ITEMS.slice(0, 10).map((item) => (
-            <Text key={item} paddingVertical="$xs">
+            <Text key={item} paddingVertical="xs">
               {item}
             </Text>
           ))}
@@ -206,7 +206,7 @@ export const ScrollPositionTracking: Story = {
   render: (args) => {
     const [pos, setPos] = React.useState({ x: 0, y: 0 });
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <Text>
           <Text fontWeight="700">Scroll position: </Text>
           {`x=${pos.x}  y=${pos.y}`}
@@ -219,7 +219,7 @@ export const ScrollPositionTracking: Story = {
           onScrollPositionChange={setPos}
         >
           {ITEMS.map((item) => (
-            <Text key={item} paddingVertical="$xs">
+            <Text key={item} paddingVertical="xs">
               {item}
             </Text>
           ))}
@@ -232,22 +232,22 @@ export const ScrollPositionTracking: Story = {
 /** ScrollArea.Autosize grows with its content until maxHeight is reached, then scrolls. */
 export const Autosize: Story = {
   render: () => (
-    <Box flexDirection="row" gap="$xl" alignItems="flex-start">
-      <Box gap="$xs">
+    <Box flexDirection="row" gap="xl" alignItems="flex-start">
+      <Box gap="xs">
         <Text fontWeight="700">3 items (no scroll)</Text>
         <ScrollArea.Autosize maxHeight={200} width={240} scrollbars="y">
           {ITEMS.slice(0, 3).map((item) => (
-            <Text key={item} paddingVertical="$xs">
+            <Text key={item} paddingVertical="xs">
               {item}
             </Text>
           ))}
         </ScrollArea.Autosize>
       </Box>
-      <Box gap="$xs">
+      <Box gap="xs">
         <Text fontWeight="700">20 items (scrolls)</Text>
         <ScrollArea.Autosize maxHeight={200} width={240} scrollbars="y">
           {ITEMS.map((item) => (
-            <Text key={item} paddingVertical="$xs">
+            <Text key={item} paddingVertical="xs">
               {item}
             </Text>
           ))}
@@ -267,18 +267,17 @@ export const CustomScrollbars: Story = {
   render: (args) => (
     <ScrollArea
       {...args}
-      scrollbarProps={{ backgroundColor: "$color3", borderRadius: "$sm" }}
+      scrollbarProps={{ backgroundColor: "color3", borderRadius: "sm" }}
       thumbProps={{
-        backgroundColor: "$blue9",
+        backgroundColor: "blue9 hover:blue10",
         opacity: 1,
-        hoverStyle: { backgroundColor: "$blue10" },
       }}
-      cornerProps={{ backgroundColor: "$color3" }}
+      cornerProps={{ backgroundColor: "color3" }}
     >
       {Array.from({ length: 20 }, (_, row) => (
-        <Box key={row} flexDirection="row" gap="$md" flexWrap="nowrap">
+        <Box key={row} flexDirection="row" gap="md" flexWrap="nowrap">
           {Array.from({ length: 20 }, (_, col) => (
-            <Box key={col} minWidth={60} padding="$xs">
+            <Box key={col} minWidth={60} padding="xs">
               <Text>{`${row + 1}×${col + 1}`}</Text>
             </Box>
           ))}
@@ -295,13 +294,13 @@ export const CustomScrollbars: Story = {
  */
 export const VisibilityTypes: Story = {
   render: () => (
-    <Box flexDirection="row" gap="$lg" alignItems="flex-start" flexWrap="wrap">
+    <Box flexDirection="row" gap="lg" alignItems="flex-start" flexWrap="wrap">
       {(["always", "hover", "scroll", "never"] as const).map((t) => (
-        <Box key={t} gap="$xs">
+        <Box key={t} gap="xs">
           <Text fontWeight="700">{t}</Text>
           <ScrollArea type={t} scrollbars="y" width={200} height={160}>
             {ITEMS.slice(0, 12).map((item) => (
-              <Text key={item} paddingVertical="$xs">
+              <Text key={item} paddingVertical="xs">
                 {item}
               </Text>
             ))}
@@ -321,8 +320,8 @@ export const ImperativeControls: Story = {
   render: () => {
     const ref = React.useRef<ScrollAreaHandle>(null);
     return (
-      <Box gap="$md" alignItems="flex-start">
-        <Box flexDirection="row" gap="$xs" flexWrap="wrap">
+      <Box gap="md" alignItems="flex-start">
+        <Box flexDirection="row" gap="xs" flexWrap="wrap">
           <Button size="xs" variant="default" onPress={() => ref.current?.scrollToTop(true)}>
             Top
           </Button>
@@ -341,7 +340,7 @@ export const ImperativeControls: Story = {
         </Box>
         <ScrollArea ref={ref} scrollbars="y" type="always" width={320} height={200}>
           {ITEMS.map((item, i) => (
-            <Text key={item} id={i === 14 ? "target" : undefined} paddingVertical="$xs">
+            <Text key={item} id={i === 14 ? "target" : undefined} paddingVertical="xs">
               {i === 14 ? `★ ${item}` : item}
             </Text>
           ))}
@@ -360,9 +359,9 @@ export const EdgeShadows: Story = {
   render: (args) => (
     <ScrollArea {...args} shadows shadowSize={40}>
       {Array.from({ length: 24 }, (_, row) => (
-        <Box key={row} flexDirection="row" gap="$md" flexWrap="nowrap">
+        <Box key={row} flexDirection="row" gap="md" flexWrap="nowrap">
           {Array.from({ length: 24 }, (_, col) => (
-            <Box key={col} minWidth={64} padding="$sm">
+            <Box key={col} minWidth={64} padding="sm">
               <Text>{`${row + 1}×${col + 1}`}</Text>
             </Box>
           ))}
@@ -382,7 +381,7 @@ export const InfiniteScroll: Story = {
     const [count, setCount] = React.useState(20);
     const [loads, setLoads] = React.useState(0);
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <Text>
           <Text fontWeight="700">Items: </Text>
           {`${count}  ·  loads: ${loads}`}
@@ -399,7 +398,7 @@ export const InfiniteScroll: Story = {
           }}
         >
           {Array.from({ length: count }, (_, i) => (
-            <Text key={i} paddingVertical="$xs">
+            <Text key={i} paddingVertical="xs">
               {`Row ${i + 1}`}
             </Text>
           ))}
@@ -426,11 +425,11 @@ export const StickToBottom: Story = {
       return () => clearInterval(id);
     }, []);
     return (
-      <Box gap="$xs" alignItems="flex-start">
+      <Box gap="xs" alignItems="flex-start">
         <Text fontWeight="700">Live log (sticks to bottom)</Text>
         <ScrollArea stickToBottom scrollbars="y" type="always" width={320} height={200}>
           {lines.map((line) => (
-            <Text key={line} fontFamily="$mono" paddingVertical="$xxs">
+            <Text key={line} fontFamily="mono" paddingVertical="xxs">
               {line}
             </Text>
           ))}
@@ -449,7 +448,7 @@ export const TrackPaging: Story = {
   render: (args) => (
     <ScrollArea {...args}>
       {ITEMS.map((item) => (
-        <Text key={item} paddingVertical="$xs">
+        <Text key={item} paddingVertical="xs">
           {item}
         </Text>
       ))}
@@ -473,7 +472,7 @@ export const HoverGrow: Story = {
   render: (args) => (
     <ScrollArea {...args}>
       {ITEMS.map((item) => (
-        <Text key={item} paddingVertical="$xs">
+        <Text key={item} paddingVertical="xs">
           {item}
         </Text>
       ))}
@@ -487,11 +486,11 @@ export const HoverGrow: Story = {
  */
 export const Keyboard: Story = {
   render: () => (
-    <Box gap="$xs" alignItems="flex-start">
+    <Box gap="xs" alignItems="flex-start">
       <Text>Tab to focus, then use the arrow / page / home / end keys.</Text>
       <ScrollArea scrollbars="y" type="always" width={320} height={200} keyStep={48}>
         {ITEMS.map((item) => (
-          <Text key={item} paddingVertical="$xs">
+          <Text key={item} paddingVertical="xs">
             {item}
           </Text>
         ))}
@@ -510,16 +509,16 @@ export const Styles: Story = {
     <ScrollArea
       {...args}
       styles={{
-        viewport: { backgroundColor: "$blue2" },
-        scrollbar: { backgroundColor: "$blue3", borderRadius: "$sm" },
-        thumb: { backgroundColor: "$blue9" },
-        corner: { backgroundColor: "$blue3" },
+        viewport: { backgroundColor: "blue2" },
+        scrollbar: { backgroundColor: "blue3", borderRadius: "sm" },
+        thumb: { backgroundColor: "blue9" },
+        corner: { backgroundColor: "blue3" },
       }}
     >
       {Array.from({ length: 20 }, (_, row) => (
-        <Box key={row} flexDirection="row" gap="$md" flexWrap="nowrap">
+        <Box key={row} flexDirection="row" gap="md" flexWrap="nowrap">
           {Array.from({ length: 20 }, (_, col) => (
-            <Box key={col} minWidth={60} padding="$xs">
+            <Box key={col} minWidth={60} padding="xs">
               <Text>{`${row + 1}×${col + 1}`}</Text>
             </Box>
           ))}

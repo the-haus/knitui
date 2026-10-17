@@ -81,12 +81,12 @@ function Stage({ children }: { children: React.ReactNode }) {
       width={280}
       height={160}
       backgroundColor="#e8eaed"
-      borderRadius="$sm"
+      borderRadius="sm"
       overflow="hidden"
       alignItems="center"
       justifyContent="center"
     >
-      <Text color="#555" fontSize="$sm">
+      <Text color="#555" fontSize="sm">
         Content behind the overlay
       </Text>
       {children}
@@ -153,11 +153,11 @@ export const LightWash: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the scrim frame. */
 export const Shadows: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {(["xs", "sm", "md", "lg", "xl"] as const).map((shadow) => (
         <Stage key={shadow}>
           <Overlay shadow={shadow} backgroundOpacity={0.6} center>
-            <Text color="#fff" fontWeight="600" fontSize="$sm">
+            <Text color="#fff" fontWeight="600" fontSize="sm">
               {shadow}
             </Text>
           </Overlay>
@@ -170,7 +170,7 @@ export const Shadows: Story = {
 /** Colour-tinted scrim — a branded accent wash rather than neutral black. */
 export const ColoredTint: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(
         [
           { color: "#1c4ed8", label: "Blue" },
@@ -181,7 +181,7 @@ export const ColoredTint: Story = {
       ).map(({ color, label }) => (
         <Stage key={label}>
           <Overlay backgroundColor={color} backgroundOpacity={0.55} center>
-            <Text color="#fff" fontWeight="600" fontSize="$sm">
+            <Text color="#fff" fontWeight="600" fontSize="sm">
               {label}
             </Text>
           </Overlay>
@@ -254,9 +254,9 @@ export const Trigger: Story = {
   render: (args) => {
     const [visible, setVisible] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Stage>
-          <Text color="#555" fontSize="$sm" position="absolute">
+          <Text color="#555" fontSize="sm" position="absolute">
             Content behind overlay
           </Text>
           {visible && (

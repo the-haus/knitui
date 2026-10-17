@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { declarationsUnder, hasFocusRing, restingCss } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { NavLink } from "./NavLink";
 
@@ -125,5 +126,51 @@ describe("NavLink", () => {
   it("reaches the outer wrapper via the `wrapper` slot", () => {
     render(<NavLink label="Home" styles={{ wrapper: { testID: "nl-wrapper" } }} />);
     expect(screen.getByTestId("nl-wrapper")).toBeInTheDocument();
+  });
+
+  const resting = restingCss;
+
+  it("marks the active link with aria-current and the variant's active fill", () => {
+    const { unmount } = render(<NavLink label="Home" active variant="filled" />);
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("aria-current", "page");
+    expect(resting(link)).toMatch(/background-color: var\(--color9\)/);
+    expect(declarationsUnder(link, ":hover")).toContain("background-color: var(--color10)");
+    // Filled active labels sit on the accent.
+    expect(resting(screen.getByText("Home"))).toMatch(/color: var\(--color1\)/);
+    unmount();
+
+    render(<NavLink label="Docs" active />);
+    expect(resting(screen.getByRole("link"))).toMatch(/background-color: var\(--color4\)/);
+  });
+
+  it("has no active fill or aria-current when inactive, but hover/press fills + ring", () => {
+    render(<NavLink label="Home" />);
+    const link = screen.getByRole("link");
+    expect(link).not.toHaveAttribute("aria-current");
+    expect(resting(link)).not.toMatch(/background-color/);
+    expect(declarationsUnder(link, ":hover")).toContain("background-color: var(--color3)");
+    expect(declarationsUnder(link, ":active")).toContain("background-color: var(--color4)");
+    expect(hasFocusRing(link)).toBe(true);
+  });
+
+  it("activates from the keyboard and is focusable", () => {
+    const onPress = jest.fn();
+    render(<NavLink label="Home" onPress={onPress} />);
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(link, { key: "Enter" });
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("truncates label and description to one line only with noWrap", () => {
+    const { unmount } = render(<NavLink label="Long" description="Desc" />);
+    expect(resting(screen.getByText("Long"))).not.toMatch(/-webkit-line-clamp|text-overflow/);
+    unmount();
+    render(<NavLink label="Long" description="Desc" noWrap />);
+    const label = screen.getByText("Long");
+    expect(resting(label) + (label.getAttribute("style") ?? "") + label.className).toMatch(
+      /ellipsis|line-clamp|nowrap/i,
+    );
   });
 });

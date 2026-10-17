@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Anchor } from "./Anchor";
 
@@ -75,5 +76,27 @@ describe("Anchor", () => {
       </Anchor>,
     );
     expect(ref.current).not.toBeNull();
+  });
+
+  it.each([
+    ["always", /text-decoration-line: underline/],
+    ["never", /text-decoration-line: none/],
+  ] as const)("underline=%s sets the resting decoration", (underline, re) => {
+    render(<Anchor underline={underline}>u</Anchor>);
+    expect(cssRulesOf(screen.getByText("u")).join("\n")).toMatch(re);
+  });
+
+  it("underlines only on hover by default", () => {
+    render(<Anchor href="#">hov</Anchor>);
+    const rules = cssRulesOf(screen.getByText("hov")).join("\n");
+    expect(rules).toMatch(/text-decoration-line: none/);
+    expect(rules).toMatch(/:hover[^{]*\{[^}]*text-decoration-line: underline/);
+  });
+
+  it("carries the shared focus ring and the accent link colour", () => {
+    render(<Anchor href="#">ring</Anchor>);
+    const el = screen.getByText("ring");
+    expect(hasFocusRing(el)).toBe(true);
+    expect(cssRulesOf(el).join("\n")).toContain("color: var(--color11)");
   });
 });

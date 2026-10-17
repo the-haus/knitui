@@ -12,10 +12,18 @@ type Tokens = {
     lineHeight: Scale;
   };
   breakpoints: Scale;
+  /** The configured media queries — the names used as `sm:` / `gtSm:` modifiers. */
+  media?: Record<string, { minWidth?: number; maxWidth?: number }>;
   zIndex: Scale;
   motion: {
     durations: Record<string, number>;
     easings: Record<string, string>;
+    /** v3 unified `transition` presets — the same motion on every driver. */
+    presets?: Record<
+      string,
+      | { type: "timing"; duration: number; easing: string }
+      | { type: "spring"; damping: number; mass: number; stiffness: number }
+    >;
   };
   controlMetrics: Record<string, Record<string, string>>;
   notes: Record<string, string | undefined>;
@@ -64,7 +72,7 @@ export function TokenScale({ scale }: { scale: keyof Tokens["scales"] }) {
           {Object.entries(data).map(([key, value]) => (
             <tr key={key}>
               <td>
-                <code>${key}</code>
+                <code>{key}</code>
               </td>
               <td>
                 {value}
@@ -112,7 +120,7 @@ export function AllTokenScales() {
 /**
  * `controlMetrics` — the sizing table every control-shaped component derives from.
  *
- * Each cell is a token KEY, not a pixel value, which is the point: `$md` resolves
+ * Each cell is a token KEY, not a pixel value, which is the point: `md` resolves
  * to `size.md` on height, `space.md` on padding, `font.md` on fontSize. The
  * resolved pixels are shown in parentheses so the ladder is legible at a glance.
  */
@@ -128,8 +136,8 @@ export function ControlMetricsTable() {
     "borderRadius",
   ];
 
-  const resolve = (column: string, token: string) => {
-    const key = token.replace(/^\$/, "");
+  // v3 token names are bare (`"md"`), so a cell IS the scale key.
+  const resolve = (column: string, key: string) => {
     const scale =
       column === "height"
         ? scales.size
@@ -175,7 +183,7 @@ export function ControlMetricsTable() {
   );
 }
 
-/** Motion tokens: durations and easings. */
+/** Motion tokens: durations, easings and the unified `transition` presets. */
 export function MotionTable() {
   const { motion } = tokens();
 
@@ -224,13 +232,55 @@ export function MotionTable() {
           </tbody>
         </table>
       </div>
+
+      {motion.presets ? (
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  <code>transition</code> preset
+                </th>
+                <th>Motion (web and native)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(motion.presets).map(([key, preset]) => (
+                <tr key={key}>
+                  <td>
+                    <code>{key}</code>
+                  </td>
+                  <td>
+                    <code>
+                      {preset.type === "timing"
+                        ? `${preset.duration}ms ${preset.easing}`
+                        : `spring (damping ${preset.damping}, mass ${preset.mass}, stiffness ${preset.stiffness})`}
+                    </code>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </>
   );
 }
 
-/** Breakpoints, as used by `useMedia` and `@knitui/mediaquery`. */
+/**
+ * Breakpoints and the media modifiers built from them. The modifier names are
+ * what style values use (`p="sm gtMd:lg"`) and what `useMedia()` reports.
+ */
 export function BreakpointTable() {
-  const { breakpoints } = tokens();
+  const { breakpoints, media = {} } = tokens();
+  const query = (q: { minWidth?: number; maxWidth?: number }) =>
+    [
+      q.minWidth !== undefined ? `(min-width: ${q.minWidth}px)` : null,
+      q.maxWidth !== undefined ? `(max-width: ${q.maxWidth}px)` : null,
+    ]
+      .filter(Boolean)
+      .join(" and ");
+  const gtKey = (key: string) => `gt${key.charAt(0).toUpperCase()}${key.slice(1)}`;
 
   return (
     <div className="table-scroll">
@@ -238,22 +288,42 @@ export function BreakpointTable() {
         <thead>
           <tr>
             <th>Breakpoint</th>
-            <th>Min width</th>
-            <th>Media query</th>
+            <th>Width</th>
+            <th>At or below</th>
+            <th>Above</th>
           </tr>
         </thead>
         <tbody>
-          {Object.entries(breakpoints).map(([key, value]) => (
-            <tr key={key}>
-              <td>
-                <code>${key}</code>
-              </td>
-              <td>{value}px</td>
-              <td>
-                <code>{`(min-width: ${value}px)`}</code>
-              </td>
-            </tr>
-          ))}
+          {Object.entries(breakpoints).map(([key, value]) => {
+            const below = media[key];
+            const above = media[gtKey(key)];
+            return (
+              <tr key={key}>
+                <td>
+                  <code>{key}</code>
+                </td>
+                <td>{value}px</td>
+                <td>
+                  {below ? (
+                    <>
+                      <code>{`${key}:`}</code> <code>{query(below)}</code>
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td>
+                  {above ? (
+                    <>
+                      <code>{`${gtKey(key)}:`}</code> <code>{query(above)}</code>
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -286,7 +356,7 @@ export function ZIndexTable() {
           {Object.entries(zIndex).map(([key, value]) => (
             <tr key={key}>
               <td>
-                <code>${key}</code>
+                <code>{key}</code>
               </td>
               <td>{value}</td>
               <td>{meaning[key] ?? ""}</td>

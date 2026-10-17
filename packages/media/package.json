@@ -70,7 +70,10 @@
     "!**/__tests__/**",
     "!**/__mocks__/**"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/video/expo-globals.ts",
+    "./lib/*/video/expo-globals.js"
+  ],
   "scripts": {
     "build": "bob build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -109,7 +112,7 @@
     "@shopify/react-native-skia": "2.6.2",
     "@storybook/addon-docs": "^10.6.0",
     "@storybook/react-vite": "^10.6.0",
-    "@tamagui/build": "2.7.7",
+    "@tamagui/build": "3.0.18",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

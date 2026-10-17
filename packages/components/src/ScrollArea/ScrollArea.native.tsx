@@ -1,5 +1,5 @@
 import * as React from "react";
-import { type LayoutChangeEvent, RefreshControl, type ScrollView } from "react-native";
+import { RefreshControl, type ScrollView } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   cancelAnimation,
@@ -12,13 +12,19 @@ import Animated, {
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
 
-import { styled, type TamaguiElement, useTheme, withStaticProperties } from "@knitui/core";
+import {
+  type LayoutChangeEvent,
+  styled,
+  type TamaguiElement,
+  useTheme,
+  withStaticProperties,
+} from "@knitui/core";
 import { useDebouncedCallback, useMove, useReducedMotion } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
 import { useReducedTransition } from "../internal/motion";
 import { resolveThemeColor } from "../internal/resolve-theme-color";
-import { animateOnlyProps } from "../internal/style-props";
+import { scopeTransition } from "../internal/style-props";
 import { slotStyles } from "../internal/styles";
 import {
   DEFAULT_HIDE_DELAY,
@@ -59,7 +65,7 @@ export type {
   ScrollToOptions,
 } from "./ScrollArea.shared";
 
-/* Hoisted `animateOnly` property list (see web build) — module-level so it is not
+/* Hoisted transition `properties` list (see web build) — module-level so it is not
    reallocated per render. */
 const ANIMATE_OPACITY = ["opacity"];
 
@@ -161,7 +167,7 @@ function thumbGeometryW(
  * cross-platform gradient primitive) unless `renderShadow` is supplied.
  */
 const ScrollAreaFrame = styled(Box, {
-  name: "ScrollArea",
+  displayName: "ScrollArea",
   position: "relative",
   overflow: "hidden",
 });
@@ -172,39 +178,38 @@ const ScrollAreaFrame = styled(Box, {
  * an RN `ScrollView`); this is a marker/styling handle rather than the live scroller.
  */
 const ScrollAreaViewport = styled(Box, {
-  name: "ScrollAreaViewport",
+  displayName: "ScrollAreaViewport",
   width: "100%",
   height: "100%",
 });
 
 const ScrollAreaScrollbar = styled(Box, {
-  name: "ScrollAreaScrollbar",
+  displayName: "ScrollAreaScrollbar",
   position: "absolute",
-  backgroundColor: "$colorTransparent",
+  backgroundColor: "colorTransparent",
   padding: 2,
   zIndex: 2,
 });
 
 const ScrollAreaThumb = styled(Box, {
-  name: "ScrollAreaThumb",
+  displayName: "ScrollAreaThumb",
   position: "absolute",
-  backgroundColor: "$color8",
+  backgroundColor: "color8",
   borderRadius: 9999,
-  opacity: 0.7,
-  pressStyle: { opacity: 1 },
+  opacity: "0.7 press:1",
 });
 
 const ScrollAreaCorner = styled(Box, {
-  name: "ScrollAreaCorner",
+  displayName: "ScrollAreaCorner",
   position: "absolute",
   right: 0,
   bottom: 0,
-  backgroundColor: "$colorTransparent",
+  backgroundColor: "colorTransparent",
   zIndex: 2,
 });
 
 const ScrollAreaShadow = styled(Box, {
-  name: "ScrollAreaShadow",
+  displayName: "ScrollAreaShadow",
   position: "absolute",
   zIndex: 1,
   pointerEvents: "none",
@@ -298,7 +303,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       keyStep: _keyStep,
       onRefresh,
       refreshing = false,
-      refreshColor = "$color10",
+      refreshColor = "color10",
       // Internal: Autosize uses the native ScrollView path.
       autosize = false,
       children,
@@ -889,7 +894,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     // the parent at the edge) — without it the ancestor steals every drag.
     //
     // TODO(viewport-token-flatten): `mergedViewportProps` is a `Partial<BoxProps>`
-    // that may carry Tamagui token style props (e.g. `padding="$md"`). Spreading it
+    // that may carry Tamagui token style props (e.g. `padding="md"`). Spreading it
     // raw onto an RN `ScrollView` silently DROPS those token props. A faithful fix
     // routes it through `usePropsAndStyle` and splits style → `style`, padding →
     // `contentContainerStyle`, behaviour props through. Deferred (out of scope).
@@ -973,7 +978,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     // derived in `reportScroll` — opt-in, so this React-state path only costs when
     // `shadows` is set, and then only on an actual edge crossing.
     const edgeOverflow: EdgeState = edges;
-    const resolvedScrim = (shadowColor ?? "$color8") as BoxProps["backgroundColor"];
+    const resolvedScrim = (shadowColor ?? "color8") as BoxProps["backgroundColor"];
 
     const renderEdgeShadow = (edge: Edge) => {
       if (!shadowEligible[edge]) return null;
@@ -983,9 +988,8 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
         <ScrollAreaShadow
           key={edge}
           opacity={visible ? (custom ? 1 : 0.12) : 0}
-          backgroundColor={custom ? undefined : resolvedScrim}
-          {...fade}
-          {...animateOnlyProps(ANIMATE_OPACITY)}
+          {...(custom ? null : { backgroundColor: resolvedScrim })}
+          {...scopeTransition(fade, ANIMATE_OPACITY)}
           {...shadowBoxProps(edge, shadowSize)}
         >
           {custom}
@@ -1016,8 +1020,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             width={scrollbarSize}
             opacity={showY ? 1 : 0}
             pointerEvents={showY ? "auto" : "none"}
-            {...fade}
-            {...animateOnlyProps(ANIMATE_OPACITY)}
+            {...scopeTransition(fade, ANIMATE_OPACITY)}
             {...mergedScrollbarProps}
           >
             {/* Plain Animated.View carries the per-frame geometry (height/offset/
@@ -1045,8 +1048,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             height={scrollbarSize}
             opacity={showX ? 1 : 0}
             pointerEvents={showX ? "auto" : "none"}
-            {...fade}
-            {...animateOnlyProps(ANIMATE_OPACITY)}
+            {...scopeTransition(fade, ANIMATE_OPACITY)}
             {...mergedScrollbarProps}
           >
             <Animated.View
@@ -1066,8 +1068,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
             width={scrollbarSize}
             height={scrollbarSize}
             opacity={showX && showY ? 1 : 0}
-            {...fade}
-            {...animateOnlyProps(ANIMATE_OPACITY)}
+            {...scopeTransition(fade, ANIMATE_OPACITY)}
             {...mergedCornerProps}
           />
         )}

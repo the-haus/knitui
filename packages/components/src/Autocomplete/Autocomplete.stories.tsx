@@ -82,7 +82,7 @@ export const Playground: Story = {};
 /** All five sizes displayed side by side. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Autocomplete key={size} {...args} size={size} placeholder={size} />
       ))}
@@ -96,7 +96,7 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Autocomplete key={shadow} {...args} shadow={shadow} placeholder={shadow} />
       ))}
@@ -173,7 +173,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("Vue");
     return (
-      <Box gap="$md" width={280}>
+      <Box gap="md" width={280}>
         <Autocomplete {...args} value={value} onChange={setValue} clearable />
         <Text>Selected: {value || <Text theme="gray">(empty)</Text>}</Text>
       </Box>
@@ -189,7 +189,7 @@ export const Controlled: Story = {
 export const CustomRenderOption: Story = {
   args: {
     renderOption: ({ option }) => (
-      <Box flexDirection="row" gap="$sm" alignItems="center">
+      <Box flexDirection="row" gap="sm" alignItems="center">
         <Text>⭐</Text>
         <Text>{option.label}</Text>
       </Box>
@@ -205,8 +205,8 @@ export const Styles: Story = {
     placeholder: "Styled field…",
     defaultValue: "React",
     styles: {
-      trigger: { backgroundColor: "$blue3" },
-      dropdown: { backgroundColor: "$blue2", borderColor: "$blue7", borderWidth: 2 },
+      trigger: { backgroundColor: "blue3" },
+      dropdown: { backgroundColor: "blue2", borderColor: "blue7", borderWidth: 2 },
     },
   },
 };

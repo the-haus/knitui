@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
 import { Box } from "../Box";
 import { renderTextChild } from "../internal/render-text-child";
@@ -34,27 +40,27 @@ const ListContext = createStyledContext<{ size: ListSize; center: boolean }>({
  * inherited; the marker tints from the ramp. No Mantine `color` prop.
  */
 const ListFrame = styled(Box, {
-  name: "List",
+  displayName: "List",
   context: ListContext,
   flexDirection: "column",
   margin: 0,
   padding: 0,
 
   variants: {
-    /** Gap between items. Token (`"$sm"`), CSS value, or number. @default 0 */
+    /** Gap between items. Space token (`"sm"`), CSS value, or number. @default 0 */
     spacing: gapVariant,
     /** Extra inline-start padding for nested lists. @default false */
     withPadding: {
-      true: { paddingLeft: "$md" },
+      true: { paddingLeft: "md" },
     },
   } as const,
 });
 
 const ListItemFrame = styled(Box, {
-  name: "ListItem",
+  displayName: "ListItem",
   context: ListContext,
   flexDirection: "row",
-  gap: "$xs",
+  gap: "xs",
 
   variants: {
     /** Vertically center the marker with the label (else align to the top). */
@@ -67,10 +73,10 @@ const ListItemFrame = styled(Box, {
 
 /** Leading marker (bullet / number / icon) — tinted from the ramp. */
 const ListItemMarker = styled(Text, {
-  name: "ListItemMarker",
+  displayName: "ListItemMarker",
   context: ListContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
   variants: {
     size: fontSizeVariant,
   } as const,
@@ -78,7 +84,7 @@ const ListItemMarker = styled(Text, {
 
 /** The item's text content. Scales with the list `size`. */
 const ListItemLabel = styled(Text, {
-  name: "ListItemLabel",
+  displayName: "ListItemLabel",
   context: ListContext,
   flexShrink: 1,
   variants: {
@@ -115,7 +121,7 @@ export interface ListItemProps extends GetProps<typeof ListItemFrame> {
   styles?: SlotStyles<ListItemStyles>;
 }
 
-const ListItemBase = ListItemFrame.styleable<ListItemProps>(function ListItem(props, ref) {
+const ListItemBase = styleable<ListItemProps>(ListItemFrame, function ListItem(props, ref) {
   const { children, icon, styles, ...rest } = props;
 
   // Per-slot style sugar, distributed onto the parts below.
@@ -184,7 +190,7 @@ export interface ListProps extends ListFrameProps {
   listStyleType?: string;
 }
 
-const ListComponent = ListFrame.styleable<ListProps>(function List(props, ref) {
+const ListComponent = styleable<ListProps>(ListFrame, function List(props, ref) {
   const {
     children,
     type = "unordered",

@@ -21,7 +21,7 @@ export default meta;
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <Box flexDirection="row" justifyContent="space-between" gap="$md" paddingVertical="$xs">
+    <Box flexDirection="row" justifyContent="space-between" gap="md" paddingVertical="xs">
       <Text opacity={0.7}>{label}</Text>
       <Text fontWeight="700">{typeof value === "boolean" ? String(value) : value}</Text>
     </Box>
@@ -30,11 +30,11 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Box gap="$xs">
-      <Text fontWeight="700" fontSize="$lg">
+    <Box gap="xs">
+      <Text fontWeight="700" fontSize="lg">
         {title}
       </Text>
-      <Box borderWidth={1} borderColor="$borderColor" borderRadius="$md" padding="$md" gap="$xxs">
+      <Box borderWidth={1} borderColor="borderColor" borderRadius="md" padding="md" gap="xxs">
         {children}
       </Box>
     </Box>
@@ -50,7 +50,7 @@ function Playground() {
   const columns = useBreakpointValue({ base: 1, sm: 2, md: 3, lg: 4 });
 
   return (
-    <Box gap="$lg" maxWidth={520}>
+    <Box gap="lg" maxWidth={520}>
       <Card title="useMediaQuery">
         <Row label="(min-width: 768px)" value={isWide} />
         <Row label="{ orientation: 'portrait' }" value={isPortrait} />

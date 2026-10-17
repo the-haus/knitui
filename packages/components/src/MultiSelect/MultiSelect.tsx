@@ -20,6 +20,7 @@ import {
   composeTriggerRightSection,
   defaultOptionsFilter,
   flattenComboboxOptions,
+  getComboboxOptionId,
   getOptionsLockup,
   getParsedComboboxData,
   isComboboxGroup,
@@ -48,7 +49,7 @@ type MultiSelectInputProps = Omit<
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the
  * MultiSelect part surface. Each key maps to the props of the part it targets, so
- * `styles={{ option: { bg: "$color3" } }}` is sugar for `<MultiSelect.Option bg="$color3" />`.
+ * `styles={{ option: { bg: "color3" } }}` is sugar for `<MultiSelect.Option bg="color3" />`.
  */
 export interface MultiSelectStyles {
   /** Props for the state-machine root (`MultiSelect.Root` → `<Combobox>`). */
@@ -818,6 +819,9 @@ const MultiSelectTrigger = React.forwardRef<MultiSelectRef, MultiSelectTriggerPr
           aria-autocomplete={ctx.searchable ? "list" : "none"}
           aria-controls={ctx.dropdownId}
           aria-expanded={ctx.combobox.opened}
+          {...(ctx.combobox.opened && ctx.activeValue != null
+            ? { "aria-activedescendant": getComboboxOptionId(ctx.dropdownId, ctx.activeValue) }
+            : null)}
           placeholder={placeholder}
           value={ctx.search}
           disabled={ctx.disabled}
@@ -911,6 +915,7 @@ function MultiSelectOptions(props: MultiSelectOptionsProps) {
       withScrollArea={ctx.withScrollArea}
       maxDropdownHeight={ctx.maxDropdownHeight}
       renderOption={ctx.renderOption}
+      optionIdPrefix={ctx.dropdownId}
       // The `option`/`group`/`empty` slots reach each rendered row through OptionsDropdown.
       optionProps={s.get("option")}
       groupProps={s.get("group")}

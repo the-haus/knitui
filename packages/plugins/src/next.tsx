@@ -7,7 +7,7 @@
 // unstyled and React reports a hydration mismatch. This wraps that flush so a
 // Next app installs ZERO Tamagui / react-native-web packages itself and never
 // imports `next/navigation`, `react-native`, or the kit's Tamagui `config`
-// directly — just like `@knitui/plugins/babel-plugin` hides the compiler.
+// directly — just like `@knitui/plugins/next-plugin` hides the compiler.
 //
 //   // app/layout.tsx
 //   import { NextTamaguiProvider } from "@knitui/plugins/next";

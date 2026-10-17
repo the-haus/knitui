@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { UnstyledButton } from "./UnstyledButton";
 
@@ -61,5 +62,20 @@ describe("UnstyledButton", () => {
     const ref = React.createRef<GetRef<typeof UnstyledButton>>();
     render(<UnstyledButton ref={ref}>Ref</UnstyledButton>);
     expect(ref.current).not.toBeNull();
+  });
+
+  it("resets the button chrome and carries the focus ring + press dip", () => {
+    render(<UnstyledButton>reset</UnstyledButton>);
+    const el = screen.getByRole("button");
+    expect(el).toHaveStyle({ backgroundColor: "transparent", cursor: "pointer" });
+    expect(hasFocusRing(el)).toBe(true);
+    expect(cssRulesOf(el).join("\n")).toMatch(/:active[^{]*\{[^}]*scale/);
+  });
+
+  it("dims and blocks pointer events when disabled", () => {
+    render(<UnstyledButton disabled>off</UnstyledButton>);
+    const el = screen.getByRole("button");
+    expect(el).toHaveStyle({ opacity: "0.6", pointerEvents: "none" });
+    expect(el).toHaveAttribute("aria-disabled", "true");
   });
 });

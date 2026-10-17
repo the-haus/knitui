@@ -23,7 +23,7 @@ const meta = {
   args: {
     "aria-label": "Breadcrumb",
     separator: "/",
-    separatorMargin: "$xs",
+    separatorMargin: "xs",
   },
   argTypes: {
     "aria-label": {
@@ -93,7 +93,7 @@ export const CustomElementSeparator: Story = {
 
 /** Wider spacing around each separator via a larger token. */
 export const LargeSeparatorMargin: Story = {
-  args: { separatorMargin: "$lg" },
+  args: { separatorMargin: "lg" },
   render: (args) => (
     <Breadcrumbs {...args}>
       <Anchor href="#">Home</Anchor>
@@ -159,7 +159,7 @@ export const DeepTrail: Story = {
 /** Several breadcrumb trails side by side to compare separator styles. */
 export const SeparatorShowcase: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Breadcrumbs separator="/">
         <Anchor href="#">Home</Anchor>
         <Anchor href="#">Library</Anchor>
@@ -191,8 +191,8 @@ export const SeparatorShowcase: Story = {
 export const Styles: Story = {
   args: {
     styles: {
-      label: { color: "$blue11", fontWeight: "700" },
-      separator: { color: "$red9" },
+      label: { color: "blue11", fontWeight: "700" },
+      separator: { color: "red9" },
     },
   },
   render: (args) => (

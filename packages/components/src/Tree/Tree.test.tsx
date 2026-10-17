@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { type GetRef } from "@knitui/core";
 
+import { cssRulesOf, declarationsUnder, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { Box } from "../Box";
 import { fireEvent, render, screen } from "../test-utils";
 import { Tree } from "./Tree";
@@ -115,5 +116,65 @@ describe("Tree composable parts", () => {
   it("routes a `styles` slot to the label part", () => {
     render(<Tree data={data} styles={{ label: { testID: "styled-label" } }} />);
     expect(screen.getAllByTestId("styled-label").length).toBeGreaterThan(0);
+  });
+
+  const row = (name: string) =>
+    screen.getAllByRole("treeitem").find((el) => el.textContent?.includes(name))!;
+
+  it("renders semantic list hosts: ul[role=tree] > li > ul[role=group]", () => {
+    render(<Tree data={data} />);
+    const tree = screen.getByRole("tree");
+    expect(tree.tagName).toBe("UL");
+    expect(tree.firstElementChild?.tagName).toBe("LI");
+    fireEvent.click(row("src"));
+    expect(tree.querySelector("ul")).toHaveAttribute("role", "group");
+  });
+
+  it("toggles a branch from the keyboard (Enter / Space) and is focusable", () => {
+    render(<Tree data={data} />);
+    const branch = row("src");
+    expect(branch).toHaveAttribute("tabindex", "0");
+    expect(branch).toHaveAttribute("aria-expanded", "false");
+    fireEvent.keyDown(branch, { key: "Enter" });
+    expect(row("src")).toHaveAttribute("aria-expanded", "true");
+    fireEvent.keyDown(row("src"), { key: " " });
+    expect(row("src")).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("announces depth with aria-level and leaves aria-expanded off leaves", () => {
+    render(<Tree data={data} />);
+    expect(row("src")).toHaveAttribute("aria-level", "1");
+    expect(row("README")).not.toHaveAttribute("aria-expanded");
+    fireEvent.click(row("src"));
+    expect(row("index.ts")).toHaveAttribute("aria-level", "2");
+  });
+
+  it("selects on click when selectOnClick is set (aria-selected)", () => {
+    render(<Tree data={data} selectOnClick />);
+    fireEvent.click(row("README"));
+    expect(row("README")).toHaveAttribute("aria-selected", "true");
+    expect(row("src")).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("gives rows hover/press fills, a selected fill and a focus ring", () => {
+    render(<Tree data={data} selectOnClick />);
+    const r = row("README");
+    expect(declarationsUnder(r, ":hover")).toContain("background-color: var(--color3)");
+    expect(declarationsUnder(r, ":active")).toContain("background-color: var(--color4)");
+    expect(hasFocusRing(r)).toBe(true);
+    fireEvent.click(r);
+    const resting = cssRulesOf(row("README"))
+      .filter((rule) => !rule.startsWith("@") && !rule.includes(":where("))
+      .join("\n");
+    expect(resting).toMatch(/background-color: var\(--color4\)/);
+  });
+
+  it("indents subtrees by levelOffset and draws lines with withLines", () => {
+    render(<Tree data={data} levelOffset={24} withLines />);
+    fireEvent.click(row("src"));
+    const group = screen.getByRole("tree").querySelector('[role="group"]')!;
+    const rules = cssRulesOf(group).join("\n");
+    expect(rules).toMatch(/padding-left: 24px/);
+    expect(rules).toMatch(/border-left-width: 1px/);
   });
 });

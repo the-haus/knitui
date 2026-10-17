@@ -110,7 +110,7 @@ export const CustomRenderDay: Story = {
         <Box alignItems="center">
           <Text>{new Date(date).getUTCDate()}</Text>
           {isWeekend && (
-            <Box width={4} height={4} borderRadius={2} backgroundColor="$color9" marginTop={2} />
+            <Box width={4} height={4} borderRadius={2} backgroundColor="color9" marginTop={2} />
           )}
         </Box>
       );
@@ -134,19 +134,19 @@ export const Themed: Story = {
 export const FramedSurface: Story = {
   args: {
     defaultDate: "2026-06-15",
-    padding: "$md",
+    padding: "md",
     borderWidth: 1,
-    borderColor: "$borderColor",
-    borderRadius: "$md",
+    borderColor: "borderColor",
+    borderRadius: "md",
   },
 };
 
 /** Every size token, from `xxs` to `xxl`, at the month level. */
 export const Sizes: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-        <Box key={size} gap="$xs" alignItems="center">
+        <Box key={size} gap="xs" alignItems="center">
           <Text>{size}</Text>
           <Calendar size={size} defaultDate="2026-06-15" />
         </Box>

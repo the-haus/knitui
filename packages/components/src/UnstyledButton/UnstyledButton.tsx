@@ -1,4 +1,4 @@
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 
 import { Box } from "../Box";
 import { usePressScale } from "../internal/motion";
@@ -19,7 +19,7 @@ import { Text } from "../Text";
  * its own controls on `UnstyledButton`.
  */
 export const UnstyledButtonFrame = styled(Box, {
-  name: "UnstyledButton",
+  displayName: "UnstyledButton",
   role: "button",
   ...webCursor("pointer"),
   backgroundColor: "transparent",
@@ -31,8 +31,8 @@ export const UnstyledButtonFrame = styled(Box, {
   // (reduced-motion aware). Without it an `UnstyledButton` is the only pressable
   // in the kit that gives NO feedback on press, so custom controls built on it
   // read as dead next to their built-in siblings. Descendants that add their own
-  // `pressStyle` (e.g. a background shift) merge with this rather than replace
-  // it, exactly as `Chip`'s per-state colours do.
+  // `press:` clauses (e.g. `bg="… press:color4"`) merge with this per
+  // (property, condition) slot rather than replace it.
   ...pressScaleStyle,
 
   variants: {
@@ -55,7 +55,8 @@ export interface UnstyledButtonProps extends UnstyledButtonFrameProps {
  * variant). Mirrors Mantine's `UnstyledButton`: the building block for custom
  * controls. Renders a semantic `<button type="button">` on web. Forwards a ref.
  */
-const UnstyledButtonComponent = UnstyledButtonFrame.styleable<UnstyledButtonProps>(
+const UnstyledButtonComponent = styleable<UnstyledButtonProps>(
+  UnstyledButtonFrame,
   function UnstyledButton(props, ref) {
     const { children, disabled, style, ...rest } = props;
     // Reduced-motion-aware press easing (neutralises the base dip when reduced).

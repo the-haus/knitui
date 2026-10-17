@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Avatar } from "./Avatar";
 
@@ -98,5 +99,63 @@ describe("Avatar", () => {
     expect(screen.getByRole("group")).toBeInTheDocument();
     expect(screen.getByText("AB")).toBeInTheDocument();
     expect(screen.getByText("CD")).toBeInTheDocument();
+  });
+
+  describe("v3 style resolution (web CSS)", () => {
+    // [variant, bg, border width, initials colour]
+    const MATRIX = [
+      ["filled", "var(--color9)", "0px", "var(--color1)"],
+      ["light", "var(--color4)", "0px", "var(--color11)"],
+      ["outline", "transparent", "1px", "var(--color11)"],
+      ["transparent", "transparent", "0px", "var(--color11)"],
+      ["default", "var(--color3)", "1px", "var(--color12)"],
+      ["white", "var(--c-white)", "0px", "var(--color9)"],
+    ] as const;
+
+    it.each(MATRIX)(
+      "variant=%s resolves fill, border and initials colour",
+      (variant, bg, bw, fg) => {
+        render(<Avatar variant={variant} name="Ada Lovelace" testID="a" />);
+        const avatar = screen.getByTestId("a");
+        expect(baseValue(avatar, "background-color")).toBe(bg);
+        expect(baseValue(avatar, "border-width")).toBe(bw);
+        expect(baseValue(screen.getByText("AL"), "color")).toBe(fg);
+      },
+    );
+
+    it.each(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const)(
+      "size=%s is a square",
+      (size) => {
+        render(<Avatar size={size} testID="a" />);
+        const avatar = screen.getByTestId("a");
+        expect(baseValue(avatar, "width")).toBe(`var(--t-size-${size})`);
+        expect(baseValue(avatar, "height")).toBe(`var(--t-size-${size})`);
+      },
+    );
+
+    it("a numeric size and radius fall through to px", () => {
+      render(<Avatar size={52} radius={6} testID="a" />);
+      const avatar = screen.getByTestId("a");
+      expect(baseValue(avatar, "width")).toBe("52px");
+      expect(baseValue(avatar, "border-radius")).toBe("6px");
+    });
+
+    it("keeps the full-circle base radius when no radius is given", () => {
+      render(<Avatar testID="a" />);
+      expect(baseValue(screen.getByTestId("a"), "border-radius")).toBe("999px");
+    });
+
+    it("group children overlap and draw a background ring", () => {
+      render(
+        <Avatar.Group spacing={12}>
+          <Avatar testID="a" />
+        </Avatar.Group>,
+      );
+      const avatar = screen.getByTestId("a");
+      expect(baseValue(avatar, "margin-left")).toBe("-12px");
+      expect(baseValue(avatar, "border-width")).toBe("2px");
+      expect(baseValue(avatar, "border-color")).toBe("var(--background)");
+      expect(baseValue(screen.getByRole("group"), "padding-left")).toBe("12px");
+    });
   });
 });

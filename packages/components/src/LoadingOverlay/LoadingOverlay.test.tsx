@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { LoadingOverlay } from "./LoadingOverlay";
 
@@ -51,5 +52,20 @@ describe("LoadingOverlay", () => {
       />,
     );
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-label", "Explicit loading");
+  });
+
+  it("covers its parent with a centred, light scrim at z-index 400", () => {
+    render(<LoadingOverlay visible testID="lo" />);
+    const rules = cssRulesOf(screen.getByTestId("lo")).join("\n");
+    expect(rules).toContain("position: absolute;");
+    expect(rules).toContain("z-index: 400;");
+    expect(rules).toContain("align-items: center;");
+    expect(rules).toContain("justify-content: center;");
+    expect(rules).toMatch(/background-color: rgba\(255, 255, 255, 0\.75\)/);
+  });
+
+  it("accepts a custom zIndex", () => {
+    render(<LoadingOverlay visible zIndex={10} testID="lo" />);
+    expect(cssRulesOf(screen.getByTestId("lo")).join("\n")).toContain("z-index: 10;");
   });
 });

@@ -37,6 +37,7 @@ export {
   type ComposedTriggerRightSection,
   composeTriggerRightSection,
   type ComposeTriggerRightSectionInput,
+  getComboboxOptionId,
 } from "./Combobox";
 export {
   type ComboboxRenderOption,

@@ -21,14 +21,8 @@ const WRAPS = ["nowrap", "wrap", "wrap-reverse"] as const;
 /** A reusable colored box child for layout demos. */
 function Item({ label }: { label: string }) {
   return (
-    <Box
-      backgroundColor="$blue5"
-      padding="$sm"
-      borderRadius="$sm"
-      minWidth="$xxl"
-      alignItems="center"
-    >
-      <Text color="$blue11" fontSize="$sm" fontWeight="600">
+    <Box backgroundColor="blue5" padding="sm" borderRadius="sm" minWidth="xxl" alignItems="center">
+      <Text color="blue11" fontSize="sm" fontWeight="600">
         {label}
       </Text>
     </Box>
@@ -52,7 +46,7 @@ const meta = {
     align: "flex-start",
     justify: "flex-start",
     wrap: "nowrap",
-    gap: "$md",
+    gap: "md",
   },
   argTypes: {
     direction: {
@@ -77,17 +71,17 @@ const meta = {
     },
     gap: {
       control: "select",
-      options: ["$xs", "$sm", "$md", "$lg", "$xl"],
+      options: ["xs", "sm", "md", "lg", "xl"],
       description: "Gap between flex items (Tamagui token).",
     },
     rowGap: {
       control: "select",
-      options: [undefined, "$xs", "$sm", "$md", "$lg", "$xl"],
+      options: [undefined, "xs", "sm", "md", "lg", "xl"],
       description: "Row gap override when items wrap.",
     },
     columnGap: {
       control: "select",
-      options: [undefined, "$xs", "$sm", "$md", "$lg", "$xl"],
+      options: [undefined, "xs", "sm", "md", "lg", "xl"],
       description: "Column gap override.",
     },
   },
@@ -115,13 +109,13 @@ export const Directions: Story = {
   },
 
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {DIRECTIONS.map((direction) => (
-        <Box key={direction} gap="$xs">
-          <Text fontSize="$sm" color="$color10">
+        <Box key={direction} gap="xs">
+          <Text fontSize="sm" color="color10">
             direction="{direction}"
           </Text>
-          <Flex direction={direction} gap="$sm">
+          <Flex direction={direction} gap="sm">
             <Item label="A" />
             <Item label="B" />
             <Item label="C" />
@@ -135,31 +129,31 @@ export const Directions: Story = {
 /** The `align` prop controls cross-axis alignment; shown in a fixed-height container. */
 export const Alignment: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {ALIGNS.map((align) => (
-        <Box key={align} gap="$xs">
-          <Text fontSize="$sm" color="$color10">
+        <Box key={align} gap="xs">
+          <Text fontSize="sm" color="color10">
             align="{align}"
           </Text>
           <Flex
             align={align}
             direction="row"
-            gap="$sm"
-            minHeight="$xxl"
-            backgroundColor="$color3"
-            borderRadius="$sm"
+            gap="sm"
+            minHeight="xxl"
+            backgroundColor="color3"
+            borderRadius="sm"
           >
             <Item label="Short" />
             <Box
-              backgroundColor="$blue5"
-              padding="$sm"
-              borderRadius="$sm"
-              minWidth="$xxl"
-              height="$xl"
+              backgroundColor="blue5"
+              padding="sm"
+              borderRadius="sm"
+              minWidth="xxl"
+              height="xl"
               alignItems="center"
               justifyContent="center"
             >
-              <Text color="$blue11" fontSize="$sm" fontWeight="600">
+              <Text color="blue11" fontSize="sm" fontWeight="600">
                 Tall
               </Text>
             </Box>
@@ -174,19 +168,19 @@ export const Alignment: Story = {
 /** The `justify` prop distributes items along the main axis. */
 export const Justification: Story = {
   render: () => (
-    <Box gap="$lg" width={400}>
+    <Box gap="lg" width={400}>
       {JUSTIFIES.map((justify) => (
-        <Box key={justify} gap="$xs">
-          <Text fontSize="$sm" color="$color10">
+        <Box key={justify} gap="xs">
+          <Text fontSize="sm" color="color10">
             justify="{justify}"
           </Text>
           <Flex
             justify={justify}
             direction="row"
-            gap="$sm"
-            backgroundColor="$color3"
-            borderRadius="$sm"
-            padding="$xs"
+            gap="sm"
+            backgroundColor="color3"
+            borderRadius="sm"
+            padding="xs"
           >
             <Item label="A" />
             <Item label="B" />
@@ -201,20 +195,20 @@ export const Justification: Story = {
 /** `wrap="wrap"` allows items to flow onto multiple lines when space is tight. */
 export const Wrapping: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {WRAPS.map((wrap) => (
-        <Box key={wrap} gap="$xs">
-          <Text fontSize="$sm" color="$color10">
+        <Box key={wrap} gap="xs">
+          <Text fontSize="sm" color="color10">
             wrap="{wrap}"
           </Text>
           <Flex
             wrap={wrap}
             direction="row"
-            gap="$sm"
+            gap="sm"
             width={220}
-            backgroundColor="$color3"
-            borderRadius="$sm"
-            padding="$xs"
+            backgroundColor="color3"
+            borderRadius="sm"
+            padding="xs"
           >
             {["One", "Two", "Three", "Four", "Five"].map((label) => (
               <Item key={label} label={label} />
@@ -229,10 +223,10 @@ export const Wrapping: Story = {
 /** `gap`, `rowGap`, and `columnGap` use Tamagui spacing tokens. */
 export const GapTokens: Story = {
   render: () => (
-    <Box gap="$lg">
-      {(["$xs", "$sm", "$md", "$lg", "$xl"] as const).map((token) => (
-        <Box key={token} gap="$xs">
-          <Text fontSize="$sm" color="$color10">
+    <Box gap="lg">
+      {(["xs", "sm", "md", "lg", "xl"] as const).map((token) => (
+        <Box key={token} gap="xs">
+          <Text fontSize="sm" color="color10">
             gap="{token}"
           </Text>
           <Flex direction="row" gap={token} wrap="wrap">
@@ -250,41 +244,35 @@ export const GapTokens: Story = {
 /** Flex composes naturally with `Box` children of varying sizes for real-world layouts. */
 export const ComposedLayout: Story = {
   render: () => (
-    <Flex direction="column" gap="$md" width={360}>
-      <Flex direction="row" justify="space-between" align="center" gap="$sm">
-        <Box backgroundColor="$blue5" padding="$sm" borderRadius="$sm" flex={1} alignItems="center">
-          <Text color="$blue11" fontWeight="600">
+    <Flex direction="column" gap="md" width={360}>
+      <Flex direction="row" justify="space-between" align="center" gap="sm">
+        <Box backgroundColor="blue5" padding="sm" borderRadius="sm" flex={1} alignItems="center">
+          <Text color="blue11" fontWeight="600">
             Nav
           </Text>
         </Box>
-        <Box
-          backgroundColor="$green5"
-          padding="$sm"
-          borderRadius="$sm"
-          flex={2}
-          alignItems="center"
-        >
-          <Text color="$green11" fontWeight="600">
+        <Box backgroundColor="accent5" padding="sm" borderRadius="sm" flex={2} alignItems="center">
+          <Text color="accent11" fontWeight="600">
             Content
           </Text>
         </Box>
-        <Box backgroundColor="$blue5" padding="$sm" borderRadius="$sm" flex={1} alignItems="center">
-          <Text color="$blue11" fontWeight="600">
+        <Box backgroundColor="blue5" padding="sm" borderRadius="sm" flex={1} alignItems="center">
+          <Text color="blue11" fontWeight="600">
             Aside
           </Text>
         </Box>
       </Flex>
-      <Flex direction="row" wrap="wrap" gap="$sm" justify="center">
+      <Flex direction="row" wrap="wrap" gap="sm" justify="center">
         {["Card 1", "Card 2", "Card 3", "Card 4", "Card 5"].map((label) => (
           <Box
             key={label}
-            backgroundColor="$color3"
-            padding="$sm"
-            borderRadius="$sm"
-            minWidth="$xxl"
+            backgroundColor="color3"
+            padding="sm"
+            borderRadius="sm"
+            minWidth="xxl"
             alignItems="center"
           >
-            <Text fontSize="$sm">{label}</Text>
+            <Text fontSize="sm">{label}</Text>
           </Box>
         ))}
       </Flex>

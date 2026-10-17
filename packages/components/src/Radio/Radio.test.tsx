@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { type GetRef } from "@knitui/core";
 
+import { baseValue, declarationsUnder, hasFocusRing } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Radio } from "./Radio";
 
@@ -150,5 +151,103 @@ describe("Radio", () => {
     );
     expect(screen.getByTestId("radio-c2")).toHaveAttribute("role", "radio");
     expect(screen.getByTestId("radio-l2")).toHaveTextContent("Pick me");
+  });
+
+  describe("v3 style resolution (web CSS)", () => {
+    it.each([
+      ["filled", "var(--color9)", "var(--color1)"],
+      ["outline", "transparent", "var(--color9)"],
+    ] as const)("checked variant=%s paints fill %s and dot %s", (variant, bg, dot) => {
+      render(<Radio aria-label="r" variant={variant} defaultChecked />);
+      const circle = screen.getByRole("radio");
+      expect(baseValue(circle, "background-color")).toBe(bg);
+      expect(baseValue(circle, "border-color")).toBe("var(--color9)");
+      const glyph = circle.firstElementChild!;
+      expect(baseValue(glyph, "background-color")).toBe(dot);
+      expect(baseValue(glyph, "width")).toBe("var(--t-size-md)");
+    });
+
+    it("unchecked paints the resting tone and the error tone; no dot", () => {
+      render(
+        <>
+          <Radio aria-label="off" />
+          <Radio aria-label="err" error="Pick one" />
+        </>,
+      );
+      const off = screen.getByRole("radio", { name: "off" });
+      expect(baseValue(off, "background-color")).toBe("var(--background)");
+      expect(baseValue(off, "border-color")).toBe("var(--borderColor)");
+      expect(off.childElementCount).toBe(0);
+      expect(baseValue(screen.getByRole("radio", { name: "err" }), "border-color")).toBe(
+        "var(--red8)",
+      );
+    });
+
+    it("eases the circle colours and checks on press", () => {
+      render(<Radio aria-label="t" />);
+      const circle = screen.getByRole("radio");
+      expect(circle.getAttribute("style") ?? "").toMatch(/background-color 150ms/);
+      fireEvent.click(circle);
+      expect(circle).toHaveAttribute("aria-checked", "true");
+      expect(baseValue(circle, "background-color")).toBe("var(--color9)");
+    });
+
+    it("rings the focusable circle and the card, not the Indicator", () => {
+      render(
+        <>
+          <Radio aria-label="focus" />
+          <Radio.Indicator testID="ind" />
+          <Radio.Card aria-label="card">Body</Radio.Card>
+        </>,
+      );
+      const circle = screen.getByRole("radio", { name: "focus" });
+      expect(circle).toHaveAttribute("tabindex", "0");
+      expect(hasFocusRing(circle)).toBe(true);
+      expect(hasFocusRing(screen.getByTestId("ind"))).toBe(false);
+      expect(hasFocusRing(screen.getByRole("radio", { name: "card" }))).toBe(true);
+    });
+
+    it.each(SIZES)("size=%s maps the circle to the size token", (size) => {
+      render(<Radio aria-label="s" size={size} />);
+      expect(baseValue(screen.getByRole("radio"), "height")).toBe(`var(--t-size-${size})`);
+    });
+
+    it("dims a disabled radio", () => {
+      render(<Radio aria-label="d" disabled />);
+      const circle = screen.getByRole("radio");
+      expect(circle).toHaveAttribute("aria-disabled", "true");
+      expect(baseValue(circle, "opacity")).toBe("0.6");
+    });
+
+    it("exposes a radiogroup and keeps one radio checked", () => {
+      render(
+        <Radio.Group defaultValue="a">
+          <Radio value="a" aria-label="a" />
+          <Radio value="b" aria-label="b" />
+        </Radio.Group>,
+      );
+      expect(screen.getByRole("radiogroup")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("radio", { name: "b" }));
+      expect(screen.getByRole("radio", { name: "a" })).toHaveAttribute("aria-checked", "false");
+      expect(screen.getByRole("radio", { name: "b" })).toHaveAttribute("aria-checked", "true");
+    });
+
+    it("Radio.Card hover/press clauses and checked border", () => {
+      render(
+        <Radio.Card aria-label="card" defaultChecked>
+          Body
+        </Radio.Card>,
+      );
+      const card = screen.getByRole("radio", { name: "card" });
+      expect(card).toHaveAttribute("aria-checked", "true");
+      expect(baseValue(card, "border-color")).toBe("var(--color9)");
+      expect(declarationsUnder(card, ":hover")).toContain("background-color: var(--color2)");
+      expect(declarationsUnder(card, ":active")).toContain("background-color: var(--color3)");
+    });
+
+    it("does not leak a `name` attribute onto the host", () => {
+      render(<Radio aria-label="n" />);
+      expect(screen.getByRole("radio")).not.toHaveAttribute("name");
+    });
   });
 });

@@ -1172,6 +1172,10 @@
       "collapsed": true,
       "items": [
         {
+          "label": "Upgrading to 1.0 (Tamagui v3)",
+          "href": "/docs/guides/upgrading-to-v1"
+        },
+        {
           "label": "Cross-platform authoring",
           "href": "/docs/guides/cross-platform-authoring"
         },

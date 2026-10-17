@@ -4,6 +4,7 @@ import {
   type SlotAccessor,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
 } from "@knitui/core";
 
@@ -25,7 +26,7 @@ import {
  * out behind the top card.
  */
 export const DeckFrame = styled(Box, {
-  name: "SwipeDeck",
+  displayName: "SwipeDeck",
   position: "relative",
   overflow: "visible",
 });
@@ -35,65 +36,70 @@ export const DeckFrame = styled(Box, {
  * background / border. Neutral, card-like defaults; override via `styles.card`.
  */
 export const DeckCardBox = styled(Box, {
-  name: "SwipeDeckCard",
+  displayName: "SwipeDeckCard",
   flex: 1,
-  borderRadius: "$xl",
-  backgroundColor: "$background",
+  borderRadius: "xl",
+  backgroundColor: "background",
   borderWidth: 1,
-  borderColor: "$borderColor",
+  borderColor: "borderColor",
   overflow: "hidden",
-});
-
-const TONE_COLORS = {
-  like: "$green9",
-  nope: "$red9",
-  super: "$blue9",
-  neutral: "$color9",
-} as const;
-
-/** The bordered LIKE / NOPE chip. `tone` colors the border; sits in an opacity host. */
-export const DeckStamp = styled(Box, {
-  name: "SwipeDeckStamp",
-  borderWidth: 4,
-  borderRadius: "$md",
-  paddingHorizontal: "$sm",
-  paddingVertical: "$xs",
-  alignSelf: "flex-start",
-  variants: {
-    tone: {
-      like: { borderColor: TONE_COLORS.like },
-      nope: { borderColor: TONE_COLORS.nope },
-      super: { borderColor: TONE_COLORS.super },
-      neutral: { borderColor: TONE_COLORS.neutral },
-    },
-  } as const,
-  defaultVariants: { tone: "neutral" },
-});
-
-/** The stamp's label text; `tone` matches the chip border. */
-export const DeckStampText = styled(Text, {
-  name: "SwipeDeckStampText",
-  fontSize: 32,
-  fontWeight: "800",
-  letterSpacing: 2,
-  variants: {
-    tone: {
-      like: { color: TONE_COLORS.like },
-      nope: { color: TONE_COLORS.nope },
-      super: { color: TONE_COLORS.super },
-      neutral: { color: TONE_COLORS.neutral },
-    },
-  } as const,
-  defaultVariants: { tone: "neutral" },
 });
 
 export type DeckStampTone = "like" | "nope" | "super" | "neutral";
 
+/**
+ * The accent sub-theme each tone mounts. The stamp paints from that theme's
+ * `color9`, so a tone recolours border AND label (and follows light/dark) with
+ * no per-tone palette names. `neutral` stays on the surrounding theme.
+ */
+const TONE_THEME = {
+  like: "green",
+  nope: "red",
+  super: "blue",
+  neutral: undefined,
+} as const satisfies Record<DeckStampTone, string | undefined>;
+
+/** The bordered chip itself (static; the tone arrives as a sub-theme). */
+const DeckStampFrame = styled(Box, {
+  displayName: "SwipeDeckStamp",
+  borderWidth: 4,
+  borderRadius: "md",
+  paddingHorizontal: "sm",
+  paddingVertical: "xs",
+  alignSelf: "flex-start",
+  borderColor: "color9",
+});
+
+export interface DeckStampProps extends GetProps<typeof DeckStampFrame> {
+  /** The stamp's colour: like (green), nope (red), super (blue). @default "neutral" */
+  tone?: DeckStampTone;
+}
+
+/**
+ * The bordered LIKE / NOPE chip; sits in an opacity host. A `styleable` because
+ * `tone` provides a sub-theme (`theme="green"` …) to the chip and its label,
+ * which a variant cannot do.
+ */
+export const DeckStamp = styleable<DeckStampProps>(DeckStampFrame, function DeckStamp(props, ref) {
+  const { tone = "neutral", ...rest } = props;
+  const theme = TONE_THEME[tone];
+  return <DeckStampFrame ref={ref} {...(theme ? { theme } : null)} {...rest} />;
+});
+
+/** The stamp's label text; inherits the stamp's tone through its sub-theme. */
+export const DeckStampText = styled(Text, {
+  displayName: "SwipeDeckStampText",
+  fontSize: 32,
+  fontWeight: "800",
+  letterSpacing: 2,
+  color: "color9",
+});
+
 /* ── Per-slot styles ────────────────────────────────────────────────────── */
 
 /**
- * Named style slots. `styles={{ card: { borderRadius: "$lg" } }}` is sugar for
- * `<SwipeDeck.Card borderRadius="$lg" />`. Precedence:
+ * Named style slots. `styles={{ card: { borderRadius: "lg" } }}` is sugar for
+ * `<SwipeDeck.Card borderRadius="lg" />`. Precedence:
  * `defaults < styles[slot] < explicit props < inline`.
  */
 export interface DeckStyles {

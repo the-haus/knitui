@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, getTokenValue, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, resolveToken, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useMergedRef, useRadialMove, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -15,9 +15,8 @@ import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Text } from "../Text";
 
 type AngleSliderSize = SizeKey;
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
 
-/** Default diameter resolves to the `$xxl` size token (64px). */
+/** Default diameter: the `xxl` size token. */
 const DEFAULT_SIZE: AngleSliderSize = "xxl";
 
 export interface AngleSliderMark {
@@ -50,9 +49,10 @@ const findClosest = (target: number, values: number[]): number =>
     values[0] ?? target,
   );
 
+/** Diameter in px — the ring geometry (knob length, tick / label offsets) needs a number. */
 const resolveSize = (size: AngleSliderSize | number): number => {
   if (typeof size === "number") return size;
-  const value = getTokenValue(`$${size}` as TokenValueInput, "size");
+  const value = resolveToken(size, "size");
   return typeof value === "number" ? value : 64;
 };
 
@@ -61,22 +61,20 @@ const resolveSize = (size: AngleSliderSize | number): number => {
 /* -------------------------------------------------------------------------- */
 
 const AngleSliderRoot = styled(Box, {
-  name: "AngleSlider",
+  displayName: "AngleSlider",
   position: "relative",
   borderRadius: 9999,
   alignItems: "center",
   justifyContent: "center",
   userSelect: "none",
-  backgroundColor: "$color3",
+  backgroundColor: "color3",
   ...webCursor("pointer"),
 
   variants: {
     disabled: {
       true: { opacity: 0.6, ...webCursor("default"), pointerEvents: "none" },
     },
-    size: {
-      ...squareSizeVariantFallthrough,
-    },
+    size: squareSizeVariantFallthrough,
   } as const,
 
   defaultVariants: { size: DEFAULT_SIZE },
@@ -85,16 +83,16 @@ const AngleSliderRoot = styled(Box, {
 });
 
 const AngleSliderLabel = styled(Text, {
-  name: "AngleSliderLabel",
-  fontSize: "$xs",
-  color: "$color",
+  displayName: "AngleSliderLabel",
+  fontSize: "xs",
+  color: "color",
   userSelect: "none",
   pointerEvents: "none",
 });
 
 /** Full-height bar rotated about the ring centre; the visible knob is its top. */
 const AngleSliderThumb = styled(Box, {
-  name: "AngleSliderThumb",
+  displayName: "AngleSliderThumb",
   position: "absolute",
   top: 0,
   bottom: 0,
@@ -106,16 +104,16 @@ const AngleSliderThumb = styled(Box, {
 });
 
 const AngleSliderThumbKnob = styled(Box, {
-  name: "AngleSliderThumbKnob",
+  displayName: "AngleSliderThumbKnob",
   position: "absolute",
   top: 0,
   width: 3,
   borderRadius: 2,
-  backgroundColor: "$color11",
+  backgroundColor: "color11",
 });
 
 const AngleSliderMarks = styled(Box, {
-  name: "AngleSliderMarks",
+  displayName: "AngleSliderMarks",
   position: "absolute",
   top: 1,
   left: 1,
@@ -126,7 +124,7 @@ const AngleSliderMarks = styled(Box, {
 });
 
 const AngleSliderMark = styled(Box, {
-  name: "AngleSliderMark",
+  displayName: "AngleSliderMark",
   position: "absolute",
   top: 0,
   bottom: 0,
@@ -137,17 +135,17 @@ const AngleSliderMark = styled(Box, {
 });
 
 const AngleSliderMarkTick = styled(Box, {
-  name: "AngleSliderMarkTick",
+  displayName: "AngleSliderMarkTick",
   position: "absolute",
   width: 1,
-  backgroundColor: "$color6",
+  backgroundColor: "color6",
 });
 
 const AngleSliderMarkLabel = styled(Text, {
-  name: "AngleSliderMarkLabel",
+  displayName: "AngleSliderMarkLabel",
   position: "absolute",
-  fontSize: "$xs",
-  color: "$color",
+  fontSize: "xs",
+  color: "color",
   textAlign: "center",
 });
 
@@ -158,8 +156,8 @@ const AngleSliderMarkLabel = styled(Text, {
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the
  * AngleSlider part surface (the 8 statics below). Each key maps to the props of
- * the part it targets, so `styles={{ thumbKnob: { backgroundColor: "$red9" } }}`
- * is sugar for `<AngleSlider.ThumbKnob backgroundColor="$red9" />`.
+ * the part it targets, so `styles={{ thumbKnob: { backgroundColor: "red9" } }}`
+ * is sugar for `<AngleSlider.ThumbKnob backgroundColor="red9" />`.
  */
 export interface AngleSliderStyles {
   /** Props for the ring root (`AngleSlider.Frame`). */
@@ -279,7 +277,7 @@ export interface AngleSliderProps extends Omit<
   withLabel?: boolean;
   /** Marks displayed around the ring. */
   marks?: AngleSliderMark[];
-  /** Diameter of the slider. Token sizes use the `$size` scale; numbers are px. @default "xxl" */
+  /** Diameter of the slider. Keys use the `size` token scale; numbers are px. @default "xxl" */
   size?: AngleSliderSize | number;
   /** Length of the thumb knob in px. Derived from `size` by default. */
   thumbSize?: number;
@@ -299,7 +297,8 @@ export interface AngleSliderProps extends Omit<
   styles?: SlotStyles<AngleSliderStyles>;
 }
 
-const AngleSliderComponent = AngleSliderRoot.styleable<AngleSliderProps>(
+const AngleSliderComponent = styleable<AngleSliderProps>(
+  AngleSliderRoot,
   function AngleSlider(props, ref) {
     const {
       step = 1,
@@ -366,62 +365,84 @@ const AngleSliderComponent = AngleSliderRoot.styleable<AngleSliderProps>(
       onScrubEnd,
     });
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-      if (disabled) return;
-      const markValues = restrictToMarks && marks ? marks.map((m) => m.value) : null;
-      let next = currentValue;
+    // Latest value / props for the (stable) key handler.
+    const keyStateRef = React.useRef({ currentValue, disabled, step, marks, restrictToMarks });
+    keyStateRef.current = { currentValue, disabled, step, marks, restrictToMarks };
+    const onChangeEndRef = React.useRef(onChangeEnd);
+    onChangeEndRef.current = onChangeEnd;
 
-      const back = event.key === "ArrowLeft" || event.key === "ArrowDown";
-      const forward = event.key === "ArrowRight" || event.key === "ArrowUp";
+    const handleKeyDown = React.useCallback(
+      (event: React.KeyboardEvent<HTMLElement>) => {
+        const k = keyStateRef.current;
+        if (k.disabled) return;
+        const markValues = k.restrictToMarks && k.marks ? k.marks.map((m) => m.value) : null;
+        const current = k.currentValue;
+        let next = current;
 
-      if (back || forward) {
-        event.preventDefault();
-        if (markValues && markValues.length > 0) {
-          const idx = markValues.indexOf(currentValue);
-          if (idx !== -1) {
-            next = back
-              ? markValues[idx === 0 ? markValues.length - 1 : idx - 1]
-              : markValues[idx === markValues.length - 1 ? 0 : idx + 1];
+        const back = event.key === "ArrowLeft" || event.key === "ArrowDown";
+        const forward = event.key === "ArrowRight" || event.key === "ArrowUp";
+        const page = event.key === "PageUp" ? 1 : event.key === "PageDown" ? -1 : 0;
+
+        if (back || forward) {
+          event.preventDefault();
+          if (markValues && markValues.length > 0) {
+            const idx = markValues.indexOf(current);
+            if (idx !== -1) {
+              next = back
+                ? markValues[idx === 0 ? markValues.length - 1 : idx - 1]
+                : markValues[idx === markValues.length - 1 ? 0 : idx + 1];
+            } else {
+              next = findClosest(current, markValues);
+            }
           } else {
-            next = findClosest(currentValue, markValues);
+            next = normalizeAngle(current + (back ? -k.step : k.step));
           }
+        } else if (page !== 0) {
+          event.preventDefault();
+          next =
+            markValues && markValues.length > 0
+              ? findClosest(normalizeAngle(current + page * 10 * k.step), markValues)
+              : normalizeAngle(current + page * 10 * k.step);
+        } else if (event.key === "Home") {
+          event.preventDefault();
+          next = markValues && markValues.length > 0 ? markValues[0] : 0;
+        } else if (event.key === "End") {
+          event.preventDefault();
+          next = markValues && markValues.length > 0 ? markValues[markValues.length - 1] : 359;
         } else {
-          next = normalizeAngle(currentValue + (back ? -step : step));
+          return;
         }
-      } else if (event.key === "Home") {
-        next = markValues && markValues.length > 0 ? markValues[0] : 0;
-      } else if (event.key === "End") {
-        next = markValues && markValues.length > 0 ? markValues[markValues.length - 1] : 359;
-      } else {
-        return;
-      }
 
-      setValue(next);
-      onChangeEnd?.(next);
-    };
+        setValue(next);
+        onChangeEndRef.current?.(next);
+      },
+      [setValue],
+    );
 
     const labelNode = withLabel ? (formatLabel ? formatLabel(currentValue) : currentValue) : null;
 
     // `tabIndex` / `onKeyDown` are web focus props outside Tamagui's typed style
     // surface — narrowed via an `object` cast (no `any`), same as elsewhere.
-    const focusProps: object = {
-      tabIndex: tabIndex ?? (disabled ? -1 : 0),
-      onKeyDown: handleKeyDown,
-    };
+    const resolvedTabIndex = tabIndex ?? (disabled ? -1 : 0);
+    const focusProps: object = React.useMemo(
+      () => ({ tabIndex: resolvedTabIndex, onKeyDown: handleKeyDown }),
+      [resolvedTabIndex, handleKeyDown],
+    );
+    const mergedRef = useMergedRef(ref, rootRef);
     return (
       <AngleSliderRoot
-        ref={useMergedRef(ref, rootRef)}
+        ref={mergedRef}
         size={size}
         disabled={disabled}
         role="slider"
         aria-valuemin={0}
         aria-valuemax={359}
         aria-valuenow={currentValue}
-        aria-disabled={disabled ? true : undefined}
+        aria-disabled={disabled || undefined}
         aria-label={ariaLabel}
         {...s.get("frame")}
-        {...(rootProps as GetProps<typeof AngleSliderRoot>)}
-        {...(focusProps as GetProps<typeof AngleSliderRoot>)}
+        {...rootProps}
+        {...focusProps}
         {...rest}
       >
         {marks && marks.length > 0 ? (
@@ -442,6 +463,9 @@ const AngleSliderComponent = AngleSliderRoot.styleable<AngleSliderProps>(
           <AngleSliderLabel {...s.get("label")}>{labelNode}</AngleSliderLabel>
         ) : null}
 
+        {/* `rotate` stays a style prop: v3 web lifts `transform` out of an inline
+            `style` into atomic classes anyway, so `style` would not avoid the
+            per-angle rule (bounded: ≤360 rules, cached by Tamagui). */}
         <AngleSliderThumb {...s.get("thumb")} rotate={`${currentValue}deg`}>
           <AngleSliderThumbKnob height={knobLength} {...s.get("thumbKnob")} />
         </AngleSliderThumb>

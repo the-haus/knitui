@@ -5,6 +5,7 @@ import { useSharedValue, type WithSpringConfig } from "react-native-reanimated";
 import {
   type GetProps,
   isWeb,
+  styleable,
   styled,
   type TamaguiElement,
   withStaticProperties,
@@ -38,6 +39,9 @@ import {
 
 export type ModalSize = SizeKey;
 
+/** The full-screen width override, hoisted so the spread allocates nothing. */
+const FULL_WIDTH = { maxWidth: "100%" } as const;
+
 /**
  * Default enter/exit motion for the content panel — a subtle 8px drop-in fade,
  * matching Mantine. Override per instance via the `animation` prop (a preset name,
@@ -46,9 +50,9 @@ export type ModalSize = SizeKey;
  */
 const DEFAULT_MODAL_MOTION: MotionPreset = {
   transition: "fast",
-  enterStyle: { opacity: 0, y: -DISTANCES.nudge },
-  exitStyle: { opacity: 0, y: -DISTANCES.nudge },
-  animateOnly: ["transform", "opacity"],
+  enter: { opacity: 0, y: -DISTANCES.nudge },
+  exit: { opacity: 0, y: -DISTANCES.nudge },
+  properties: "transform, opacity",
 };
 
 /* -------------------------------------------------------------------------- */
@@ -56,11 +60,11 @@ const DEFAULT_MODAL_MOTION: MotionPreset = {
 /* -------------------------------------------------------------------------- */
 
 const ModalContentFrame = styled(Box, {
-  name: "ModalContent",
+  displayName: "ModalContent",
   position: "relative",
   zIndex: 1,
   width: "100%",
-  backgroundColor: "$background",
+  backgroundColor: "background",
   overflow: "hidden",
   // Cap the panel at the viewport (minus the layer's offsets) and stack the
   // header + body as a flex column so the header stays pinned while the body
@@ -73,9 +77,7 @@ const ModalContentFrame = styled(Box, {
   variants: {
     radius: radiusVariant,
     shadow: shadowVariant,
-    size: {
-      ...modalSizeVariant,
-    },
+    size: modalSizeVariant,
     fullScreen: {
       // Fill the viewport via flexbox rather than percentage `width`/`height`:
       // `flex: 1` fills the main axis and `alignSelf: "stretch"` the cross axis.
@@ -96,13 +98,13 @@ const ModalContentFrame = styled(Box, {
 });
 
 const ModalHeader = styled(Box, {
-  name: "ModalHeader",
+  displayName: "ModalHeader",
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingHorizontal: "$md",
-  paddingVertical: "$sm",
-  backgroundColor: "$background",
+  paddingHorizontal: "md",
+  paddingVertical: "sm",
+  backgroundColor: "background",
   // Pinned: never compress when the body's content overflows and scrolls.
   flexShrink: 0,
 
@@ -110,21 +112,21 @@ const ModalHeader = styled(Box, {
     // Optional hairline under the header — visually separates the pinned header
     // from the scrolling body. Driven by the `withHeaderDivider` prop.
     withBorder: {
-      true: { borderBottomWidth: 1, borderColor: "$borderColor" },
+      true: { borderBottomWidth: 1, borderColor: "borderColor" },
     },
   } as const,
 });
 
 const ModalTitle = styled(Text, {
-  name: "ModalTitle",
-  fontSize: "$lg",
+  displayName: "ModalTitle",
+  fontSize: "lg",
   fontWeight: "600",
-  color: "$color",
+  color: "color",
 });
 
 const ModalBody = styled(Box, {
-  name: "ModalBody",
-  padding: "$md",
+  displayName: "ModalBody",
+  padding: "md",
 });
 
 /* -------------------------------------------------------------------------- */
@@ -137,6 +139,8 @@ type ModalContentFrameProps = Omit<
   | "aria-label"
   | "aria-labelledby"
   | "aria-modal"
+  // v3 has a CSS `animation` style prop; ours is the enter/exit motion recipe.
+  | "animation"
   | "children"
   | "fullScreen"
   | "maxWidth"
@@ -180,7 +184,7 @@ export interface ModalProps extends ModalBaseSharedProps, ModalContentFrameProps
   closeButtonProps?: CloseButtonProps;
   /**
    * Inner spacing applied to the header (horizontal) and the body (all sides).
-   * A `$space` token, number, or CSS string. @default "$md"
+   * A space token (`"md"`), number, or CSS string. @default "md"
    */
   padding?: BoxProps["padding"];
   /** Render a hairline divider under the header. @default false */
@@ -199,11 +203,11 @@ export interface ModalProps extends ModalBaseSharedProps, ModalContentFrameProps
    */
   shadow?: ModalContentProps["shadow"];
   /**
-   * Vertical gap between the content and the viewport edges. @default "$xl"
+   * Vertical gap between the content and the viewport edges. @default "xl"
    * (a cross-platform theme token; Mantine defaults to the web-only `5dvh`).
    */
   yOffset?: BoxProps["paddingVertical"];
-  /** Horizontal gap between the content and the viewport edges. @default "$xl" */
+  /** Horizontal gap between the content and the viewport edges. @default "xl" */
   xOffset?: BoxProps["paddingHorizontal"];
   /**
    * Enter/exit animation — a motion preset name, an inline {@link MotionPreset},
@@ -232,7 +236,7 @@ export interface ModalProps extends ModalBaseSharedProps, ModalContentFrameProps
   animationConfig?: WithSpringConfig;
 }
 
-const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Modal(props, ref) {
+const ModalBaseComponent = styleable<ModalProps>(ModalContentFrame, function Modal(props, ref) {
   const {
     "aria-describedby": describedBy,
     "aria-label": ariaLabel,
@@ -282,7 +286,7 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
   const hasHeader = !!title || withCloseButton;
 
   // `padding` overrides the default insets — horizontal on the header (its
-  // vertical rhythm stays `$sm`) and all sides on the body. Spread BEFORE the
+  // vertical rhythm stays `sm`) and all sides on the body. Spread BEFORE the
   // per-slot `styles`, so an explicit slot override still wins.
   const headerPadding = padding !== undefined ? { paddingHorizontal: padding } : undefined;
   const bodyPadding = padding !== undefined ? { padding } : undefined;
@@ -372,11 +376,14 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
       fullScreen={fullScreen}
       size={size}
       // Instance-level override beats the `size` variant's `maxWidth`, letting
-      // the full-screen panel span the full width on every platform.
-      maxWidth={fullScreen ? "100%" : undefined}
+      // the full-screen panel span the full width on every platform. Spread
+      // conditionally: in v3 an explicit `maxWidth={undefined}` at the call site
+      // CLEARS the `size` variant's cap (docs/v3/conventions.md §5).
+      {...(fullScreen ? FULL_WIDTH : null)}
       // Concrete px safety cap on native (the styled `maxHeight:"100%"` is a no-op
-      // there — Yoga can't resolve the percentage). Web keeps the `"100%"` default.
-      maxHeight={useNativeAutosize && availableHeight > 0 ? availableHeight : undefined}
+      // there — Yoga can't resolve the percentage). Web keeps the `"100%"` base;
+      // spread conditionally for the same explicit-undefined reason.
+      {...(useNativeAutosize && availableHeight > 0 ? { maxHeight: availableHeight } : null)}
       radius={fullScreen ? 0 : radius}
       shadow={shadow}
       role="dialog"
@@ -467,8 +474,8 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
       // width via flex (no percentage sizing); otherwise centre the panel.
       align={fullScreen ? "stretch" : "center"}
       justify={centered ? "center" : "flex-start"}
-      paddingVertical={fullScreen ? 0 : (yOffset ?? "$xl")}
-      paddingHorizontal={fullScreen ? 0 : (xOffset ?? "$xl")}
+      paddingVertical={fullScreen ? 0 : (yOffset ?? "xl")}
+      paddingHorizontal={fullScreen ? 0 : (xOffset ?? "xl")}
     >
       {/*
         Native height probe: an inert, inset-0 box that fills the positioning
@@ -511,8 +518,8 @@ const ModalBaseComponent = ModalContentFrame.styleable<ModalProps>(function Moda
             flexDirection="column"
             alignItems={fullScreen ? "stretch" : "center"}
             justifyContent={centered ? "center" : "flex-start"}
-            paddingVertical={fullScreen ? 0 : (yOffset ?? "$xl")}
-            paddingHorizontal={fullScreen ? 0 : (xOffset ?? "$xl")}
+            paddingVertical={fullScreen ? 0 : (yOffset ?? "xl")}
+            paddingHorizontal={fullScreen ? 0 : (xOffset ?? "xl")}
           >
             {withOverlay !== false ? (
               <DragDismissOverlay

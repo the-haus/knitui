@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { UnstyledButton } from "@knitui/components";
+import { Text, UnstyledButton } from "@knitui/components";
 import {
   createStyledContext,
   type GetProps,
@@ -9,12 +9,11 @@ import {
   withStaticProperties,
 } from "@knitui/core";
 
-import { type CalendarSize, CELL_FONT } from "../cell-metrics";
+import { type CalendarSize, cellFontVariant } from "../cell-metrics";
 import { controlA11yProps } from "../internal/a11y";
 import { hasPreventDefault } from "../internal/has-prevent-default";
-import { webCursor } from "../internal/web-cursor";
-import { TimeValue } from "../TimeValue";
 import type { TimePickerAmPmLabels, TimePickerFormat } from "../types";
+import { getFormattedTime } from "../utils";
 
 // ── 2. Shared context ───────────────────────────────────────────────────────
 // One `createStyledContext` carries `size` to the styled parts so the cell and
@@ -27,51 +26,37 @@ const TimePresetControlContext = createStyledContext<{ size: CalendarSize }>({ s
 // ladder (the calendar twin of components' `controlMetrics`), expressed with raw
 // values that resolve at module-load — NOT `getTokenValue`, which needs the live
 // config.
-const presetFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 // ── 5. Styled parts ───────────────────────────────────────────────────────────
 
 /**
  * One preset time-cell. Accent comes from the active theme's palette ramp via
  * the `theme` prop (no Mantine `color` prop): the active preset fills with
- * `$color9`/`$color1` text — the `PickerControl`/`TimeGridControl` convention.
+ * `color9`/`color1` text — the `PickerControl`/`TimeGridControl` convention.
  *
- * 12. Interaction lives in real Tamagui pseudo-state (`hoverStyle`/`pressStyle`)
+ * 12. Interaction lives in real Tamagui pseudo-state (`hover:`/`press:` clauses)
  *     and the `active` variant, never a runtime hover state machine.
  * 15. The active highlight is a boolean VARIANT, never a dynamic
  *     `opacity`/`display` style prop the web optimiser could fold onto the cell.
  */
 const TimePresetControlFrame = styled(UnstyledButton.Frame, {
-  name: "TimePresetControl",
+  displayName: "TimePresetControl",
   context: TimePresetControlContext,
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  borderRadius: "$sm",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$sm",
-  backgroundColor: "transparent",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderColor: "borderColor",
+  borderRadius: "sm",
+  paddingVertical: "xs",
+  paddingHorizontal: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  cursor: "web:pointer",
 
   variants: {
     /** Active preset — solid accent fill. */
     active: {
       true: {
-        backgroundColor: "$color9",
-        borderColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
+        borderColor: "color9",
       },
     },
   } as const,
@@ -80,20 +65,25 @@ const TimePresetControlFrame = styled(UnstyledButton.Frame, {
 /**
  * The preset's formatted-time label.
  *
- * 4. Idle text is the neutral `$color`; on the active accent fill it flips to the
- *    contrast `$color1`. No hex, no Mantine `color` prop.
+ * 4. Idle text is the neutral `color`; on the active accent fill it flips to the
+ *    contrast `color1`. No hex, no Mantine `color` prop.
  */
-const TimePresetControlLabel = styled(TimeValue, {
-  name: "TimePresetControlLabel",
+// A styled `Text` (NOT `styled(TimeValue)`): in v3, `styled()` over a plain
+// React component hands it a resolved inline `style` and DROPS theme-name
+// values (`color: "color1"` never reached the DOM), so the label is a real
+// Tamagui leaf and the time is formatted with the same `getFormattedTime`
+// `TimeValue` uses.
+const TimePresetControlLabel = styled(Text, {
+  displayName: "TimePresetControlLabel",
   context: TimePresetControlContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
 
   variants: {
-    size: presetFontVariant,
+    size: cellFontVariant,
 
     /** On the active accent fill, the label flips to the contrast color. */
-    active: { true: { color: "$color1" } },
+    active: { true: { color: "color1" } },
   } as const,
 
   defaultVariants: { size: "sm" },
@@ -128,7 +118,7 @@ export interface TimePresetControlProps extends Omit<
 
 /**
  * `TimePresetControl` — one selectable preset in the `TimePicker` dropdown,
- * rendering its time through the shared `TimeValue` formatter. The `any`-free,
+ * rendering its time through the shared `getFormattedTime` formatter (`TimeValue`'s). The `any`-free,
  * cross-platform port of Mantine's `TimePresetControl`; focus-stealing is
  * prevented on web via `onPressIn` + the `has-prevent-default` guard. Forwards
  * its ref to the cell. Folder-local to the `TimePicker` dropdown.
@@ -167,14 +157,9 @@ function TimePresetControlImpl(
       render="button"
       {...others}
     >
-      <TimePresetControlLabel
-        value={value}
-        format={format}
-        amPmLabels={amPmLabels}
-        withSeconds={withSeconds}
-        size={size}
-        active={active}
-      />
+      <TimePresetControlLabel size={size} active={active}>
+        {getFormattedTime({ value, format, amPmLabels, withSeconds })}
+      </TimePresetControlLabel>
     </TimePresetControlFrame>
   );
 }

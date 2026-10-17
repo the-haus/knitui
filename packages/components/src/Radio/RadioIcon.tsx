@@ -1,7 +1,5 @@
 import * as React from "react";
 
-import { type SizeTokens } from "@knitui/core";
-
 import { Box, type BoxProps } from "../Box";
 import { type SizeKey } from "../internal/style-props";
 import { type TextProps } from "../Text";
@@ -27,17 +25,13 @@ export type RadioIconComponent = React.ComponentType<RadioIconProps>;
 /**
  * Default radio glyph: a filled dot. Rendered from `Box` rather than an SVG so it
  * works on web AND native without an `react-native-svg` dependency — the same
- * approach as `CheckboxIcon`.
+ * approach as `CheckboxIcon`. The size key IS the `size` token name (v3: no `$`).
  */
-const squareToken = (size: RadioIconSize): SizeTokens => `$${size}` as SizeTokens;
-
-export function RadioIcon({ size = "xs", color = "$color1", ...rest }: RadioIconProps) {
-  const boxToken = squareToken(size);
-
+export function RadioIcon({ size = "xs", color = "color1", ...rest }: RadioIconProps) {
   return (
     <Box
-      width={boxToken}
-      height={boxToken}
+      width={size}
+      height={size}
       scale={0.5}
       borderRadius={999}
       backgroundColor={color}

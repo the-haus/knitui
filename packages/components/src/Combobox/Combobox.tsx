@@ -4,6 +4,7 @@ import {
   createStyledContext,
   type GetProps,
   type RadiusTokens,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -129,23 +130,31 @@ function ComboboxRoot(props: ComboboxProps) {
 
   return (
     <ComboboxContext.Provider value={ctx}>
-      <Popover
-        opened={store.opened}
-        onChange={handleOpenedChange}
-        position={position}
-        offset={offset}
-        width={width}
-        withinPortal={withinPortal}
-        keepMounted={keepMounted}
-        zIndex={zIndex}
-        radius={radius}
-        shadow={shadow}
-        disabled={disabled}
-        closeOnClickOutside={closeOnClickOutside}
-        closeOnEscape={closeOnEscape}
-      >
-        {children}
-      </Popover>
+      {/*
+        Styled context: every context-bound leaf part (Options, OptionText, the
+        group label, Empty, Header, Footer, Chevron) reads `size` from here, so the
+        leaves stay plain `styled()` frames the compiler can flatten — no wrapper
+        has to thread `size={ctx.size}` through by hand.
+      */}
+      <ComboboxStyleContext.Provider size={size}>
+        <Popover
+          opened={store.opened}
+          onChange={handleOpenedChange}
+          position={position}
+          offset={offset}
+          width={width}
+          withinPortal={withinPortal}
+          keepMounted={keepMounted}
+          zIndex={zIndex}
+          radius={radius}
+          shadow={shadow}
+          disabled={disabled}
+          closeOnClickOutside={closeOnClickOutside}
+          closeOnEscape={closeOnEscape}
+        >
+          {children}
+        </Popover>
+      </ComboboxStyleContext.Provider>
     </ComboboxContext.Provider>
   );
 }
@@ -205,7 +214,7 @@ function ComboboxTarget({ children, refProp = "ref", targetType = "input" }: Com
 /* -------------------------------------------------------------------------- */
 
 const ComboboxDropdownFrame = styled(Box, {
-  name: "ComboboxDropdown",
+  displayName: "ComboboxDropdown",
   context: ComboboxStyleContext,
   flexDirection: "column",
 
@@ -226,7 +235,8 @@ const ComboboxDropdownFrame = styled(Box, {
 
 export interface ComboboxDropdownProps extends GetProps<typeof ComboboxDropdownFrame> {}
 
-const ComboboxDropdown = ComboboxDropdownFrame.styleable<ComboboxDropdownProps>(
+const ComboboxDropdown = styleable<ComboboxDropdownProps>(
+  ComboboxDropdownFrame,
   function ComboboxDropdown({ children, ...rest }, ref) {
     const ctx = useComboboxContext();
 
@@ -240,24 +250,42 @@ const ComboboxDropdown = ComboboxDropdownFrame.styleable<ComboboxDropdownProps>(
   },
 );
 
+/**
+ * The DOM id of the option whose `value` is `value` inside the listbox `listId` —
+ * the `aria-activedescendant` target the combobox trigger points at while an
+ * option is keyboard-highlighted. Values are free text, so they are encoded into
+ * the IDREF-safe alphabet (no spaces).
+ */
+export function getComboboxOptionId(listId: string, value: string): string {
+  return `${listId}-option-${encodeURIComponent(value).replace(/[%'()*!~.]/g, "_")}`;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Options + Option                                                           */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * React Native's `Role` union has no `"listbox"` (it does have `"option"`), but
+ * the web host passes the ARIA role straight through and native ignores roles it
+ * does not know — so the listbox role is re-typed once, here.
+ */
+const LISTBOX_ROLE = "listbox" as unknown as GetProps<typeof Box>["role"];
+
 const ComboboxOptionsFrame = styled(Box, {
-  name: "ComboboxOptions",
+  displayName: "ComboboxOptions",
   context: ComboboxStyleContext,
+  role: LISTBOX_ROLE,
   flexDirection: "column",
 
   variants: {
     size: {
-      xxs: { gap: "$xxs" },
-      xs: { gap: "$xxs" },
-      sm: { gap: "$xxs" },
-      md: { gap: "$xxs" },
-      lg: { gap: "$xxs" },
-      xl: { gap: "$xxs" },
-      xxl: { gap: "$xxs" },
+      xxs: { gap: "xxs" },
+      xs: { gap: "xxs" },
+      sm: { gap: "xxs" },
+      md: { gap: "xxs" },
+      lg: { gap: "xxs" },
+      xl: { gap: "xxs" },
+      xxl: { gap: "xxs" },
     },
   } as const,
 
@@ -266,27 +294,17 @@ const ComboboxOptionsFrame = styled(Box, {
 
 export type ComboboxOptionsProps = GetProps<typeof ComboboxOptionsFrame>;
 
-const ComboboxOptions = ComboboxOptionsFrame.styleable<ComboboxOptionsProps>(
-  function ComboboxOptions(props, ref) {
-    const ctx = useComboboxContext();
-    const listboxProps: object = { role: "listbox" };
-
-    return (
-      <ComboboxOptionsFrame
-        ref={ref}
-        {...props}
-        {...(listboxProps as GetProps<typeof ComboboxOptionsFrame>)}
-        size={ctx.size}
-      />
-    );
-  },
-);
+/**
+ * The listbox container. A plain styled frame (flattenable): `role="listbox"`
+ * lives in the base and `size` arrives through `ComboboxStyleContext`.
+ */
+const ComboboxOptions = ComboboxOptionsFrame;
 
 const ComboboxOptionText = styled(Text, {
-  name: "ComboboxOptionText",
+  displayName: "ComboboxOptionText",
   context: ComboboxStyleContext,
   flex: 1,
-  color: "$color12",
+  color: "color12",
   userSelect: "none",
 
   variants: {
@@ -297,14 +315,14 @@ const ComboboxOptionText = styled(Text, {
 });
 
 const ComboboxOptionFrame = styled(Box, {
-  name: "ComboboxOption",
+  displayName: "ComboboxOption",
   context: ComboboxStyleContext,
   role: "option",
   flexDirection: "row",
   alignItems: "center",
   ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color4" },
-  pressStyle: { backgroundColor: "$color5" },
+  backgroundColor: "hover:color4 press:color5",
+
   // No focus ring here ON PURPOSE: options never take DOM focus — focus stays on
   // the field's input and the highlighted option is tracked via the `active`
   // variant + `aria-activedescendant` (combobox pattern). A `focusVisibleStyle`
@@ -319,67 +337,67 @@ const ComboboxOptionFrame = styled(Box, {
     // floor for wrapped/two-line options; single-line rows sit at `minHeight`.
     size: {
       xxs: {
-        minHeight: "$xxs",
-        gap: "$xxs",
-        paddingVertical: "$xxs",
-        paddingHorizontal: "$xs",
-        borderRadius: "$xs",
+        minHeight: "xxs",
+        gap: "xxs",
+        paddingVertical: "xxs",
+        paddingHorizontal: "xs",
+        borderRadius: "xs",
       },
       xs: {
-        minHeight: "$xs",
-        gap: "$xxs",
-        paddingVertical: "$xxs",
-        paddingHorizontal: "$sm",
-        borderRadius: "$xs",
+        minHeight: "xs",
+        gap: "xxs",
+        paddingVertical: "xxs",
+        paddingHorizontal: "sm",
+        borderRadius: "xs",
       },
       sm: {
-        minHeight: "$sm",
-        gap: "$xs",
-        paddingVertical: "$xxs",
-        paddingHorizontal: "$sm",
-        borderRadius: "$sm",
+        minHeight: "sm",
+        gap: "xs",
+        paddingVertical: "xxs",
+        paddingHorizontal: "sm",
+        borderRadius: "sm",
       },
       md: {
-        minHeight: "$md",
-        gap: "$xs",
-        paddingVertical: "$xs",
-        paddingHorizontal: "$md",
-        borderRadius: "$sm",
+        minHeight: "md",
+        gap: "xs",
+        paddingVertical: "xs",
+        paddingHorizontal: "md",
+        borderRadius: "sm",
       },
       lg: {
-        minHeight: "$lg",
-        gap: "$sm",
-        paddingVertical: "$xs",
-        paddingHorizontal: "$md",
-        borderRadius: "$sm",
+        minHeight: "lg",
+        gap: "sm",
+        paddingVertical: "xs",
+        paddingHorizontal: "md",
+        borderRadius: "sm",
       },
       xl: {
-        minHeight: "$xl",
-        gap: "$sm",
-        paddingVertical: "$sm",
-        paddingHorizontal: "$lg",
-        borderRadius: "$md",
+        minHeight: "xl",
+        gap: "sm",
+        paddingVertical: "sm",
+        paddingHorizontal: "lg",
+        borderRadius: "md",
       },
       xxl: {
-        minHeight: "$xxl",
-        gap: "$md",
-        paddingVertical: "$sm",
-        paddingHorizontal: "$lg",
-        borderRadius: "$md",
+        minHeight: "xxl",
+        gap: "md",
+        paddingVertical: "sm",
+        paddingHorizontal: "lg",
+        borderRadius: "md",
       },
     },
     selected: {
-      true: { backgroundColor: "$color4" },
+      true: { backgroundColor: "color4" },
     },
     active: {
-      true: { backgroundColor: "$color3" },
+      true: { backgroundColor: "color3" },
     },
     disabled: {
       true: {
         opacity: 0.5,
         pointerEvents: "none",
         ...webCursor("default"),
-        hoverStyle: { backgroundColor: "transparent" },
+        backgroundColor: "hover:transparent",
       },
     },
   } as const,
@@ -404,7 +422,8 @@ export interface ComboboxOptionProps extends Omit<GetProps<typeof ComboboxOption
   onClick?: (event: unknown) => void;
 }
 
-const ComboboxOption = ComboboxOptionFrame.styleable<ComboboxOptionProps>(
+const ComboboxOption = styleable<ComboboxOptionProps>(
+  ComboboxOptionFrame,
   function ComboboxOption(props, ref) {
     const ctx = useComboboxContext();
     const { value, selected, active, disabled, onClick, children, ...rest } = props;
@@ -456,32 +475,32 @@ const ComboboxOption = ComboboxOptionFrame.styleable<ComboboxOptionProps>(
 /* -------------------------------------------------------------------------- */
 
 const ComboboxGroupLabel = styled(Text, {
-  name: "ComboboxGroupLabel",
+  displayName: "ComboboxGroupLabel",
   context: ComboboxStyleContext,
   fontWeight: "600",
-  color: "$color11",
+  color: "color11",
   userSelect: "none",
 
   variants: {
     size: {
       xxs: {
-        paddingVertical: "$xxs",
-        paddingHorizontal: "$xs",
-        fontSize: "$xxs",
+        paddingVertical: "xxs",
+        paddingHorizontal: "xs",
+        fontSize: "xxs",
       },
       xs: {
-        paddingVertical: "$xxs",
-        paddingHorizontal: "$sm",
-        fontSize: "$xxs",
+        paddingVertical: "xxs",
+        paddingHorizontal: "sm",
+        fontSize: "xxs",
       },
-      sm: { paddingVertical: "$xs", paddingHorizontal: "$sm", fontSize: "$xs" },
-      md: { paddingVertical: "$xs", paddingHorizontal: "$md", fontSize: "$xs" },
-      lg: { paddingVertical: "$sm", paddingHorizontal: "$lg", fontSize: "$sm" },
-      xl: { paddingVertical: "$md", paddingHorizontal: "$xl", fontSize: "$sm" },
+      sm: { paddingVertical: "xs", paddingHorizontal: "sm", fontSize: "xs" },
+      md: { paddingVertical: "xs", paddingHorizontal: "md", fontSize: "xs" },
+      lg: { paddingVertical: "sm", paddingHorizontal: "lg", fontSize: "sm" },
+      xl: { paddingVertical: "md", paddingHorizontal: "xl", fontSize: "sm" },
       xxl: {
-        paddingVertical: "$lg",
-        paddingHorizontal: "$xxl",
-        fontSize: "$md",
+        paddingVertical: "lg",
+        paddingHorizontal: "xxl",
+        fontSize: "md",
       },
     },
   } as const,
@@ -490,7 +509,7 @@ const ComboboxGroupLabel = styled(Text, {
 });
 
 const ComboboxGroupFrame = styled(Box, {
-  name: "ComboboxGroup",
+  displayName: "ComboboxGroup",
   context: ComboboxStyleContext,
   flexDirection: "column",
 
@@ -514,46 +533,46 @@ export interface ComboboxGroupProps extends GetProps<typeof ComboboxGroupFrame> 
   label?: React.ReactNode;
 }
 
-const ComboboxGroup = ComboboxGroupFrame.styleable<ComboboxGroupProps>(function ComboboxGroup(
-  { label, children, ...rest },
-  ref,
-) {
-  const ctx = useComboboxContext();
+const ComboboxGroup = styleable<ComboboxGroupProps>(
+  ComboboxGroupFrame,
+  function ComboboxGroup({ label, children, ...rest }, ref) {
+    const ctx = useComboboxContext();
 
-  return (
-    <ComboboxGroupFrame ref={ref} role="group" {...rest} size={ctx.size}>
-      {label != null ? <ComboboxGroupLabel>{label}</ComboboxGroupLabel> : null}
-      {children}
-    </ComboboxGroupFrame>
-  );
-});
+    return (
+      <ComboboxGroupFrame ref={ref} role="group" {...rest} size={ctx.size}>
+        {label != null ? <ComboboxGroupLabel>{label}</ComboboxGroupLabel> : null}
+        {children}
+      </ComboboxGroupFrame>
+    );
+  },
+);
 
 /* -------------------------------------------------------------------------- */
 /* Empty / Header / Footer                                                    */
 /* -------------------------------------------------------------------------- */
 
 const ComboboxEmpty = styled(Text, {
-  name: "ComboboxEmpty",
+  displayName: "ComboboxEmpty",
   context: ComboboxStyleContext,
-  color: "$color11",
+  color: "color11",
   textAlign: "center",
 
   variants: {
     size: {
       xxs: {
-        paddingVertical: "$xs",
-        paddingHorizontal: "$xs",
-        fontSize: "$xxs",
+        paddingVertical: "xs",
+        paddingHorizontal: "xs",
+        fontSize: "xxs",
       },
-      xs: { paddingVertical: "$xs", paddingHorizontal: "$sm", fontSize: "$xs" },
-      sm: { paddingVertical: "$sm", paddingHorizontal: "$sm", fontSize: "$sm" },
-      md: { paddingVertical: "$sm", paddingHorizontal: "$md", fontSize: "$md" },
-      lg: { paddingVertical: "$md", paddingHorizontal: "$lg", fontSize: "$lg" },
-      xl: { paddingVertical: "$lg", paddingHorizontal: "$xl", fontSize: "$xl" },
+      xs: { paddingVertical: "xs", paddingHorizontal: "sm", fontSize: "xs" },
+      sm: { paddingVertical: "sm", paddingHorizontal: "sm", fontSize: "sm" },
+      md: { paddingVertical: "sm", paddingHorizontal: "md", fontSize: "md" },
+      lg: { paddingVertical: "md", paddingHorizontal: "lg", fontSize: "lg" },
+      xl: { paddingVertical: "lg", paddingHorizontal: "xl", fontSize: "xl" },
       xxl: {
-        paddingVertical: "$xl",
-        paddingHorizontal: "$xxl",
-        fontSize: "$xxl",
+        paddingVertical: "xl",
+        paddingHorizontal: "xxl",
+        fontSize: "xxl",
       },
     },
   } as const,
@@ -564,20 +583,20 @@ const ComboboxEmpty = styled(Text, {
 export type ComboboxEmptyProps = GetProps<typeof ComboboxEmpty>;
 
 const ComboboxHeader = styled(Box, {
-  name: "ComboboxHeader",
+  displayName: "ComboboxHeader",
   context: ComboboxStyleContext,
   borderBottomWidth: 1,
-  borderBottomColor: "$borderColor",
+  borderBottomColor: "borderColor",
 
   variants: {
     size: {
-      xxs: { paddingVertical: "$xxs", paddingHorizontal: "$xs", marginBottom: "$xxs" },
-      xs: { paddingVertical: "$xxs", paddingHorizontal: "$sm", marginBottom: "$xxs" },
-      sm: { paddingVertical: "$xs", paddingHorizontal: "$sm", marginBottom: "$xs" },
-      md: { paddingVertical: "$xs", paddingHorizontal: "$md", marginBottom: "$xs" },
-      lg: { paddingVertical: "$sm", paddingHorizontal: "$lg", marginBottom: "$sm" },
-      xl: { paddingVertical: "$md", paddingHorizontal: "$xl", marginBottom: "$sm" },
-      xxl: { paddingVertical: "$lg", paddingHorizontal: "$xxl", marginBottom: "$md" },
+      xxs: { paddingVertical: "xxs", paddingHorizontal: "xs", marginBottom: "xxs" },
+      xs: { paddingVertical: "xxs", paddingHorizontal: "sm", marginBottom: "xxs" },
+      sm: { paddingVertical: "xs", paddingHorizontal: "sm", marginBottom: "xs" },
+      md: { paddingVertical: "xs", paddingHorizontal: "md", marginBottom: "xs" },
+      lg: { paddingVertical: "sm", paddingHorizontal: "lg", marginBottom: "sm" },
+      xl: { paddingVertical: "md", paddingHorizontal: "xl", marginBottom: "sm" },
+      xxl: { paddingVertical: "lg", paddingHorizontal: "xxl", marginBottom: "md" },
     },
   } as const,
 
@@ -587,20 +606,20 @@ const ComboboxHeader = styled(Box, {
 export type ComboboxHeaderProps = GetProps<typeof ComboboxHeader>;
 
 const ComboboxFooter = styled(Box, {
-  name: "ComboboxFooter",
+  displayName: "ComboboxFooter",
   context: ComboboxStyleContext,
   borderTopWidth: 1,
-  borderTopColor: "$borderColor",
+  borderTopColor: "borderColor",
 
   variants: {
     size: {
-      xxs: { paddingVertical: "$xxs", paddingHorizontal: "$xs", marginTop: "$xxs" },
-      xs: { paddingVertical: "$xxs", paddingHorizontal: "$sm", marginTop: "$xxs" },
-      sm: { paddingVertical: "$xs", paddingHorizontal: "$sm", marginTop: "$xs" },
-      md: { paddingVertical: "$xs", paddingHorizontal: "$md", marginTop: "$xs" },
-      lg: { paddingVertical: "$sm", paddingHorizontal: "$lg", marginTop: "$sm" },
-      xl: { paddingVertical: "$md", paddingHorizontal: "$xl", marginTop: "$sm" },
-      xxl: { paddingVertical: "$lg", paddingHorizontal: "$xxl", marginTop: "$md" },
+      xxs: { paddingVertical: "xxs", paddingHorizontal: "xs", marginTop: "xxs" },
+      xs: { paddingVertical: "xxs", paddingHorizontal: "sm", marginTop: "xxs" },
+      sm: { paddingVertical: "xs", paddingHorizontal: "sm", marginTop: "xs" },
+      md: { paddingVertical: "xs", paddingHorizontal: "md", marginTop: "xs" },
+      lg: { paddingVertical: "sm", paddingHorizontal: "lg", marginTop: "sm" },
+      xl: { paddingVertical: "md", paddingHorizontal: "xl", marginTop: "sm" },
+      xxl: { paddingVertical: "lg", paddingHorizontal: "xxl", marginTop: "md" },
     },
   } as const,
 
@@ -618,7 +637,7 @@ export type ComboboxFooterProps = GetProps<typeof ComboboxFooter>;
 // open-ended `size` prop (the icon itself is sized/colored in the render below;
 // the `size` style prop here is inert on a View and harmless).
 const ComboboxChevronText = styled(Box, {
-  name: "ComboboxChevron",
+  displayName: "ComboboxChevron",
   context: ComboboxStyleContext,
   alignItems: "center",
   justifyContent: "center",
@@ -638,7 +657,7 @@ const ComboboxChevronText = styled(Box, {
 
 export interface ComboboxChevronProps extends Omit<
   GetProps<typeof ComboboxChevronText>,
-  "children"
+  "children" | "color"
 > {
   /** Rotate to point up when the dropdown is open. */
   opened?: boolean;
@@ -647,15 +666,16 @@ export interface ComboboxChevronProps extends Omit<
   /**
    * Chevron icon color (token or concrete). Routed to the `@knitui/icons` icon —
    * the wrapper is a `Box`, so `color` no longer applies to it directly.
-   * @default "$color11"
+   * @default "color11"
    */
   color?: string;
 }
 
-const ComboboxChevron = ComboboxChevronText.styleable<ComboboxChevronProps>(
+const ComboboxChevron = styleable<ComboboxChevronProps>(
+  ComboboxChevronText,
   function ComboboxChevron({ error, color, size, ...rest }, ref) {
     void error;
-    // Paintable colour for the SVG (defaults to the chevron's `$color11`); an
+    // Paintable colour for the SVG (defaults to the chevron's `color11`); an
     // explicit `color`/slot value still wins. Size tracks the field's control key
     // via the canonical icon ladder. The wrapper `Box` keeps the open/close
     // rotation + slot passthrough.
@@ -665,7 +685,7 @@ const ComboboxChevron = ComboboxChevronText.styleable<ComboboxChevronProps>(
     // every Select/Autocomplete/MultiSelect no longer registers a theme subscriber
     // (nor pays `useThemeWithState`'s dep-less per-render `useEffect`). Native
     // still resolves through the theme, where the SVG needs a concrete colour.
-    const iconColor = useIconColor(typeof color === "string" ? color : "$color11");
+    const iconColor = useIconColor(typeof color === "string" ? color : "color11");
     // `size` is the open-ended host type (SizeKey | bare string | number); the
     // ladder only keys on `SizeKey`/number, so narrow before mapping.
     const iconSize =
@@ -693,7 +713,7 @@ const ComboboxChevron = ComboboxChevronText.styleable<ComboboxChevronProps>(
 // `ComboboxStyleContext` and accepts style props directly. The wrapper below owns
 // the field-relative size step-down + clear wiring.
 const ComboboxClearButtonFrame = styled(CloseButton, {
-  name: "ComboboxClearButton",
+  displayName: "ComboboxClearButton",
   context: ComboboxStyleContext,
 });
 
@@ -702,7 +722,8 @@ export interface ComboboxClearButtonProps extends Omit<CloseButtonProps, "onPres
   onClear: () => void;
 }
 
-const ComboboxClearButton = ComboboxClearButtonFrame.styleable<ComboboxClearButtonProps>(
+const ComboboxClearButton = styleable<ComboboxClearButtonProps>(
+  ComboboxClearButtonFrame,
   function ComboboxClearButton({ onClear, size, ...rest }, ref) {
     // Callers pass the FIELD size; the clear button is embedded in that field, so
     // step it down one key (`toEmbeddedControlSize`) — a same-key button would be

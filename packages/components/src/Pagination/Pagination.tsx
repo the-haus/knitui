@@ -1,18 +1,24 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { DOTS, useKeyboardActions, usePagination } from "@knitui/hooks";
 
-import { Box, type BoxProps } from "../Box";
+import { Box } from "../Box";
 import {
   controlFontVariant,
   focusRingStyle,
-  fontSizePassthroughVariant,
+  fontSizeOf,
   radiusVariant,
   type SizeKey,
-  squareSizeVariantFallthrough,
+  squareSizeOf,
+  tableVariant,
   webCursor,
-  webCursorStyle,
 } from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Text } from "../Text";
@@ -70,8 +76,67 @@ const usePaginationState = (): PaginationState => {
 /* Styled control frame + label                                               */
 /* -------------------------------------------------------------------------- */
 
+/** Square page-button sizes; a raw number / CSS value sizes the square directly. */
+const paginationControlSizeVariant = tableVariant(
+  {
+    xxs: {
+      width: "xxs",
+      height: "xxs",
+      minWidth: "xxs",
+      borderRadius: "xs",
+      paddingHorizontal: "xxs",
+    },
+    xs: {
+      width: "xs",
+      height: "xs",
+      minWidth: "xs",
+      borderRadius: "xs",
+      paddingHorizontal: "xxs",
+    },
+    sm: {
+      width: "sm",
+      height: "sm",
+      minWidth: "sm",
+      borderRadius: "sm",
+      paddingHorizontal: "xxs",
+    },
+    md: {
+      width: "md",
+      height: "md",
+      minWidth: "md",
+      borderRadius: "md",
+      paddingHorizontal: "xs",
+    },
+    lg: {
+      width: "lg",
+      height: "lg",
+      minWidth: "lg",
+      borderRadius: "md",
+      paddingHorizontal: "xs",
+    },
+    xl: {
+      width: "xl",
+      height: "xl",
+      minWidth: "xl",
+      borderRadius: "lg",
+      paddingHorizontal: "sm",
+    },
+    xxl: {
+      width: "xxl",
+      height: "xxl",
+      minWidth: "xxl",
+      borderRadius: "lg",
+      paddingHorizontal: "md",
+    },
+  },
+  squareSizeOf,
+);
+
+/** Page-number label: the balanced control-font ladder + a raw / CSS fallthrough. */
+const paginationLabelSizeVariant = tableVariant(controlFontVariant, fontSizeOf);
+
 const PaginationControlFrame = styled(Box, {
-  name: "PaginationControl",
+  displayName: "PaginationControl",
   context: PaginationStyleContext,
   role: "button",
   ...webCursor("pointer"),
@@ -79,79 +144,18 @@ const PaginationControlFrame = styled(Box, {
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 1,
-  borderColor: "$color4",
-  backgroundColor: "$background",
-  hoverStyle: { backgroundColor: "$color3" },
-  pressStyle: { backgroundColor: "$color4" },
+  borderColor: "color4",
+  backgroundColor: "background hover:color3 press:color4",
+
   ...focusRingStyle,
 
   variants: {
-    size: {
-      xxs: {
-        width: "$xxs",
-        height: "$xxs",
-        minWidth: "$xxs",
-        borderRadius: "$xs",
-        paddingHorizontal: "$xxs",
-      },
-      xs: {
-        width: "$xs",
-        height: "$xs",
-        minWidth: "$xs",
-        borderRadius: "$xs",
-        paddingHorizontal: "$xxs",
-      },
-      sm: {
-        width: "$sm",
-        height: "$sm",
-        minWidth: "$sm",
-        borderRadius: "$sm",
-        paddingHorizontal: "$xxs",
-      },
-      md: {
-        width: "$md",
-        height: "$md",
-        minWidth: "$md",
-        borderRadius: "$md",
-        paddingHorizontal: "$xs",
-      },
-      lg: {
-        width: "$lg",
-        height: "$lg",
-        minWidth: "$lg",
-        borderRadius: "$md",
-        paddingHorizontal: "$xs",
-      },
-      xl: {
-        width: "$xl",
-        height: "$xl",
-        minWidth: "$xl",
-        borderRadius: "$lg",
-        paddingHorizontal: "$sm",
-      },
-      xxl: {
-        width: "$xxl",
-        height: "$xxl",
-        minWidth: "$xxl",
-        borderRadius: "$lg",
-        paddingHorizontal: "$md",
-      },
-      ":number": (value: number) => ({
-        ...squareSizeVariantFallthrough[":number"](value),
-        minWidth: value,
-      }),
-      ":string": (value: string) => ({
-        ...squareSizeVariantFallthrough[":string"](value),
-        minWidth: value as BoxProps["minWidth"],
-      }),
-    },
+    size: paginationControlSizeVariant,
     radius: radiusVariant,
     active: {
       true: {
-        backgroundColor: "$color9",
-        borderColor: "$color9",
-        hoverStyle: { backgroundColor: "$color9" },
-        pressStyle: { backgroundColor: "$color9" },
+        backgroundColor: "color9 hover:color9 press:color9",
+        borderColor: "color9",
       },
       false: {},
     },
@@ -168,25 +172,36 @@ const PaginationControlFrame = styled(Box, {
 });
 
 const PaginationControlText = styled(Text, {
-  name: "PaginationControlText",
+  displayName: "PaginationControlText",
   context: PaginationStyleContext,
-  color: "$color12",
+  color: "color12",
 
   variants: {
     // Page-number label uses the balanced control-font ladder (clamped at the
     // bottom two steps) keyed off the same `size` as the square page button, with
-    // the passthrough catch-all preserving the `:number`/`:string` escape hatch.
-    size: {
-      ...controlFontVariant,
-      ...fontSizePassthroughVariant,
-    },
+    // the passthrough fallthrough preserving the number / CSS escape hatch.
+    size: paginationLabelSizeVariant,
     active: {
-      true: { color: "$color1" },
+      true: { color: "color1" },
       false: {},
     },
   } as const,
 
   defaultVariants: { active: false },
+});
+
+/**
+ * The truncation ellipsis: a non-interactive, transparent control cell. Its
+ * fill is transparent in EVERY state, overriding the control's hover/press
+ * clauses slot by slot (a bare `"transparent"` would only claim the resting
+ * slot and keep the inherited `hover:color3`).
+ */
+const PaginationDotsFrame = styled(PaginationControlFrame, {
+  displayName: "PaginationDots",
+  role: "presentation",
+  borderColor: "transparent",
+  backgroundColor: "transparent hover:transparent press:transparent",
+  ...webCursor("default"),
 });
 
 /* -------------------------------------------------------------------------- */
@@ -210,7 +225,8 @@ export interface PaginationControlProps extends PaginationControlFrameProps {
   children?: React.ReactNode;
 }
 
-const PaginationControl = PaginationControlFrame.styleable<PaginationControlProps>(
+const PaginationControl = styleable<PaginationControlProps>(
+  PaginationControlFrame,
   function PaginationControl(props, ref) {
     const { active, disabled, onPress, children, ...rest } = props;
     const content =
@@ -255,25 +271,17 @@ export interface PaginationDotsProps extends Omit<
   radius?: GetProps<typeof PaginationControlFrame>["radius"];
 }
 
-const PaginationDots = PaginationControlFrame.styleable<PaginationDotsProps>(
+const PaginationDots = styleable<PaginationDotsProps>(
+  PaginationDotsFrame,
   function PaginationDots({ icon, ...rest }, ref) {
     return (
-      <PaginationControlFrame
-        ref={ref}
-        role="presentation"
-        borderColor="transparent"
-        backgroundColor="transparent"
-        style={webCursorStyle("default")}
-        hoverStyle={{ backgroundColor: "transparent" }}
-        pressStyle={{ backgroundColor: "transparent" }}
-        {...rest}
-      >
+      <PaginationDotsFrame ref={ref} {...rest}>
         {typeof icon === "string" || icon === undefined ? (
           <PaginationControlText>{icon ?? "…"}</PaginationControlText>
         ) : (
           icon
         )}
-      </PaginationControlFrame>
+      </PaginationDotsFrame>
     );
   },
 );
@@ -284,8 +292,8 @@ const PaginationDots = PaginationControlFrame.styleable<PaginationDotsProps>(
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ item: { borderColor: "$red9" } }}`
- * is sugar for `<Pagination.Control borderColor="$red9" />` on every page button.
+ * of the styled part it targets, so `styles={{ item: { borderColor: "red9" } }}`
+ * is sugar for `<Pagination.Control borderColor="red9" />` on every page button.
  * `item` = the numbered page controls; `control` = the edge/step controls
  * (first/previous/next/last); `dots` = the truncation ellipsis; `root` = the nav
  * frame. The dynamic `getItemProps` / `getControlProps` overrides layer OVER these
@@ -466,13 +474,27 @@ type EdgeStyle = {
   marginLeft?: number;
 };
 
-const edgeStyleFor = (isFirst: boolean, isLast: boolean): EdgeStyle => ({
-  borderTopLeftRadius: isFirst ? undefined : 0,
-  borderBottomLeftRadius: isFirst ? undefined : 0,
-  borderTopRightRadius: isLast ? undefined : 0,
-  borderBottomRightRadius: isLast ? undefined : 0,
-  marginLeft: isFirst ? undefined : -1,
-});
+/*
+ * Precomputed per position, and each one names ONLY the props it changes: an
+ * explicit `undefined` on a style prop would clear the size variant's radius
+ * (v3 call-site semantics), so the outer corners are simply left out.
+ */
+const EDGE_SOLO: EdgeStyle = {};
+const EDGE_FIRST: EdgeStyle = { borderTopRightRadius: 0, borderBottomRightRadius: 0 };
+const EDGE_LAST: EdgeStyle = { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, marginLeft: -1 };
+const EDGE_INNER: EdgeStyle = {
+  borderTopLeftRadius: 0,
+  borderBottomLeftRadius: 0,
+  borderTopRightRadius: 0,
+  borderBottomRightRadius: 0,
+  marginLeft: -1,
+};
+
+const edgeStyleFor = (isFirst: boolean, isLast: boolean): EdgeStyle =>
+  isFirst ? (isLast ? EDGE_SOLO : EDGE_FIRST) : isLast ? EDGE_LAST : EDGE_INNER;
+
+/** Grouped dots are a plain bordered cell: the resting fill in every state. */
+const GROUPED_DOTS_BG = "background hover:background press:background";
 
 interface PaginationGroupedRowProps {
   withControls: boolean;
@@ -508,8 +530,8 @@ function PaginationGroupedRow({ withControls, withEdges, withPages }: Pagination
           render: (e) =>
             renderDots(state, key, {
               ...e,
-              borderColor: "$color4",
-              backgroundColor: "$background",
+              borderColor: "color4",
+              backgroundColor: GROUPED_DOTS_BG,
             }),
         });
       } else {
@@ -531,7 +553,9 @@ function PaginationGroupedRow({ withControls, withEdges, withPages }: Pagination
 /* -------------------------------------------------------------------------- */
 
 const PaginationRootFrame = styled(Box, {
-  name: "PaginationRoot",
+  displayName: "PaginationRoot",
+  role: "navigation",
+  "aria-label": "Pagination",
   context: PaginationStyleContext,
   flexDirection: "row",
   alignItems: "center",
@@ -540,13 +564,13 @@ const PaginationRootFrame = styled(Box, {
     // Declared so the root can PROVIDE `size` to the style context (controls read
     // it); also scales the inter-control gap.
     size: {
-      xxs: { gap: "$xxs" },
-      xs: { gap: "$xxs" },
-      sm: { gap: "$xxs" },
-      md: { gap: "$xs" },
-      lg: { gap: "$xs" },
-      xl: { gap: "$sm" },
-      xxl: { gap: "$md" },
+      xxs: { gap: "xxs" },
+      xs: { gap: "xxs" },
+      sm: { gap: "xxs" },
+      md: { gap: "xs" },
+      lg: { gap: "xs" },
+      xl: { gap: "sm" },
+      xxl: { gap: "md" },
     },
     // Declared after `size` so it overrides the size-driven gap: attached
     // controls sit flush (the composite's grouped layout strips inner radii +
@@ -612,7 +636,8 @@ export interface PaginationRootProps extends Omit<
   children?: React.ReactNode;
 }
 
-const PaginationRoot = PaginationRootFrame.styleable<PaginationRootProps>(
+const PaginationRoot = styleable<PaginationRootProps>(
+  PaginationRootFrame,
   function PaginationRoot(props, ref) {
     const {
       total,
@@ -720,14 +745,7 @@ const PaginationRoot = PaginationRootFrame.styleable<PaginationRootProps>(
 
     return (
       <PaginationStateContext.Provider value={state}>
-        <PaginationRootFrame
-          ref={ref}
-          role="navigation"
-          aria-label="Pagination"
-          size={size}
-          {...slots.get("root")}
-          {...rest}
-        >
+        <PaginationRootFrame ref={ref} size={size} {...slots.get("root")} {...rest}>
           {children}
         </PaginationRootFrame>
       </PaginationStateContext.Provider>
@@ -750,7 +768,8 @@ export interface PaginationProps extends PaginationRootProps {
   hideWithOnePage?: boolean;
 }
 
-const PaginationComposite = PaginationRootFrame.styleable<PaginationProps>(
+const PaginationComposite = styleable<PaginationProps>(
+  PaginationRootFrame,
   function Pagination(props, ref) {
     const {
       withControls = true,

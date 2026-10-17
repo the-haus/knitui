@@ -45,9 +45,9 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string | null>("14:30");
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <TimeGrid {...args} data={DATA} value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -113,9 +113,9 @@ export const AllowDeselect: Story = {
   render: () => {
     const [value, setValue] = React.useState<string | null>("14:30");
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <TimeGrid data={DATA} allowDeselect value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -139,10 +139,10 @@ export const Styled: Story = {
 /** Every size token. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$lg" width={320}>
+    <Box gap="lg" width={320}>
       {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <TimeGrid size={size} data={DATA.slice(0, 6)} defaultValue="14:30" />

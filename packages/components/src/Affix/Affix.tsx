@@ -1,13 +1,14 @@
 import * as React from "react";
 
-import { type GetProps, isWeb, styled } from "@knitui/core";
+import { type GetProps, isWeb, styleable, styled } from "@knitui/core";
 
 import { Box } from "../Box";
-import { shadowVariant } from "../internal/style-props";
 import { Portal, useOverlayHost } from "../Portal";
 
 /** Default screen `z-index` for the Affix layer (mirrors Mantine's `modal`). */
 const DEFAULT_Z_INDEX = 200;
+
+const DEFAULT_POSITION: AffixPosition = { bottom: 0, right: 0 };
 
 /**
  * Fixed-position layer. `position: "fixed"` pins the element to the viewport on
@@ -17,11 +18,12 @@ const DEFAULT_Z_INDEX = 200;
  * `isWeb`) — pinning to the nearest filling ancestor / the screen.
  */
 const AffixFrame = styled(Box, {
-  name: "Affix",
-
-  variants: {
-    shadow: shadowVariant,
-  } as const,
+  displayName: "Affix",
+  // The portal layer is `pointer-events: none` (so its full-viewport box does
+  // not swallow clicks meant for the page behind the affix); re-enable events on
+  // the frame itself so the affixed content stays interactive.
+  pointerEvents: "auto",
+  position: isWeb ? "fixed" : "absolute",
 });
 
 type AffixFrameStyle = GetProps<typeof AffixFrame>;
@@ -61,32 +63,19 @@ export interface AffixProps extends AffixFrameProps {
  * `withinPortal` (renders the layer through `Portal` so it escapes
  * `overflow:hidden`/transformed ancestors; see prop docs).
  */
-export const Affix = AffixFrame.styleable<AffixProps>(function Affix(props, ref) {
+export const Affix = styleable<AffixProps>(AffixFrame, function Affix(props, ref) {
   const {
     zIndex = DEFAULT_Z_INDEX,
     withinPortal = true,
-    position = { bottom: 0, right: 0 },
+    position = DEFAULT_POSITION,
     ...rest
   } = props;
   // The nearest scoped `OverlayHost` (a native modal screen), else "root".
   const overlayHost = useOverlayHost();
 
-  const frame = (
-    <AffixFrame
-      ref={ref}
-      {...rest}
-      position={isWeb ? "fixed" : "absolute"}
-      // The portal layer is `pointer-events: none` (so its full-viewport box does
-      // not swallow clicks meant for the page behind the affix); re-enable events
-      // on the frame itself so the affixed content stays interactive.
-      pointerEvents="auto"
-      zIndex={zIndex}
-      top={position.top}
-      left={position.left}
-      bottom={position.bottom}
-      right={position.right}
-    />
-  );
+  // `position` only carries the edges the caller named, so spreading it never
+  // writes an explicit `undefined` edge (which would claim the call-site slot).
+  const frame = <AffixFrame ref={ref} {...rest} zIndex={zIndex} {...position} />;
 
   return withinPortal ? <Portal hostName={overlayHost}>{frame}</Portal> : frame;
 });

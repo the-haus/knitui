@@ -29,18 +29,6 @@ import type {
 /** Video control size — the kit's full size scale (see `../control-size`). */
 export type VideoSize = MediaSize;
 
-/**
- * Build a precisely-typed `{ onHoverIn?, onHoverOut? }` object to spread onto a
- * styled `Box`. Tamagui resolves these web hover events at runtime (no-ops on
- * native), but the generated style-prop types don't surface them, so a direct
- * attribute fails to typecheck. Spreading a precise object dodges the
- * excess-property check without widening to `any`.
- */
-export const hoverProps = (handlers: {
-  onHoverIn?: () => void;
-  onHoverOut?: () => void;
-}): { onHoverIn?: () => void; onHoverOut?: () => void } => handlers;
-
 /** Re-exported from the contract; lives in `types.ts` so the platform-free
  * controllers can consume it. */
 export type { VideoTextTrack };
@@ -51,17 +39,17 @@ export type { VideoTextTrack };
 
 /** Outer wrapper — positioning context for the overlaid chrome; clips the video. */
 export const VideoFrame = styled(Box, {
-  name: "Video",
+  displayName: "Video",
   position: "relative",
   overflow: "hidden",
   width: "100%",
-  backgroundColor: "$color1",
-  borderRadius: "$md",
+  backgroundColor: "color1",
+  borderRadius: "md",
 });
 
 /** Holds the platform surface (the `<video>` element or expo `VideoView`). */
 export const VideoSurfaceFrame = styled(Box, {
-  name: "VideoSurface",
+  displayName: "VideoSurface",
   position: "relative",
   width: "100%",
   height: "100%",
@@ -70,11 +58,11 @@ export const VideoSurfaceFrame = styled(Box, {
 
 /** The caption cue bubble — the translucent pill the active cue text sits in. */
 export const CaptionBubble = styled(Box, {
-  name: "VideoCaptionBubble",
-  backgroundColor: "$mediaScrim",
-  borderRadius: "$xs",
-  paddingHorizontal: "$sm",
-  paddingVertical: "$xxs",
+  displayName: "VideoCaptionBubble",
+  backgroundColor: "mediaScrim",
+  borderRadius: "xs",
+  paddingHorizontal: "sm",
+  paddingVertical: "xxs",
   maxWidth: "100%",
 });
 
@@ -84,23 +72,93 @@ export const CaptionBubble = styled(Box, {
  * built-in subtitle rendering does not let you control.
  */
 export const CaptionText = styled(Text, {
-  name: "VideoCaptionText",
-  color: "$mediaOnScrim",
-  fontSize: "$md",
+  displayName: "VideoCaptionText",
+  color: "mediaOnScrim",
+  fontSize: "md",
   fontWeight: "500",
   textAlign: "center",
 });
 
 /** The bottom gradient/scrim + control bar container. Kept compact. */
 export const VideoControlBarFrame = styled(Box, {
-  name: "VideoControlBar",
+  displayName: "VideoControlBar",
   position: "absolute",
   left: 0,
   right: 0,
   bottom: 0,
-  paddingHorizontal: "$xs",
-  paddingVertical: "$xxs",
-  gap: "$xxs",
+  paddingHorizontal: "xs",
+  paddingVertical: "xxs",
+  gap: "xxs",
+});
+
+/**
+ * A full-frame layer (absolute, inset 0) — the poster, tap layer, overlays and
+ * chrome container all stack on this. Static, so every use flattens.
+ */
+export const VideoLayer = styled(Box, {
+  displayName: "VideoLayer",
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  variants: {
+    /** Center the layer's content (big play, buffering, error). */
+    centered: { true: { alignItems: "center", justifyContent: "center" } },
+  } as const,
+});
+
+/** The full-frame error backdrop (message + retry). */
+export const VideoErrorLayer = styled(VideoLayer, {
+  displayName: "VideoError",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "sm",
+  padding: "lg",
+  backgroundColor: "mediaOverlay",
+});
+
+/**
+ * The caption cue's positioning layer. It sits just above the control bar and
+ * lifts further while the chrome is visible, so the bar never covers the cue.
+ */
+export const VideoCaptionLayer = styled(Box, {
+  displayName: "VideoCaptionLayer",
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 16,
+  alignItems: "center",
+  paddingHorizontal: "md",
+  pointerEvents: "none",
+  variants: {
+    lifted: { true: { bottom: 72 } },
+  } as const,
+});
+
+/**
+ * The bottom legibility scrim: one `linear-gradient` on both platforms. v3
+ * resolves the theme name embedded in the recipe (`mediaScrim` → `var(--mediaScrim)`
+ * on web, the raw colour on native), so the gradient is a static string and the
+ * frame needs no `useTheme()` read.
+ */
+export const VideoScrimGradient = styled(Box, {
+  displayName: "VideoScrimGradient",
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  height: "55%",
+  pointerEvents: "none",
+  backgroundImage: "linear-gradient(to top, mediaScrim 0%, transparent 100%)",
+});
+
+/** Timecode text over the video (white-on-scrim). */
+export const VideoTimeText = styled(Text, {
+  displayName: "VideoTimeText",
+  color: "mediaOnScrim",
+  fontWeight: "500",
+  fontSize: "xs",
 });
 
 /** Default delay (ms) before the chrome auto-hides during playback. */

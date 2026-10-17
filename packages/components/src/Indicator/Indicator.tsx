@@ -3,7 +3,8 @@ import * as React from "react";
 import {
   DURATIONS,
   type GetProps,
-  getTokenValue,
+  resolveToken,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -17,9 +18,8 @@ import { Text } from "../Text";
 
 export type IndicatorSize = SizeKey;
 type IndicatorOffsetToken = "0" | IndicatorSize;
-type IndicatorOffset = number | IndicatorOffsetToken | `$${IndicatorOffsetToken}`;
+type IndicatorOffset = number | IndicatorOffsetToken | `${IndicatorOffsetToken}`;
 type IndicatorOffsetObject = { x: IndicatorOffset; y: IndicatorOffset };
-type TokenValueInput = Parameters<typeof getTokenValue>[0];
 
 const DEFAULT_SIZE: IndicatorSize = "xxs";
 const SIZE_KEYS = new Set<IndicatorSize>(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"]);
@@ -46,7 +46,7 @@ export type IndicatorPosition =
 /**
  * Overlays a small dot or label badge on a corner/edge of its children —
  * mirrors Mantine's `Indicator`. Accent comes from the `theme` prop + palette
- * ramp (`$color9` fill, `$color1` contrast text), never a Mantine `color` prop.
+ * ramp (`color9` fill, `color1` contrast text), never a Mantine `color` prop.
  * `position`/`offset`/`size`/`radius`/`withBorder`/`disabled`/`inline`/`label`/
  * `processing` mirror Mantine's surface. On anchored edges the dot sits at the
  * corner where it's defined and pokes out a few pixels past it (not centered on
@@ -54,7 +54,7 @@ export type IndicatorPosition =
  * works on web AND native (no web-only `%` transforms).
  */
 const IndicatorContainer = styled(Box, {
-  name: "Indicator",
+  displayName: "Indicator",
   position: "relative",
   // Hug the wrapped content so the dot anchors to the child's box, not the row.
   alignSelf: "flex-start",
@@ -71,20 +71,20 @@ const IndicatorContainer = styled(Box, {
 });
 
 const IndicatorDot = styled(Box, {
-  name: "IndicatorDot",
+  displayName: "IndicatorDot",
   position: "absolute",
   zIndex: 1,
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "$color9",
+  backgroundColor: "color9",
   borderRadius: 999,
   borderWidth: 0,
-  borderColor: "$background",
+  borderColor: "background",
   variants: {
     radius: radiusVariant,
     /** Pad into a pill once there's a label to show. */
     withLabel: {
-      true: { width: "auto", paddingHorizontal: "$xxs" },
+      true: { width: "auto", paddingHorizontal: "xxs" },
     },
     /** Ring in the page background so the dot reads against the target. */
     withBorder: {
@@ -94,9 +94,7 @@ const IndicatorDot = styled(Box, {
     disabled: {
       true: { display: "none" },
     },
-    size: {
-      ...squareSizeVariantFallthrough,
-    },
+    size: squareSizeVariantFallthrough,
   } as const,
 
   defaultVariants: { size: DEFAULT_SIZE },
@@ -109,16 +107,16 @@ const IndicatorDot = styled(Box, {
  * on a single node clashes (`Invalid value passed to shareableViewDescriptors`).
  * `asLoopHost` makes this a reanimated host on native (identity on web); the opacity
  * composes down onto the dot, so the whole badge throbs. It stays a Tamagui `Box`
- * (not the raw `LoopView`) so the `$token` inset/offset values still resolve.
+ * (not the raw `LoopView`) so the token inset/offset values (`top="sm"`) still resolve.
  */
 const IndicatorAnchor = asLoopHost(Box);
 
 const IndicatorLabel = styled(Text, {
-  name: "IndicatorLabel",
-  color: "$color1",
-  fontSize: "$xxs",
+  displayName: "IndicatorLabel",
+  color: "color1",
+  fontSize: "xxs",
   fontWeight: "700",
-  lineHeight: "$xxs",
+  lineHeight: "xxs",
   numberOfLines: 1,
   userSelect: "none",
 });
@@ -176,15 +174,20 @@ function resolveInset(
 function resolveNumericSize(size: IndicatorSize | number | (string & {})): number | null {
   if (typeof size === "number") return size;
   if (!SIZE_KEYS.has(size as IndicatorSize)) return null;
-  const value = getTokenValue(`$${size}` as TokenValueInput, "size");
+  const value = resolveToken(size, "size");
   return typeof value === "number" ? value : null;
 }
 
+/**
+ * An offset is a px number or a bare space-token name (`"sm"`), which the inset
+ * style prop resolves itself. `"0"` is the zero inset, not a token.
+ */
 function resolveOffset(offset: IndicatorOffset): BoxProps["top"] {
-  if (typeof offset === "number") return offset;
-  if (offset.startsWith("$")) return offset as BoxProps["top"];
-  return `$${offset}` as BoxProps["top"];
+  if (typeof offset === "number" || offset === "0") return Number(offset);
+  return offset;
 }
+
+const LABEL_WIDTH = { width: "auto" } as const;
 
 function isOffsetObject(offset: IndicatorProps["offset"]): offset is IndicatorOffsetObject {
   return typeof offset === "object" && offset != null;
@@ -194,8 +197,8 @@ function isOffsetObject(offset: IndicatorProps["offset"]): offset is IndicatorOf
  * Named slots for {@link IndicatorStyles} (Pillar B / `internal/styles.ts`).
  * Gives prop-API callers (who pass `label`/`size`/… rather than composing the
  * parts) a handle on the dot and label. Each key maps to the props of the styled
- * part it targets — `styles={{ dot: { backgroundColor: "$red9" } }}` is sugar for
- * `<Indicator.Dot backgroundColor="$red9" />`.
+ * part it targets — `styles={{ dot: { backgroundColor: "red9" } }}` is sugar for
+ * `<Indicator.Dot backgroundColor="red9" />`.
  */
 export interface IndicatorStyles {
   /** Props spread onto the container that wraps the children (`.Frame`). */
@@ -231,7 +234,7 @@ export interface IndicatorProps extends Omit<
   radius?: number | string;
   /** Content inside the indicator (turns the dot into a pill badge). */
   label?: React.ReactNode;
-  /** Adds a `$background` ring so the dot separates from the target. */
+  /** Adds a `background` ring so the dot separates from the target. */
   withBorder?: boolean;
   /** Hide the indicator while still rendering children. */
   disabled?: boolean;
@@ -245,12 +248,12 @@ export interface IndicatorProps extends Omit<
   zIndex?: number;
   /**
    * Accepted for Mantine parity. Text already contrasts the accent fill via the
-   * ramp (`$color1` on `$color9`), so this is effectively always on.
+   * ramp (`color1` on `color9`), so this is effectively always on.
    */
   autoContrast?: boolean;
 }
 
-const IndicatorBase = IndicatorContainer.styleable<IndicatorProps>(function Indicator(props, ref) {
+const IndicatorBase = styleable<IndicatorProps>(IndicatorContainer, function Indicator(props, ref) {
   const {
     children,
     position = "top-end",
@@ -268,7 +271,7 @@ const IndicatorBase = IndicatorContainer.styleable<IndicatorProps>(function Indi
     styles,
     ...rest
   } = props;
-  void autoContrast; // contrast comes from the ramp ($color1 on $color9).
+  void autoContrast; // contrast comes from the ramp (color1 on color9).
 
   // Per-slot style sugar, distributed onto the parts below.
   const s = slotStyles<IndicatorStyles>(styles, INDICATOR_SLOT_KEYS, "Indicator");
@@ -294,7 +297,12 @@ const IndicatorBase = IndicatorContainer.styleable<IndicatorProps>(function Indi
 
   const offsetX = isOffsetObject(offset) ? offset.x : offset;
   const offsetY = isOffsetObject(offset) ? offset.y : offset;
-  const inset = resolveInset(position, size, offsetX, offsetY);
+  // Memoised: the inset object is handed to the anchor's style props, so a fresh
+  // object per render would defeat Tamagui's style caches.
+  const inset = React.useMemo(
+    () => resolveInset(position, size, offsetX, offsetY),
+    [position, size, offsetX, offsetY],
+  );
 
   const hasLabel = label != null && label !== "";
   const hideZero = !showZero && (label === 0 || label === "0");
@@ -325,7 +333,7 @@ const IndicatorBase = IndicatorContainer.styleable<IndicatorProps>(function Indi
             disabled={disabled}
             withBorder={withBorder}
             withLabel={hasLabel}
-            radius={radius}
+            {...(radius !== undefined ? { radius } : null)}
             size={size}
             // Sit in the anchor's flow — the anchor owns the absolute corner
             // placement, so the dot drops its styled `position: absolute`.
@@ -333,9 +341,10 @@ const IndicatorBase = IndicatorContainer.styleable<IndicatorProps>(function Indi
             // `size` and `withLabel` both set `width`; `size` (the fixed square)
             // would otherwise win and clip a multi-character label. Force `auto`
             // when labelled so the pill grows to its text — `minWidth`/`height`
-            // from `size` still keep a bare dot circular.
-            width={hasLabel ? "auto" : undefined}
-            // The one-shot scale-in entrance is a Tamagui `enterStyle` transition,
+            // from `size` still keep a bare dot circular. Conditional spread: an
+            // explicit `width={undefined}` would CLEAR the size variant's width.
+            {...(hasLabel ? LABEL_WIDTH : null)}
+            // The one-shot scale-in entrance is a v3 `enter:` clause transition,
             // safe on this node now that the reanimated loop lives on the anchor.
             {...entrance}
           >

@@ -18,7 +18,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "`Affix` pins its children to a fixed position on the viewport (or nearest filling ancestor on React Native). Pass a `position` object with `top`, `right`, `bottom`, and/or `left` offsets — `$`-space tokens (`'$md'`) or raw numbers are accepted. By default the layer renders through a `Portal` so it escapes `overflow:hidden` / transformed ancestors.",
+          "`Affix` pins its children to a fixed position on the viewport (or nearest filling ancestor on React Native). Pass a `position` object with `top`, `right`, `bottom`, and/or `left` offsets — `$`-space tokens (`'md'`) or raw numbers are accepted. By default the layer renders through a `Portal` so it escapes `overflow:hidden` / transformed ancestors.",
       },
     },
   },
@@ -40,7 +40,7 @@ const meta = {
     position: {
       control: "object",
       description:
-        "Edge offsets — top, right, bottom, left. Accepts `$`-space tokens ('$md') or raw numbers.",
+        "Edge offsets — top, right, bottom, left. Accepts space tokens ('md') or raw numbers.",
     },
     shadow: {
       control: "select",
@@ -58,12 +58,7 @@ type Story = StoryObj<ComponentProps<typeof Affix>>;
 export const Playground: Story = {
   args: {
     children: (
-      <Box
-        backgroundColor="$color8"
-        paddingHorizontal="$md"
-        paddingVertical="$sm"
-        borderRadius="$md"
-      >
+      <Box backgroundColor="color8" paddingHorizontal="md" paddingVertical="sm" borderRadius="md">
         <Text color="white">Pinned content</Text>
       </Box>
     ),
@@ -73,14 +68,9 @@ export const Playground: Story = {
 /** Default placement — bottom-right corner of the viewport. */
 export const BottomRight: Story = {
   args: {
-    position: { bottom: "$lg", right: "$lg" },
+    position: { bottom: "lg", right: "lg" },
     children: (
-      <Box
-        backgroundColor="$color8"
-        paddingHorizontal="$md"
-        paddingVertical="$sm"
-        borderRadius="$md"
-      >
+      <Box backgroundColor="color8" paddingHorizontal="md" paddingVertical="sm" borderRadius="md">
         <Text color="white">Bottom right</Text>
       </Box>
     ),
@@ -90,14 +80,9 @@ export const BottomRight: Story = {
 /** Top-left placement using spacing tokens as offsets. */
 export const TopLeft: Story = {
   args: {
-    position: { top: "$md", left: "$md" },
+    position: { top: "md", left: "md" },
     children: (
-      <Box
-        backgroundColor="$color8"
-        paddingHorizontal="$md"
-        paddingVertical="$sm"
-        borderRadius="$md"
-      >
+      <Box backgroundColor="color8" paddingHorizontal="md" paddingVertical="sm" borderRadius="md">
         <Text color="white">Top left</Text>
       </Box>
     ),
@@ -107,14 +92,9 @@ export const TopLeft: Story = {
 /** Offsets expressed as Tamagui space tokens instead of raw numbers. */
 export const TokenOffsets: Story = {
   args: {
-    position: { bottom: "$md", right: "$md" },
+    position: { bottom: "md", right: "md" },
     children: (
-      <Box
-        backgroundColor="$color9"
-        paddingHorizontal="$lg"
-        paddingVertical="$md"
-        borderRadius="$lg"
-      >
+      <Box backgroundColor="color9" paddingHorizontal="lg" paddingVertical="md" borderRadius="lg">
         <Text color="white">Token offsets (md)</Text>
       </Box>
     ),
@@ -125,14 +105,9 @@ export const TokenOffsets: Story = {
 export const WithoutPortal: Story = {
   args: {
     withinPortal: false,
-    position: { bottom: "$md", right: "$md" },
+    position: { bottom: "md", right: "md" },
     children: (
-      <Box
-        backgroundColor="$color7"
-        paddingHorizontal="$md"
-        paddingVertical="$sm"
-        borderRadius="$md"
-      >
+      <Box backgroundColor="color7" paddingHorizontal="md" paddingVertical="sm" borderRadius="md">
         <Text color="white">No portal</Text>
       </Box>
     ),
@@ -146,7 +121,7 @@ export const ScrollToTop: Story = {
 
     return (
       <Box height={300} position="relative" overflow="hidden">
-        <Box padding="$lg" gap="$md">
+        <Box padding="lg" gap="md">
           <Text>Scroll the page to reveal the scroll-to-top button.</Text>
           <Button variant="subtle" onPress={() => setVisible((v) => !v)}>
             {visible ? "Hide button" : "Show button"}
@@ -154,12 +129,12 @@ export const ScrollToTop: Story = {
         </Box>
 
         {visible && (
-          <Affix {...args} withinPortal={false} position={{ bottom: "$md", right: "$md" }}>
+          <Affix {...args} withinPortal={false} position={{ bottom: "md", right: "md" }}>
             <Box
-              backgroundColor="$color8"
-              width="$xl"
-              height="$xl"
-              borderRadius="$xl"
+              backgroundColor="color8"
+              width="xl"
+              height="xl"
+              borderRadius="xl"
               alignItems="center"
               justifyContent="center"
             >
@@ -175,19 +150,19 @@ export const ScrollToTop: Story = {
 /** All five shadow levels stacked in a contained frame to compare elevation. */
 export const Shadows: Story = {
   render: () => (
-    <Box height={300} position="relative" overflow="hidden" padding="$md" gap="$md">
+    <Box height={300} position="relative" overflow="hidden" padding="md" gap="md">
       {SHADOWS.map((shadow, i) => (
         <Affix
           key={shadow}
           withinPortal={false}
           shadow={shadow}
-          position={{ top: i * 56 + 16, left: "$md" }}
+          position={{ top: i * 56 + 16, left: "md" }}
         >
           <Box
-            backgroundColor="$background"
-            paddingHorizontal="$md"
-            paddingVertical="$sm"
-            borderRadius="$md"
+            backgroundColor="background"
+            paddingHorizontal="md"
+            paddingVertical="sm"
+            borderRadius="md"
           >
             <Text>shadow="{shadow}"</Text>
           </Box>
@@ -203,18 +178,18 @@ export const AllCorners: Story = {
     <Box height={300} position="relative" overflow="hidden">
       {(
         [
-          { position: { top: "$md", left: "$md" }, label: "TL" },
-          { position: { top: "$md", right: "$md" }, label: "TR" },
-          { position: { bottom: "$md", left: "$md" }, label: "BL" },
-          { position: { bottom: "$md", right: "$md" }, label: "BR" },
+          { position: { top: "md", left: "md" }, label: "TL" },
+          { position: { top: "md", right: "md" }, label: "TR" },
+          { position: { bottom: "md", left: "md" }, label: "BL" },
+          { position: { bottom: "md", right: "md" }, label: "BR" },
         ] as const
       ).map(({ position, label }) => (
         <Affix key={label} withinPortal={false} position={position}>
           <Box
-            backgroundColor="$color8"
-            paddingHorizontal="$sm"
-            paddingVertical="$xs"
-            borderRadius="$sm"
+            backgroundColor="color8"
+            paddingHorizontal="sm"
+            paddingVertical="xs"
+            borderRadius="sm"
           >
             <Text color="white">{label}</Text>
           </Box>

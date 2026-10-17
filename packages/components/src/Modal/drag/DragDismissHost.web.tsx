@@ -45,7 +45,8 @@ export const DragDismissHost = React.forwardRef<unknown, DragDismissHostProps>(
     }, [offset, paint]);
 
     return (
-      <Box ref={setRef as never} style={style} pointerEvents={pointerEvents}>
+      // The layout is spread as Tamagui style props (flattenable, no inline style).
+      <Box ref={setRef as never} {...style} pointerEvents={pointerEvents}>
         {children}
       </Box>
     );

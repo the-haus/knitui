@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 import { IconCheck } from "@knitui/icons/IconCheck";
 
@@ -54,7 +60,7 @@ const ChipContext = createStyledContext<{ size: ChipSize; state: ChipState }>({
  * defers its checked state to the group (single- or multi-select).
  */
 const ChipFrame = styled(Box, {
-  name: "Chip",
+  displayName: "Chip",
   context: ChipContext,
   flexDirection: "row",
   alignItems: "center",
@@ -66,43 +72,31 @@ const ChipFrame = styled(Box, {
   ...webCursor("pointer"),
   userSelect: "none",
   ...focusRingStyle,
-  // Tactile press-dip — merges with the per-state `pressStyle` color below and
+  // Tactile press-dip — composes with the per-state `press:` colour below and
   // eases via the `usePressScale()` props applied on render (reduced-motion aware).
   ...pressScaleStyle,
 
   variants: {
     state: {
       outline: {
-        backgroundColor: "transparent",
-        borderColor: "$color7",
-        hoverStyle: { backgroundColor: "$color2" },
-        pressStyle: { backgroundColor: "$color3" },
+        backgroundColor: "transparent hover:color2 press:color3",
+        borderColor: "color7",
       },
       "outline-on": {
-        backgroundColor: "transparent",
-        borderColor: "$color9",
-        hoverStyle: { borderColor: "$color10" },
-        pressStyle: { backgroundColor: "$color2" },
+        backgroundColor: "transparent press:color2",
+        borderColor: "color9 hover:color10",
       },
       filled: {
-        backgroundColor: "$color3",
-        hoverStyle: { backgroundColor: "$color4" },
-        pressStyle: { backgroundColor: "$color5" },
+        backgroundColor: "color3 hover:color4 press:color5",
       },
       "filled-on": {
-        backgroundColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
       },
       light: {
-        backgroundColor: "$color2",
-        hoverStyle: { backgroundColor: "$color3" },
-        pressStyle: { backgroundColor: "$color4" },
+        backgroundColor: "color2 hover:color3 press:color4",
       },
       "light-on": {
-        backgroundColor: "$color5",
-        hoverStyle: { backgroundColor: "$color6" },
-        pressStyle: { backgroundColor: "$color7" },
+        backgroundColor: "color5 hover:color6 press:color7",
       },
     },
     size: controlGapVariant,
@@ -125,19 +119,19 @@ const ChipFrame = styled(Box, {
 // native must live inside a `View`. The `state`/`size` style props are inert on a
 // View and harmless; the rendered `IconCheck` carries its own resolved color/px.
 const ChipIcon = styled(Box, {
-  name: "ChipIcon",
+  displayName: "ChipIcon",
   context: ChipContext,
   alignItems: "center",
   justifyContent: "center",
   userSelect: "none",
   variants: {
     state: {
-      outline: { color: "$color" },
-      "outline-on": { color: "$color11" },
-      filled: { color: "$color" },
-      "filled-on": { color: "$color1" },
-      light: { color: "$color" },
-      "light-on": { color: "$color11" },
+      outline: { color: "color" },
+      "outline-on": { color: "color11" },
+      filled: { color: "color" },
+      "filled-on": { color: "color1" },
+      light: { color: "color" },
+      "light-on": { color: "color11" },
     },
     size: {
       ...controlFontVariant,
@@ -153,29 +147,29 @@ const ChipIcon = styled(Box, {
  * are reachable.
  */
 const CHIP_ICON_TOKEN: Record<ChipState, string> = {
-  outline: "$color",
-  "outline-on": "$color11",
-  filled: "$color",
-  "filled-on": "$color1",
-  light: "$color",
-  "light-on": "$color11",
+  outline: "color",
+  "outline-on": "color11",
+  filled: "color",
+  "filled-on": "color1",
+  light: "color",
+  "light-on": "color11",
 };
 
 /** Label + check glyph share this themed text (coloured by the combined state). */
 const ChipLabel = styled(Text, {
-  name: "ChipLabel",
+  displayName: "ChipLabel",
   context: ChipContext,
   fontWeight: "500",
   userSelect: "none",
   numberOfLines: 1,
   variants: {
     state: {
-      outline: { color: "$color" },
-      "outline-on": { color: "$color11" },
-      filled: { color: "$color" },
-      "filled-on": { color: "$color1" },
-      light: { color: "$color" },
-      "light-on": { color: "$color11" },
+      outline: { color: "color" },
+      "outline-on": { color: "color11" },
+      filled: { color: "color" },
+      "filled-on": { color: "color1" },
+      light: { color: "color" },
+      "light-on": { color: "color11" },
     },
     size: {
       ...controlFontVariant,
@@ -240,8 +234,16 @@ function ChipGroup(props: ChipGroupProps) {
 
 export interface ChipProps extends Omit<
   GetProps<typeof ChipFrame>,
-  "state" | "onChange" | "role" | "aria-checked" | "aria-disabled"
+  "state" | "onChange" | "role" | "aria-checked" | "aria-disabled" | "size" | "disabled"
 > {
+  /**
+   * Control size — a single key (or px gap fallback). Narrowed from the frame's
+   * v3 clause-program type: the render reads it as DATA (check-glyph px).
+   * @default "sm"
+   */
+  size?: ChipSize | number;
+  /** Disables the chip (no toggle, dimmed, `aria-disabled`). */
+  disabled?: boolean;
   /** Visual style. @default "outline" */
   variant?: ChipVariant;
   /** Controlled checked state. */
@@ -285,7 +287,7 @@ export interface ChipSlots {
 
 const CHIP_SLOTS = ["root", "label", "icon"] as const satisfies readonly (keyof ChipSlots)[];
 
-const ChipComponent = ChipFrame.styleable<ChipProps>(function Chip(props, ref) {
+const ChipComponent = styleable<ChipProps>(ChipFrame, function Chip(props, ref) {
   const {
     variant = "outline",
     size = "sm",
@@ -354,6 +356,9 @@ const ChipComponent = ChipFrame.styleable<ChipProps>(function Chip(props, ref) {
     "aria-disabled": disabled || undefined,
     "aria-label": ariaLabel,
   };
+  // Cast only the AT-action handler: `@knitui/hooks` types it with RN's
+  // `AccessibilityActionEvent`, v3's view props with a structurally different
+  // event (`currentTarget: number | ReactNativeElement`). Same runtime value.
   const focusProps = useKeyboardActions({ onActivate: handlePress }, { disabled });
 
   return (

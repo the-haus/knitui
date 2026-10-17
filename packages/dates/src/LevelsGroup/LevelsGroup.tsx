@@ -25,14 +25,14 @@
 // What this frame DOES carry: provenance header (#1); the `styled(Box)` root
 // Frame (#5); the `fullWidth` stretch as a boolean VARIANT, not a dynamic style
 // prop, which is the compiler-safe form (#15 — no `._o-0`-style dynamic flatten);
-// `.styleable` ref + style-prop forwarding to the root (#13); the styled Frame
+// `styleable()` ref + style-prop forwarding to the root (#13); the styled Frame
 // exposed via `withStaticProperties` (#14). A11y (#11) is deliberately
 // FORWARDABLE rather than baked: Mantine's `LevelsGroup` carries no role of its
 // own, and the callers pass `role="group"` (see `DecadeLevelGroup`), so the role
 // flows through unchanged via `{...rest}` and is not hard-coded here.
 // ───────────────────────────────────────────────────────────────────────────
 import { Box } from "@knitui/components";
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 
 import { type CalendarSize, CELL_SPACING } from "../cell-metrics";
 
@@ -44,7 +44,7 @@ import { type CalendarSize, CELL_SPACING } from "../cell-metrics";
  * column to an equal share of the container).
  */
 const LevelsGroupFrame = styled(Box, {
-  name: "LevelsGroup",
+  displayName: "LevelsGroup",
   flexDirection: "row",
   // A small fixed gap between adjacent level columns, matching the calendar's
   // shared cell spacing so columns read as one calendar (Mantine uses a fixed
@@ -93,17 +93,17 @@ export interface LevelsGroupProps extends LevelsGroupFrameProps {
  *   <MonthLevel month="2024-02-01" />
  * </LevelsGroup>
  */
-const LevelsGroupComponent = LevelsGroupFrame.styleable<LevelsGroupProps>(function LevelsGroup(
-  { size: _size, ...rest },
-  ref,
-) {
-  // `size` is intentionally swallowed: the row layout does not depend on it,
-  // and forwarding it to the host would leak an unknown attribute. Levels are
-  // sized by their own `size` prop, set by the parent group.
-  void _size;
+const LevelsGroupComponent = styleable<LevelsGroupProps>(
+  LevelsGroupFrame,
+  function LevelsGroup({ size: _size, ...rest }, ref) {
+    // `size` is intentionally swallowed: the row layout does not depend on it,
+    // and forwarding it to the host would leak an unknown attribute. Levels are
+    // sized by their own `size` prop, set by the parent group.
+    void _size;
 
-  return <LevelsGroupFrame ref={ref} {...rest} />;
-});
+    return <LevelsGroupFrame ref={ref} {...rest} />;
+  },
+);
 
 LevelsGroupComponent.displayName = "@knitui/dates/LevelsGroup";
 

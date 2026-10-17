@@ -76,7 +76,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="flex-start">
       {VARIANTS.map((variant) => (
         <TextInput key={variant} {...args} variant={variant} label={variant} />
       ))}
@@ -87,7 +87,7 @@ export const Variants: Story = {
 /** All seven token sizes rendered together from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {SIZES.map((size) => (
         <TextInput key={size} {...args} size={size} label={size} placeholder={`size ${size}`} />
       ))}
@@ -98,7 +98,7 @@ export const Sizes: Story = {
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {SHADOWS.map((shadow) => (
         <TextInput key={shadow} {...args} shadow={shadow} label={shadow} placeholder={shadow} />
       ))}
@@ -169,7 +169,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("Hello, world!");
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <TextInput
           {...args}
           label="Controlled"
@@ -211,9 +211,9 @@ export const Styles: Story = {
         leftSection={<Text>@</Text>}
         placeholder="username"
         styles={{
-          root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-          label: { color: "$blue11" },
-          leftSection: { backgroundColor: "$red9" },
+          root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+          label: { color: "blue11" },
+          leftSection: { backgroundColor: "red9" },
         }}
       />
     </Box>
@@ -223,9 +223,9 @@ export const Styles: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="$md" alignItems="flex-end">
+        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="md" alignItems="flex-end">
           {SIZES.map((size) => (
             <TextInput
               key={size}

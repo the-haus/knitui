@@ -56,7 +56,7 @@ type Story = StoryObj<ComponentProps<typeof Container>>;
 export const Playground: Story = {
   render: (args) => (
     <Container {...args}>
-      <Box backgroundColor="$color3" padding="$md" borderRadius="$sm">
+      <Box backgroundColor="color3" padding="md" borderRadius="sm">
         <Text>Container content</Text>
       </Box>
     </Container>
@@ -66,10 +66,10 @@ export const Playground: Story = {
 /** All named sizes rendered sequentially to show each max-width cap. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
         <Container key={size} {...args} size={size}>
-          <Box backgroundColor="$color3" padding="$sm" borderRadius="$sm">
+          <Box backgroundColor="color3" padding="sm" borderRadius="sm">
             <Text>{`size="${size}" — maxWidth: ${SIZE_CAPS[size]}px`}</Text>
           </Box>
         </Container>
@@ -83,7 +83,7 @@ export const Fluid: Story = {
   args: { fluid: true },
   render: (args) => (
     <Container {...args}>
-      <Box backgroundColor="$color5" padding="$md" borderRadius="$sm">
+      <Box backgroundColor="color5" padding="md" borderRadius="sm">
         <Text>Fluid container — no max-width constraint</Text>
       </Box>
     </Container>
@@ -94,7 +94,7 @@ export const Fluid: Story = {
 export const NumericSize: Story = {
   render: (args) => (
     <Container {...args} size={800}>
-      <Box backgroundColor="$color3" padding="$md" borderRadius="$sm">
+      <Box backgroundColor="color3" padding="md" borderRadius="sm">
         <Text>Custom numeric size — maxWidth: 800px</Text>
       </Box>
     </Container>
@@ -105,17 +105,17 @@ export const NumericSize: Story = {
 export const PageLayout: Story = {
   render: (args) => (
     <Container {...args} size="lg">
-      <Box gap="$lg" padding="$md">
-        <Box backgroundColor="$color5" padding="$md" borderRadius="$sm">
+      <Box gap="lg" padding="md">
+        <Box backgroundColor="color5" padding="md" borderRadius="sm">
           <Text fontWeight="bold">Page Header</Text>
         </Box>
-        <Box backgroundColor="$color3" padding="$md" borderRadius="$sm">
+        <Box backgroundColor="color3" padding="md" borderRadius="sm">
           <Text>
             Main content area. The container constrains the reading width so long lines of text
             remain comfortable to read on wide viewports.
           </Text>
         </Box>
-        <Box backgroundColor="$color5" padding="$md" borderRadius="$sm">
+        <Box backgroundColor="color5" padding="md" borderRadius="sm">
           <Text>Page Footer</Text>
         </Box>
       </Box>
@@ -127,10 +127,10 @@ export const PageLayout: Story = {
 export const Nested: Story = {
   render: (args) => (
     <Container {...args} fluid>
-      <Box backgroundColor="$color2" padding="$md">
+      <Box backgroundColor="color2" padding="md">
         <Text>Outer fluid container</Text>
         <Container size="sm">
-          <Box backgroundColor="$color5" padding="$md" borderRadius="$sm" marginTop="$sm">
+          <Box backgroundColor="color5" padding="md" borderRadius="sm" marginTop="sm">
             <Text>Inner size="sm" container (maxWidth: 720px)</Text>
           </Box>
         </Container>

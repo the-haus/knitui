@@ -14,7 +14,7 @@
 import * as React from "react";
 
 import { Image, PortalHost, Stack, Text } from "@knitui/components";
-import { isWeb, slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import { slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
 
 import { useMediaCallbacks } from "../core/react/useMediaCallbacks";
 import { audioHostName, useRequireMediaProvider } from "../provider/context";
@@ -63,6 +63,9 @@ function resolveLockScreenMetadata(props: AudioProps): AudioMetadata | null {
   };
 }
 
+/** The artwork image fills its thumbnail frame (hoisted style object). */
+const FILL_STYLE = { width: "100%", height: "100%" } as const;
+
 function MetadataHeader(): React.ReactElement | null {
   const { styles, headerMetadata } = useAudio("Header");
   // Props-derived header metadata wins; otherwise fall back to the live
@@ -80,19 +83,19 @@ function MetadataHeader(): React.ReactElement | null {
         <AudioArtwork {...styles?.get("artwork")}>
           <Image
             source={{ uri: artwork }}
-            style={{ width: "100%", height: "100%" }}
+            style={FILL_STYLE}
             alt={metadata.title ? `${metadata.title} artwork` : "Artwork"}
           />
         </AudioArtwork>
       ) : null}
-      <Stack flex={1} gap="$xxs">
+      <Stack flex={1} gap="xxs">
         {metadata.title ? (
           <Text fontWeight="600" numberOfLines={1} {...styles?.get("title")}>
             {metadata.title}
           </Text>
         ) : null}
         {metadata.artist ? (
-          <Text size="sm" color="$color11" numberOfLines={1} {...styles?.get("artist")}>
+          <Text size="sm" color="color11" numberOfLines={1} {...styles?.get("artist")}>
             {metadata.artist}
           </Text>
         ) : null}
@@ -230,7 +233,7 @@ function AudioRoot(props: AudioProps): React.ReactElement {
         ref={setFrameRef}
         testID={testID}
         width={width}
-        maxWidth={maxWidth}
+        {...(maxWidth != null ? { maxWidth } : null)}
         {...accessor.get("root")}
       >
         {/* The single shared (hidden) <audio> teleports into this host while this
@@ -238,7 +241,7 @@ function AudioRoot(props: AudioProps): React.ReactElement {
         <PortalHost name={audioHostName(playerId)} />
         <MetadataHeader />
         {controls === false ? null : (
-          <AudioControlBarFrame {...(isWeb ? {} : {})} {...accessor.get("controlBar")}>
+          <AudioControlBarFrame {...accessor.get("controlBar")}>
             {controls === true ? <ControlBar /> : controls}
           </AudioControlBarFrame>
         )}

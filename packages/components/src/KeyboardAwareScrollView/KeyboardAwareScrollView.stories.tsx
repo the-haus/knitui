@@ -42,9 +42,9 @@ type Story = StoryObj<ComponentProps<typeof KeyboardAwareScrollView>>;
 /** The interactive playground — adjust the native-only props from the Controls panel. */
 export const Playground: Story = {
   render: (args) => (
-    <Box height={320} width={360} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+    <Box height={320} width={360} borderWidth={1} borderColor="borderColor" borderRadius="md">
       <KeyboardAwareScrollView {...args} contentContainerStyle={{ padding: 16 }}>
-        <Box gap="$md">
+        <Box gap="md">
           <Text fontWeight="700">Profile</Text>
           {Array.from({ length: 8 }).map((_, i) => (
             <TextInput key={i} placeholder={`Field ${i + 1}`} />
@@ -59,13 +59,13 @@ export const Playground: Story = {
 /** A long scrollable form — the canonical use-case. Focus a field near the bottom on native to see it scroll above the keyboard. */
 export const LongForm: Story = {
   render: (args) => (
-    <Box height={360} width={380} borderWidth={1} borderColor="$borderColor" borderRadius="$md">
+    <Box height={360} width={380} borderWidth={1} borderColor="borderColor" borderRadius="md">
       <KeyboardAwareScrollView {...args} contentContainerStyle={{ padding: 20 }}>
-        <Box gap="$md">
-          <Text fontWeight="700" fontSize="$lg">
+        <Box gap="md">
+          <Text fontWeight="700" fontSize="lg">
             Account details
           </Text>
-          <Text color="$color10">Scroll through and fill in every field.</Text>
+          <Text color="color10">Scroll through and fill in every field.</Text>
           {[
             "First name",
             "Last name",

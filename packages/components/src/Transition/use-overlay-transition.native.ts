@@ -1,7 +1,7 @@
 import { DURATIONS } from "@knitui/core";
 
 import { type MotionPresetName, useMotionConfig } from "../internal/motion";
-import { resolveTransition, type TransitionValue } from "../internal/style-props";
+import { timedTransition, type TransitionValue } from "../internal/style-props";
 import {
   getTransitionStyles,
   type MantineTransition,
@@ -57,11 +57,11 @@ export interface OverlayTransitionResult {
   /** Animated style to spread onto the frame's `style`. */
   style: TransitionStyle;
   /**
-   * Tamagui animation-driver props for the frame: `transition` picks the easing
-   * curve + exact duration and `animateOnly` scopes the driver to the opacity/
+   * Tamagui animation-driver props for the frame: a v3 `transition={{ duration,
+   * easing, properties }}` — the exact curve + duration, scoped to the opacity/
    * transform that actually change, so the floating-ui `top`/`left` stay instant.
    */
-  animation: { transition?: TransitionValue; animateOnly?: string[] };
+  animation: { transition?: TransitionValue };
 }
 
 const DEFAULT_TRANSITION: MantineTransition = "fade";
@@ -79,7 +79,7 @@ const animatedKeys = (style: TransitionStyle): string[] => {
  * Native counterpart to {@link useOverlayTransition} (web). Same lifecycle +
  * presets + easing, but applies the animation through Tamagui's native driver:
  * the returned `style` carries the opacity/transform target and `animation`
- * carries `{ transition, animateOnly }` to spread onto the same frame. Reduced
+ * carries `{ transition }` (scoped via `properties`) to spread onto the same frame. Reduced
  * motion collapses the duration to `0` (handled by {@link useTransition}),
  * yielding an instant, animation-free show/hide.
  */
@@ -129,13 +129,7 @@ export function useOverlayTransition({
     hidden: false,
     style,
     animation: keys.length
-      ? {
-          transition: [
-            resolveTransition(transitionTimingFunction),
-            { duration: transitionDuration },
-          ],
-          animateOnly: keys,
-        }
+      ? { transition: timedTransition(transitionDuration, transitionTimingFunction, keys) }
       : {},
   };
 }

@@ -1,0 +1,30 @@
+condition-merged · 6 · <Box>: hoverStyle → bg
+condition-merged · 6 · <Box>: pressStyle → bg
+condition-merged · 7 · <Box>: hoverStyle → backgroundColor, opacity
+condition-merged · 8 · <Box>: hoverStyle → backgroundColor
+condition-merged · 9 · <Box>: hoverStyle → backgroundColor
+condition-merged · 10 · <Box>: pressStyle → opacity, scale, y
+condition-merged · 11 · <Box>: enterStyle → opacity, y, rotate
+condition-merged · 11 · <Box>: exitStyle → opacity
+condition-merged · 12 · <Box>: hoverStyle → bg
+condition-merged · 13 · <Box>: focusVisibleStyle → outlineWidth, outlineStyle, outlineColor
+condition-merged · 14 · <Box>: hoverStyle → w, lineHeight
+condition-dynamic · 15 · hoverStyle={cond ? { bg: "$a" } : undefined}
+condition-dynamic · 16 · enterStyle={motion.enterStyle}
+condition-spread-order · 17 · <Box>: hoverStyle → bg, but {...rest} comes after the bg base
+condition-spread-order · 18 · <Box>: hoverStyle → bg, but {...rest} comes after it
+condition-merged · 19 · <Box>: disabledStyle → opacity
+condition-merged · 19 · <Box>: focusStyle → borderColor
+condition-unsupported-value · 20 · hoverStyle.rotateX has no flat spelling (only x, y, scale, scaleX, scaleY, rotate)
+condition-unsupported-value · 21 · hoverStyle.boxShadow = "0 0 0 2px $blue8" embeds a $token in a compound value
+condition-merged · 22 · <Text>: hoverStyle → textDecorationLine
+token-literal · 8 · $color3
+token-literal · 9 · $color5
+token-literal · 9 · $color4
+token-literal · 15 · $a
+token-literal · 17 · $color1
+token-literal · 17 · $color3
+token-literal · 18 · $color3
+token-literal · 19 · $color1
+token-compound · 21 · "0 0 0 2px $blue8"
+token-literal · 22 · $color11

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled } from "@knitui/core";
+import { type GetProps, styleable, styled } from "@knitui/core";
 
 import { Box } from "../Box";
 import { alignVariant, justifyVariant, wrapVariant } from "../internal/style-props";
@@ -12,9 +12,9 @@ import { alignVariant, justifyVariant, wrapVariant } from "../internal/style-pro
  * single wide child can't push the others out.
  */
 const GroupFrame = styled(Box, {
-  name: "Group",
+  displayName: "Group",
   flexDirection: "row",
-  gap: "$md",
+  gap: "md",
   variants: {
     align: alignVariant,
     justify: justifyVariant,
@@ -95,7 +95,7 @@ export interface GroupProps extends GroupFrameProps {
   preventGrowOverflow?: boolean;
 }
 
-export const Group = GroupFrame.styleable<GroupProps>(function Group(props, ref) {
+export const Group = styleable<GroupProps>(GroupFrame, function Group(props, ref) {
   const { children, grow = false, preventGrowOverflow = true, ...rest } = props;
 
   const items = grow ? React.Children.toArray(children).filter(Boolean) : null;

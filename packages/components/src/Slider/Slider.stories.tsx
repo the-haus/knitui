@@ -19,13 +19,13 @@ const meta = {
     docs: {
       description: {
         component:
-          "Slider captures a single numeric value within a range by dragging a thumb. Accent comes from the theme ramp (`$color9`); recolor via the `theme` prop. `RangeSlider` is also exported for two-thumb ranges.",
+          "Slider captures a single numeric value within a range by dragging a thumb. Accent comes from the theme ramp; recolor via the `theme` prop. `RangeSlider` is also exported for two-thumb ranges.",
       },
     },
   },
   decorators: [
     (Story) => (
-      <Box width={360} paddingHorizontal="$lg" paddingVertical="$xl">
+      <Box width={360} paddingHorizontal="lg" paddingVertical="xl">
         <Story />
       </Box>
     ),
@@ -69,10 +69,10 @@ export const Playground: Story = {};
 /** The seven token sizes, from xxs to xxl, showing track and thumb scaling. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" alignItems="center" gap="$md">
-          <Text width="$sm" fontSize="$xs" color="$color11">
+        <Box key={size} flexDirection="row" alignItems="center" gap="md">
+          <Text width="sm" fontSize="xs" color="color11">
             {size}
           </Text>
           <Box flex={1}>
@@ -87,10 +87,10 @@ export const Sizes: Story = {
 /** Elevation shadow ladder applied via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} flexDirection="row" alignItems="center" gap="$md">
-          <Text width="$sm" fontSize="$xs" color="$color11">
+        <Box key={shadow} flexDirection="row" alignItems="center" gap="md">
+          <Text width="sm" fontSize="xs" color="color11">
             {shadow}
           </Text>
           <Box flex={1}>
@@ -135,7 +135,7 @@ export const WithMarks: Story = {
   },
   decorators: [
     (Story) => (
-      <Box width={360} paddingHorizontal="$lg" paddingBottom="$xl" paddingTop="$md">
+      <Box width={360} paddingHorizontal="lg" paddingBottom="xl" paddingTop="md">
         <Story />
       </Box>
     ),
@@ -168,12 +168,12 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState(25);
     return (
-      <Box gap="$md">
-        <Box flexDirection="row" alignItems="center" gap="$sm">
-          <Text fontSize="$sm" color="$color11">
+      <Box gap="md">
+        <Box flexDirection="row" alignItems="center" gap="sm">
+          <Text fontSize="sm" color="color11">
             Value:
           </Text>
-          <Text fontSize="$sm" fontWeight="600">
+          <Text fontSize="sm" fontWeight="600">
             {value}
           </Text>
         </Box>
@@ -203,12 +203,12 @@ export const RangeControlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<[number, number]>([20, 70]);
     return (
-      <Box gap="$md">
-        <Box flexDirection="row" alignItems="center" gap="$sm">
-          <Text fontSize="$sm" color="$color11">
+      <Box gap="md">
+        <Box flexDirection="row" alignItems="center" gap="sm">
+          <Text fontSize="sm" color="color11">
             Range:
           </Text>
-          <Text fontSize="$sm" fontWeight="600">
+          <Text fontSize="sm" fontWeight="600">
             {value[0]} – {value[1]}
           </Text>
         </Box>
@@ -229,10 +229,10 @@ export const RangeControlled: Story = {
 /** Themed slider — the filled bar and thumb border follow the active theme accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
-        <Box key={theme} flexDirection="row" alignItems="center" gap="$md">
-          <Text width={48} fontSize="$xs" color="$color11">
+        <Box key={theme} flexDirection="row" alignItems="center" gap="md">
+          <Text width={48} fontSize="xs" color="color11">
             {theme}
           </Text>
           <Box flex={1}>
@@ -249,9 +249,9 @@ export const Styles: Story = {
   args: {
     defaultValue: 50,
     styles: {
-      track: { backgroundColor: "$blue3" },
-      bar: { backgroundColor: "$red9" },
-      thumb: { borderColor: "$red9", borderWidth: 3 },
+      track: { backgroundColor: "blue3" },
+      bar: { backgroundColor: "red9" },
+      thumb: { borderColor: "red9", borderWidth: 3 },
     },
   },
 };

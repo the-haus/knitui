@@ -43,19 +43,28 @@ describe("Transition (native)", () => {
     expect(seen.length).toBeGreaterThan(1);
     for (const props of seen) {
       expect("transition" in props).toBe(true);
-      expect(props.animateOnly).toEqual(expect.arrayContaining(["opacity"]));
+      // v3: the animated-property scope rides inside the transition object.
+      expect(props).not.toHaveProperty("animateOnly");
+      expect((props.transition as { properties: string }).properties).toContain("opacity");
     }
-    expect(seen[seen.length - 1].transition).toEqual(["ease", { duration: 40 }]);
+    expect(seen[seen.length - 1].transition).toEqual({
+      duration: 40,
+      easing: "ease",
+      properties: "opacity",
+    });
   });
 
   it("leaves a transition the child set itself alone", () => {
     const { seen, Child } = recorder();
     render(
       <Transition mounted={false} keepMounted>
-        {(styles) => <Child style={styles} transition="bouncy" animateOnly={["opacity"]} />}
+        {(styles) => (
+          <Child style={styles} transition={{ preset: "bouncy", properties: "opacity" }} />
+        )}
       </Transition>,
     );
-    expect(seen[0]).toMatchObject({ transition: "bouncy", animateOnly: ["opacity"] });
+    expect(seen[0]).toMatchObject({ transition: { preset: "bouncy", properties: "opacity" } });
+    expect(seen[0]).not.toHaveProperty("animateOnly");
   });
 
   it("renders nothing when not mounted and not kept", () => {

@@ -14,7 +14,7 @@ import { objectFitToContentFit } from "./shared";
  * `cachePolicy`, `tintColor`, `blurRadius`, `priority`, …) it adds the unified,
  * Mantine-compatible API: `src`, `fit`/`objectFit` (→ `contentFit`),
  * `objectPosition` (→ `contentPosition`), `radius`, `fallbackSrc`, plus Tamagui
- * styling props (`w`, `h`, `bg`, `$token`s). expo-image's static methods
+ * styling props (`w`, `h`, `bg`, token names). expo-image's static methods
  * (`Image.prefetch`, `Image.clearMemoryCache`, …) are forwarded as-is.
  *
  * @example

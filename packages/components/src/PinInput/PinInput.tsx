@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, isAndroid, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, isAndroid, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useCallbackRef, useId, useMergedRef, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -67,7 +67,7 @@ function createPinArray(length: number, value: string): string[] {
 }
 
 const PinInputRow = styled(Box, {
-  name: "PinInput",
+  displayName: "PinInput",
   role: "group",
   flexDirection: "row",
   alignItems: "center",
@@ -75,7 +75,7 @@ const PinInputRow = styled(Box, {
     gap: gapVariant,
   } as const,
   defaultVariants: {
-    gap: "$xs",
+    gap: "xs",
   },
 });
 
@@ -84,7 +84,7 @@ type PinInputRowProps = GetProps<typeof PinInputRow>;
 /**
  * Named style slots (Pillar B / `internal/styles.ts`) for `PinInput`. The
  * `field` slot is spread onto every per-character `Input`, so
- * `styles={{ field: { borderColor: "$color8" } }}` styles all fields at once —
+ * `styles={{ field: { borderColor: "color8" } }}` styles all fields at once —
  * sugar over the functional `getInputProps(index)` escape hatch (which still
  * works and, being per-index and more explicit, wins where they overlap).
  */
@@ -149,7 +149,7 @@ export interface PinInputProps extends Omit<
   /** Border radius of each input. */
   radius?: InputProps["radius"];
 
-  /** Gap between inputs. Token, CSS value or number. @default "$xs" */
+  /** Gap between inputs. Token, CSS value or number. @default "xs" */
   gap?: PinInputRowProps["gap"];
 
   /** Disables every input. */
@@ -204,7 +204,7 @@ export interface PinInputProps extends Omit<
  * Multi-field paste distribution is deferred; single-field paste of a full code is
  * handled.
  */
-const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput(props, ref) {
+const PinInputComponent = styleable<PinInputProps>(PinInputRow, function PinInput(props, ref) {
   const {
     value,
     defaultValue,
@@ -218,7 +218,7 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
     placeholder = "○",
     size = "md",
     radius,
-    gap = "$xs",
+    gap = "xs",
     disabled,
     error,
     readOnly,
@@ -345,6 +345,14 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
     }
   });
 
+  // Reads the LATEST `getInputProps` at call time, so the memoized per-field
+  // handlers below never go stale and never need rebuilding.
+  const callFieldHandler = useCallbackRef(
+    (index: number, key: "onFocus" | "onBlur", event: unknown) => {
+      (getInputProps?.(index)?.[key] as ((e: unknown) => void) | undefined)?.(event);
+    },
+  );
+
   // Per-field props (ref + handlers) are memoized so React only attaches/detaches
   // refs and rebinds listeners when `length` changes — not on every keystroke.
   const fields = React.useMemo(
@@ -357,10 +365,20 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
         },
         onChangeText: (text: string) => handleChange(text, index),
         onKeyDown: (event: { key: string }) => handleKeyDown(event.key, index),
-        onFocus: () => setFocusedIndex(index),
-        onBlur: () => setFocusedIndex(-1),
+        // A consumer's `onFocus`/`onBlur` (via `getInputProps`) is CALLED, never a
+        // replacement: the row needs its own to know which field has the caret.
+        focusHandlers: {
+          onFocus: (event: unknown) => {
+            setFocusedIndex(index);
+            callFieldHandler(index, "onFocus", event);
+          },
+          onBlur: (event: unknown) => {
+            setFocusedIndex(-1);
+            callFieldHandler(index, "onBlur", event);
+          },
+        },
       })),
-    [length, uuid, setFirstRef, handleChange, handleKeyDown],
+    [length, uuid, setFirstRef, handleChange, handleKeyDown, callFieldHandler],
   );
 
   const fieldSize = React.useMemo(() => toFieldSize(size), [size]);
@@ -376,8 +394,6 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
     () => inputMode ?? (type === "number" ? "numeric" : "text"),
     [inputMode, type],
   );
-
-  const perField = (index: number) => getInputProps?.(index);
 
   return (
     <PinInputRow gap={gap} {...others}>
@@ -409,17 +425,9 @@ const PinInputComponent = PinInputRow.styleable<PinInputProps>(function PinInput
           // The `field` style slot is sugar under the per-index `getInputProps`,
           // which is more explicit and wins where the two overlap.
           {...s.get("field")}
-          {...perField(index)}
-          // After the spreads: a consumer's `onFocus`/`onBlur` is CALLED, never a
-          // replacement. The row needs its own to know which field has the caret.
-          onFocus={(event: unknown) => {
-            field.onFocus();
-            (perField(index)?.onFocus as ((e: unknown) => void) | undefined)?.(event);
-          }}
-          onBlur={(event: unknown) => {
-            field.onBlur();
-            (perField(index)?.onBlur as ((e: unknown) => void) | undefined)?.(event);
-          }}
+          {...getInputProps?.(index)}
+          // After the spreads (see `fields`): wraps the consumer's handlers.
+          {...(field.focusHandlers as object)}
         />
       ))}
       <HiddenInput

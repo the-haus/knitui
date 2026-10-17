@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Indicator } from "./Indicator";
 
@@ -54,7 +55,7 @@ describe("Indicator", () => {
 
   it("accepts token size and offset values", () => {
     render(
-      <Indicator label="N" offset="$xs" position="bottom-start" size="md">
+      <Indicator label="N" offset="xs" position="bottom-start" size="md">
         <span>Token target</span>
       </Indicator>,
     );
@@ -133,5 +134,55 @@ describe("Indicator", () => {
     expect(screen.getByTestId("indicator-root")).toBeInTheDocument();
     expect(screen.getByTestId("indicator-dot")).toBeInTheDocument();
     expect(screen.getByTestId("indicator-label")).toBeInTheDocument();
+  });
+
+  describe("v3 style resolution (web CSS)", () => {
+    const dotOf = (props: React.ComponentProps<typeof Indicator>) => {
+      render(
+        <Indicator {...props} styles={{ dot: { testID: "dot" } }}>
+          <span>t</span>
+        </Indicator>,
+      );
+      return screen.getByTestId("dot");
+    };
+
+    it("paints the accent dot with the size square", () => {
+      const dot = dotOf({ size: "sm" });
+      expect(baseValue(dot, "background-color")).toBe("var(--color9)");
+      expect(baseValue(dot, "width")).toBe("var(--t-size-sm)");
+      expect(baseValue(dot, "height")).toBe("var(--t-size-sm)");
+    });
+
+    it("a labelled dot grows to its text but keeps the size height", () => {
+      const dot = dotOf({ label: 12 });
+      expect(baseValue(dot, "width")).toBe("auto");
+      expect(baseValue(dot, "height")).toBe("var(--t-size-xxs)");
+      expect(baseValue(screen.getByText("12"), "color")).toBe("var(--color1)");
+    });
+
+    it("withBorder draws a background ring; radius overrides the round default", () => {
+      const dot = dotOf({ withBorder: true, radius: "xs" });
+      expect(baseValue(dot, "border-width")).toBe("2px");
+      expect(baseValue(dot, "border-color")).toBe("var(--background)");
+      expect(baseValue(dot, "border-radius")).toBe("var(--t-radius-xs)");
+    });
+
+    it("anchors to the requested corner with a token / px offset", () => {
+      const anchor = dotOf({ position: "bottom-start", offset: { x: 4, y: "sm" } }).parentElement!;
+      expect(baseValue(anchor, "position")).toBe("absolute");
+      expect(baseValue(anchor, "bottom")).toBe("var(--t-space-sm)");
+      expect(baseValue(anchor, "left")).toBe("4px");
+      expect(baseValue(anchor, "margin-left")).toBe("-2px");
+    });
+
+    it("centres on a middle axis using the resolved numeric size", () => {
+      const anchor = dotOf({ position: "middle-center", size: 20 }).parentElement!;
+      expect(baseValue(anchor, "top")).toBe("50%");
+      expect(baseValue(anchor, "margin-top")).toBe("-10px");
+    });
+
+    it("hides the dot when disabled", () => {
+      expect(baseValue(dotOf({ disabled: true }), "display")).toBe("none");
+    });
   });
 });

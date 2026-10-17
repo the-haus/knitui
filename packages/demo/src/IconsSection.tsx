@@ -20,14 +20,14 @@ function IconTile({ name, color }: { name: IconName; color: string }) {
   return (
     <Stack
       width={104}
-      gap="$xs"
+      gap="xs"
       alignItems="center"
-      px="$xs"
-      py="$sm"
+      px="xs"
+      py="sm"
       borderWidth={1}
-      borderColor="$color4"
-      borderRadius="$sm"
-      backgroundColor="$color1"
+      borderColor="color4"
+      borderRadius="sm"
+      backgroundColor="color1"
     >
       <Icon
         name={name}
@@ -36,7 +36,7 @@ function IconTile({ name, color }: { name: IconName; color: string }) {
         title={name}
         fallback={<Box width={28} height={28} />}
       />
-      <Text c="$color11" fz={11} numberOfLines={1} ta="center" w="100%">
+      <Text c="color11" fz={11} numberOfLines={1} ta="center" w="100%">
         {name}
       </Text>
     </Stack>
@@ -69,10 +69,10 @@ export function IconsSection() {
   const truncated = matches.length - visible.length;
 
   return (
-    <Stack gap="$md">
-      <Stack gap="$xxs">
+    <Stack gap="md">
+      <Stack gap="xxs">
         <Title order={3}>Icons</Title>
-        <Text c="$color11">
+        <Text c="color11">
           {ALL_ICON_NAMES.length} icons from <Text fontWeight="600">@knitui/icons</Text>. Search by
           name to filter; render the <Text fontWeight="600">{"<Icon name=… />"}</Text> component
           with any registry name.
@@ -88,7 +88,7 @@ export function IconsSection() {
         size="sm"
       />
 
-      <Text c="$color10" fz={12}>
+      <Text c="color10" fz={12}>
         {matches.length === 0
           ? `No icons match “${query.trim()}”.`
           : truncated > 0
@@ -96,7 +96,7 @@ export function IconsSection() {
             : `Showing ${matches.length} ${matches.length === 1 ? "icon" : "icons"}.`}
       </Text>
 
-      <Box flexDirection="row" flexWrap="wrap" gap="$sm">
+      <Box flexDirection="row" flexWrap="wrap" gap="sm">
         {visible.map((name) => (
           <IconTile key={name} name={name} color={iconColor} />
         ))}

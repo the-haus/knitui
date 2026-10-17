@@ -28,7 +28,7 @@
 // dropdown subtree + the `dropdownOpened` boolean — never a dynamic
 // `opacity`/`display` style prop (15). The `<Type>` generic is preserved through
 // `forwardRef` (which would otherwise pin it at `"default"`), so the ref is
-// forwarded via a typed `forwardRef` rather than `.styleable` (13) — the
+// forwarded via a typed `forwardRef` rather than `styleable()` (13) — the
 // documented sibling-picker pattern.
 // ───────────────────────────────────────────────────────────────────────────
 import * as React from "react";

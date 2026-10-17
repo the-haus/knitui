@@ -1,9 +1,18 @@
 import * as React from "react";
 
-import type { GetRef } from "@knitui/core";
+import { type GetRef, getTokens } from "@knitui/core";
 
-import { render, screen } from "../test-utils";
+import { fireEvent, render, screen } from "../test-utils";
 import { Marquee } from "./Marquee";
+
+// jsdom has no layout: report a fixed measured group so the loop has a distance.
+jest.mock("@knitui/hooks", () => ({
+  ...jest.requireActual("@knitui/hooks"),
+  useElementSize: () => ({ ref: () => {}, rootProps: {}, width: 120, height: 30 }),
+}));
+
+/** The animated track (LoopView) — the root's only child. */
+const trackOf = (root: HTMLElement) => root.firstElementChild as HTMLElement;
 
 describe("Marquee", () => {
   it("renders its children", () => {
@@ -17,8 +26,13 @@ describe("Marquee", () => {
   });
 
   it("hides repeated decorative groups from assistive tech", () => {
-    const { container } = render(<Marquee repeat={3}>tick</Marquee>);
-    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(2);
+    render(
+      <Marquee repeat={3} testID="mq">
+        tick
+      </Marquee>,
+    );
+    const root = screen.getByTestId("mq");
+    expect(root.querySelectorAll('[aria-hidden="true"]')).toHaveLength(2);
   });
 
   it.each(["horizontal", "vertical"] as const)("renders the %s orientation", (orientation) => {
@@ -63,5 +77,54 @@ describe("Marquee", () => {
     // The `group` slot applies to every repeated copy.
     expect(screen.getAllByTestId("group")).toHaveLength(3);
     expect(screen.getAllByTestId("text").length).toBeGreaterThan(0);
+  });
+
+  it("loops the track by exactly one group + gap on a CSS keyframe animation", () => {
+    render(
+      <Marquee testID="mq" gap={10} duration={5000}>
+        loop
+      </Marquee>,
+    );
+    const style = trackOf(screen.getByTestId("mq")).style;
+    expect(style.animationName).toMatch(/shimmer-x/i);
+    // 120px group + 10px gap, scrolling toward the start edge.
+    expect(style.animationName).toContain("130");
+    expect(style.animationDuration).toBe("5000ms");
+    expect(style.animationIterationCount).toBe("infinite");
+  });
+
+  it("resolves a gap token into the travel distance and loops vertically on y", () => {
+    render(
+      <Marquee testID="mq" orientation="vertical" gap="md" reverse>
+        v
+      </Marquee>,
+    );
+    const name = trackOf(screen.getByTestId("mq")).style.animationName;
+    expect(name).toMatch(/shimmer-y/i);
+    // height 30 + the md space token (a dropped token would leave the bare 30);
+    // `reverse` flips the sign (positive travel).
+    const md = (getTokens().space as Record<string, { val: number }>).md!.val;
+    expect(name).toMatch(new RegExp(`-${30 + md}$`));
+  });
+
+  it("pauses the CSS loop while hovered with pauseOnHover (web)", () => {
+    render(
+      <Marquee testID="mq" pauseOnHover>
+        p
+      </Marquee>,
+    );
+    const root = screen.getByTestId("mq");
+    expect(trackOf(root).style.animationPlayState).toBe("running");
+    fireEvent.mouseEnter(root);
+    expect(trackOf(root).style.animationPlayState).toBe("paused");
+    fireEvent.mouseLeave(root);
+    expect(trackOf(root).style.animationPlayState).toBe("running");
+  });
+
+  it("does not leak the styled frame name onto the DOM", () => {
+    render(<Marquee testID="mq">n</Marquee>);
+    const root = screen.getByTestId("mq");
+    expect(root).not.toHaveAttribute("name");
+    expect(root.querySelector("[name]")).toBeNull();
   });
 });

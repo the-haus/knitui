@@ -2,10 +2,22 @@ import * as React from "react";
 
 import { type GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen, waitForElementToBeRemoved } from "../test-utils";
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
+import { fireEvent, render, screen, waitFor } from "../test-utils";
 import { Dialog } from "./Dialog";
 
-const SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
+const SIZES = [
+  ["xxs", 160],
+  ["xs", 200],
+  ["sm", 280],
+  ["md", 340],
+  ["lg", 400],
+  ["xl", 480],
+  ["xxl", 560],
+] as const;
+
+/** Every CSS rule that targets `el` (v3 emits hashed atomic classes). */
+const css = (el: Element) => cssRulesOf(el).join("\n");
 
 describe("Dialog", () => {
   it("renders nothing when closed and not kept mounted", () => {
@@ -53,13 +65,31 @@ describe("Dialog", () => {
     expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
   });
 
-  it.each(SIZES)("renders the %s size", (size) => {
+  it.each(SIZES)("sizes the panel width for size=%s (%ipx)", (size, px) => {
     render(
       <Dialog opened size={size}>
         sized dialog
       </Dialog>,
     );
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(css(screen.getByRole("dialog"))).toContain(`width: ${px}px;`);
+  });
+
+  it("pins to the requested viewport corner", () => {
+    render(
+      <Dialog opened position={{ top: 12, left: "md" }} testID="corner">
+        corner
+      </Dialog>,
+    );
+    // `Affix` owns the fixed positioning; it wraps the dialog frame.
+    const affix = css(screen.getByRole("dialog").parentElement as HTMLElement);
+    expect(affix).toContain("position: fixed;");
+    expect(affix).toContain("top: 12px;");
+    expect(affix).toContain("left: var(--t-space-md);");
+  });
+
+  it("is a non-modal dialog (no aria-modal)", () => {
+    render(<Dialog opened>non-modal</Dialog>);
+    expect(screen.getByRole("dialog")).not.toHaveAttribute("aria-modal");
   });
 
   it("stays mounted while closed when keepMounted is set", () => {
@@ -116,7 +146,7 @@ describe("Dialog", () => {
     expect(Dialog.CloseButton).toBeDefined();
   });
 
-  it("removes immediately on close when animation is disabled", async () => {
+  it("removes immediately on close when animation is disabled", () => {
     const { rerender } = render(
       <Dialog opened animation={false}>
         no-anim body
@@ -128,7 +158,8 @@ describe("Dialog", () => {
         no-anim body
       </Dialog>,
     );
-    await waitForElementToBeRemoved(() => screen.queryByText("no-anim body"));
+    // No exit clauses → nothing for AnimatePresence to wait on: gone in the same commit.
+    expect(screen.queryByText("no-anim body")).not.toBeInTheDocument();
   });
 
   it("accepts a preset name and a custom speed via props", () => {
@@ -140,12 +171,37 @@ describe("Dialog", () => {
     expect(screen.getByText("custom-speed body")).toBeInTheDocument();
   });
 
-  it("holds the content in the tree through its exit animation", () => {
+  it("holds the content through its exit animation, then unmounts", async () => {
     const { rerender } = render(<Dialog opened>exit body</Dialog>);
     expect(screen.getByText("exit body")).toBeInTheDocument();
     rerender(<Dialog opened={false}>exit body</Dialog>);
-    // AnimatePresence keeps the exiting node mounted while it animates out, rather
-    // than the prior instant unmount.
-    expect(screen.getByText("exit body")).toBeInTheDocument();
+    // AnimatePresence keeps the exiting node mounted while it animates out (the v3
+    // driver tags it `t_exiting` and applies the `exit:` clauses)…
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).toContain("t_exiting");
+    expect(css(dialog)).toContain(".t_exiting *) {opacity: 0;}");
+    // …and removes it once the exit settles.
+    await waitFor(() => expect(screen.queryByText("exit body")).not.toBeInTheDocument());
+  });
+
+  it("re-enters with the enter clauses when reopened", () => {
+    const { rerender } = render(<Dialog opened={false}>again</Dialog>);
+    rerender(<Dialog opened>again</Dialog>);
+    expect(css(screen.getByRole("dialog"))).toContain(".t_unmounted *) {--t-y: 8px;}");
+  });
+});
+
+/** `name` attributes on the page that came from a styled() config (v3 forwards unknown options). */
+const leakedNames = (prefix: string) =>
+  Array.from(document.querySelectorAll("[name]"))
+    .map((el) => el.getAttribute("name") ?? "")
+    .filter((n) => n.startsWith(prefix));
+
+describe("Dialog DOM attributes", () => {
+  // v3 has no `name` styled() option: it becomes a default prop and lands in the
+  // DOM (and in FormData). Frames use `displayName`; nothing may leak.
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(<Dialog opened>body</Dialog>);
+    expect(leakedNames("Dialog")).toEqual([]);
   });
 });

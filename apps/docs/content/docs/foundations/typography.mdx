@@ -58,7 +58,7 @@ Both are platform-split internally — CSS line clamping on the web, native
 scale, which is what makes nesting work:
 
 ```tsx
-<Text c="$color11">
+<Text c="color11">
   Mostly muted, with <Text inherit fontWeight="700">emphasis</Text> inside.
 </Text>
 ```
@@ -71,7 +71,7 @@ Register families through the [theme builder](/docs/foundations/theme-builder):
 createTheme({ fonts: { body: "Inter", heading: "Sora", mono: "JetBrains Mono" } });
 ```
 
-Then `fontFamily="$mono"` resolves. On native, load the font file itself with
+Then `fontFamily="mono"` resolves. On native, load the font file itself with
 `expo-font` (or your own loader) — registering a name in the config does not
 install it.
 

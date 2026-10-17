@@ -10,35 +10,29 @@ This package is built on [`@knitui/core`](../core) (it resolves the kit's config
 from there). The build-tool plugins are `optionalDependencies`, and `next` is an
 optional peer — a native app pulls only what its bundler needs.
 
-## Babel (optional compiler)
+## Tamagui v3 compiler
 
-The Tamagui compiler is an optional build-time optimizer — it flattens the kit's
-`styled()` components into static styles for faster runtime.
+Tamagui v3 compiles through the bundler plugins below — there is no babel plugin
+any more. `@knitui/plugins/babel-plugin` is kept as a deprecated **no-op** that
+warns once; remove it from `babel.config.js` and use the Metro wrapper instead.
 
-```js
-// babel.config.js
-module.exports = {
-  presets: ["babel-preset-expo"],
-  plugins: [
-    require("@knitui/plugins/babel-plugin"),
-    "react-native-reanimated/plugin", // must stay LAST
-  ],
-};
-```
-
-Override options with `require("@knitui/plugins/babel-plugin").withOptions({ logTimings: false })`.
+Every wrapper points the compiler at `@knitui/core/config` and evaluates the kit's
+component packages (`@knitui/core`, `components`, `dates`, `media`, `sheet`,
+`carousel`). After changing the Tamagui config, restart Metro with
+`npx expo start -c`; Metro does not invalidate its cache on config edits.
 
 ## Bundlers (zero config)
 
 ```js
-// metro.config.js (Expo)
+// metro.config.js (Expo) — @tamagui/cli/metro
 const { getDefaultConfig } = require("expo/metro-config");
-const withTamagui = require("@knitui/plugins/metro");
-module.exports = withTamagui(getDefaultConfig(__dirname));
+const withKnitui = require("@knitui/plugins/metro");
+module.exports = withKnitui(getDefaultConfig(__dirname));
 ```
 
 ```js
-// next.config.mjs (Next.js App Router)
+// next.config.mjs (Next.js App Router) — @tamagui/next-plugin, webpack only:
+// build with `next build --webpack`
 import { withKnitui } from "@knitui/plugins/next-plugin";
 export default withKnitui({ reactStrictMode: true });
 ```
@@ -50,9 +44,9 @@ config.plugins.push(TamaguiPlugin());
 ```
 
 ```ts
-// vite.config.ts
-import { tamagui } from "@knitui/plugins/vite";
-export default { plugins: [tamagui()] };
+// vite.config.ts — @tamagui/cli/vite
+import { knitui } from "@knitui/plugins/vite";
+export default { plugins: [knitui()] };
 ```
 
 ## Next.js SSR provider

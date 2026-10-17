@@ -17,6 +17,7 @@ import {
   composeTriggerRightSection,
   defaultOptionsFilter,
   flattenComboboxOptions,
+  getComboboxOptionId,
   getParsedComboboxData,
   type OptionsDropdownProps,
   type OptionsFilter,
@@ -40,8 +41,8 @@ type AutocompleteInputProps = Omit<
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the
  * Autocomplete part surface. Each key maps to the props of the part it targets, so
- * `styles={{ option: { bg: "$color3" } }}` is sugar for
- * `<Autocomplete.Option bg="$color3" />`.
+ * `styles={{ option: { bg: "color3" } }}` is sugar for
+ * `<Autocomplete.Option bg="color3" />`.
  *
  * Autocomplete has no chevron part (free-text field, not a select trigger), so the
  * map intentionally omits a `chevron` slot.
@@ -540,6 +541,9 @@ const AutocompleteTrigger = React.forwardRef<AutocompleteRef, AutocompleteTrigge
           aria-autocomplete="list"
           aria-controls={ctx.dropdownId}
           aria-expanded={ctx.combobox.opened}
+          {...(ctx.combobox.opened && ctx.activeValue != null
+            ? { "aria-activedescendant": getComboboxOptionId(ctx.dropdownId, ctx.activeValue) }
+            : null)}
           size={ctx.size}
           disabled={ctx.disabled}
           readOnly={ctx.readOnly}
@@ -615,6 +619,7 @@ function AutocompleteOptions(props: AutocompleteOptionsProps) {
       withScrollArea={ctx.withScrollArea}
       maxDropdownHeight={ctx.maxDropdownHeight}
       renderOption={ctx.renderOption}
+      optionIdPrefix={ctx.dropdownId}
       // The `option`/`group`/`empty` slots reach each rendered row through OptionsDropdown.
       optionProps={s.get("option")}
       groupProps={s.get("group")}

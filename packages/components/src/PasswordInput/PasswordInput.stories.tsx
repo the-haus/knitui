@@ -83,7 +83,7 @@ export const Playground: Story = {
 /** The three input chrome variants — default, filled and unstyled. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {VARIANTS.map((variant) => (
         <PasswordInput key={variant} {...args} variant={variant} placeholder={variant} />
       ))}
@@ -94,7 +94,7 @@ export const Variants: Story = {
 /** The full seven-step size scale from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {SIZES.map((size) => (
         <PasswordInput key={size} {...args} size={size} placeholder={`size: ${size}`} />
       ))}
@@ -105,7 +105,7 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the input frame. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {SHADOWS.map((shadow) => (
         <PasswordInput key={shadow} {...args} shadow={shadow} placeholder={shadow} />
       ))}
@@ -147,7 +147,7 @@ export const WithError: Story = {
   args: {
     label: "Password",
     error: "Password must be at least 8 characters.",
-    value: "abc",
+    defaultValue: "abc",
   },
   decorators: [
     (Story) => (
@@ -182,7 +182,7 @@ export const ControlledVisibility: Story = {
   render: (args) => {
     const [visible, setVisible] = React.useState(false);
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <PasswordInput
           {...args}
           label="Password"
@@ -190,7 +190,7 @@ export const ControlledVisibility: Story = {
           onVisibilityChange={setVisible}
           placeholder="Controlled visibility"
         />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           visible: {visible ? "true" : "false"}
         </Text>
       </Box>
@@ -220,7 +220,7 @@ export const Styles: Story = {
     label: "Styled password",
     placeholder: "Enter password…",
     styles: {
-      label: { color: "$blue9", fontWeight: "700" },
+      label: { color: "blue9", fontWeight: "700" },
       visibilityToggle: { variant: "filled" },
     },
   },
@@ -236,13 +236,13 @@ export const Styles: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$sm">
-          <Text fontSize="$xxs" color="$color11">
+        <Box key={variant} gap="sm">
+          <Text fontSize="xxs" color="color11">
             {variant}
           </Text>
-          <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+          <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
             {SIZES.map((size) => (
               <PasswordInput
                 key={size}

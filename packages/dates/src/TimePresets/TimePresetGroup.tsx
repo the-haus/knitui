@@ -6,6 +6,7 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
@@ -37,16 +38,16 @@ const labelFontVariant = {
 
 /** The group container: label above a grid of preset cells. */
 const TimePresetGroupFrame = styled(Stack, {
-  name: "TimePresetGroup",
+  displayName: "TimePresetGroup",
   context: TimePresetGroupContext,
-  gap: "$xs",
+  gap: "xs",
 });
 
 /** The group's section label. */
 const TimePresetGroupLabel = styled(Text, {
-  name: "TimePresetGroupLabel",
+  displayName: "TimePresetGroupLabel",
   context: TimePresetGroupContext,
-  color: "$color11",
+  color: "color11",
 
   variants: {
     size: labelFontVariant,
@@ -124,7 +125,8 @@ export interface TimePresetGroupProps extends TimePresetGroupFrameProps {
  * each cell `role="option"`; native counterparts ride on each cell's own
  * `accessibility*` props. Folder-local to the `TimePicker` dropdown.
  */
-const TimePresetGroupComponent = TimePresetGroupFrame.styleable<TimePresetGroupProps>(
+const TimePresetGroupComponent = styleable<TimePresetGroupProps>(
+  TimePresetGroupFrame,
   function TimePresetGroup(props, ref) {
     const {
       value,

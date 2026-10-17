@@ -16,6 +16,8 @@
  *  - Embed:  `toEmbeddedControlSize` (+ its key types) — step a nested control down one key
  *  - Icon:   `CONTROL_ICON_SIZE` / `controlIconSize` / `ControlIconProvider`
  *  - Color:  read-only variant ladders + `VARIANT_KEYS` / `VariantKey`
+ *  - Hover:  `hoverProps` — pointer-hover handlers per platform (mouse events on
+ *            web, `onHoverIn`/`onHoverOut` on native)
  */
 
 // Icon sizing ladder + the provider that auto-sizes/colors icons in a control.
@@ -37,6 +39,9 @@ export {
   type EmbeddedControlSize,
   toEmbeddedControlSize,
 } from "./internal/embedded-control-size";
+
+// Pointer hover per platform (v3 web wires only `onMouseEnter`/`onMouseLeave`).
+export { type HoverHandlerProps, hoverProps } from "./internal/style-props";
 
 // Color ladders — read-only; spread onto a frame's styled base. See
 // `internal/variant-colors.ts` for the full table and design rationale.

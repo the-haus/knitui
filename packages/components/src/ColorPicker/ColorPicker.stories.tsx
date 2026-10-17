@@ -89,11 +89,11 @@ export const Playground: Story = {};
 /** All seven sizes displayed side by side to compare the picker footprint. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-start">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="column" gap="$xs" alignItems="center">
+        <Box key={size} flexDirection="column" gap="xs" alignItems="center">
           <ColorPicker {...args} size={size} />
-          <Text fontSize="$sm" color="$color11">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
         </Box>
@@ -105,11 +105,11 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation ladder, from `xs` to `xl`. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} flexDirection="column" gap="$xs" alignItems="center">
+        <Box key={shadow} flexDirection="column" gap="xs" alignItems="center">
           <ColorPicker {...args} shadow={shadow} />
-          <Text fontSize="$sm" color="$color11">
+          <Text fontSize="sm" color="color11">
             {shadow}
           </Text>
         </Box>
@@ -160,9 +160,9 @@ export const Styles: Story = {
     format: "hex",
     size: "md",
     styles: {
-      saturation: { borderRadius: "$lg" },
-      hueSlider: { borderRadius: "$sm" },
-      thumb: { borderColor: "$red9", borderWidth: 3 },
+      saturation: { borderRadius: "lg" },
+      hueSlider: { borderRadius: "sm" },
+      thumb: { borderColor: "red9", borderWidth: 3 },
     },
   },
 };
@@ -172,7 +172,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [color, setColor] = React.useState("#228be6");
     return (
-      <Box flexDirection="column" gap="$md" alignItems="center">
+      <Box flexDirection="column" gap="md" alignItems="center">
         <ColorPicker
           {...args}
           value={color}
@@ -183,22 +183,22 @@ export const Controlled: Story = {
         <Box
           flexDirection="row"
           alignItems="center"
-          gap="$sm"
-          paddingHorizontal="$md"
-          paddingVertical="$xs"
-          borderRadius="$sm"
+          gap="sm"
+          paddingHorizontal="md"
+          paddingVertical="xs"
+          borderRadius="sm"
           borderWidth={1}
-          borderColor="$color5"
+          borderColor="color5"
         >
           <Box
             width={18}
             height={18}
-            borderRadius="$xs"
+            borderRadius="xs"
             backgroundColor={color as BoxProps["backgroundColor"]}
             borderWidth={1}
-            borderColor="$color5"
+            borderColor="color5"
           />
-          <Text fontSize="$sm">{color}</Text>
+          <Text fontSize="sm">{color}</Text>
         </Box>
       </Box>
     );

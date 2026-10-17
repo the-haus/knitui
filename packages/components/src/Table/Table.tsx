@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
 import { shadowVariant } from "../internal/style-props";
@@ -9,6 +9,7 @@ import { Text } from "../Text";
 
 type TableSpacingToken = "xxs" | "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
 
+/** A space token (`"md"`), a raw number (px) or any CSS length string. */
 export type TableSpacing = TableSpacingToken | (string & {}) | number;
 type Striped = "odd" | "even";
 
@@ -19,25 +20,7 @@ export interface TableData {
   caption?: string;
 }
 
-/** `7` → `7`; `"md"` → `"$md"`; a `$`-token / CSS value passes through. */
-const toSpace = (val: TableSpacing): BoxProps["padding"] => {
-  if (typeof val === "number") {
-    return val;
-  }
-
-  switch (val) {
-    case "xxs":
-    case "xs":
-    case "sm":
-    case "md":
-    case "lg":
-    case "xl":
-    case "xxl":
-      return `$${val}` as BoxProps["padding"];
-    default:
-      return val as BoxProps["padding"];
-  }
-};
+type Padding = BoxProps["padding"];
 
 /* -------------------------------------------------------------------------- */
 /* Context                                                                    */
@@ -82,51 +65,86 @@ const TableFirstCellContext = React.createContext(false);
 /* -------------------------------------------------------------------------- */
 
 const TableFrame = styled(Box, {
-  name: "Table",
+  displayName: "Table",
+  role: "table",
   flexDirection: "column",
   width: "100%",
 
   variants: {
     shadow: shadowVariant,
     withTableBorder: {
-      true: { borderWidth: 1, borderColor: "$borderColor", borderRadius: "$xs" },
+      true: { borderWidth: 1, borderColor: "borderColor", borderRadius: "xs" },
     },
   } as const,
 });
 
+/**
+ * Pure role + layout frames: `Table.Thead` / `Table.Tfoot` / `Table.Caption`
+ * carry no behaviour, so they are plain `styled()` components the compiler can
+ * flatten to a host element at the call site.
+ */
 const RowGroup = styled(Box, {
-  name: "TableRowGroup",
+  displayName: "TableRowGroup",
+  role: "rowgroup",
   flexDirection: "column",
 });
 
+/**
+ * Row striping, hover highlight and row dividers are STATIC variants: the row
+ * wrapper only maps table context onto three booleans, so no per-row style
+ * object is allocated. `striped` fills the resting slot and `highlightOnHover`
+ * the `hover:` slot of the same property; v3 merges them per clause.
+ */
 const RowFrame = styled(Box, {
-  name: "TableRow",
+  displayName: "TableRow",
+  role: "row",
   flexDirection: "row",
   alignItems: "stretch",
-});
-
-const CellFrame = styled(Text, {
-  name: "TableCell",
-  flex: 1,
-  minWidth: 0,
-  fontSize: "$sm",
-  color: "$color12",
+  borderBottomColor: "borderColor",
+  borderBottomWidth: 0,
 
   variants: {
-    header: {
-      true: { fontWeight: "700", color: "$color11" },
+    striped: {
+      true: { backgroundColor: "color2" },
     },
-    columnBorder: {
-      true: { borderLeftWidth: 1, borderLeftColor: "$borderColor" },
+    highlightOnHover: {
+      true: { backgroundColor: "hover:color3" },
+    },
+    withRowBorder: {
+      true: { borderBottomWidth: 1 },
     },
   } as const,
 });
 
+const CellFrame = styled(Text, {
+  displayName: "TableCell",
+  role: "cell",
+  flex: 1,
+  minWidth: 0,
+  fontSize: "sm",
+  color: "color12",
+
+  variants: {
+    header: {
+      true: { fontWeight: "700", color: "color11" },
+    },
+    columnBorder: {
+      true: { borderLeftWidth: 1, borderLeftColor: "borderColor" },
+    },
+  } as const,
+});
+
+const HeaderCellFrame = styled(CellFrame, {
+  displayName: "TableTh",
+  role: "columnheader",
+  header: true,
+});
+
 const CaptionFrame = styled(Text, {
-  name: "TableCaption",
-  fontSize: "$xs",
-  color: "$color11",
-  paddingVertical: "$xs",
+  displayName: "TableCaption",
+  fontSize: "xs",
+  color: "color11",
+  paddingVertical: "xs",
 });
 
 /* -------------------------------------------------------------------------- */
@@ -137,37 +155,51 @@ type CellFrameProps = Omit<GetProps<typeof CellFrame>, "columnBorder" | "header"
 
 export interface TableCellProps extends CellFrameProps {}
 
-function makeCell(header: boolean, role: NonNullable<BoxProps["role"]>, displayName: string) {
-  const Cell = CellFrame.styleable<TableCellProps>(function Cell(props, ref) {
-    const ctx = useTableContext();
-    const isFirst = React.useContext(TableFirstCellContext);
-    return (
-      <CellFrame
-        ref={ref}
-        role={role}
-        header={header}
-        columnBorder={ctx.withColumnBorders && !isFirst}
-        paddingHorizontal={toSpace(ctx.horizontalSpacing)}
-        paddingVertical={toSpace(ctx.verticalSpacing)}
-        {...props}
-      />
-    );
-  });
-  Cell.displayName = displayName;
-  return Cell;
-}
-
 export type TableThProps = TableCellProps;
 export type TableTdProps = TableCellProps;
 
-const TableTh = makeCell(true, "columnheader", "Table.Th");
-const TableTd = makeCell(false, "cell", "Table.Td");
+/*
+ * Cells stay behaviour wrappers (styleable, class B): their padding comes from
+ * the table's `horizontalSpacing` / `verticalSpacing` and the column divider
+ * from the row position, both read from context. The wrapper body is
+ * allocation-free — it forwards context values straight onto the frame.
+ */
+const TableTh = styleable<TableThProps>(HeaderCellFrame, function TableTh(props, ref) {
+  const ctx = useTableContext();
+  const isFirst = React.useContext(TableFirstCellContext);
+  return (
+    <HeaderCellFrame
+      ref={ref}
+      columnBorder={ctx.withColumnBorders && !isFirst}
+      paddingHorizontal={ctx.horizontalSpacing as Padding}
+      paddingVertical={ctx.verticalSpacing as Padding}
+      {...props}
+    />
+  );
+});
+
+const TableTd = styleable<TableTdProps>(CellFrame, function TableTd(props, ref) {
+  const ctx = useTableContext();
+  const isFirst = React.useContext(TableFirstCellContext);
+  return (
+    <CellFrame
+      ref={ref}
+      columnBorder={ctx.withColumnBorders && !isFirst}
+      paddingHorizontal={ctx.horizontalSpacing as Padding}
+      paddingVertical={ctx.verticalSpacing as Padding}
+      {...props}
+    />
+  );
+});
 
 /* -------------------------------------------------------------------------- */
 /* Row                                                                        */
 /* -------------------------------------------------------------------------- */
 
-export type TableTrProps = GetProps<typeof RowFrame>;
+export type TableTrProps = Omit<
+  GetProps<typeof RowFrame>,
+  "striped" | "highlightOnHover" | "withRowBorder"
+>;
 
 /**
  * Wraps a row's leading cell in `TableFirstCellContext` so column dividers only
@@ -211,7 +243,7 @@ function markFirstCell(node: React.ReactNode): React.ReactNode | null {
   return node === null || node === undefined || typeof node === "boolean" ? null : node;
 }
 
-const TableTr = RowFrame.styleable<TableTrProps>(function TableTr(props, ref) {
+const TableTr = styleable<TableTrProps>(RowFrame, function TableTr(props, ref) {
   const ctx = useTableContext();
   const rowIndex = React.useContext(TableRowIndexContext);
   const { children, ...rest } = props;
@@ -228,11 +260,9 @@ const TableTr = RowFrame.styleable<TableTrProps>(function TableTr(props, ref) {
   return (
     <RowFrame
       ref={ref}
-      role="row"
-      backgroundColor={isStriped ? "$color2" : undefined}
-      borderBottomWidth={ctx.withRowBorders ? 1 : 0}
-      borderBottomColor="$borderColor"
-      hoverStyle={ctx.highlightOnHover ? { backgroundColor: "$color3" } : undefined}
+      striped={isStriped}
+      highlightOnHover={ctx.highlightOnHover}
+      withRowBorder={ctx.withRowBorders}
       {...rest}
     >
       {cells}
@@ -248,13 +278,8 @@ export type TableTheadProps = GetProps<typeof RowGroup>;
 export type TableTbodyProps = GetProps<typeof RowGroup>;
 export type TableTfootProps = GetProps<typeof RowGroup>;
 
-const TableThead = RowGroup.styleable<TableTheadProps>(function TableThead(props, ref) {
-  return <RowGroup ref={ref} role="rowgroup" {...props} />;
-});
-
-const TableTfoot = RowGroup.styleable<TableTfootProps>(function TableTfoot(props, ref) {
-  return <RowGroup ref={ref} role="rowgroup" {...props} />;
-});
+const TableThead = styled(RowGroup, { displayName: "TableThead" });
+const TableTfoot = styled(RowGroup, { displayName: "TableTfoot" });
 
 /** Publishes a 0-based index to each `Table.Tr` child so it can stripe itself. */
 function withRowIndices(children: React.ReactNode): React.ReactNode {
@@ -269,22 +294,20 @@ function withRowIndices(children: React.ReactNode): React.ReactNode {
   });
 }
 
-const TableTbody = RowGroup.styleable<TableTbodyProps>(function TableTbody(props, ref) {
+const TableTbody = styleable<TableTbodyProps>(RowGroup, function TableTbody(props, ref) {
   const ctx = useTableContext();
   const { children, ...rest } = props;
   // Row indices only matter for striping — skip the walk entirely without it.
   const rows = ctx.striped === undefined ? children : withRowIndices(children);
   return (
-    <RowGroup ref={ref} role="rowgroup" {...rest}>
+    <RowGroup ref={ref} {...rest}>
       {rows}
     </RowGroup>
   );
 });
 
 export type TableCaptionProps = GetProps<typeof CaptionFrame>;
-const TableCaption = CaptionFrame.styleable<TableCaptionProps>(function TableCaption(props, ref) {
-  return <CaptionFrame ref={ref} {...props} />;
-});
+const TableCaption = CaptionFrame;
 
 /* -------------------------------------------------------------------------- */
 /* Style slots                                                                */
@@ -293,7 +316,7 @@ const TableCaption = CaptionFrame.styleable<TableCaptionProps>(function TableCap
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). One optional key per
  * exposed `Table.*` part; each maps to that part's props, so
- * `styles={{ td: { color: "$red9" } }}` is sugar for `<Table.Td color="$red9" />`.
+ * `styles={{ td: { color: "red9" } }}` is sugar for `<Table.Td color="red9" />`.
  *
  * In the `data`-driven render path these are distributed onto the generated
  * parts; `styles` is the LOWEST-precedence sugar, so any prop the data path
@@ -378,7 +401,7 @@ export interface TableProps extends TableFrameProps {
   styles?: SlotStyles<TableStyles>;
 }
 
-const TableRoot = TableFrame.styleable<TableProps>(function Table(props, ref) {
+const TableRoot = styleable<TableProps>(TableFrame, function Table(props, ref) {
   const {
     data,
     children,
@@ -443,7 +466,7 @@ const TableRoot = TableFrame.styleable<TableProps>(function Table(props, ref) {
       {/* Reset row/cell position so a table nested in a cell starts clean. */}
       <TableRowIndexContext.Provider value={undefined}>
         <TableFirstCellContext.Provider value={false}>
-          <TableFrame ref={ref} role="table" {...s.merge("table", rest)}>
+          <TableFrame ref={ref} {...s.merge("table", rest)}>
             {content}
           </TableFrame>
         </TableFirstCellContext.Provider>

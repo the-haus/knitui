@@ -10,6 +10,13 @@ import "@testing-library/jest-dom";
 import "dayjs/locale/ru";
 import "dayjs/locale/fr";
 
+// Tamagui v3 guard: fail on leaked v2 `…Style` props, "removed in v3" APIs and
+// `$`-prefixed tokens (docs/v3/conventions.md §8). Installed first so the benign
+// message filters below still run before it.
+import { installTamaguiV3Guard } from "../../scripts/jest/v3-guard";
+
+installTamaguiV3Guard();
+
 // Reanimated expects React Native's development global to exist when the shared
 // Tamagui config is imported in tests.
 (globalThis as typeof globalThis & { __DEV__?: boolean }).__DEV__ = false;

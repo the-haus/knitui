@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen } from "../test-utils";
+import { act, fireEvent, render, screen } from "../test-utils";
 import { PinInput } from "./PinInput";
 
 describe("PinInput", () => {
@@ -130,5 +130,101 @@ describe("PinInput", () => {
 
   it("exposes PinInput.Field as a static property", () => {
     expect(PinInput.Field).toBeDefined();
+  });
+
+  describe("keyboard navigation", () => {
+    const fields = () => screen.getAllByLabelText("PinInput") as HTMLInputElement[];
+
+    it("advances focus as each character is typed and calls onComplete once", () => {
+      const onComplete = jest.fn();
+      render(<PinInput type="number" onComplete={onComplete} />);
+      const inputs = fields();
+      act(() => inputs[0].focus());
+      fireEvent.change(inputs[0], { target: { value: "1" } });
+      expect(inputs[1]).toHaveFocus();
+      fireEvent.change(inputs[1], { target: { value: "2" } });
+      fireEvent.change(inputs[2], { target: { value: "3" } });
+      expect(inputs[3]).toHaveFocus();
+      fireEvent.change(inputs[3], { target: { value: "4" } });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(onComplete).toHaveBeenCalledWith("1234");
+    });
+
+    it("moves with ArrowLeft / ArrowRight", () => {
+      render(<PinInput />);
+      const inputs = fields();
+      act(() => inputs[1].focus());
+      fireEvent.keyDown(inputs[1], { key: "ArrowRight" });
+      expect(inputs[2]).toHaveFocus();
+      fireEvent.keyDown(inputs[2], { key: "ArrowLeft" });
+      fireEvent.keyDown(inputs[1], { key: "ArrowLeft" });
+      expect(inputs[0]).toHaveFocus();
+      // Nowhere further left.
+      fireEvent.keyDown(inputs[0], { key: "ArrowLeft" });
+      expect(inputs[0]).toHaveFocus();
+    });
+
+    it("steps back on Backspace in an empty field, and on clearing a character", () => {
+      const onChange = jest.fn();
+      render(<PinInput defaultValue="12" onChange={onChange} />);
+      const inputs = fields();
+      act(() => inputs[2].focus());
+      fireEvent.keyDown(inputs[2], { key: "Backspace" });
+      expect(inputs[1]).toHaveFocus();
+      fireEvent.change(inputs[1], { target: { value: "" } });
+      expect(onChange).toHaveBeenLastCalledWith("1");
+      expect(inputs[0]).toHaveFocus();
+    });
+
+    it("rejects characters outside `type` and keeps focus", () => {
+      const onChange = jest.fn();
+      render(<PinInput type="number" onChange={onChange} />);
+      const inputs = fields();
+      act(() => inputs[0].focus());
+      fireEvent.change(inputs[0], { target: { value: "a" } });
+      expect(inputs[0]).toHaveValue("");
+      expect(inputs[0]).toHaveFocus();
+    });
+
+    it("distributes a pasted full code across the fields", () => {
+      const onComplete = jest.fn();
+      render(<PinInput type="number" onComplete={onComplete} />);
+      const inputs = fields();
+      fireEvent.change(inputs[0], { target: { value: "9876" } });
+      expect(inputs.map((input) => input.value)).toEqual(["9", "8", "7", "6"]);
+      expect(onComplete).toHaveBeenCalledWith("9876");
+    });
+
+    it("does not move focus when manageFocus is false", () => {
+      render(<PinInput manageFocus={false} />);
+      const inputs = fields();
+      act(() => inputs[0].focus());
+      fireEvent.change(inputs[0], { target: { value: "a" } });
+      expect(inputs[0]).toHaveFocus();
+      fireEvent.keyDown(inputs[0], { key: "ArrowRight" });
+      expect(inputs[0]).toHaveFocus();
+    });
+
+    it("hides the placeholder on the focused field only", () => {
+      render(<PinInput placeholder="*" length={2} />);
+      const inputs = fields();
+      fireEvent.focus(inputs[0]);
+      expect(inputs[0]).toHaveAttribute("placeholder", "");
+      expect(inputs[1]).toHaveAttribute("placeholder", "*");
+    });
+
+    it("marks every field aria-invalid under error and renders a group", () => {
+      render(<PinInput error length={2} />);
+      for (const input of fields()) expect(input).toHaveAttribute("aria-invalid", "true");
+      expect(screen.getByRole("group")).not.toHaveAttribute("name");
+    });
+
+    it("infers type/inputMode from `type` and `mask`", () => {
+      const { rerender } = render(<PinInput type="number" length={1} />);
+      expect(fields()[0]).toHaveAttribute("type", "tel");
+      expect(fields()[0]).toHaveAttribute("inputmode", "numeric");
+      rerender(<PinInput mask length={1} />);
+      expect(fields()[0]).toHaveAttribute("type", "password");
+    });
   });
 });

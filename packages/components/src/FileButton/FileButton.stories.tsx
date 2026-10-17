@@ -69,7 +69,7 @@ export const Playground: Story = {};
  */
 export const Shadows: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <FileButton key={shadow} onChange={() => {}}>
           {({ onClick }) => (
@@ -100,7 +100,7 @@ export const Multiple: Story = {
   render: () => {
     const [files, setFiles] = React.useState<File[]>([]);
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <FileButton multiple onChange={setFiles}>
           {({ onClick }) => (
             <Button onClick={onClick}>
@@ -109,15 +109,15 @@ export const Multiple: Story = {
           )}
         </FileButton>
         {files.length > 0 ? (
-          <Box gap="$xs">
+          <Box gap="xs">
             {files.map((f) => (
-              <Text key={f.name} fontSize="$sm">
+              <Text key={f.name} fontSize="sm">
                 {f.name}
               </Text>
             ))}
           </Box>
         ) : (
-          <Text fontSize="$sm" color="$color10">
+          <Text fontSize="sm" color="color10">
             No files selected
           </Text>
         )}
@@ -150,8 +150,8 @@ export const WithReset: Story = {
     };
 
     return (
-      <Box gap="$md" alignItems="flex-start">
-        <Box flexDirection="row" gap="$sm" alignItems="center" flexWrap="wrap">
+      <Box gap="md" alignItems="flex-start">
+        <Box flexDirection="row" gap="sm" alignItems="center" flexWrap="wrap">
           <FileButton onChange={setFile} resetRef={resetRef}>
             {({ onClick }) => <Button onClick={onClick}>Choose file</Button>}
           </FileButton>
@@ -161,7 +161,7 @@ export const WithReset: Story = {
             </Button>
           )}
         </Box>
-        <Text fontSize="$sm" color="$color10">
+        <Text fontSize="sm" color="color10">
           {file ? `Selected: ${file.name}` : "No file selected"}
         </Text>
       </Box>
@@ -172,7 +172,7 @@ export const WithReset: Story = {
 /** Custom trigger — any element can act as the trigger, not just a Button. */
 export const CustomTrigger: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <FileButton onChange={() => {}}>
         {({ onClick }) => (
           <Box
@@ -180,16 +180,16 @@ export const CustomTrigger: Story = {
             onClick={onClick}
             borderWidth={2}
             borderStyle="dashed"
-            borderColor="$color8"
-            borderRadius="$md"
-            padding="$lg"
-            style={{ cursor: "pointer" }}
+            borderColor="color8 hover:color10"
+            borderRadius="md"
+            padding="lg"
+            cursor="pointer"
             alignItems="center"
-            gap="$xs"
-            hoverStyle={{ borderColor: "$color10", backgroundColor: "$color2" }}
+            gap="xs"
+            backgroundColor="transparent hover:color2"
           >
-            <Text fontSize="$xl">⭐</Text>
-            <Text fontSize="$sm" color="$color10">
+            <Text fontSize="xl">⭐</Text>
+            <Text fontSize="sm" color="color10">
               Click to upload
             </Text>
           </Box>
@@ -202,7 +202,7 @@ export const CustomTrigger: Story = {
 /** Capture — requests a direct camera or microphone capture on supported devices. */
 export const Capture: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <FileButton onChange={() => {}} capture="user" accept="image/*">
         {({ onClick }) => (
           <Button onClick={onClick} variant="outline">

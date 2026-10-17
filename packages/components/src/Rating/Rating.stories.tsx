@@ -79,11 +79,11 @@ export const Playground: Story = {};
 /** All named sizes side by side, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="column" gap="$xs" alignItems="center">
+        <Box key={size} flexDirection="column" gap="xs" alignItems="center">
           <Rating {...args} size={size} defaultValue={3} />
-          <Text fontSize="$sm" color="$color10">
+          <Text fontSize="sm" color="color10">
             {size}
           </Text>
         </Box>
@@ -120,11 +120,11 @@ export const HighlightSelectedOnly: Story = {
 /** Elevation shadow ladder applied via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} flexDirection="column" gap="$xs" alignItems="center">
+        <Box key={shadow} flexDirection="column" gap="xs" alignItems="center">
           <Rating {...args} shadow={shadow} defaultValue={3} />
-          <Text fontSize="$sm" color="$color10">
+          <Text fontSize="sm" color="color10">
             {shadow}
           </Text>
         </Box>
@@ -159,9 +159,9 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState(0);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Rating {...args} value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color10">
+        <Text fontSize="sm" color="color10">
           Selected: {value > 0 ? value : "none"}
         </Text>
       </Box>
@@ -172,10 +172,10 @@ export const Controlled: Story = {
 /** Dense visual regression matrix across sizes and common states. */
 export const Matrix: Story = {
   render: (args) => (
-    <Box flexDirection="column" gap="$md">
+    <Box flexDirection="column" gap="md">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" gap="$lg" alignItems="center">
-          <Text width="$xl" fontSize="$sm" color="$color10">
+        <Box key={size} flexDirection="row" gap="lg" alignItems="center">
+          <Text width="xl" fontSize="sm" color="color10">
             {size}
           </Text>
           <Rating {...args} size={size} defaultValue={3} />
@@ -194,8 +194,8 @@ export const Styles: Story = {
     size: "lg",
     defaultValue: 3,
     styles: {
-      root: { backgroundColor: "$blue3", padding: "$xs", borderRadius: "$sm" },
-      symbol: { borderColor: "$blue7", borderWidth: 1 },
+      root: { backgroundColor: "blue3", padding: "xs", borderRadius: "sm" },
+      symbol: { borderColor: "blue7", borderWidth: 1 },
     },
   },
 };

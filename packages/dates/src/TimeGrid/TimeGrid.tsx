@@ -26,14 +26,15 @@ import {
   type GetProps,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
-import { useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useUncontrolled } from "@knitui/hooks";
 
-import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
+import { type CalendarSize, cellFontVariant, cellMinHeightVariant } from "../cell-metrics";
 import { controlA11yProps } from "../internal/a11y";
-import { webCursor } from "../internal/web-cursor";
+import { areCellPropsEqual } from "../internal/are-cell-props-equal";
 import type { TimePickerAmPmLabels, TimePickerFormat } from "../types";
 import { getFormattedTime, isSameTime } from "../utils";
 import { isTimeAfter, isTimeBefore } from "./compare-time/compare-time";
@@ -54,70 +55,46 @@ const TimeGridContext = createStyledContext<{ size: CalendarSize }>({ size: "sm"
 // (`CELL_WIDTH`/`CELL_FONT`) — the calendar twin of components' `controlMetrics`
 // — expressed with raw ladder values at module-load (NOT `getTokenValue`, which
 // needs the live config).
-const controlSizeVariant = {
-  xxs: { minHeight: CELL_WIDTH.xxs },
-  xs: { minHeight: CELL_WIDTH.xs },
-  sm: { minHeight: CELL_WIDTH.sm },
-  md: { minHeight: CELL_WIDTH.md },
-  lg: { minHeight: CELL_WIDTH.lg },
-  xl: { minHeight: CELL_WIDTH.xl },
-  xxl: { minHeight: CELL_WIDTH.xxl },
-} as const;
-
-const controlFontVariant = {
-  xxs: { fontSize: CELL_FONT.xxs },
-  xs: { fontSize: CELL_FONT.xs },
-  sm: { fontSize: CELL_FONT.sm },
-  md: { fontSize: CELL_FONT.md },
-  lg: { fontSize: CELL_FONT.lg },
-  xl: { fontSize: CELL_FONT.xl },
-  xxl: { fontSize: CELL_FONT.xxl },
-} as const;
-
 /* -------------------------------------------------------------------------- */
 /* Styled parts (#5)                                                           */
 /* -------------------------------------------------------------------------- */
 
 /** The host frame establishing the shared `size` context (web `role="group"`). */
 const TimeGridFrame = styled(Box, {
-  name: "TimeGrid",
+  displayName: "TimeGrid",
   context: TimeGridContext,
 });
 
 /**
  * A single time-option button. Accent comes from the active theme's palette ramp
  * via the `theme` prop (no Mantine `color` prop): a selected control fills with
- * `$color9` and prints `$color1` text (checklist #4). States use
- * `hoverStyle`/`pressStyle` + a `disabled` variant, never a runtime hover flag
+ * `color9` and prints `color1` text (checklist #4). States use
+ * `hover:`/`press:` clauses + a `disabled` variant, never a runtime hover flag
  * (#12) — mirroring `PickerControl`.
  */
 const TimeGridControlFrame = styled(UnstyledButton.Frame, {
-  name: "TimeGridControl",
+  displayName: "TimeGridControl",
   context: TimeGridContext,
   alignItems: "center",
   justifyContent: "center",
   flexGrow: 1,
   flexBasis: 0,
   borderWidth: 1,
-  borderColor: "$borderColor",
-  borderRadius: "$sm",
-  backgroundColor: "transparent",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$sm",
-  ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color2" },
-  pressStyle: { backgroundColor: "$color3" },
+  borderColor: "borderColor",
+  borderRadius: "sm",
+  backgroundColor: "transparent hover:color2 press:color3",
+  paddingVertical: "xs",
+  paddingHorizontal: "sm",
+  cursor: "web:pointer",
 
   variants: {
-    size: controlSizeVariant,
+    size: cellMinHeightVariant,
 
     /** Selected option — solid accent fill. */
     selected: {
       true: {
-        backgroundColor: "$color9",
-        borderColor: "$color9",
-        hoverStyle: { backgroundColor: "$color10" },
-        pressStyle: { backgroundColor: "$color8" },
+        backgroundColor: "color9 hover:color10 press:color8",
+        borderColor: "color9",
       },
     },
 
@@ -126,9 +103,8 @@ const TimeGridControlFrame = styled(UnstyledButton.Frame, {
       true: {
         opacity: 0.5,
         pointerEvents: "none",
-        ...webCursor("not-allowed"),
-        hoverStyle: { backgroundColor: "transparent" },
-        pressStyle: { backgroundColor: "transparent" },
+        cursor: "web:not-allowed",
+        backgroundColor: "hover:transparent press:transparent",
       },
     },
   } as const,
@@ -142,15 +118,15 @@ const TimeGridControlFrame = styled(UnstyledButton.Frame, {
  * web optimiser can never fold a hide-value class onto the whole cell.
  */
 const TimeGridControlLabel = styled(Text, {
-  name: "TimeGridControlLabel",
+  displayName: "TimeGridControlLabel",
   context: TimeGridContext,
   userSelect: "none",
-  color: "$color",
+  color: "color",
   variants: {
-    size: controlFontVariant,
+    size: cellFontVariant,
 
     /** On the selected accent fill, the label flips to the contrast colour. */
-    selected: { true: { color: "$color1" } },
+    selected: { true: { color: "color1" } },
   } as const,
 
   defaultVariants: { size: "sm" },
@@ -163,12 +139,23 @@ const TimeGridControlLabel = styled(Text, {
 /** Props passed to a single control via `getControlProps` / `styles.control`. */
 type TimeGridControlPassthrough = Partial<GetProps<typeof UnstyledButton>>;
 
-interface TimeGridControlProps extends Omit<GetProps<typeof TimeGridControlFrame>, "children"> {
+type TimeGridPressEvent = Parameters<NonNullable<TimeGridControlPassthrough["onPress"]>>[0];
+
+interface TimeGridControlProps extends Omit<
+  GetProps<typeof TimeGridControlFrame>,
+  "children" | "selected" | "disabled" | "size" | "onPress"
+> {
   /** Time value in 24h format (`"HH:mm[:ss]"`). */
   time: string;
 
   /** Whether this option is the active value. */
   active: boolean;
+
+  /** Whether this option is disabled (bounds / `disableTime` / `disabled`). */
+  disabled: boolean;
+
+  /** Control size. */
+  size: CalendarSize;
 
   /** Clock display mode. */
   format: TimePickerFormat;
@@ -181,17 +168,31 @@ interface TimeGridControlProps extends Omit<GetProps<typeof TimeGridControlFrame
 
   /** Props spread onto the inner label (carries `styles.label`). */
   labelProps?: GetProps<typeof TimeGridControlLabel>;
+
+  /** The consumer's own `getControlProps(time).onPress`, called before ours. */
+  consumerOnPress?: TimeGridControlPassthrough["onPress"];
+
+  /** Stable (grid-level) press handler — keeps the memo boundary intact. */
+  onSelect: (time: string, active: boolean) => void;
 }
 
-function TimeGridControl({
+/**
+ * One time option, memoized. A selection change re-renders the grid, but only
+ * the two cells whose `active` flag moved need to re-render: the press handler
+ * is a stable grid-level callback (`onSelect`), and `areCellPropsEqual` looks one
+ * level into the freshly built `labelProps` / slot objects.
+ */
+const TimeGridControl = React.memo(function TimeGridControl({
   time,
   active,
   format,
   amPmLabels,
   withSeconds,
   disabled,
-  size = "sm",
+  size,
   labelProps,
+  consumerOnPress,
+  onSelect,
   ...others
 }: TimeGridControlProps) {
   const label = getFormattedTime({ value: time, format, amPmLabels, withSeconds });
@@ -214,13 +215,17 @@ function TimeGridControl({
       size={size}
       render="button"
       {...others}
+      onPress={(event: TimeGridPressEvent) => {
+        consumerOnPress?.(event);
+        onSelect(time, active);
+      }}
     >
       <TimeGridControlLabel size={size} selected={active} {...labelProps}>
         {label}
       </TimeGridControlLabel>
     </TimeGridControlFrame>
   );
-}
+}, areCellPropsEqual);
 
 /* -------------------------------------------------------------------------- */
 /* TimeGrid                                                                    */
@@ -318,7 +323,7 @@ const DEFAULT_AM_PM_LABELS: TimePickerAmPmLabels = { am: "AM", pm: "PM" };
  * `useUncontrolled`; each option is labelled through the shared `getFormattedTime`
  * (so `12h` shows AM/PM and `withSeconds` adds `:ss`); `minTime`/`maxTime`/
  * `disableTime`/`disabled` gate the controls; selection is styled from the active
- * Tamagui theme ramp (`$color9`/`$color1`).
+ * Tamagui theme ramp (`color9`/`color1`).
  *
  * Per-control sizing/colour/interaction live in the folder-local `TimeGridControl`
  * leaf (delegated); this lays out the grid, shares `size` via context, and offers
@@ -329,7 +334,7 @@ const DEFAULT_AM_PM_LABELS: TimePickerAmPmLabels = { am: "AM", pm: "PM" };
  * @example
  * <TimeGrid data={["10:00", "12:30", "18:00"]} defaultValue="10:00" onChange={setValue} />
  */
-const TimeGridComponent = TimeGridFrame.styleable<TimeGridProps>(function TimeGrid(props, ref) {
+const TimeGridComponent = styleable<TimeGridProps>(TimeGridFrame, function TimeGrid(props, ref) {
   const {
     data,
     value,
@@ -362,6 +367,15 @@ const TimeGridComponent = TimeGridFrame.styleable<TimeGridProps>(function TimeGr
   const s = slotStyles<TimeGridStyles>(styles, TIME_GRID_SLOT_KEYS, "TimeGrid");
   const labelStyles = s.get("label");
 
+  // One stable press handler for every control (reads the live value through
+  // the ref), so a selection change only re-renders the cells whose state moved.
+  const onSelect = useCallbackRef((time: string, active: boolean) => {
+    const nextValue = allowDeselect && active ? null : time;
+    if (nextValue !== _value) {
+      setValue(nextValue);
+    }
+  });
+
   const controls = data.map((time) => {
     // 10. Bounds + per-time disabling gate each control.
     const isDisabled =
@@ -387,15 +401,11 @@ const TimeGridComponent = TimeGridFrame.styleable<TimeGridProps>(function TimeGr
         size={size}
         labelProps={labelStyles}
         // explicit beats sugar: the `control` slot sits UNDER per-item
-        // `getControlProps`, and the consumer's own `onPress` is preserved.
+        // `getControlProps`, and the consumer's own `onPress` is preserved
+        // (called before ours, inside the leaf).
         {...s.merge("control", controlProps)}
-        onPress={(event: Parameters<NonNullable<TimeGridControlPassthrough["onPress"]>>[0]) => {
-          controlProps?.onPress?.(event);
-          const nextValue = allowDeselect && active ? null : time;
-          if (nextValue !== _value) {
-            setValue(nextValue);
-          }
-        }}
+        consumerOnPress={controlProps?.onPress}
+        onSelect={onSelect}
       />
     );
   });

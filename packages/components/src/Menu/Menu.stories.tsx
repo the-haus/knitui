@@ -96,7 +96,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Menu {...args} opened={opened} onChange={setOpened}>
           <Menu.Target>
             <Button variant={opened ? "filled" : "default"}>
@@ -109,7 +109,7 @@ export const Controlled: Story = {
             <Menu.Item onPress={() => setOpened(false)}>Action three</Menu.Item>
           </Menu.Dropdown>
         </Menu>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Menu is {opened ? "open" : "closed"}
         </Text>
       </Box>
@@ -150,7 +150,7 @@ export const WithSections: Story = {
         <Menu.Item
           leftSection={<Text>✏️</Text>}
           rightSection={
-            <Text fontSize="$xs" color="$color10">
+            <Text fontSize="xs" color="color10">
               Ctrl+E
             </Text>
           }
@@ -160,7 +160,7 @@ export const WithSections: Story = {
         <Menu.Item
           leftSection={<Text>📋</Text>}
           rightSection={
-            <Text fontSize="$xs" color="$color10">
+            <Text fontSize="xs" color="color10">
               Ctrl+C
             </Text>
           }
@@ -170,7 +170,7 @@ export const WithSections: Story = {
         <Menu.Item
           leftSection={<Text>📌</Text>}
           rightSection={
-            <Text fontSize="$xs" color="$color10">
+            <Text fontSize="xs" color="color10">
               Ctrl+V
             </Text>
           }
@@ -181,7 +181,7 @@ export const WithSections: Story = {
         <Menu.Item
           leftSection={<Text>🗑️</Text>}
           rightSection={
-            <Text fontSize="$xs" color="$color10">
+            <Text fontSize="xs" color="color10">
               Del
             </Text>
           }
@@ -253,9 +253,9 @@ export const Styles: Story = {
       {...args}
       defaultOpened
       styles={{
-        label: { color: "$red9" },
-        item: { backgroundColor: "$blue3" },
-        itemLabel: { color: "$blue11", fontWeight: "700" },
+        label: { color: "red9" },
+        item: { backgroundColor: "blue3" },
+        itemLabel: { color: "blue11", fontWeight: "700" },
       }}
     >
       <Menu.Target>
@@ -278,10 +278,10 @@ export const Styles: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} position="relative" alignItems="center" gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={shadow} position="relative" alignItems="center" gap="xs">
+          <Text fontSize="sm" color="color11">
             {shadow}
           </Text>
           <Menu {...args} defaultOpened shadow={shadow} withinPortal={false}>
@@ -303,7 +303,7 @@ export const Shadows: Story = {
 export const HoverTrigger: Story = {
   args: { trigger: "hover" },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Menu {...args}>
         <Menu.Target>
           <Button variant="outline">Hover me</Button>
@@ -314,7 +314,7 @@ export const HoverTrigger: Story = {
           <Menu.Item leftSection={<Text>⬆️</Text>}>Upload file</Menu.Item>
         </Menu.Dropdown>
       </Menu>
-      <Text color="$color11" fontSize="$sm">
+      <Text color="color11" fontSize="sm">
         Hover the button to open
       </Text>
     </Box>

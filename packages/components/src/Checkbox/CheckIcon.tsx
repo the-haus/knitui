@@ -14,9 +14,12 @@ export type CheckboxIconSize = SizeKey;
  * Extra style props (e.g. `testID`, layout overrides) accepted by the glyph and
  * spread onto its root element. The `icon` slot of `Checkbox` targets these, so
  * a slot value reaches the rendered glyph. `color`/`size`/`indeterminate` are
- * the glyph's own controls; `children` is owned by the glyph.
+ * the glyph's own controls; `children` is owned by the glyph. Typed off the SVG
+ * icon's own props (the glyph is an `@knitui/icons` SVG, not a Tamagui Text).
  */
-export interface CheckboxIconProps extends Omit<TextProps, "color" | "children" | "size"> {
+type IconProps = React.ComponentProps<typeof IconCheck>;
+
+export interface CheckboxIconProps extends Omit<IconProps, "color" | "children" | "size"> {
   /** Render the indeterminate (dash) glyph instead of the check mark. */
   indeterminate?: boolean;
   /** Glyph size key (the parent sizes this from the control `size`). */
@@ -30,7 +33,7 @@ export type CheckboxIconComponent = React.ComponentType<CheckboxIconProps>;
 
 /**
  * Default checkbox glyph. Renders an `@knitui/icons` `IconCheck` (checked) or
- * `IconMinus` (indeterminate). The `color` token (default `$color1`, which sits
+ * `IconMinus` (indeterminate). The `color` theme key (default `color1`, which sits
  * on the filled box) is resolved to a concrete colour for `react-native-svg`,
  * and `size` is mapped from the control key to px via `controlIconSize`. A
  * slightly heavier stroke keeps the check crisp at small sizes.
@@ -38,7 +41,7 @@ export type CheckboxIconComponent = React.ComponentType<CheckboxIconProps>;
 export function CheckboxIcon({
   indeterminate,
   size = "xs",
-  color = "$color1",
+  color = "color1",
   ...rest
 }: CheckboxIconProps) {
   // `useIconColor` instead of `useTheme()` + `resolveThemeColor`: on web the token
@@ -46,7 +49,7 @@ export function CheckboxIcon({
   // theme subscription at all (one per checkbox, plus the dep-less `useEffect`
   // `useThemeWithState` fires after every render). Native still reads the theme,
   // where `react-native-svg` needs a concrete colour. See `use-icon-color.ts`.
-  const resolvedColor = useIconColor(typeof color === "string" ? color : "$color1");
+  const resolvedColor = useIconColor(typeof color === "string" ? color : "color1");
   const iconSize = controlIconSize(size);
 
   const Icon = indeterminate ? IconMinus : IconCheck;

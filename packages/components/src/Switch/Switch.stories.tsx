@@ -67,7 +67,7 @@ export const Playground: Story = {};
 /** All seven sizes side by side for a quick visual comparison. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Switch key={size} {...args} size={size} label={size} />
       ))}
@@ -78,7 +78,7 @@ export const Sizes: Story = {
 /** Elevation shadow ladder applied to the track via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Switch key={shadow} {...args} shadow={shadow} label={shadow} />
       ))}
@@ -89,7 +89,7 @@ export const Shadows: Story = {
 /** Disabled state — the switch is non-interactive and visually dimmed. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Switch {...args} disabled label="Disabled off" />
       <Switch {...args} disabled defaultChecked label="Disabled on" />
     </Box>
@@ -99,7 +99,7 @@ export const Disabled: Story = {
 /** On/off labels rendered inside the track, behind the thumb. */
 export const TrackLabels: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Switch {...args} size="md" onLabel="ON" offLabel="OFF" label="With track labels" />
       <Switch
         {...args}
@@ -115,9 +115,9 @@ export const TrackLabels: Story = {
 /** An icon rendered inside the thumb replaces the default dot indicator. */
 export const ThumbIcon: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
-      <Switch {...args} size="md" thumbIcon={<Text fontSize="$xxs">⭐</Text>} label="Star thumb" />
-      <Switch {...args} size="lg" thumbIcon={<Text fontSize="$xs">🔔</Text>} label="Bell thumb" />
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
+      <Switch {...args} size="md" thumbIcon={<Text fontSize="xxs">⭐</Text>} label="Star thumb" />
+      <Switch {...args} size="lg" thumbIcon={<Text fontSize="xs">🔔</Text>} label="Bell thumb" />
     </Box>
   ),
 };
@@ -125,7 +125,7 @@ export const ThumbIcon: Story = {
 /** Accent colour comes from the Tamagui theme prop. */
 export const Themes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {THEMES.map((theme) => (
         <Switch key={theme} {...args} theme={theme} defaultChecked label={theme} />
       ))}
@@ -145,7 +145,7 @@ export const LabelLeft: Story = {
 /** Description and error slot — rendered below the label when provided. */
 export const WithDescriptionAndError: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Switch
         {...args}
         label="With description"
@@ -161,7 +161,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [checked, setChecked] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <Switch {...args} checked={checked} onChange={setChecked} label={checked ? "On" : "Off"} />
         <Text>Current value: {String(checked)}</Text>
       </Box>
@@ -172,7 +172,7 @@ export const Controlled: Story = {
 /** `Switch.Group` manages a set of switches as a multi-select; `maxSelectedValues` caps the selection. */
 export const Group: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Switch.Group label="Notifications" description="Choose which alerts to enable.">
         <Switch {...args} value="email" label="Email" />
         <Switch {...args} value="sms" label="SMS" />
@@ -204,7 +204,7 @@ export const ControlledGroup: Story = {
   render: () => {
     const [value, setValue] = React.useState<string[]>(["dark"]);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <Switch.Group label="Appearance" value={value} onChange={setValue} size="md">
           <Switch value="dark" label="Dark mode" />
           <Switch value="animations" label="Animations" />
@@ -222,9 +222,9 @@ export const Styles: Story = {
     label: "Styled switch",
     defaultChecked: true,
     styles: {
-      track: { backgroundColor: "$blue7" },
-      thumb: { backgroundColor: "$red9" },
-      label: { color: "$red9", fontWeight: "700" },
+      track: { backgroundColor: "blue7" },
+      thumb: { backgroundColor: "red9" },
+      label: { color: "red9", fontWeight: "700" },
     },
   },
 };

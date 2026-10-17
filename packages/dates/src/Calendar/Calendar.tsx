@@ -17,7 +17,7 @@
 // `styles` sugar) are satisfied downstream and intentionally do NOT live here —
 // the same call `LevelsGroup` documents. What Calendar DOES carry: provenance
 // header (1), a styled `.Frame` part (5) exposed via `withStaticProperties` (14)
-// and forwarded through `.styleable` (13), controlled/uncontrolled state (8),
+// and forwarded through `styleable()` (13), controlled/uncontrolled state (8),
 // locale/min/max/a11y passthrough (9/10/11), per-item `getDayProps` /
 // `getMonthControlProps` / `getYearControlProps` passthrough (7), and
 // compiler-safe show/hide via conditional subtrees — never a dynamic `opacity`
@@ -31,6 +31,7 @@ import { Box } from "@knitui/components";
 import {
   type GetProps,
   isWeb,
+  styleable,
   styled,
   type TamaguiElement,
   withStaticProperties,
@@ -192,7 +193,7 @@ export interface CalendarBaseProps {
  * below resolves `width: 100%` against this root, so the root itself must opt in.
  */
 const CalendarFrame = styled(Box, {
-  name: "Calendar",
+  displayName: "Calendar",
 
   variants: {
     /**
@@ -213,7 +214,7 @@ const CalendarFrame = styled(Box, {
 // `MouseEventHandler`) so `CalendarBaseProps` can re-declare it cross-platform.
 type CalendarFrameProps = Omit<
   GetProps<typeof CalendarFrame>,
-  "size" | "children" | "onMouseLeave"
+  "size" | "children" | "onMouseLeave" | "fullWidth"
 >;
 
 export interface CalendarProps extends CalendarFrameProps, CalendarSettings, CalendarBaseProps {
@@ -248,9 +249,9 @@ export interface CalendarProps extends CalendarFrameProps, CalendarSettings, Cal
  * enhanced Ctrl/Cmd+Arrow and `Y` shortcuts are web-only and live behind an
  * `isWeb` guard (a no-op on native). The root is a `styled(Box)` frame (never an
  * HTML element), exposed as `Calendar.Frame` and forwarding its ref + style
- * props via `.styleable`. Accent comes from the active Tamagui theme.
+ * props via `styleable()`. Accent comes from the active Tamagui theme.
  */
-const CalendarComponent = CalendarFrame.styleable<CalendarProps>(function Calendar(props, ref) {
+const CalendarComponent = styleable<CalendarProps>(CalendarFrame, function Calendar(props, ref) {
   const {
     // Level / navigation owned by Calendar
     maxLevel = "decade",

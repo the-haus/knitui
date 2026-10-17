@@ -1,14 +1,14 @@
 /**
  * The OVER-MEDIA palette — the tokens chrome painted ON TOP of media pixels uses
  * (the `@knitui/media` Video player). Video controls float over arbitrary video
- * content, so they can't ride the normal `$colorN` surface ramp the way a card
+ * content, so they can't ride the normal `colorN` surface ramp the way a card
  * does: their backdrops must be translucent scrims and their glyphs a fixed light
  * color, regardless of the app theme. These values are therefore THEME-INDEPENDENT
  * (identical in light and dark) and are spread into every theme's `extra` so a
- * `$mediaScrim` / `$mediaOnScrim` reference resolves anywhere. This is the single
+ * `mediaScrim` / `mediaOnScrim` reference resolves anywhere. This is the single
  * source of truth for the over-media look — media no longer hardcodes `rgba(…)` /
  * `"white"` literals. (Keeping the literals HERE, in the theme layer, is correct:
- * a `linear-gradient` / scrim color genuinely can't be a `$colorN` ramp token.)
+ * a `linear-gradient` / scrim color genuinely can't be a `colorN` ramp token.)
  *
  * NB: this lives in its own module — deliberately NOT in `themes.ts` — because
  * `themes.ts`'s module body runs `createThemes(...)`, generating the full theme

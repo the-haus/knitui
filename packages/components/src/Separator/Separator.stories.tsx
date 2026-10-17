@@ -65,10 +65,10 @@ export const Playground: Story = {};
 /** Every line style (solid, dashed, dotted) shown side by side. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={variant} gap="xs">
+          <Text fontSize="sm" color="color11">
             {variant}
           </Text>
           <Separator {...args} variant={variant} />
@@ -81,10 +81,10 @@ export const Variants: Story = {
 /** All seven thickness levels from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {SIZES.map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <Separator {...args} size={size} />
@@ -97,7 +97,7 @@ export const Sizes: Story = {
 /** Vertical orientation — useful inside flex rows to divide sections. */
 export const Vertical: Story = {
   render: (args) => (
-    <Box flexDirection="row" alignItems="center" gap="$md" height={80}>
+    <Box flexDirection="row" alignItems="center" gap="md" height={80}>
       <Text>Left</Text>
       <Separator {...args} orientation="vertical" size="sm" />
       <Text>Middle</Text>
@@ -162,15 +162,15 @@ export const WithIconLabel: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$xl" width={360}>
+    <Box gap="xl" width={360}>
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$sm">
-          <Text fontSize="$sm" color="$color11" fontWeight="bold">
+        <Box key={variant} gap="sm">
+          <Text fontSize="sm" color="color11" fontWeight="bold">
             {variant}
           </Text>
           {SIZES.map((size) => (
-            <Box key={size} gap="$xs">
-              <Text fontSize="$xs" color="$color10">
+            <Box key={size} gap="xs">
+              <Text fontSize="xs" color="color10">
                 {size}
               </Text>
               <Separator variant={variant} size={size} />
@@ -188,8 +188,8 @@ export const Styles: Story = {
     label: "Section",
     labelPosition: "center",
     styles: {
-      line: { borderColor: "$blue7" },
-      label: { color: "$blue9", fontWeight: "700" },
+      line: { borderColor: "blue7" },
+      label: { color: "blue9", fontWeight: "700" },
     },
   },
   render: (args) => (

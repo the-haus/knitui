@@ -70,8 +70,8 @@ export const NoTrackList: Story = { args: { showTrackList: false } };
 export const Styles: Story = {
   args: {
     styles: {
-      root: { backgroundColor: "$green3", borderColor: "$green6" },
-      trackRow: { borderRadius: "$lg" },
+      root: { backgroundColor: "blue3", borderColor: "blue6" },
+      trackRow: { borderRadius: "lg" },
     },
   },
 };

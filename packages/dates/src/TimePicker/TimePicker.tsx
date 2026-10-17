@@ -70,43 +70,43 @@ export type TimePickerSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 /** Per-size height + horizontal inset for the field frame (the kit input recipe). */
 const fieldFrameSizeVariant = {
-  xs: { height: "$xs", paddingHorizontal: "$xs" },
-  sm: { height: "$sm", paddingHorizontal: "$sm" },
-  md: { height: "$md", paddingHorizontal: "$sm" },
-  lg: { height: "$lg", paddingHorizontal: "$md" },
-  xl: { height: "$xl", paddingHorizontal: "$md" },
+  xs: { height: "xs", paddingHorizontal: "xs" },
+  sm: { height: "sm", paddingHorizontal: "sm" },
+  md: { height: "md", paddingHorizontal: "sm" },
+  lg: { height: "lg", paddingHorizontal: "md" },
+  xl: { height: "xl", paddingHorizontal: "md" },
 } as const;
 
 /**
  * The bordered field row that holds the editable time segments. Mirrors the kit
  * `Input` root recipe (border/background/radius + `focused`/`error`/`disabled`/
- * `variant`), themed from the active Tamagui theme — `$red9` keeps the error
+ * `variant`), themed from the active Tamagui theme — `red9` keeps the error
  * border red under every accent. The inner `SpinInput`/`AmPmInput` segments are
  * rendered `variant="unstyled"` so only this frame draws a border.
  */
 const TimePickerFieldFrame = styled(Box, {
-  name: "TimePickerField",
+  displayName: "TimePickerField",
   flexDirection: "row",
   alignItems: "center",
   minWidth: 0,
   borderWidth: 1,
-  borderColor: "$borderColor",
-  backgroundColor: "$background",
-  borderRadius: "$sm",
+  borderColor: "borderColor",
+  backgroundColor: "background",
+  borderRadius: "sm",
   overflow: "hidden",
 
   variants: {
     size: fieldFrameSizeVariant,
     variant: {
       default: {},
-      filled: { backgroundColor: "$color2" },
+      filled: { backgroundColor: "color2" },
       unstyled: { borderWidth: 0, backgroundColor: "transparent" },
     },
     focused: {
-      true: { borderColor: "$borderColorFocus" },
+      true: { borderColor: "focusRingColor" },
     },
     error: {
-      true: { borderColor: "$red9" },
+      true: { borderColor: "red9" },
     },
     disabled: {
       true: { opacity: 0.6, pointerEvents: "none" },
@@ -628,7 +628,7 @@ const TimePickerComponent = React.forwardRef<TamaguiElement, TimePickerProps>(
       : {};
 
     const colon = (
-      <Text key="colon" color="$color" userSelect="none" paddingHorizontal={1} {...s.get("colon")}>
+      <Text key="colon" color="color" userSelect="none" paddingHorizontal={1} {...s.get("colon")}>
         :
       </Text>
     );
@@ -811,7 +811,7 @@ const TimePickerComponent = React.forwardRef<TamaguiElement, TimePickerProps>(
         scrollAreaProps={scrollAreaProps}
       />
     ) : (
-      <Box flexDirection="row" gap="$xs" {...s.get("dropdown")}>
+      <Box flexDirection="row" gap="xs" {...s.get("dropdown")}>
         <TimeControlsList
           min={format === "12h" ? 1 : 0}
           max={format === "12h" ? 12 : 23}

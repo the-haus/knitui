@@ -72,7 +72,7 @@ export const Playground: Story = {};
 /** Full token size scale rendered side by side for quick comparison. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Burger key={size} {...args} size={size} aria-label={`Toggle — ${size}`} />
       ))}
@@ -83,7 +83,7 @@ export const Sizes: Story = {
 /** The opened (×) state — the full token size scale to show the morph result. */
 export const Opened: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Burger key={size} {...args} size={size} opened aria-label={`Close — ${size}`} />
       ))}
@@ -97,7 +97,7 @@ export const Opened: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Burger key={shadow} {...args} shadow={shadow} aria-label={`Toggle — ${shadow}`} />
       ))}
@@ -110,7 +110,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Burger
           {...args}
           opened={opened}
@@ -139,7 +139,7 @@ export const WithLabel: Story = {
 /** Theme accent — line color follows the active theme tokens. */
 export const ThemeAccent: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["red", "green", "blue", "orange"] as const).map((theme) => (
         <Burger key={theme} {...args} theme={theme} aria-label="Toggle navigation" />
       ))}
@@ -170,8 +170,8 @@ export const Styles: Story = {
     "aria-label": "Toggle navigation",
     children: <Text>Menu</Text>,
     styles: {
-      line: { backgroundColor: "$red9" },
-      text: { color: "$blue11", fontWeight: "700" },
+      line: { backgroundColor: "red9" },
+      text: { color: "blue11", fontWeight: "700" },
     },
   },
 };

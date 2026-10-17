@@ -1,4 +1,10 @@
-import { FONT_UNITS_REM, pxToRem, ROOT_FONT_SIZE_PX, toFontUnits } from "./font-units";
+import {
+  FONT_UNITS_REM,
+  pxToRem,
+  ROOT_FONT_SIZE_PX,
+  toFontUnits,
+  toLineHeightUnits,
+} from "./font-units";
 import { fonts } from "./fonts";
 import { getFontSize, getLineHeight } from "./get-font-size";
 import { font, lineHeightRatios } from "./scales";
@@ -35,15 +41,29 @@ describe("toFontUnits", () => {
   });
 
   it("converts numbers and passes everything else through on the web", () => {
-    expect(toFontUnits({ sm: 16, md: "1.2em", lg: "$theme" }, true)).toEqual({
+    expect(toFontUnits({ sm: 16, md: "1.2em", lg: "theme" }, true)).toEqual({
       sm: "1rem",
       md: "1.2em",
-      lg: "$theme",
+      lg: "theme",
     });
   });
 
   it("emits rem in this (web) test runtime", () => {
     expect(FONT_UNITS_REM).toBe(true);
+  });
+});
+
+describe("toLineHeightUnits", () => {
+  it('native: px numbers become "<n>px" strings (a bare number is a v3 RATIO)', () => {
+    expect(toLineHeightUnits({ sm: 24, md: "1.5", lg: "normal" }, false)).toEqual({
+      sm: "24px",
+      md: "1.5",
+      lg: "normal",
+    });
+  });
+
+  it("web: rem, like font sizes", () => {
+    expect(toLineHeightUnits({ sm: 24 }, true)).toEqual({ sm: "1.5rem" });
   });
 });
 
@@ -55,10 +75,11 @@ describe("font tokens on the web", () => {
         expect(remToPx(size[key])).toBe(font[key]);
         expect(remToPx(lineHeight?.[key])).toBe(Math.round(font[key] * lineHeightRatios[key]));
         // the config-free px helpers stay numeric and agree with the tokens
-        expect(remToPx(size[key])).toBe(getFontSize(`$${key}`));
-        expect(remToPx(lineHeight?.[key])).toBe(getLineHeight(`$${key}`));
+        expect(remToPx(size[key])).toBe(getFontSize(key));
+        expect(remToPx(lineHeight?.[key])).toBe(getLineHeight(key));
       }
-      expect(remToPx(size.true)).toBe(font.md);
+      // v3 reserves `true`: no alias key in the font sections
+      expect(size).not.toHaveProperty("true");
     }
   });
 

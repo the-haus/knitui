@@ -1,33 +1,31 @@
 import * as React from "react";
 
-import { type GetProps, getTokenValue, isWeb, type SpaceTokens, styled } from "@knitui/core";
+import {
+  type GetProps,
+  isWeb,
+  resolveToken,
+  type SpaceTokens,
+  styleable,
+  styled,
+} from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 
-const SPACING_KEYS = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
+/** Spacing as a space token (`"xxs"`–`"xxl"`) or a raw px number. */
+export type SimpleGridSpacing = SpaceTokens | number;
 
-type SimpleGridSpacingKey = (typeof SPACING_KEYS)[number];
+const DEFAULT_SPACING: SimpleGridSpacing = "md";
 
-/** Spacing as a space key, `$space` token, or a raw px number. */
-export type SimpleGridSpacing = SimpleGridSpacingKey | SpaceTokens | number;
-
-const DEFAULT_SPACING: SimpleGridSpacingKey = "md";
-
-const isSimpleGridSpacingKey = (value: SimpleGridSpacing): value is SimpleGridSpacingKey =>
-  typeof value === "string" && (SPACING_KEYS as readonly string[]).includes(value);
-
-const toSpacingToken = (value: SimpleGridSpacingKey): SpaceTokens => `$${value}` as SpaceTokens;
-
-const resolveSpacingToken = (token: SpaceTokens): number => {
-  const value = getTokenValue(token as Parameters<typeof getTokenValue>[0], "space");
-  return typeof value === "number" ? value : 0;
-};
-
+/**
+ * Spacing in px. The cell math (per-column inline padding, `calc()` basis) needs
+ * a real number, so a space token resolves through the active config and an
+ * unknown name falls back to 0.
+ */
 const resolveSpacing = (spacing: SimpleGridSpacing): number => {
   if (typeof spacing === "number") return spacing;
-  if (isSimpleGridSpacingKey(spacing)) return resolveSpacingToken(toSpacingToken(spacing));
-  return resolveSpacingToken(spacing);
+  const value = resolveToken(spacing, "space");
+  return typeof value === "number" ? value : 0;
 };
 
 /**
@@ -51,7 +49,7 @@ const resolveSpacing = (spacing: SimpleGridSpacing): number => {
  * matching `Grid`. Accent/theme is inherited; no Mantine `color` prop.
  */
 const SimpleGridFrame = styled(Box, {
-  name: "SimpleGrid",
+  displayName: "SimpleGrid",
   flexDirection: "row",
   flexWrap: "wrap",
 });
@@ -61,7 +59,7 @@ type SimpleGridFrameProps = Omit<GetProps<typeof SimpleGridFrame>, "children" | 
 export interface SimpleGridProps extends SimpleGridFrameProps {
   /** Number of equal columns. @default 1 */
   cols?: number;
-  /** Spacing between columns — space key (`xxs`–`xxl`), `$space` token, or px number. @default "md" */
+  /** Spacing between columns — a space token (`"xxs"`–`"xxl"`) or a px number. @default "md" */
   spacing?: SimpleGridSpacing;
   /** Spacing between rows; falls back to `spacing` when unset. */
   verticalSpacing?: SimpleGridSpacing;
@@ -87,7 +85,7 @@ export interface SimpleGridProps extends SimpleGridFrameProps {
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each child is wrapped in a
  * cell `Box` (the cross-platform grid-track technique); the `cell` slot reaches
- * that wrapper, so `styles={{ cell: { padding: "$xs" } }}` restyles every cell.
+ * that wrapper, so `styles={{ cell: { padding: "xs" } }}` restyles every cell.
  */
 export interface SimpleGridStyles {
   /** Props for the per-child cell wrapper `Box`. */
@@ -113,7 +111,8 @@ const minLessGap = (min: number | string, gap: number): BoxProps["flexBasis"] =>
   return (isWeb ? `calc(${min} - ${gap}px)` : min) as BoxProps["flexBasis"];
 };
 
-export const SimpleGrid = SimpleGridFrame.styleable<SimpleGridProps>(
+export const SimpleGrid = styleable<SimpleGridProps>(
+  SimpleGridFrame,
   function SimpleGrid(props, ref) {
     const {
       cols = 1,

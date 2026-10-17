@@ -271,7 +271,7 @@ describe("Calendar", () => {
         ariaLabels={ariaLabels}
       />,
     );
-    expect(screen.getByTestId("calendar-root")).toHaveStyle({ padding: "8px 8px 8px 8px" });
+    expect(screen.getByTestId("calendar-root")).toHaveStyle({ padding: "8px" });
   });
 
   describe("static parts", () => {
@@ -282,7 +282,7 @@ describe("Calendar", () => {
     it("Calendar.Frame is extensible via styled()", () => {
       const Extended = styled(Calendar.Frame, { padding: 12 });
       render(<Extended data-testid="extended-frame" />);
-      expect(screen.getByTestId("extended-frame")).toHaveStyle({ padding: "12px 12px 12px 12px" });
+      expect(screen.getByTestId("extended-frame")).toHaveStyle({ padding: "12px" });
     });
   });
 });

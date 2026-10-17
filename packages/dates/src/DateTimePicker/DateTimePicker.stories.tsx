@@ -30,7 +30,7 @@ export const Default: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <DateTimePicker
           label="Appointment"
           placeholder="Pick date & time"
@@ -38,7 +38,7 @@ export const Default: Story = {
           onChange={setValue}
           defaultDate="2026-06-15"
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -51,7 +51,7 @@ export const WithSeconds: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <DateTimePicker
           label="Precise time"
           withSeconds
@@ -59,7 +59,7 @@ export const WithSeconds: Story = {
           onChange={setValue}
           defaultDate="2026-06-15"
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -72,7 +72,7 @@ export const DefaultTimeValue: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <DateTimePicker
           label="Defaults to 09:00"
           defaultTimeValue="09:00"
@@ -80,7 +80,7 @@ export const DefaultTimeValue: Story = {
           onChange={setValue}
           defaultDate="2026-06-15"
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -93,7 +93,7 @@ export const Range: Story = {
   render: () => {
     const [value, setValue] = React.useState<DatesRangeValue<DateStringValue>>([null, null]);
     return (
-      <Box gap="$md" width={360}>
+      <Box gap="md" width={360}>
         <DateTimePicker
           type="range"
           label="Window"
@@ -101,7 +101,7 @@ export const Range: Story = {
           onChange={setValue}
           defaultDate="2026-06-15"
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           {value[0] ?? "—"} → {value[1] ?? "—"}
         </Text>
       </Box>
@@ -114,9 +114,9 @@ export const Clearable: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>("2026-06-15 13:30:00");
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <DateTimePicker label="Clearable" clearable value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -129,7 +129,7 @@ export const MinMax: Story = {
   render: () => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" width={320}>
+      <Box gap="md" width={320}>
         <DateTimePicker
           label="Within range"
           value={value}
@@ -138,7 +138,7 @@ export const MinMax: Story = {
           minDate="2026-06-05"
           maxDate="2026-06-25"
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>

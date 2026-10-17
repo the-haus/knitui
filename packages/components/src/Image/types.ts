@@ -8,6 +8,8 @@ import type {
 
 import type { TamaguiElement, ViewProps } from "@knitui/core";
 
+import type { ShadowKey } from "../internal/style-props";
+
 /** CSS `object-fit` values — identical to expo-image's `contentFit` enum. */
 export type ImageObjectFit = "contain" | "cover" | "fill" | "none" | "scale-down";
 /** CSS `object-position` value — accepts expo-image's richer `ImageContentPosition`. */
@@ -78,7 +80,7 @@ type ForwardedExpoProps = Pick<
 
 /**
  * Props for the cross-platform `Image`. Combines:
- * - Tamagui `ViewProps` for styling (width, height, bg, margins, `$token`s…),
+ * - Tamagui `ViewProps` for styling (width, height, bg, margins, token names…),
  * - the forwarded expo-image surface (`ForwardedExpoProps`),
  * - Mantine-compatible aliases (`fit`, `radius`, `fallbackSrc`, `src`),
  * - cross-platform-normalised `onLoad`/`onError` handlers.
@@ -90,6 +92,8 @@ export type ImageProps = Omit<ViewProps, "transition"> &
      * Mirrors Mantine's `radius` prop.
      */
     radius?: string | number;
+    /** Elevation from the shared shadow ladder (`"xs"`…`"xxl"`), as on `Box`. */
+    shadow?: ShadowKey;
     /**
      * How the image should be resized to fit its container. Mantine-compatible
      * alias for `contentFit`/`objectFit`.

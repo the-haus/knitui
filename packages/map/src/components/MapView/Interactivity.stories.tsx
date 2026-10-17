@@ -40,7 +40,7 @@ export const OnPress: Story = {
       return (
         <Box flex={1}>
           <Box p={8} backgroundColor="#f6f6f6" borderWidth={1} borderColor="#ddd">
-            <Text fontFamily="$mono" fontSize={12} color="#111827">
+            <Text fontFamily="mono" fontSize={12} color="#111827">
               {last
                 ? `Clicked: ${last.lng.toFixed(5)}, ${last.lat.toFixed(5)} (lng, lat)`
                 : "Click anywhere on the map to capture its coordinates."}
@@ -77,7 +77,7 @@ export const OnRegionDidChange: Story = {
       return (
         <Box flex={1}>
           <Box p={8} backgroundColor="#f6f6f6" borderWidth={1} borderColor="#ddd">
-            <Text fontFamily="$mono" fontSize={12} color="#111827">
+            <Text fontFamily="mono" fontSize={12} color="#111827">
               {region
                 ? `Center: ${region.center[0].toFixed(4)}, ${region.center[1].toFixed(4)} · Zoom: ${region.zoom.toFixed(2)}`
                 : "Pan or zoom the map to read the live viewport."}
@@ -137,7 +137,7 @@ export const ImperativeRef: Story = {
             >
               Read viewport
             </Button>
-            <Text fontFamily="$mono" fontSize={12} color="#111827">
+            <Text fontFamily="mono" fontSize={12} color="#111827">
               {info}
             </Text>
           </Box>

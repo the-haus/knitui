@@ -144,3 +144,22 @@ describe("Spoiler", () => {
     expect(screen.getByTestId("spoiler-fade")).toBeInTheDocument();
   });
 });
+
+/** `name` attributes on the page that came from a styled() config (v3 forwards unknown options). */
+const leakedNames = (prefix: string) =>
+  Array.from(document.querySelectorAll("[name]"))
+    .map((el) => el.getAttribute("name") ?? "")
+    .filter((n) => n.startsWith(prefix));
+
+describe("Spoiler DOM attributes", () => {
+  // v3 has no `name` styled() option: it becomes a default prop and lands in the
+  // DOM (and in FormData). Frames use `displayName`; nothing may leak.
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(
+      <Spoiler showLabel="Show more" hideLabel="Hide">
+        <span>body</span>
+      </Spoiler>,
+    );
+    expect(leakedNames("Spoiler")).toEqual([]);
+  });
+});

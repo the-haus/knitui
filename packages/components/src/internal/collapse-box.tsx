@@ -4,15 +4,15 @@ import { DURATIONS, type TamaguiElement } from "@knitui/core";
 
 import { Box } from "../Box";
 import type { CollapseBoxProps } from "./collapse-box.shared";
-import { animateOnlyProps, timedTransition, transitionProps } from "./style-props";
+import { timedTransition } from "./style-props";
 
 export type { CollapseAxis, CollapseBoxProps } from "./collapse-box.shared";
 
 /**
  * Web clip — stays on Tamagui's animation driver. Renders the {@link CollapseBoxProps.Frame}
- * with the size as a Tamagui prop plus the kit's `transition` + `animateOnly`, so
- * the driver emits the CSS height/width transition exactly as the components did
- * inline before. The animation props are applied AFTER the spread `rest` (slot
+ * with the size as a Tamagui prop plus a v3 `transition={{ duration, easing,
+ * properties }}` scoped to the animated axis (+ opacity), so the driver emits
+ * exactly one CSS height/width transition with the caller's EXACT easing curve. The animation props are applied AFTER the spread `rest` (slot
  * styles / a11y / user props) so a slot can't accidentally clobber the size or
  * transition; an explicit `opacity` still wins over a slot's.
  */
@@ -36,19 +36,23 @@ export const CollapseBox = React.forwardRef<TamaguiElement, CollapseBoxProps>(fu
 ) {
   const FrameComp: React.ElementType = Frame ?? Box;
 
-  const sizeProp = axis === "width" ? { width: size } : { height: size };
-  const properties = animateOpacity ? [axis, "opacity"] : [axis];
-  const transition = transitionProps(animate ? timedTransition(durationMs, timingFunction) : null);
-  const animateOnly = animate ? animateOnlyProps(properties) : undefined;
+  // Conditional: an explicit `height={undefined}` (size unset = "auto") would claim
+  // the call-site slot and clear a Frame's own height (docs/v3/conventions.md §11).
+  const sizeProp =
+    size === undefined ? null : axis === "width" ? { width: size } : { height: size };
+  const transition = animate
+    ? timedTransition(durationMs, timingFunction, animateOpacity ? `${axis}, opacity` : axis)
+    : null;
 
   return (
     <FrameComp
       ref={ref}
       {...rest}
       {...sizeProp}
-      opacity={animateOpacity ? opacity : undefined}
-      {...animateOnly}
-      {...transition}
+      // Only when fading: in Tamagui 3.0.18 an explicit `opacity={undefined}` still
+      // claims the call-site slot and CLEARS a Frame's own opacity.
+      {...(animateOpacity ? { opacity } : null)}
+      transition={transition}
     >
       {children}
     </FrameComp>

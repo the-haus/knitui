@@ -81,14 +81,12 @@
     "clean": "rimraf lib .turbo"
   },
   "dependencies": {
-    "@knitui/core": "workspace:*",
-    "@tamagui/babel-plugin": "2.7.7"
+    "@knitui/core": "workspace:*"
   },
   "optionalDependencies": {
-    "@tamagui/metro-plugin": "2.7.7",
-    "@tamagui/next-plugin": "2.7.7",
-    "@tamagui/vite-plugin": "2.7.7",
-    "tamagui-loader": "^2.3.0"
+    "@tamagui/cli": "3.0.18",
+    "@tamagui/next-plugin": "3.0.18",
+    "tamagui-loader": "3.0.18"
   },
   "peerDependencies": {
     "next": "*",

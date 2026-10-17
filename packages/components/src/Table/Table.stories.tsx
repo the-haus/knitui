@@ -159,12 +159,12 @@ export const AllBorders: Story = {
 /** Alternating row background — `striped="odd"` shades the first, third… rows. */
 export const Striped: Story = {
   render: (args) => (
-    <Box gap="$lg">
-      <Text fontWeight="700" fontSize="$sm" color="$color11">
+    <Box gap="lg">
+      <Text fontWeight="700" fontSize="sm" color="color11">
         odd (default)
       </Text>
       <SampleTable {...args} striped="odd" withTableBorder />
-      <Text fontWeight="700" fontSize="$sm" color="$color11">
+      <Text fontWeight="700" fontSize="sm" color="color11">
         even
       </Text>
       <SampleTable {...args} striped="even" withTableBorder />
@@ -215,9 +215,9 @@ export const Styles: Story = {
   args: {
     withTableBorder: true,
     styles: {
-      table: { borderColor: "$blue7", borderWidth: 2 },
-      th: { color: "$red9", fontWeight: "700" },
-      td: { color: "$blue9" },
+      table: { borderColor: "blue7", borderWidth: 2 },
+      th: { color: "red9", fontWeight: "700" },
+      td: { color: "blue9" },
     },
   },
   render: (args) => (
@@ -234,10 +234,10 @@ export const Styles: Story = {
 /** The five shadow levels from the shared elevation ladder, mapped over the scale. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontWeight="700" fontSize="$sm" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontWeight="700" fontSize="sm" color="color11">
             {shadow}
           </Text>
           <SampleTable {...args} shadow={shadow} withTableBorder />

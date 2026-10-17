@@ -5,6 +5,7 @@ import { useSharedValue, withSpring } from "react-native-reanimated";
 import { Box } from "@knitui/components";
 
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
+import { type HostStyle, toHostStyle } from "../style";
 import { transformToCss } from "../view/transformToCss";
 import { DeckCardBox } from "./chrome";
 import { stampOpacityFor } from "./decide";
@@ -18,6 +19,9 @@ import {
 import type { DeckCardState, SwipeDirection } from "./types";
 import { useCardGesture } from "./useCardGesture";
 
+/** Stamps start hidden; the painter drives their opacity (hoisted). */
+const STAMP_HIDDEN: HostStyle = { opacity: 0 };
+
 /**
  * One deck card (web). Reanimated's `useAnimatedStyle` does not re-run on
  * shared-value changes under this repo's Vite tooling (see `Item.web.tsx` /
@@ -29,6 +33,7 @@ import { useCardGesture } from "./useCardGesture";
  * (`depthSV`) that springs to the `depth` prop, so a promoted card rises
  * smoothly without any deck-wide value that must reset with the React index bump.
  */
+
 export function SwipeCard(props: SwipeCardProps) {
   const {
     children,
@@ -127,7 +132,7 @@ export function SwipeCard(props: SwipeCardProps) {
 
   return (
     <GestureDetector gesture={gesture}>
-      <Box ref={cardRef as never} style={[CARD_BASE, initialStyle]}>
+      <Box ref={cardRef as never} style={[CARD_BASE, toHostStyle(initialStyle)]}>
         <DeckCardBox {...cardStyle}>{children}</DeckCardBox>
         {isTop &&
           stampDirections.map((dir) => {
@@ -138,7 +143,7 @@ export function SwipeCard(props: SwipeCardProps) {
                 key={dir}
                 ref={setStampRef(dir) as never}
                 pointerEvents="none"
-                style={[stampPosition(dir), { opacity: 0 }]}
+                style={[stampPosition(dir), STAMP_HIDDEN]}
               >
                 {content}
               </Box>

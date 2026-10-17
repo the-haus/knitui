@@ -1,0 +1,28 @@
+variant-function · 17 · variant "...size" (function)
+token-literal-type · 3 · $sm
+token-literal-type · 3 · $md
+token-template · 4 · `$${string}` (type)
+token-literal · 6 · $sm
+token-literal · 6 · $md
+token-template · 7 · `$${v}`
+token-literal · 11 · $md
+token-literal · 12 · $color2
+token-variant-key · 15 · $sm → sm
+token-literal · 15 · $sm
+token-variant-key · 16 · $md → md
+token-literal · 16 · $md
+token-literal · 20 · $md
+token-literal · 24 · $md
+token-api-call · 24 · getTokenValue("$md")
+token-literal · 26 · $lg
+token-literal · 26 · $sm
+token-literal · 26 · $background
+token-compound · 26 · "0px 5px 12px 0px $dropShadowColor"
+token-template-compound · 27 · `$${price.toFixed(2)}`
+token-removed · 29 · $true has no v3 equivalent
+media-prop · 29 · $sm={…}
+token-literal · 29 · $xs
+token-template · 30 · `$${"md"}`
+sigil-detection · 37 · v.startsWith("$")
+sigil-detection · 37 · v[0] === "$"
+token-dot-path · 38 · "$color.blue"

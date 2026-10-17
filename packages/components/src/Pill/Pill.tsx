@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
 import { Box } from "../Box";
 import { CloseButton, type CloseButtonProps } from "../CloseButton";
@@ -39,35 +45,35 @@ const REMOVE_BUTTON_SIZE: Record<PillSize, CloseButtonSize> = {
 };
 
 const REMOVE_ICON_SIZE: Record<PillSize, CloseButtonIconSize> = {
-  xxs: "$xxs",
-  xs: "$xs",
-  sm: "$sm",
-  md: "$md",
-  lg: "$lg",
-  xl: "$xl",
-  xxl: "$xxl",
+  xxs: "xxs",
+  xs: "xs",
+  sm: "sm",
+  md: "md",
+  lg: "lg",
+  xl: "xl",
+  xxl: "xxl",
 };
 
 /**
  * Mirrors Mantine's `Pill` — a small rounded label, optionally with a remove
  * button. Inside a `Pill.Group` it inherits `size`/`disabled`. The `contrast`
- * variant uses the active theme's solid accent (`$color9`); colour comes from the
+ * variant uses the active theme's solid accent (`color9`); colour comes from the
  * `theme` prop + palette ramp, never a Mantine `color` prop.
  */
 const PillFrame = styled(Box, {
-  name: "Pill",
+  displayName: "Pill",
   context: PillContext,
   flexDirection: "row",
   alignItems: "center",
   alignSelf: "flex-start",
-  gap: "$xs",
+  gap: "xs",
   borderRadius: 9999,
   overflow: "hidden",
 
   variants: {
     variant: {
-      default: { backgroundColor: "$color4" },
-      contrast: { backgroundColor: "$color9" },
+      default: { backgroundColor: "color4" },
+      contrast: { backgroundColor: "color9" },
       // Base stays transparent; the gradient is painted at render by `useGradient`.
       gradient: { backgroundColor: "transparent" },
     },
@@ -82,22 +88,29 @@ const PillFrame = styled(Box, {
 });
 
 const PillLabel = styled(Text, {
-  name: "PillLabel",
+  displayName: "PillLabel",
   context: PillContext,
   numberOfLines: 1,
   userSelect: "none",
 
   variants: {
     variant: {
-      default: { color: "$color12" },
-      contrast: { color: "$color1" },
-      gradient: { color: "$white" },
+      default: { color: "color12" },
+      contrast: { color: "color1" },
+      gradient: { color: "white" },
     },
     size: {
       ...controlFontVariant,
     },
   } as const,
 });
+
+/**
+ * On a gradient pill the label is white, so the remove glyph defaults to white
+ * too (a transparent CloseButton would otherwise show a dark `✕`). A module
+ * constant: spread on every gradient render, never re-allocated.
+ */
+const GRADIENT_REMOVE_PROPS = { styles: { icon: { color: "white" } } } as const;
 
 // --- Pill.Group ------------------------------------------------------------
 
@@ -115,7 +128,7 @@ export interface PillGroupProps extends Omit<GetProps<typeof Box>, "gap"> {
    * @default "sm"
    */
   size?: PillSize;
-  /** Gap between pills — token string or px number. @default "$xs" */
+  /** Gap between pills — token string or px number. @default "xs" */
   gap?: GetProps<typeof Box>["gap"];
   /** Disable all child pills. */
   disabled?: boolean;
@@ -124,15 +137,15 @@ export interface PillGroupProps extends Omit<GetProps<typeof Box>, "gap"> {
 }
 
 const PillGroupFrame = styled(Box, {
-  name: "PillGroup",
+  displayName: "PillGroup",
   flexDirection: "row",
   flexWrap: "wrap",
   alignItems: "center",
-  gap: "$xs",
+  gap: "xs",
 });
 
-const PillGroup = PillGroupFrame.styleable<PillGroupProps>(function PillGroup(props, ref) {
-  const { size, gap = "$xs", disabled, children, ...rest } = props;
+const PillGroup = styleable<PillGroupProps>(PillGroupFrame, function PillGroup(props, ref) {
+  const { size, gap = "xs", disabled, children, ...rest } = props;
   // Inherit size/disabled from an enclosing provider (e.g. a `PillsInput`, which
   // provides a field-relative pill size) when this group doesn't set its own.
   const parentGroup = React.useContext(PillGroupContext);
@@ -156,8 +169,8 @@ const PillGroup = PillGroupFrame.styleable<PillGroupProps>(function PillGroup(pr
 /**
  * Named style slots (Pillar B / `internal/styles.ts`) for `Pill`. Each key maps
  * to the props of the styled part it targets, so
- * `styles={{ removeButton: { backgroundColor: "$color5" } }}` is sugar for
- * `<Pill.RemoveButton backgroundColor="$color5" />`.
+ * `styles={{ removeButton: { backgroundColor: "color5" } }}` is sugar for
+ * `<Pill.RemoveButton backgroundColor="color5" />`.
  */
 export interface PillStyles {
   /** Props for the label text (`Pill.Label`). */
@@ -194,12 +207,12 @@ export interface PillProps extends Omit<
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
 
-const PillComponent = PillFrame.styleable<PillProps>(function Pill(props, ref) {
+const PillComponent = styleable<PillProps>(PillFrame, function Pill(props, ref) {
   const {
     variant = "default",
     size,
@@ -256,10 +269,9 @@ const PillComponent = PillFrame.styleable<PillProps>(function Pill(props, ref) {
           variant="transparent"
           size={REMOVE_BUTTON_SIZE[resolvedSize]}
           iconSize={REMOVE_ICON_SIZE[resolvedSize]}
-          // On a gradient pill the label is white, so default the remove glyph to
-          // white too (a transparent CloseButton would otherwise show a dark `✕`).
-          // Spread first so an explicit `removeButton` slot / props still win.
-          {...(variant === "gradient" ? { styles: { icon: { color: "$white" } } } : null)}
+          // Gradient pills default the glyph to white; spread first so an explicit
+          // `removeButton` slot / props still win.
+          {...(variant === "gradient" ? GRADIENT_REMOVE_PROPS : null)}
           // Precedence (low → high): the `removeButton` slot sugar, then the
           // deprecated `removeButtonProps` alias, then the forced per-part props
           // (resolved aria-label / press handler that fold in the alias).

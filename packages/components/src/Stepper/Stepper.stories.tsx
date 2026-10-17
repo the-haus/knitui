@@ -111,7 +111,7 @@ export const Playground: Story = {
 /** All seven sizes from xxs to xxl. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SIZES.map((size) => (
         <Stepper key={size} active={1} size={size}>
           <Stepper.Step label="First" />
@@ -156,13 +156,13 @@ export const Vertical: Story = {
 /** Elevation shadow ladder applied to the Stepper frame via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
-          <Stepper {...args} shadow={shadow} active={1} padding="$md">
+          <Stepper {...args} shadow={shadow} active={1} padding="md">
             <Stepper.Step label="First" />
             <Stepper.Step label="Second" />
             <Stepper.Step label="Third" />
@@ -179,7 +179,7 @@ export const Controlled: Story = {
     const [active, setActive] = React.useState(0);
     const total = 3;
     return (
-      <Box gap="$lg">
+      <Box gap="lg">
         <Stepper {...args} active={active} onStepClick={setActive}>
           <Stepper.Step label="Account" description="Create your account">
             <Text>Step 1 — account details.</Text>
@@ -194,25 +194,25 @@ export const Controlled: Story = {
             <Text>All done! Your submission was received.</Text>
           </Stepper.Completed>
         </Stepper>
-        <Box flexDirection="row" gap="$md">
+        <Box flexDirection="row" gap="md">
           <Text
             onPress={() => setActive((n) => Math.max(0, n - 1))}
-            color="$color11"
-            paddingHorizontal="$sm"
-            paddingVertical="$xs"
+            color="color11"
+            paddingHorizontal="sm"
+            paddingVertical="xs"
           >
             ← Back
           </Text>
           <Text
             onPress={() => setActive((n) => Math.min(total, n + 1))}
-            color="$color9"
-            paddingHorizontal="$sm"
-            paddingVertical="$xs"
+            color="color9"
+            paddingHorizontal="sm"
+            paddingVertical="xs"
           >
             Next →
           </Text>
         </Box>
-        <Text fontSize={12} color="$color11">
+        <Text fontSize={12} color="color11">
           active: {active}
         </Text>
       </Box>
@@ -265,7 +265,7 @@ export const CustomIcons: Story = {
 export const KeepMounted: Story = {
   args: { active: 0, keepMounted: true },
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Stepper {...args}>
         <Stepper.Step label="First">
           <Text>Content one (always mounted)</Text>
@@ -277,7 +277,7 @@ export const KeepMounted: Story = {
           <Text>Content three (always mounted, hidden)</Text>
         </Stepper.Step>
       </Stepper>
-      <Text fontSize={12} color="$color11">
+      <Text fontSize={12} color="color11">
         All step panels are in the DOM — only the active one is visible.
       </Text>
     </Box>
@@ -316,10 +316,10 @@ export const TimelineHorizontal: Story = {
 export const TimelineLineVariants: Story = {
   args: { variant: "timeline", orientation: "vertical", active: 1 },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {(["solid", "dashed", "dotted"] as const).map((lineVariant) => (
         <Box key={lineVariant} width={180}>
-          <Text fontWeight="600" marginBottom="$sm">
+          <Text fontWeight="600" marginBottom="sm">
             {lineVariant}
           </Text>
           <Stepper {...args}>
@@ -378,9 +378,9 @@ export const Styles: Story = {
   args: {
     active: 1,
     styles: {
-      bubble: { borderColor: "$red9", borderWidth: 3 },
-      label: { color: "$red9", fontWeight: "700" },
-      connector: { backgroundColor: "$blue7" },
+      bubble: { borderColor: "red9", borderWidth: 3 },
+      label: { color: "red9", fontWeight: "700" },
+      connector: { backgroundColor: "blue7" },
     },
   },
   render: (args) => (

@@ -26,7 +26,7 @@ import { useKeyboardHeight } from "@knitui/hooks";
  * scroll to it. The web build is a plain scrollable `Box`.
  */
 const Frame = styled(ScrollView, {
-  name: "KeyboardAwareScrollView",
+  displayName: "KeyboardAwareScrollView",
   flex: 1,
 });
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { Button } from "../Button";
-import { fireEvent, render, screen, waitFor } from "../test-utils";
+import { act, fireEvent, render, screen, waitFor } from "../test-utils";
 import { Menu } from "./Menu";
 
 describe("Menu", () => {
@@ -295,5 +295,226 @@ describe("Menu", () => {
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
       expect(enabledItems()[0]).not.toHaveFocus();
     });
+  });
+
+  describe("aria + lifecycle", () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    const Basic = (props: React.ComponentProps<typeof Menu>) => (
+      <Menu {...props}>
+        <Menu.Target>
+          <Button>Toggle</Button>
+        </Menu.Target>
+        <Menu.Dropdown testID="menu-dropdown">
+          <Menu.Label>Group</Menu.Label>
+          <Menu.Item>One</Menu.Item>
+          <Menu.Divider />
+          <Menu.Item>Two</Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    );
+
+    it("wires the ARIA menu-button pattern between trigger and menu", () => {
+      render(<Basic />);
+      const trigger = screen.getByRole("button", { name: "Toggle" });
+      expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(trigger).not.toHaveAttribute("aria-controls");
+
+      fireEvent.click(trigger);
+      const menu = screen.getByRole("menu");
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+      expect(trigger.getAttribute("aria-controls")).toBe(menu.id);
+      expect(menu.getAttribute("aria-labelledby")).toBe(trigger.id);
+      expect(screen.getAllByRole("menuitem")).toHaveLength(2);
+    });
+
+    it("closes on Escape and returns focus to the trigger", async () => {
+      const onClose = jest.fn();
+      render(<Basic onClose={onClose} />);
+      const trigger = screen.getByRole("button", { name: "Toggle" });
+      fireEvent.click(trigger);
+      await waitFor(() => expect(screen.getAllByRole("menuitem")[0]).toHaveFocus());
+
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await waitFor(() => expect(trigger).toHaveFocus());
+    });
+
+    it("closes on an outside press", () => {
+      render(<Basic defaultOpened />);
+      fireEvent.pointerDown(document.body);
+      expect(screen.getByRole("button", { name: "Toggle" })).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+    });
+
+    it("closes after an item press and unmounts once the exit has played", () => {
+      jest.useFakeTimers();
+      const onPress = jest.fn();
+      render(
+        <Menu defaultOpened>
+          <Menu.Target>
+            <Button>Toggle</Button>
+          </Menu.Target>
+          <Menu.Dropdown testID="menu-dropdown">
+            <Menu.Item onPress={onPress}>Pick</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>,
+      );
+      fireEvent.click(screen.getByText("Pick"));
+      expect(onPress).toHaveBeenCalledTimes(1);
+      // Animates out first…
+      expect(screen.getByTestId("menu-dropdown")).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      // …then leaves the tree.
+      expect(screen.queryByTestId("menu-dropdown")).not.toBeInTheDocument();
+    });
+
+    it("keeps the menu open with closeMenuOnClick={false}", () => {
+      render(
+        <Menu defaultOpened>
+          <Menu.Target>
+            <Button>Toggle</Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item closeMenuOnClick={false}>Stay</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>,
+      );
+      fireEvent.click(screen.getByText("Stay"));
+      expect(screen.getByRole("button", { name: "Toggle" })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+    });
+
+    it("hover trigger: opens after openDelay, survives the trip into the dropdown, closes after closeDelay", () => {
+      jest.useFakeTimers();
+      render(<Basic trigger="hover" openDelay={100} closeDelay={200} />);
+      const trigger = screen.getByRole("button", { name: "Toggle" });
+
+      fireEvent.mouseEnter(trigger);
+      act(() => {
+        jest.advanceTimersByTime(99);
+      });
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+
+      // Leaving the trigger schedules the close; entering the dropdown re-opens.
+      fireEvent.mouseLeave(trigger);
+      fireEvent.mouseEnter(screen.getByRole("menu"));
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+      fireEvent.mouseLeave(screen.getByRole("menu"));
+      act(() => {
+        jest.advanceTimersByTime(199);
+      });
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    });
+
+    it("hover trigger: a click after hovering keeps the menu open, and a press opens it", () => {
+      const onPress = jest.fn();
+      render(
+        <Menu trigger="hover">
+          <Menu.Target>
+            <Button onPress={onPress}>Toggle</Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item>One</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>,
+      );
+      const trigger = screen.getByRole("button", { name: "Toggle" });
+      // Pointer path: hover-in opens, the click that follows must not shut it.
+      fireEvent.mouseEnter(trigger);
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+      expect(onPress).toHaveBeenCalledTimes(1);
+    });
+
+    it("hover trigger: a press alone (touch / keyboard) opens the menu", () => {
+      render(<Basic trigger="hover" />);
+      const trigger = screen.getByRole("button", { name: "Toggle" });
+      fireEvent.click(trigger);
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+    });
+
+    it("hover trigger keeps the trigger's own mouse handlers", () => {
+      const onMouseEnter = jest.fn();
+      render(
+        <Menu trigger="hover">
+          <Menu.Target>
+            <Button onMouseEnter={onMouseEnter}>Toggle</Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item>One</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>,
+      );
+      fireEvent.mouseEnter(screen.getByRole("button", { name: "Toggle" }));
+      expect(onMouseEnter).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+    });
+
+    it("marks a disabled item aria-disabled and out of the tab order", () => {
+      render(
+        <Menu defaultOpened>
+          <Menu.Target>
+            <Button>Toggle</Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item disabled>Off</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>,
+      );
+      const item = screen.getByRole("menuitem");
+      expect(item).toHaveAttribute("aria-disabled", "true");
+      expect(item).toHaveAttribute("tabindex", "-1");
+    });
+  });
+});
+
+/** `name` attributes on the page that came from a styled() config (v3 forwards unknown options). */
+const leakedNames = (prefix: string) =>
+  Array.from(document.querySelectorAll("[name]"))
+    .map((el) => el.getAttribute("name") ?? "")
+    .filter((n) => n.startsWith(prefix));
+
+describe("Menu DOM attributes", () => {
+  // v3 has no `name` styled() option: it becomes a default prop and lands in the
+  // DOM (and in FormData). Frames use `displayName`; nothing may leak.
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(
+      <Menu opened>
+        <Menu.Target>
+          <Button>t</Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>L</Menu.Label>
+          <Menu.Item>One</Menu.Item>
+          <Menu.Divider />
+        </Menu.Dropdown>
+      </Menu>,
+    );
+    expect(leakedNames("Menu")).toEqual([]);
+    expect(leakedNames("Popover")).toEqual([]);
   });
 });

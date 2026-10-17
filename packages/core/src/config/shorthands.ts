@@ -1,7 +1,7 @@
 /**
  * Mantine `MantineStyleProps` registered as Tamagui shorthands, so `Box` (and
  * everything built on it) supports the familiar Mantine style props —
- * `<Box m="$md" px="$lg" bg="$color4" c="$color" fz="$lg" maw={320} />` — while
+ * `<Box m="md" px="lg" bg="color4" c="color" fz="lg" maw={320} />` — while
  * still compiling to atomic CSS.
  *
  * Props that Tamagui already exposes natively are intentionally omitted (no

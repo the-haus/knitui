@@ -2,6 +2,8 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { baseValue, declarationsUnder, hasFocusRing } from "../__tests__/css-rules.test.helper";
+import { controlMetrics } from "../internal/control-metrics";
 import { fireEvent, render, screen } from "../test-utils";
 import { Chip } from "./Chip";
 
@@ -196,6 +198,149 @@ describe("Chip", () => {
 
     it("exposes the Icon static", () => {
       expect(Chip.Icon).toBeDefined();
+    });
+  });
+
+  describe("v3 style resolution (web CSS)", () => {
+    // [variant, checked, resting bg, hover clause (prop: value), press bg, label colour]
+    const MATRIX = [
+      [
+        "outline",
+        false,
+        "transparent",
+        "background-color: var(--color2)",
+        "var(--color3)",
+        "var(--color)",
+      ],
+      [
+        "outline",
+        true,
+        "transparent",
+        "border-color: var(--color10)",
+        "var(--color2)",
+        "var(--color11)",
+      ],
+      [
+        "filled",
+        false,
+        "var(--color3)",
+        "background-color: var(--color4)",
+        "var(--color5)",
+        "var(--color)",
+      ],
+      [
+        "filled",
+        true,
+        "var(--color9)",
+        "background-color: var(--color10)",
+        "var(--color8)",
+        "var(--color1)",
+      ],
+      [
+        "light",
+        false,
+        "var(--color2)",
+        "background-color: var(--color3)",
+        "var(--color4)",
+        "var(--color)",
+      ],
+      [
+        "light",
+        true,
+        "var(--color5)",
+        "background-color: var(--color6)",
+        "var(--color7)",
+        "var(--color11)",
+      ],
+    ] as const;
+
+    it.each(MATRIX)(
+      "variant=%s checked=%s resolves fill, hover, press and label colours",
+      (variant, checked, bg, hover, press, fg) => {
+        render(
+          <Chip variant={variant} checked={checked}>
+            C
+          </Chip>,
+        );
+        const chip = screen.getByRole("checkbox");
+        expect(baseValue(chip, "background-color")).toBe(bg);
+        expect(declarationsUnder(chip, ":hover")).toContain(hover);
+        const active = declarationsUnder(chip, ":active");
+        expect(active).toContain(`background-color: ${press}`);
+        // the base press dip composes with the state's press colour
+        expect(active).toContain("--t-scale-x: 0.97");
+        expect(baseValue(screen.getByText("C"), "color")).toBe(fg);
+      },
+    );
+
+    it("outline chips paint their border (checked → accent)", () => {
+      render(
+        <>
+          <Chip>Off</Chip>
+          <Chip defaultChecked>On</Chip>
+        </>,
+      );
+      const [off, on] = screen.getAllByRole("checkbox");
+      expect(baseValue(off!, "border-color")).toBe("var(--color7)");
+      expect(baseValue(on!, "border-color")).toBe("var(--color9)");
+    });
+
+    it.each(["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const)(
+      "size=%s maps height, pill padding and label font size",
+      (size) => {
+        render(<Chip size={size}>S</Chip>);
+        const chip = screen.getByRole("checkbox");
+        expect(baseValue(chip, "height")).toBe(`var(--t-size-${size})`);
+        expect(baseValue(chip, "padding-inline")).toBe(
+          `var(--t-space-${controlMetrics[size].paddingHorizontalPill})`,
+        );
+        expect(baseValue(screen.getByText("S"), "font-size")).toBe(
+          `var(--f-size-${controlMetrics[size].fontSize})`,
+        );
+      },
+    );
+
+    it("is focusable and carries the kit focus ring", () => {
+      render(<Chip>Focus</Chip>);
+      const chip = screen.getByRole("checkbox");
+      expect(chip).toHaveAttribute("tabindex", "0");
+      expect(hasFocusRing(chip)).toBe(true);
+    });
+
+    it("disabled: dimmed, inert, aria-disabled and out of the tab order", () => {
+      render(<Chip disabled>Off</Chip>);
+      const chip = screen.getByRole("checkbox");
+      expect(chip).toHaveAttribute("aria-disabled", "true");
+      expect(chip).not.toHaveAttribute("tabindex", "0");
+      expect(baseValue(chip, "opacity")).toBe("0.6");
+      expect(baseValue(chip, "pointer-events")).toBe("none");
+    });
+
+    it("reports aria-checked as it toggles", () => {
+      render(<Chip>T</Chip>);
+      const chip = screen.getByRole("checkbox");
+      expect(chip).toHaveAttribute("aria-checked", "false");
+      fireEvent.click(chip);
+      expect(chip).toHaveAttribute("aria-checked", "true");
+      expect(baseValue(chip, "border-color")).toBe("var(--color9)");
+    });
+
+    it("is a radio inside a single-select group", () => {
+      render(
+        <Chip.Group defaultValue="a">
+          <Chip value="a">A</Chip>
+          <Chip value="b">B</Chip>
+        </Chip.Group>,
+      );
+      const radios = screen.getAllByRole("radio");
+      expect(radios).toHaveLength(2);
+      expect(radios[0]).toHaveAttribute("aria-checked", "true");
+      expect(radios[1]).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("does not leak a `name` attribute onto the host", () => {
+      render(<Chip>N</Chip>);
+      expect(screen.getByRole("checkbox")).not.toHaveAttribute("name");
     });
   });
 });

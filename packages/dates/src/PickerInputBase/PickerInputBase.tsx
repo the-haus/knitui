@@ -25,7 +25,7 @@
 //  12  interaction styling (`pointer` cursor, disabled state) is the `InputBase`
 //      trigger's; `readOnly`/`disabled` keep the dropdown from opening.
 //  13  a typed `forwardRef` forwards the ref to the trigger element (the
-//      sibling-picker norm; `.styleable` is reserved for components that own a
+//      sibling-picker norm; `styleable()` is reserved for components that own a
 //      styled Frame, which this shell does not).
 //  15  COMPILER-SAFE show/hide: the dropdown body is mounted via a CONDITIONAL
 //      SUBTREE (`!isModal ? <Popover.Dropdown>…`) and the picker children are

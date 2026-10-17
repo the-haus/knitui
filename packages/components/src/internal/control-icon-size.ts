@@ -37,15 +37,12 @@ const isSizeKey = (value: unknown): value is SizeKey =>
 
 /**
  * Resolve a control size to its in-control icon px. A number passes straight
- * through (an explicit icon px); a non-token / absent size (including an
- * arbitrary CSS size string, which Tamagui's `size` prop allows) falls back to
- * the canonical `md` control → 20px.
+ * through (an explicit icon px); a size key (`"sm"`) reads the ladder; a
+ * non-key / absent size (including an arbitrary CSS size string, which Tamagui's
+ * `size` prop allows) falls back to the canonical `md` control → 20px. v3 size
+ * tokens ARE the bare keys, so no sigil handling is needed.
  */
 export const controlIconSize = (size: SizeKey | number | string | undefined): number => {
   if (typeof size === "number") return size;
-  // A size TOKEN (`"$sm"`) names the same step as its bare key. Callers holding
-  // token-typed sizes (Pill's remove button passes `iconSize="$sm"`) used to fall
-  // through to the `md` 20px here, so every Pill's ✕ drew at 20px whatever its size.
-  const key = typeof size === "string" && size.startsWith("$") ? size.slice(1) : size;
-  return isSizeKey(key) ? CONTROL_ICON_SIZE[key] : CONTROL_ICON_SIZE.md;
+  return isSizeKey(size) ? CONTROL_ICON_SIZE[size] : CONTROL_ICON_SIZE.md;
 };

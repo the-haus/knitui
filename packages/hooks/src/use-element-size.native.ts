@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import type { LayoutChangeEvent } from "react-native";
 
-import type { TamaguiElement } from "@knitui/core";
+import type { LayoutChangeEvent, TamaguiElement } from "@knitui/core";
 
 import type { ElementSize, UseElementSizeReturn } from "./use-element-size.shared";
 

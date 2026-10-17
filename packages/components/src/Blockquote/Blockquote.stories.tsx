@@ -45,7 +45,7 @@ const meta = {
       control: "select",
       options: [undefined, ...SIZES],
       description:
-        "Width and height of the icon badge from the `$size` scale. Numbers are also supported.",
+        "Width and height of the icon badge from the `size` token scale. Numbers are also supported.",
     },
     theme: {
       control: "select",
@@ -92,7 +92,7 @@ export const WithIcon: Story = {
 /** All seven token sizes drive padding, text, and cite spacing. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SIZES.map((size) => (
         <Blockquote key={size} {...args} size={size} cite={`size="${size}"`}>
           {SAMPLE_QUOTE}
@@ -108,7 +108,7 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {SHADOWS.map((shadow) => (
         <Blockquote key={shadow} {...args} shadow={shadow} cite={`shadow="${shadow}"`}>
           {SAMPLE_QUOTE}
@@ -121,13 +121,13 @@ export const Shadows: Story = {
 /** Icon badge size can be adjusted; the badge repositions itself relative to its size. */
 export const IconSizes: Story = {
   render: (args) => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {(["sm", "xl", "xxl", 72] as const).map((iconSize) => (
         <Blockquote
           key={iconSize}
           {...args}
           iconSize={iconSize}
-          icon={<Text fontSize="$lg">⭐</Text>}
+          icon={<Text fontSize="lg">⭐</Text>}
           cite={`iconSize=${iconSize}`}
         >
           {SAMPLE_QUOTE}
@@ -140,7 +140,7 @@ export const IconSizes: Story = {
 /** All radius values — only the inline-end corners are rounded; the bordered edge stays square. */
 export const Radii: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {RADII.map((radius) => (
         <Blockquote key={radius} {...args} radius={radius} cite={`radius="${radius}"`}>
           {SAMPLE_QUOTE}
@@ -155,9 +155,9 @@ export const CustomCiteNode: Story = {
   args: {
     children: SAMPLE_QUOTE,
     cite: (
-      <Box flexDirection="row" alignItems="center" gap="$sm" marginTop="$md">
+      <Box flexDirection="row" alignItems="center" gap="sm" marginTop="md">
         <Text>⭐</Text>
-        <Text fontSize="$sm" opacity={0.7}>
+        <Text fontSize="sm" opacity={0.7}>
           Custom attribution node
         </Text>
       </Box>
@@ -168,7 +168,7 @@ export const CustomCiteNode: Story = {
 /** The accent color follows the active theme — same component, different hue. */
 export const Themed: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <Blockquote
           key={theme}
@@ -190,8 +190,8 @@ export const Styles: Story = {
     children: SAMPLE_QUOTE,
     cite: "Steve Jobs, Stanford Commencement 2005",
     styles: {
-      text: { color: "$blue11", fontWeight: "700" },
-      cite: { color: "$red9" },
+      text: { color: "blue11", fontWeight: "700" },
+      cite: { color: "red9" },
     },
   },
 };

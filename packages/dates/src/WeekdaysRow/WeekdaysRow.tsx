@@ -5,7 +5,7 @@
 // `weekdaysRow` style slots) but is built on `@knitui/components` (`Box`/`Text`) +
 // `@knitui/core` (`styled`/`createStyledContext`/slot sugar) + dayjs — NEVER HTML
 // `<tr>`/`<th>`, so it renders on web AND native from one source. The labels are
-// muted neutral text (`$color11`); there is NO Mantine-style `color` prop.
+// muted neutral text (`color11`); there is NO Mantine-style `color` prop.
 //
 // This is a DISPLAY component (no selection, no min/max, no marker slots), so the
 // checklist's controlled-value (#8), bounds (#10) and marker-slot (#6) rules are
@@ -24,11 +24,12 @@ import {
   isWeb,
   slotStyles,
   type SlotStyles,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 
-import { type CalendarSize, CELL_FONT, CELL_WIDTH } from "../cell-metrics";
+import { type CalendarSize, weekdayCellVariant } from "../cell-metrics";
 import { useDatesContext } from "../DatesProvider";
 import type { DateLabelFormat, DayOfWeek } from "../types";
 import { getWeekdayNames } from "./get-weekdays-names/get-weekdays-names";
@@ -48,21 +49,11 @@ const WeekdaysRowContext = createStyledContext<{ size: WeekdaySize }>({ size: "m
 // The numeric ladders live in `../cell-metrics` (`CELL_WIDTH`/`CELL_FONT`) so every
 // grid component stays in lockstep. Raw ladder values (resolve at module-load) —
 // never `getTokenValue`, which needs the live config.
-const weekdayCellVariant = {
-  xxs: { width: CELL_WIDTH.xxs, fontSize: CELL_FONT.xxs },
-  xs: { width: CELL_WIDTH.xs, fontSize: CELL_FONT.xs },
-  sm: { width: CELL_WIDTH.sm, fontSize: CELL_FONT.sm },
-  md: { width: CELL_WIDTH.md, fontSize: CELL_FONT.md },
-  lg: { width: CELL_WIDTH.lg, fontSize: CELL_FONT.lg },
-  xl: { width: CELL_WIDTH.xl, fontSize: CELL_FONT.xl },
-  xxl: { width: CELL_WIDTH.xxl, fontSize: CELL_FONT.xxl },
-} as const;
-
 // ── 5. Styled parts ───────────────────────────────────────────────────────────
 
 /** The header row — a flex row, never a `<tr>`. */
 const WeekdaysRowFrame = styled(Box, {
-  name: "WeekdaysRow",
+  displayName: "WeekdaysRow",
   context: WeekdaysRowContext,
   flexDirection: "row",
 });
@@ -70,16 +61,16 @@ const WeekdaysRowFrame = styled(Box, {
 /**
  * A single weekday label cell.
  *
- * 4. Colour is a theme-ramp token ONLY: the muted neutral `$color11`, never hex
+ * 4. Colour is a theme-ramp token ONLY: the muted neutral `color11`, never hex
  *    and never a Mantine-style `color` prop.
  * 15. `fullWidth` stretches each column to an equal share of the row via a boolean
  *     VARIANT (mirrors Mantine's `data-full-width` header behaviour) — not a
  *     per-render dynamic style prop the optimiser could flatten.
  */
 const Weekday = styled(Text, {
-  name: "Weekday",
+  displayName: "Weekday",
   context: WeekdaysRowContext,
-  color: "$color11",
+  color: "color11",
   textAlign: "center",
   userSelect: "none",
   fontWeight: "500",
@@ -169,7 +160,8 @@ export interface WeekdaysRowProps extends Omit<WeekdaysRowFrameProps, "size" | "
  * a11y: the row is `role="row"`, each label `role="columnheader"`, with native
  * `accessibilityRole` counterparts (`columnheader` on web, `text` on native).
  */
-const WeekdaysRowComponent = WeekdaysRowFrame.styleable<WeekdaysRowProps>(
+const WeekdaysRowComponent = styleable<WeekdaysRowProps>(
+  WeekdaysRowFrame,
   function WeekdaysRow(props, ref) {
     const {
       size = "md",

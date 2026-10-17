@@ -78,7 +78,7 @@ export const BasicToggle: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <CopyButton key={shadow} {...args} value={`copy-${shadow}`}>
           {({ copied, copy }) => (
@@ -114,7 +114,7 @@ export const IconButton: Story = {
 /** Multiple independent CopyButtons on a single page — each manages its own state. */
 export const Multiple: Story = {
   render: () => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {["npm install @knitui/ui", "yarn add @knitui/ui", "pnpm add @knitui/ui"].map((cmd) => (
         <CopyButton key={cmd} value={cmd}>
           {({ copied, copy }) => (
@@ -165,10 +165,10 @@ export const InlineCode: Story = {
         <Box
           flexDirection="row"
           alignItems="center"
-          gap="$sm"
-          padding="$sm"
-          borderRadius="$sm"
-          backgroundColor="$backgroundStrong"
+          gap="sm"
+          padding="sm"
+          borderRadius="sm"
+          backgroundColor="color2"
         >
           <Text flex={1}>const x = 42;</Text>
           <Button variant="subtle" size="xs" onPress={copy}>

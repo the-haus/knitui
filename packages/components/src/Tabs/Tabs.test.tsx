@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { declarationsUnder, hasFocusRing, restingCss } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Tabs } from "./Tabs";
 
@@ -194,5 +195,111 @@ describe("Tabs", () => {
   it("exposes Tabs.Section as a styled subpart", () => {
     render(<Tabs.Section testID="tab-section">x</Tabs.Section>);
     expect(screen.getByTestId("tab-section")).toBeInTheDocument();
+  });
+
+  // Resting (non-pseudo, non-media) declarations of an element.
+  const resting = restingCss;
+
+  it("underlines the active tab (default variant) on the bottom edge", () => {
+    render(<Basic defaultValue="one" />);
+    const active = resting(screen.getByRole("tab", { name: "One" }));
+    const idle = resting(screen.getByRole("tab", { name: "Two" }));
+    expect(active).toMatch(/border-bottom-color: var\(--color9\)/);
+    expect(idle).not.toMatch(/var\(--color9\)/);
+  });
+
+  it("moves the underline to the top edge when inverted", () => {
+    render(<Basic defaultValue="one" inverted />);
+    const active = resting(screen.getByRole("tab", { name: "One" }));
+    expect(active).toMatch(/border-top-color: var\(--color9\)/);
+    expect(active).toMatch(/border-bottom-width: 0px/);
+    expect(resting(screen.getByRole("tablist"))).toMatch(/border-top-width: 2px/);
+  });
+
+  it("raises the active pill with a background + themed shadow", () => {
+    render(<Basic defaultValue="one" variant="pills" />);
+    const active = resting(screen.getByRole("tab", { name: "One" }));
+    expect(active).toMatch(/background-color: var\(--background\)/);
+    expect(active).toMatch(/box-shadow: .*var\(--dropShadowColor\)/);
+    expect(resting(screen.getByRole("tab", { name: "Two" }))).not.toMatch(/box-shadow/);
+  });
+
+  it("outlines the active tab in the outline variant", () => {
+    render(<Basic defaultValue="two" variant="outline" />);
+    expect(resting(screen.getByRole("tab", { name: "Two" }))).toMatch(
+      /border-bottom-color: var\(--color9\)/,
+    );
+  });
+
+  it("gives tabs hover/press fills and a focus ring", () => {
+    render(<Basic defaultValue="one" />);
+    const tab = screen.getByRole("tab", { name: "Two" });
+    expect(declarationsUnder(tab, ":hover")).toContain("background-color: var(--color2)");
+    expect(declarationsUnder(tab, ":active")).toContain("background-color: var(--color3)");
+    expect(hasFocusRing(tab)).toBe(true);
+  });
+
+  it("uses a roving tabindex: only the active tab is a tab stop", () => {
+    render(<Basic defaultValue="two" />);
+    expect(screen.getByRole("tab", { name: "Two" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("tab", { name: "One" })).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("navigates vertically with ArrowDown/ArrowUp and wraps with Home/End", () => {
+    const onChange = jest.fn();
+    render(
+      <Tabs defaultValue="a" orientation="vertical" onChange={onChange}>
+        <Tabs.List>
+          <Tabs.Tab value="a">A</Tabs.Tab>
+          <Tabs.Tab value="b">B</Tabs.Tab>
+          <Tabs.Tab value="c">C</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>,
+    );
+    const list = screen.getByRole("tablist");
+    expect(list).toHaveAttribute("aria-orientation", "vertical");
+    screen.getByRole("tab", { name: "A" }).focus();
+    fireEvent.keyDown(list, { key: "ArrowDown" });
+    expect(onChange).toHaveBeenLastCalledWith("b");
+    fireEvent.keyDown(list, { key: "End" });
+    expect(onChange).toHaveBeenLastCalledWith("c");
+    fireEvent.keyDown(list, { key: "ArrowDown" });
+    expect(onChange).toHaveBeenLastCalledWith("a");
+    fireEvent.keyDown(list, { key: "ArrowRight" });
+    expect(onChange).toHaveBeenCalledTimes(3);
+  });
+
+  it("clamps at the ends when loop is false", () => {
+    const onChange = jest.fn();
+    render(<Basic defaultValue="two" loop={false} onChange={onChange} />);
+    screen.getByRole("tab", { name: "Two" }).focus();
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Two" }));
+  });
+
+  it("skips disabled tabs in keyboard navigation", () => {
+    const onChange = jest.fn();
+    render(
+      <Tabs defaultValue="a" onChange={onChange}>
+        <Tabs.List>
+          <Tabs.Tab value="a">A</Tabs.Tab>
+          <Tabs.Tab value="b" disabled>
+            B
+          </Tabs.Tab>
+          <Tabs.Tab value="c">C</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>,
+    );
+    screen.getByRole("tab", { name: "A" }).focus();
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(onChange).toHaveBeenLastCalledWith("c");
+    expect(screen.getByRole("tab", { name: "B" })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("labels each panel by its tab and hides inactive ones", () => {
+    render(<Basic defaultValue="one" />);
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    const one = panels.find((p) => p.textContent === "Panel one")!;
+    expect(one).toHaveAttribute("aria-labelledby", screen.getByRole("tab", { name: "One" }).id);
   });
 });

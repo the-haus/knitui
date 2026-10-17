@@ -1,0 +1,234 @@
+export const meta = {
+  title: "Upgrading to Knit UI 1.0",
+  description:
+    "Knit UI 1.0 moves the kit to Tamagui v3: bare tokens, flat condition values, unified motion presets, styleable(), and a Metro compiler. What changed, the codemod, and the manual checklist.",
+};
+
+# Upgrading to Knit UI 1.0 (Tamagui v3)
+
+Knit UI 1.0 is the kit on **Tamagui v3** (3.0.18). The component API — `size`,
+`variant`, `theme`, `styles`, the compound parts — is unchanged. What changes is
+the **styling language** underneath it, which you use every time you write a
+style prop, and the **build integration**.
+
+## Why
+
+- **Faster.** v3 compiles more of the styling ahead of time on both platforms
+  (Metro on native, Vite / webpack on the web), evaluates `styled.dynamic`
+  variants when props are static, and can restyle a subtree through CSS variables
+  without a React re-render (`ThemeUpdate`).
+- **Simpler.** One way to write a condition (inside the value), one way to name a
+  token (bare), one preset table that means the same motion on every platform.
+- **Honest types.** With the kit's `allowedStyleValues: "somewhat-strict-web"`, a
+  leftover v2 spelling is a type error, so `tsc` lists what is left to migrate.
+
+## The short version
+
+```tsx
+// before (Knit UI 0.x, Tamagui v2)
+<Box
+  p="$md"
+  bg="$color2"
+  hoverStyle={{ bg: "$color3" }}
+  pressStyle={{ bg: "$color4" }}
+  $gtMd={{ p: "$lg" }}
+  enterStyle={{ opacity: 0, y: 8 }}
+  transition={["fast", { opacity: "medium" }]}
+  animateOnly={["opacity", "transform"]}
+/>
+
+// after (Knit UI 1.0, Tamagui v3)
+<Box
+  p="md gtMd:lg"
+  bg="color2 hover:color3 press:color4"
+  opacity="1 enter:0"
+  y="0 enter:8px"
+  transition={{ preset: "fast", opacity: "medium", properties: "opacity, transform" }}
+/>
+```
+
+## Breaking changes
+
+### Styling
+
+| Area | Before (0.x) | After (1.0) |
+| --- | --- | --- |
+| Token names | `p="$md"`, `bg="$color3"`, `c="$color11"` | `p="md"`, `bg="color3"`, `c="color11"` — no sigil |
+| Theme keys | `bg="$background"`, `borderColor="$borderColor"` | `bg="background"`, `borderColor="borderColor"` (names stay camelCase) |
+| Built token names | `` `$${size}` `` | `size` itself; qualify with `"space.md"` when ambiguous |
+| String vs number | `"$3"` token, `3` raw | a string is always a token, a number always raw: `zIndex="3"` → 300, `zIndex={3}` → 3 |
+| Interaction states | `hoverStyle`, `pressStyle`, `focusStyle`, `focusVisibleStyle`, `focusWithinStyle`, `disabledStyle` | clauses: `bg="color2 hover:color3 press:color4"`, `opacity="disabled:0.5"` |
+| Mount / unmount | `enterStyle`, `exitStyle` | clauses: `opacity="1 enter:0 exit:0"`, `y="enter:8px"` |
+| Media | `$sm={{ … }}`, `$gtMd={{ … }}` | `p="sm gtMd:lg"` |
+| Platform / scheme / group | `$platform-web={{}}`, `$theme-dark={{}}`, `$group-hover={{}}` | `web:`, `dark:`, `group-hover:` clauses |
+| Runtime condition values | `hoverStyle={{ bg: computed }}` | object form: `bg={{ default: computed, hover: "color3" }}` |
+| Precedence | style-object order, media vs pseudo by merge order | clause order is irrelevant; **state clauses outrank media clauses** |
+| Colour values | `rgba(0, 0, 0, 0.5)` | no spaces inside one value: `rgba(0,0,0,0.5)` (a space separates clauses) |
+| Raw lengths in strings | `y: 8` inside `enterStyle` | `y="enter:8px"` — a bare number in a clause string is a token name |
+| `undefined` props | `variant={undefined}` could reset a default | explicit `undefined` = **absent** (default applies); pass `null` to switch a default off |
+
+### Components and variants
+
+| Area | Before | After |
+| --- | --- | --- |
+| Behaviour HOCs | `Frame.styleable<P>((props, ref) => …)` | `styleable<P>(Frame, function Name(props, ref) { … })` from `@knitui/core` |
+| Spread / function variants | `"...size": (t) => ({…})`, `":number"`, `":string"`, plain functions | `styled.dynamic<T>((value, env) => ({…}))` — v2 forms **do not run** in v3 |
+| Multi-prop styles | compound variants, inspecting siblings in a HOC | `Frame.resolve((props, env) => ({…}))` |
+| Variant bodies | runtime spreads tolerated | static bodies only; build tables at module scope |
+| Host element | `tag="button"` (already `render` since 0.x) | `render="button"` — keep it a string so the compiler can flatten |
+
+### `@knitui/core` exports
+
+| Removed | Replacement |
+| --- | --- |
+| `useProps`, `usePropsAndStyle`, v2 `useStyle(props)` | `splitStyleProps(props, { expandShorthands: true })`, `getExpandedShorthand` |
+| `SizeVariantSpreadFunction`, `VariantSpreadFunction` types | `styled.dynamic<T>()` |
+| sigil checks in your own helpers (`v[0] === "$"`) | `resolveToken(value, "color", { theme }) ?? value`, `isToken(value)` |
+
+Added: `styleable`, `StyleableComponent`, `ThemeUpdate`, `style` / `useStyle(piece)`,
+the `useAnimatedNumber*` hooks, `resolveToken` / `isToken`, `FOCUS_RING_VARIABLES`,
+`MOTION_PRESETS`, and the `FlatStyleValue`, `TransitionProp`, `OnTransition`,
+`TransitionEvent` types.
+
+### Tokens, themes and `createTheme`
+
+| Area | Change |
+| --- | --- |
+| `true` tokens | gone from every scale and font (v3 reserves `true`); defaults come from `controlMetrics` (`md`) |
+| `transparent` colour token | gone (v3 rejects CSS keywords as token names); write the keyword `transparent` |
+| `createTheme({ colors })` | a colour named after a CSS keyword now throws |
+| `defaultFont` | moved into `settings` by v3; the `createTheme` option still works |
+| `settings.autocompleteSpecificTokens` | removed by v3 |
+| fonts | no `trueWeight`; `letterSpacing` is declared per size key |
+| Theme builder | ramps come from `@tamagui/config-v5/builder` (v3 dropped `@tamagui/theme-builder`); `themeBuilder` options pass through |
+| Focus ring | a `focusRingColor` key in every theme (= its `color8`) plus `focusRingWidth` / `focusRingOffset` config variables; override with `<ThemeUpdate focusRingColor="red9">` |
+| Theme key names | **unchanged** — the kit keeps `backgroundHover`, `borderColorFocus`, `dropShadowColor`, …; it does not adopt Tamagui v6's kebab-case names |
+
+### Motion
+
+| Area | Before | After |
+| --- | --- | --- |
+| Transition arrays | `transition={["fast", { opacity: "slow" }]}` | `transition={{ preset: "fast", opacity: "slow" }}` |
+| `animateOnly` | `animateOnly={["opacity"]}` | `transition={{ preset: "fast", properties: "opacity" }}` |
+| Nothing animates | `animateOnly={[]}` | `transition="none"` |
+| `"100ms"` preset | a configured key | gone — a duration is plain CSS: `transition="100ms"` or `"100ms ease-out"` |
+| Presets | per driver: `bouncy` was a cubic-bezier on the web and a spring on native | one table (`MOTION_PRESETS`), the **same motion on every driver**; `bouncy` is now a real spring on the web too |
+| Completion | timers, `onDidAnimate` | `onTransition({ phase, cause, finished })` |
+
+Expect small, intentional timing shifts wherever `bouncy` or a per-driver preset
+was used on the web.
+
+### Build and setup
+
+| Area | Before | After |
+| --- | --- | --- |
+| Native compiler | `@knitui/plugins/babel-plugin` in `babel.config.js` | `withKnitui` from `@knitui/plugins/metro` in `metro.config.js`; the babel entry is a **no-op that warns** — delete it |
+| Metro cache | — | restart with `npx expo start -c` after any theme-config change |
+| Vite | `knitui()` | same call, now `@tamagui/cli/vite` underneath: ESM-only, Vite 8 |
+| Next.js | `withKnitui`, `--webpack` | unchanged; keep `next build --webpack` |
+| `TAMAGUI_IGNORE_BUNDLE_ERRORS` | silenced "skipped loading N modules" | no longer read; use `DEBUG=tamagui` to see skipped modules |
+| `SafeAreaProvider` | anywhere | must wrap `Provider` (otherwise `NO_INSETS_ERROR` at startup) |
+| Direct `tamagui` / `@tamagui/*` deps | 2.7.x | if your app imports them, pin **exactly** the kit's version (3.0.18) or two copies load |
+
+## Run the codemod
+
+The kit ships a codemod that knows its own conventions — `styleable()`, camelCase
+theme keys, kit media keys, transition presets. It is a dry run by default and
+writes a report of every change and every site it could not fix.
+
+```bash
+# from your app, with a checkout of the Knit UI repo at <kit>
+node <kit>/scripts/codemods/tamagui-v3/index.mjs --mode consumer --report r.md ./src
+
+# read r.md, then apply
+node <kit>/scripts/codemods/tamagui-v3/index.mjs --mode consumer --write --report r.md ./src
+```
+
+<Callout>
+  The codemod will be published as `@knitui/codemod`; once it is, the same run is
+  `npx @knitui/codemod v3 --report r.md ./src` (then `--write`). Until then, run it
+  from a checkout of the repository as above.
+</Callout>
+
+What it does:
+
+| Transform | Rewrites |
+| --- | --- |
+| T0 | `Frame.styleable<P>(fn, opts?)` → `styleable<P>(Frame, fn, opts?)`, importing it from `@knitui/core` |
+| T1 | `"$md"` → `"md"` token literals, and `` `$${x}` `` → `` `${x}` `` |
+| T2 | `$md:` variant keys → `md:` |
+| T3 | `hoverStyle` / `pressStyle` / `focus*Style` / `disabledStyle` / `enterStyle` / `exitStyle` → flat values |
+| T4 | transition tuples → objects; `animateOnly` → `properties` or `"none"` |
+| T7 | report only: everything that needs a hand edit |
+
+Useful flags: `--only T1,T3` to run a subset, `--json r.json` for a
+machine-readable report, `--out-dir dir` to mirror the would-be-changed files for
+diffing. `--write` is transactional: if any file fails to parse, nothing is
+written.
+
+`--mode consumer` only rewrites `$`-literals in **style positions** — style-prop
+JSX attributes, `styled()` configs, `styles` / slot objects and `style()` — so a
+`prefix="$"` or a `"$type"` map expression in your app is left alone.
+
+<Callout kind="warning">
+  Do not run Tamagui's own `@tamagui/codemod-flat-values` on Knit UI code, and do
+  not apply its kebab-case rename table (`backgroundHover` → `background-hover`).
+  The kit keeps its camelCase theme keys, so that rename breaks every themed
+  colour.
+</Callout>
+
+## Manual checklist
+
+A clean typecheck does not mean a clean migration. After the codemod, go through
+these:
+
+1. **Typecheck.** `tsc --noEmit`. Every remaining `"$md"` in a style prop is an
+   error under the kit's strict style values.
+2. **Grep for what types cannot see.**
+   ```bash
+   grep -rnE '="\$|hoverStyle|pressStyle|focusStyle|focusVisibleStyle|enterStyle|exitStyle|disabledStyle|animateOnly|\.styleable\(' src
+   ```
+   A custom prop that forwards a token (an icon `color`, your own `accent` prop)
+   is not a style position, so `color="$color11"` there survives and resolves to
+   nothing.
+3. **Sigil checks.** Any code that tells a token from a raw value by its first
+   character (`v[0] === "$"`, `startsWith("$")`, `charCodeAt(0) === 36`) is now
+   always false and silently passes tokens through as literals — blank icons and
+   missing colours. Use `resolveToken` / `isToken` from `@knitui/core`.
+4. **Spread condition helpers.** A helper that returns `{ hoverStyle }` and is
+   spread into JSX is invisible to the codemod and to React until it warns
+   *"does not recognize the `hoverStyle` prop"*. Convert it to return the whole
+   program (`{ bg: "color2 hover:color3" }`) — a caller's own `bg` next to the
+   spread now replaces the hover clause as well.
+5. **Compound strings.** Tokens embedded in a longer value (`boxShadow:
+   "0px 2px 4px $dropShadowColor"`) and colours with spaces (`rgba(0, 0, 0, .5)`)
+   need hand edits. Template literals that can produce `"undefined"`
+   (`` py={`${a ? undefined : "sm"}`} ``) must become plain expressions.
+6. **`undefined` resets.** Anywhere you passed `undefined` to turn a default off,
+   pass `null`.
+7. **Spread / function variants.** Your own `styled()` variants using `"...size"`,
+   `":number"`, `":string"` or plain functions silently stop applying. Convert them
+   to `styled.dynamic`.
+8. **Build config.** Remove `@knitui/plugins/babel-plugin` from
+   `babel.config.js`, keep `withKnitui` in `metro.config.js`, move
+   `SafeAreaProvider` outside `Provider`, and restart Metro with `-c`.
+9. **Tests.** Snapshot or class-name assertions change with v3's output. Assert
+   behaviour and real host elements instead.
+10. **Look at it.** Run both colour schemes on the web and on a device. Motion
+    timings, state-over-media precedence and focus rings are the places a visual
+    pass catches what nothing else does.
+
+## Optional: validate with `tamagui check`
+
+`npx tamagui generate && npx tamagui check` validates your source against the
+kit's config — unknown tokens, malformed clauses, leftover v2 props. See
+[Bundler setup](/docs/getting-started/bundler-setup#checking-the-config--tamagui-check)
+for the `tamagui.build.ts` it needs.
+
+## Reference
+
+- [Style props](/docs/api/style-props) — the full flat-value grammar
+- [styled()](/docs/foundations/styled) — static variants, `styled.dynamic`, `.resolve`, `styleable()`
+- [Motion](/docs/foundations/motion) — presets, the object form of `transition`, `onTransition`
+- [Theming an app](/docs/guides/theming-an-app) — `ThemeUpdate` and the focus-ring variables
+- [Troubleshooting](/docs/getting-started/troubleshooting) — symptom-indexed fixes, including v3 leftovers

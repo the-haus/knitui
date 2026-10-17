@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { type GetProps, styled, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import {
+  type GetProps,
+  styleable,
+  styled,
+  type TamaguiElement,
+  withStaticProperties,
+} from "@knitui/core";
 import { useId, useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -13,10 +19,10 @@ import {
 } from "../internal/InlineControl";
 import { useReducedTransition } from "../internal/motion";
 import {
-  animateOnlyProps,
   FOCUS_RING,
   fontSizeVariant,
   radiusVariant,
+  scopeTransition,
   type SizeKey,
   transitionProps,
   webCursor,
@@ -53,42 +59,44 @@ const SwitchGroupContext = React.createContext<SwitchGroupContextValue | null>(n
  */
 /**
  * Horizontal inset between the track edge and the thumb, in px. Matches the
- * `$xxs` token applied as `paddingHorizontal` on the track, and is the numeric
+ * `xxs` space token applied as `paddingHorizontal` on the track, and is the numeric
  * value the thumb's slide distance is computed against (track width − thumb
  * width − 2× this inset).
  */
 const TRACK_PAD = 6;
 
 const trackSizeVariant = {
-  xxs: { minWidth: 36, height: M.xxs.height, paddingHorizontal: "$xxs" },
-  xs: { minWidth: 42, height: M.xs.height, paddingHorizontal: "$xxs" },
-  sm: { minWidth: 56, height: M.sm.height, paddingHorizontal: "$xxs" },
-  md: { minWidth: 70, height: M.md.height, paddingHorizontal: "$xxs" },
-  lg: { minWidth: 84, height: M.lg.height, paddingHorizontal: "$xxs" },
-  xl: { minWidth: 98, height: M.xl.height, paddingHorizontal: "$xxs" },
-  xxl: { minWidth: 112, height: M.xxl.height, paddingHorizontal: "$xxs" },
+  xxs: { minWidth: 36, height: M.xxs.height, paddingHorizontal: "xxs" },
+  xs: { minWidth: 42, height: M.xs.height, paddingHorizontal: "xxs" },
+  sm: { minWidth: 56, height: M.sm.height, paddingHorizontal: "xxs" },
+  md: { minWidth: 70, height: M.md.height, paddingHorizontal: "xxs" },
+  lg: { minWidth: 84, height: M.lg.height, paddingHorizontal: "xxs" },
+  xl: { minWidth: 98, height: M.xl.height, paddingHorizontal: "xxs" },
+  xxl: { minWidth: 112, height: M.xxl.height, paddingHorizontal: "xxs" },
 } as const;
 
-// Thumb = track height − 2× the track's `$xxs` (6px) horizontal inset, so the
-// thumb sits flush inside the pill with an even gap on every key.
+// Thumb = track height − 2× the track's `xxs` (6px) horizontal inset, so the
+// thumb sits flush inside the pill with an even gap on every key. `y` centres the
+// absolutely-positioned thumb (`top: 50%`) — static per key, so only the slide
+// (`x`) is set per render.
 const thumbSizeVariant = {
-  xxs: { width: 8, height: 8 },
-  xs: { width: 12, height: 12 },
-  sm: { width: 20, height: 20 },
-  md: { width: 28, height: 28 },
-  lg: { width: 36, height: 36 },
-  xl: { width: 44, height: 44 },
-  xxl: { width: 52, height: 52 },
+  xxs: { width: 8, height: 8, y: -4 },
+  xs: { width: 12, height: 12, y: -6 },
+  sm: { width: 20, height: 20, y: -10 },
+  md: { width: 28, height: 28, y: -14 },
+  lg: { width: 36, height: 36, y: -18 },
+  xl: { width: 44, height: 44, y: -22 },
+  xxl: { width: 52, height: 52, y: -26 },
 } as const;
 
 const SwitchTrack = styled(Box, {
-  name: "SwitchTrack",
+  displayName: "SwitchTrack",
   position: "relative",
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "flex-start",
   borderRadius: 999,
-  backgroundColor: "$color5",
+  backgroundColor: "color5",
   ...webCursor("pointer"),
 
   variants: {
@@ -96,7 +104,7 @@ const SwitchTrack = styled(Box, {
     // transition (see the `Switch` body), so the track only needs to swap its
     // fill colour here — no `justifyContent` flip, which CSS can't animate.
     on: {
-      true: { backgroundColor: "$color9" },
+      true: { backgroundColor: "color9" },
       false: {},
     },
     // The track is a small CONTROL: its `height` derives from the canonical
@@ -115,12 +123,18 @@ const SwitchTrack = styled(Box, {
   defaultVariants: { size: "sm", on: false },
 });
 
+/**
+ * The knob floats above the in-flow track label and slides via a `transform`
+ * (`x`) transition — CSS can't animate a `justifyContent` flip.
+ */
 const SwitchThumb = styled(Box, {
-  name: "SwitchThumb",
-  position: "relative",
+  displayName: "SwitchThumb",
+  position: "absolute",
+  left: TRACK_PAD,
+  top: "50%",
   zIndex: 1,
   borderRadius: 999,
-  backgroundColor: "$white",
+  backgroundColor: "white",
   alignItems: "center",
   justifyContent: "center",
 
@@ -134,25 +148,20 @@ const SwitchThumb = styled(Box, {
 /**
  * Small dot inside the thumb that echoes the track colour.
  *
- * RAMP NOTE: the `$colorN` steps here are MIRRORED (`13 - n`). This renders
- * inside `SwitchThumb`, whose name collides with an `inverse`-templated entry in
- * Tamagui's (deprecated) `defaultComponentThemes`; until
- * `core/config/themes.ts` set `componentThemes: false`, the dot resolved its ramp
- * from a `<scheme>_SwitchThumb` theme with `$color1…$color12` fully reversed
- * (`$color5` → step 8, `$color9` → step 4). Written pre-mirrored so the dot keeps
- * its shipped appearance. (`SwitchThumb` itself is safe: `$white` is a TOKEN, not
- * a theme value, so no inversion ever reached it.)
+ * RAMP NOTE: the `colorN` steps here are MIRRORED (`13 - n`): v2 resolved the dot
+ * inside an inverted `<scheme>_SwitchThumb` component theme (`color5` → step 8,
+ * `color9` → step 4). Written pre-mirrored so the dot keeps its shipped look now
+ * that component themes are gone.
  */
 const ThumbIndicator = styled(Box, {
-  name: "SwitchThumbIndicator",
+  displayName: "SwitchThumbIndicator",
   width: "40%",
   height: "40%",
   borderRadius: 999,
-  backgroundColor: "$color8",
-  ...transitionProps("fast"),
-  ...animateOnlyProps(["backgroundColor"]),
+  backgroundColor: "color8",
+  ...transitionProps("fast", ["backgroundColor"]),
   variants: {
-    on: { true: { backgroundColor: "$color4" } },
+    on: { true: { backgroundColor: "color4" } },
   } as const,
 });
 
@@ -162,21 +171,20 @@ const ThumbIndicator = styled(Box, {
  * has no fixed width — see `SwitchTrack`).
  */
 const TrackLabel = styled(Text, {
-  name: "SwitchTrackLabel",
+  displayName: "SwitchTrackLabel",
   flex: 1,
   zIndex: 0,
   textAlign: "center",
   alignItems: "center",
   justifyContent: "center",
   fontWeight: "600",
-  color: "$color",
+  color: "color",
   userSelect: "none",
   numberOfLines: 1,
-  paddingHorizontal: "$xs",
-  ...transitionProps("fast"),
-  ...animateOnlyProps(["color"]),
+  paddingHorizontal: "xs",
+  ...transitionProps("fast", ["color"]),
   variants: {
-    on: { true: { color: "$color1" } },
+    on: { true: { color: "color1" } },
     size: {
       ...fontSizeVariant,
     },
@@ -218,14 +226,14 @@ type SwitchTrackProps = Omit<
  * the thumb, and `trackLabel` the on/off text rendered in the track.
  */
 export interface SwitchStyles extends InlineControlSlots {
-  /** Props for the pill `SwitchTrack`. */
-  track: Partial<GetProps<typeof SwitchTrack>>;
+  /** Props for the pill `SwitchTrack` (`size` / `on` stay owned by the Switch). */
+  track: Partial<Omit<GetProps<typeof SwitchTrack>, "size" | "on">>;
   /** Props for the sliding `SwitchThumb`. */
-  thumb: Partial<GetProps<typeof SwitchThumb>>;
+  thumb: Partial<Omit<GetProps<typeof SwitchThumb>, "size">>;
   /** Props for the dot inside the thumb (`SwitchThumbIndicator`). */
-  thumbIndicator: Partial<GetProps<typeof ThumbIndicator>>;
+  thumbIndicator: Partial<Omit<GetProps<typeof ThumbIndicator>, "on">>;
   /** Props for the on/off label rendered in the track (`SwitchTrackLabel`). */
-  trackLabel: Partial<GetProps<typeof TrackLabel>>;
+  trackLabel: Partial<Omit<GetProps<typeof TrackLabel>, "size" | "on">>;
 }
 
 const SWITCH_SLOTS = [
@@ -284,7 +292,7 @@ export interface SwitchProps
   "aria-describedby"?: React.AriaAttributes["aria-describedby"];
 }
 
-const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props, ref) {
+const SwitchComponent = styleable<SwitchProps>(SwitchTrack, function Switch(props, ref) {
   const {
     checked,
     defaultChecked,
@@ -305,7 +313,6 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
     value,
     disabled,
     rootRef,
-    role: _role,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledBy,
     "aria-describedby": ariaDescribedByProp,
@@ -372,6 +379,11 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
   // the state with `minWidth` for a correct first paint before `onLayout` fires.
   const [trackWidth, setTrackWidth] = React.useState<number>(trackSizeVariant[size].minWidth);
   const slide = Math.max(0, trackWidth - thumb.width - TRACK_PAD * 2);
+  const onTrackLayout = React.useCallback(
+    (e: { nativeEvent: { layout: { width: number } } }) =>
+      setTrackWidth(e.nativeEvent.layout.width),
+    [],
+  );
 
   // The label sits on the side the thumb is NOT on; pad that side by the thumb's
   // footprint so the text never slides under the thumb.
@@ -379,9 +391,9 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
     <TrackLabel
       on={isOn}
       size={size}
-      paddingLeft={isOn ? "$xs" : thumb.width + TRACK_PAD}
-      paddingRight={isOn ? thumb.width + TRACK_PAD : "$xs"}
-      {...fade}
+      paddingLeft={isOn ? "xs" : thumb.width + TRACK_PAD}
+      paddingRight={isOn ? thumb.width + TRACK_PAD : "xs"}
+      {...scopeTransition(fade, ["color"])}
       {...s.get("trackLabel")}
     >
       {isOn ? onLabel : offLabel}
@@ -390,18 +402,17 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
   const thumbEl = (
     <SwitchThumb
       size={size}
-      position="absolute"
-      left={TRACK_PAD}
-      top="50%"
-      y={-thumb.height / 2}
       x={isOn ? slide : 0}
-      {...fade}
-      {...animateOnlyProps(["transform"])}
+      {...scopeTransition(fade, ["transform"])}
       {...s.get("thumb")}
     >
       {thumbIcon ??
         (withThumbIndicator && !thumbIcon ? (
-          <ThumbIndicator on={isOn} {...fade} {...s.get("thumbIndicator")} />
+          <ThumbIndicator
+            on={isOn}
+            {...scopeTransition(fade, ["backgroundColor"])}
+            {...s.get("thumbIndicator")}
+          />
         ) : null)}
     </SwitchThumb>
   );
@@ -414,12 +425,11 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
       radius={radius}
       disabled={resolvedDisabled}
       onPress={toggle}
-      onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
-      {...fade}
-      {...animateOnlyProps(["backgroundColor"])}
+      onLayout={onTrackLayout}
+      {...scopeTransition(fade, ["backgroundColor"])}
       {...ariaProps}
       {...focusProps}
-      focusVisibleStyle={FOCUS_RING}
+      {...FOCUS_RING}
       {...s.get("track")}
       {...rest}
     >
@@ -454,23 +464,27 @@ const SwitchComponent = SwitchTrack.styleable<SwitchProps>(function Switch(props
 /* -------------------------------------------------------------------------- */
 
 const GroupFrame = styled(Box, {
-  name: "SwitchGroup",
+  displayName: "SwitchGroup",
   flexDirection: "column",
-  gap: "$xs",
+  gap: "xs",
 });
 
 const GroupItems = styled(Box, {
-  name: "SwitchGroupItems",
+  displayName: "SwitchGroupItems",
   role: "group",
   flexDirection: "row",
   flexWrap: "wrap",
-  gap: "$md",
+  gap: "md",
 });
 
-const GroupLabel = styled(Text, { name: "SwitchGroupLabel", fontWeight: "600", color: "$color" });
+const GroupLabel = styled(Text, {
+  displayName: "SwitchGroupLabel",
+  fontWeight: "600",
+  color: "color",
+});
 const GroupDescription = styled(Text, {
-  name: "SwitchGroupDescription",
-  color: "$color",
+  displayName: "SwitchGroupDescription",
+  color: "color",
   opacity: 0.65,
 });
 
@@ -502,7 +516,7 @@ export interface SwitchGroupProps extends Omit<GetProps<typeof GroupFrame>, "onC
   name?: string;
 }
 
-const SwitchGroup = GroupFrame.styleable<SwitchGroupProps>(function SwitchGroup(props, ref) {
+const SwitchGroup = styleable<SwitchGroupProps>(GroupFrame, function SwitchGroup(props, ref) {
   const {
     children,
     value,

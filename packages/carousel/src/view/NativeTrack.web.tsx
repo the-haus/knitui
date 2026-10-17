@@ -2,11 +2,11 @@ import * as React from "react";
 import { type SharedValue, useSharedValue } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
-import type { StyleProp, ViewStyle } from "@knitui/core";
 
 import { itemProgress, mod, rawIndex } from "../engine";
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
 import type { SeekFn } from "../motion/useCarouselCore";
+import type { HostStyle } from "../style";
 import { SlideBox, useSlideStyle } from "./chrome";
 import { slideContent } from "./Item.shared";
 import {
@@ -28,6 +28,13 @@ import {
  * negative), which republishes progress / the active index through the core's
  * web offset listener — the same seam the transform painter uses.
  */
+/** Flow-content row / column (hoisted: one object each, not one per render). */
+const CONTENT_ROW: HostStyle = { display: "flex", flexDirection: "row", flexGrow: 1 };
+const CONTENT_COLUMN: HostStyle = { display: "flex", flexDirection: "column", flexGrow: 1 };
+/** CSS scroll-snap per slide; `always` = one page per gesture (`pagingEnabled`). */
+const SNAP_ALWAYS: HostStyle = { scrollSnapAlign: "start", scrollSnapStop: "always" };
+const SNAP_NORMAL: HostStyle = { scrollSnapAlign: "start", scrollSnapStop: "normal" };
+
 function NativeTrackInner<T>({
   getItem,
   ensure,
@@ -223,7 +230,7 @@ function NativeTrackInner<T>({
   // Viewport: a real scroll surface. CSS scroll-snap gives snapping without any
   // JS; `scroll-snap-stop: always` (on the slides) enforces one page per swipe.
   const snapAxis = snapEnabled ? (vertical ? "y mandatory" : "x mandatory") : "none";
-  const viewportStyle = {
+  const viewportStyle: HostStyle = {
     flex: 1,
     display: "flex",
     flexDirection: vertical ? "column" : "row",
@@ -233,16 +240,9 @@ function NativeTrackInner<T>({
     overscrollBehavior: overscrollEnabled ? "auto" : "contain",
     scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch",
-  } as unknown as ViewStyle;
+  };
 
-  const contentStyle = [
-    {
-      display: "flex",
-      flexDirection: vertical ? "column" : "row",
-      flexGrow: 1,
-    } as unknown as ViewStyle,
-    contentContainerStyle,
-  ];
+  const contentStyle = [vertical ? CONTENT_COLUMN : CONTENT_ROW, contentContainerStyle];
 
   return (
     <Box
@@ -251,7 +251,7 @@ function NativeTrackInner<T>({
       style={viewportStyle}
       {...({ onScroll: handleScroll } as { onScroll: (e: React.UIEvent<HTMLElement>) => void })}
     >
-      <Box style={contentStyle as StyleProp<ViewStyle>}>
+      <Box style={contentStyle}>
         {Array.from({ length: slideCount }, (_, rendered) => {
           // `getItem` already maps rendered → real via `mod`; derive the real
           // index for a stable key and suffix the copy so cloned slides stay
@@ -330,16 +330,11 @@ function NativeSlideInner<T>({
 
   const style = [
     flowSlideStyle(vertical, pageSize),
-    snapEnabled
-      ? ({
-          scrollSnapAlign: "start",
-          scrollSnapStop: pagingEnabled ? "always" : "normal",
-        } as unknown as ViewStyle)
-      : null,
+    snapEnabled ? (pagingEnabled ? SNAP_ALWAYS : SNAP_NORMAL) : null,
   ];
 
   return (
-    <Box style={style as StyleProp<ViewStyle>}>
+    <Box style={style}>
       <SlideBox {...slideStyle}>
         {slideContent(item, index, progress, renderItem, renderPlaceholder)}
       </SlideBox>

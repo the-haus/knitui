@@ -71,7 +71,7 @@ export const Playground: Story = {};
 /** All three visual variants side by side. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <InputBase
           key={variant}
@@ -88,7 +88,7 @@ export const Variants: Story = {
 /** The seven token sizes, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <InputBase key={size} {...args} size={size} label={size} placeholder={size} />
       ))}
@@ -99,7 +99,7 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SHADOWS.map((shadow) => (
         <InputBase key={shadow} {...args} shadow={shadow} label={shadow} placeholder={shadow} />
       ))}
@@ -183,9 +183,9 @@ export const Styles: Story = {
       leftSection={<Text>@</Text>}
       placeholder="username"
       styles={{
-        root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-        label: { color: "$blue11" },
-        leftSection: { backgroundColor: "$red9" },
+        root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+        label: { color: "blue11" },
+        leftSection: { backgroundColor: "red9" },
       }}
     />
   ),
@@ -194,9 +194,9 @@ export const Styles: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$sm">
+        <Box key={variant} gap="sm">
           {SIZES.map((size) => (
             <InputBase
               key={size}

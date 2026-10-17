@@ -10,7 +10,15 @@ import type { StorybookConfig } from "@storybook/react-vite";
  *      like `expo-image` load their web builds (the native build imports
  *      Flow-typed `react-native` internals that rolldown cannot parse), and
  *   3. alias `react-native` → `react-native-web` for the bare imports that
- *      remain (expo-image's container `View`, the Provider's `useColorScheme`).
+ *      remain (expo-image's container `View`, the Provider's `useColorScheme`),
+ *   4. optionally run the Tamagui v3 compiler (`@knitui/plugins/vite` →
+ *      `@tamagui/cli/vite`) so Storybook exercises extraction like an app build
+ *      does (`TAMAGUI_COMPILER_STATS=verbose` prints flatten/bail stats).
+ *      OPT-IN with `KNITUI_STORYBOOK_COMPILER=1` for now: under Storybook's Vite
+ *      config the compiler's evaluation environment inlines `react`'s CommonJS
+ *      entry ("ReferenceError: module is not defined" in
+ *      node_modules/react/index.js), so it is not on by default until that is
+ *      resolved (tracked in docs/v3/conventions.md §10).
  */
 const RN_WEB_EXTENSIONS = [
   ".web.tsx",
@@ -38,8 +46,13 @@ const config: StorybookConfig = {
   },
   async viteFinal(config) {
     const { mergeConfig } = await import("vite");
+    const compiler =
+      process.env.KNITUI_STORYBOOK_COMPILER === "1"
+        ? [(await import("@knitui/plugins/vite")).knitui()]
+        : [];
 
     return mergeConfig(config, {
+      plugins: compiler,
       define: {
         "process.env.TAMAGUI_TARGET": JSON.stringify("web"),
         "process.env.EXPO_OS": JSON.stringify("web"),

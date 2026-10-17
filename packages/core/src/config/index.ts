@@ -1,10 +1,21 @@
 export { animations } from "./animations";
 export { CSS_EASING_BEZIER, type EasingPoints, resolveCssEasingPoints } from "./easing";
+export { FOCUS_RING_COLOR_KEY, FOCUS_RING_VARIABLES, withFocusRingColor } from "./focus-ring";
 export { bodyFont, fonts, headingFont } from "./fonts";
 export { getFontSize, getLineHeight } from "./get-font-size";
 export { media } from "./media";
-export { BOUNCY_BEZIER, DURATIONS, type DurationToken, EASINGS, type EasingToken } from "./motion";
+export {
+  BOUNCY_BEZIER,
+  BOUNCY_SPRING,
+  DURATIONS,
+  type DurationToken,
+  EASINGS,
+  type EasingToken,
+  MOTION_PRESETS,
+  type MotionPresetName,
+} from "./motion";
 export { breakpoints } from "./scales";
+export { KNIT_SETTINGS } from "./settings";
 export { shorthands } from "./shorthands";
 export {
   createSmoother,

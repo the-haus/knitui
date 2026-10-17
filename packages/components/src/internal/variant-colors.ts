@@ -3,43 +3,50 @@
  * `control-metrics.ts`. Where `controlMetrics` is the single source of truth for
  * how a control SIZES across the size keys, this is the single source of truth
  * for how it COLORS across the `variant` keys. Every value is a palette-ramp
- * token (`$color1…$color12`, `$white`, `$borderColor`) drawn from the ACTIVE
- * theme, so `theme="red"` recolors a component with no per-component logic — the
- * same property that already makes Button/ActionIcon/Badge/Alert theme-aware,
- * now factored into one place instead of copied into a dozen styled() frames.
+ * theme key (`color1…color12`, `borderColor`) or colour token (`white`) drawn
+ * from the ACTIVE theme, so `theme="red"` recolors a component with no
+ * per-component logic.
  *
- * Three ladders, each keyed by the canonical variant set:
+ * ONE ladder ({@link VARIANT_COLOR_LADDER}) holds every step; the spreadable
+ * tables below are GENERATED from it at module load, so they are static,
+ * literal-shaped objects (compiler-friendly, zero per-render work):
  *
  *  - `VARIANT_FILL`        background + border for the FRAME (the painted box).
- *  - `VARIANT_INTERACTION` hover / press / focus states layered ON TOP of the
- *                          fill for INTERACTIVE controls (buttons, action icons).
- *                          Static surfaces (Badge, Alert) take only the fill.
- *  - `VARIANT_FOREGROUND`  text/glyph color — two ladders: `emphasis` (labels,
- *                          titles) and `muted` (body copy, e.g. Alert message).
+ *  - `VARIANT_INTERACTION` the hover / press clauses ALONE (`"hover:color10
+ *                          press:color8"`), for a frame that composes its own base.
+ *  - `VARIANT_CONTROL`     fill + interaction as ONE flat value per property
+ *                          (`bg: "color9 hover:color10 press:color8"`) — what
+ *                          interactive frames (Button, ActionIcon) put in their
+ *                          `variant` variant (via `controlColorVariant`).
+ *  - `VARIANT_FOREGROUND`  text/glyph color — `emphasis` (labels, titles) and
+ *                          `muted` (body copy, e.g. Alert message). Single tokens,
+ *                          no clauses: they are also read as data (icon colour).
  *
- *  variant      fill bg       border        emphasis fg   muted fg
- *  filled       $color9       —             $color1       $color1
- *  light        $color4       —             $color11      $color12
- *  outline      transparent   $color7       $color11      $color12
- *  subtle       transparent   —             $color11      $color12
- *  default      $color3       $borderColor  $color12      $color12
- *  white        $white        —             $color9       $color12
- *  transparent  transparent   —             $color11      $color12
- *  dot          transparent   $borderColor  $color12      $color12   (pill family)
- *  gradient     transparent*  —             $white        $white     (*painted at runtime)
+ *  variant      fill bg       border        hover    press    emphasis   muted
+ *  filled       color9        —             color10  color8   color1     color1
+ *  light        color4        —             color5   color6   color11    color12
+ *  outline      transparent   color7        color3   color4   color11    color12
+ *  subtle       transparent   —             color4   color5   color11    color12
+ *  default      color3        borderColor   color4   color5   color12    color12
+ *  white        white         —             color2   color3   color9     color12
+ *  transparent  transparent   —             color3   color4   color11    color12
+ *  dot          transparent   borderColor   —        —        color12    color12  (pill family)
+ *  gradient     transparent*  —             —        —        white      white    (*painted at runtime)
  *
- * `gradient` is the odd one out: its FILL can't be a static ramp token because a
+ * v3: interaction states are FLAT CLAUSES inside the property they change (no
+ * `hoverStyle` / `pressStyle` objects — v3 forwards those to the DOM). Clause
+ * slots merge per (property, condition) across tiers, so a frame's base
+ * `scale: "press:0.97"` and a variant's `bg: "… press:color8"` compose, exactly
+ * as v2's deep-merged `pressStyle` did.
+ *
+ * `gradient` is the odd one out: its FILL can't be a static theme value because a
  * linear-gradient is not expressible as a Tamagui style value cross-platform. The
- * base stays `transparent` here and the actual gradient is painted at render by
- * the `useGradient` primitive (web `backgroundImage`, native `react-native-svg`
- * layer) from a per-instance `gradient={{ from, to, deg }}` / multi-`stops` prop.
- * Foreground is `$white` (Mantine parity — light text on a saturated gradient).
+ * base stays `transparent` and the gradient is painted at render by `useGradient`
+ * (web `backgroundImage`, native `react-native-svg` layer). It has no hover/press
+ * colour (it would sit invisibly beneath the gradient).
  *
- * `borderColor` is set ONLY where it is non-transparent (outline/default/dot);
- * the other variants inherit the frame's base `borderColor: "transparent"`, so
- * spreading these maps is output-identical to the hand-written frames they
- * replace. See `control-metrics.ts` for the sizing twin and
- * `core/config/themes.ts` for how the `$colorN` ramp is generated per theme.
+ * `borderColor` is set ONLY where it is non-transparent (outline/default/dot); the
+ * other variants inherit the frame's base `borderColor: "transparent"`.
  */
 
 /** The canonical variant vocabulary, in the order they're declared on a frame. */
@@ -58,146 +65,175 @@ export const VARIANT_KEYS = [
 export type VariantKey = (typeof VARIANT_KEYS)[number];
 
 /**
- * THE canonical keyboard-focus ring — the single source of truth for the 2px
- * focus-visible outline shared by every interactive control (Button, ActionIcon,
- * Chip, Radio, Switch, Tabs, Menu items, Pagination, …). Centralises the literal
- * that was otherwise copy-pasted across ~two dozen styled frames, so the ring's
- * color/width/style is tuned in ONE place and every control moves together — the
- * same contract `VARIANT_FILL`/`controlMetrics` give color/size.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * THE FOCUS CONTRACT (two layers — both required, kept honest by the
- * `focus-ring` guardrail test in `src/__tests__/`):
- *
- *   Layer 1 — the VISUAL ring (this): spread `...focusRingStyle` onto a frame's
- *             styled base. It renders a `:focus-visible` outline on WEB only —
- *             react-native-web maps `outline*` to the CSS outline; on native it's
- *             a no-op (touch has no focus ring; keyboard/AT focus on native flows
- *             through accessibility, see Layer 2).
- *
- *   Layer 2 — FOCUSABILITY: a styled `Box` renders a `<div>`, which the browser
- *             will NOT tab to, so Layer 1's `:focus-visible` never fires unless the
- *             SAME frame is also made focusable. Pick ONE by the control's
- *             semantics (both are cross-platform-safe):
- *               • `webButton()`  (internal/style-props) — the control IS a button:
- *                 renders a real, natively-focusable `<button>` on web; a no-op on
- *                 native (interaction flows through `onPress`).
- *               • `useKeyboardActions()` (@knitui/hooks) — a box with a non-button
- *                 role (link/treeitem/checkbox/…): web adds `tabIndex`+`onKeyDown`
- *                 (Space/Enter → `onActivate`), native maps to accessibility
- *                 actions; `onPress` still drives native activation.
- *               • a roving `tabIndex` literal — composite widgets (Tabs/Menu).
- *
- *   INVARIANT: never spread `focusRingStyle` onto a frame you don't also make
- *   focusable — that produces a DEAD ring (the bug this contract exists to stop).
- *
- * TEXT FIELDS are the deliberate exception: they express focus as a `borderColor`
- * swap (`$borderColorFocus`, see Input's `focused` variant in `Input/shared.tsx`)
- * because a border renders cross-platform, unlike the web-only outline.
- * ─────────────────────────────────────────────────────────────────────────────
- *
- * `$color8` is a mid step of the ACTIVE theme's ramp, so `theme="blue"` (or any
- * accent sub-theme) recolors the ring with no per-component logic.
+ * THE colour ladder — every variant's steps in one literal table. Re-tune a step
+ * here and every generated table (and so every component) moves together.
  */
-export const FOCUS_RING = {
-  outlineColor: "$color8",
-  outlineWidth: 2,
-  outlineStyle: "solid",
-} as const;
+export const VARIANT_COLOR_LADDER = {
+  filled: {
+    fill: "color9",
+    hover: "color10",
+    press: "color8",
+    emphasis: "color1",
+    muted: "color1",
+  },
+  light: {
+    fill: "color4",
+    hover: "color5",
+    press: "color6",
+    emphasis: "color11",
+    muted: "color12",
+  },
+  outline: {
+    fill: "transparent",
+    border: "color7",
+    hover: "color3",
+    press: "color4",
+    emphasis: "color11",
+    muted: "color12",
+  },
+  subtle: {
+    fill: "transparent",
+    hover: "color4",
+    press: "color5",
+    emphasis: "color11",
+    muted: "color12",
+  },
+  default: {
+    fill: "color3",
+    border: "borderColor",
+    hover: "color4",
+    press: "color5",
+    emphasis: "color12",
+    muted: "color12",
+  },
+  white: { fill: "white", hover: "color2", press: "color3", emphasis: "color9", muted: "color12" },
+  transparent: {
+    fill: "transparent",
+    hover: "color3",
+    press: "color4",
+    emphasis: "color11",
+    muted: "color12",
+  },
+  dot: { fill: "transparent", border: "borderColor", emphasis: "color12", muted: "color12" },
+  gradient: { fill: "transparent", emphasis: "white", muted: "white" },
+} as const satisfies Record<VariantKey, LadderStep>;
 
-/**
- * `FOCUS_RING` pre-wrapped as a `focusVisibleStyle` block, ready to SPREAD onto a
- * styled frame's base config (`...focusRingStyle`). Pass {@link FOCUS_RING}
- * directly to a JSX `focusVisibleStyle={...}` prop instead where the ring lives on
- * a rendered element rather than a `styled()` definition.
- */
-export const focusRingStyle = { focusVisibleStyle: FOCUS_RING } as const;
+interface LadderStep {
+  /** Resting background. */
+  fill: string;
+  /** Border colour where non-transparent. */
+  border?: string;
+  /** Hover / press backgrounds — interactive variants only. */
+  hover?: string;
+  press?: string;
+  /** Label/title foreground. */
+  emphasis: string;
+  /** Body-copy foreground. */
+  muted: string;
+}
+
+type Ladder = typeof VARIANT_COLOR_LADDER;
+
+/** The variants that carry hover/press steps (everything but `dot` / `gradient`). */
+export type InteractiveVariantKey = {
+  [K in VariantKey]: Ladder[K] extends { hover: string } ? K : never;
+}[VariantKey];
+
+type BorderOf<K extends VariantKey> = Ladder[K] extends { border: infer B extends string }
+  ? { borderColor: B }
+  : unknown;
+
+type FillOf<K extends VariantKey> = { backgroundColor: Ladder[K]["fill"] } & BorderOf<K>;
+
+type InteractionOf<K extends VariantKey> = Ladder[K] extends {
+  hover: infer H extends string;
+  press: infer P extends string;
+}
+  ? { backgroundColor: `hover:${H} press:${P}` }
+  : never;
+
+type ControlOf<K extends VariantKey> = Ladder[K] extends {
+  fill: infer F extends string;
+  hover: infer H extends string;
+  press: infer P extends string;
+}
+  ? { backgroundColor: `${F} hover:${H} press:${P}` } & BorderOf<K>
+  : FillOf<K>;
+
+type ForegroundOf<K extends VariantKey, Field extends "emphasis" | "muted"> = {
+  color: Ladder[K][Field];
+};
+
+const step = (key: VariantKey): LadderStep => VARIANT_COLOR_LADDER[key];
+
+const build = <T>(make: (key: VariantKey, s: LadderStep) => object | undefined): T => {
+  const out: Record<string, object> = {};
+  for (const key of VARIANT_KEYS) {
+    const value = make(key, step(key));
+    if (value) out[key] = value;
+  }
+  // Not frozen: these are handed to `styled()` as variant bodies.
+  return out as T;
+};
 
 /**
  * Background + border for the painted frame. Border is omitted where it should
- * stay the frame's base transparent (filled/light/subtle/white/transparent), so
- * these are drop-in for the existing inline maps.
+ * stay the frame's base transparent (filled/light/subtle/white/transparent).
  */
-export const VARIANT_FILL = {
-  filled: { backgroundColor: "$color9" },
-  light: { backgroundColor: "$color4" },
-  outline: { backgroundColor: "transparent", borderColor: "$color7" },
-  subtle: { backgroundColor: "transparent" },
-  default: { backgroundColor: "$color3", borderColor: "$borderColor" },
-  white: { backgroundColor: "$white" },
-  transparent: { backgroundColor: "transparent" },
-  dot: { backgroundColor: "transparent", borderColor: "$borderColor" },
-  // Base stays transparent; the gradient is painted at render by `useGradient`.
-  gradient: { backgroundColor: "transparent" },
-} as const;
+export const VARIANT_FILL = build<{ readonly [K in VariantKey]: FillOf<K> }>((_key, s) =>
+  s.border ? { backgroundColor: s.fill, borderColor: s.border } : { backgroundColor: s.fill },
+);
 
 /**
- * Hover / press states layered on top of `VARIANT_FILL` for INTERACTIVE controls.
- * The keyboard-focus ring is NOT here — it's variant-independent, so consumers
- * spread `...focusRingStyle` (see {@link FOCUS_RING}) onto the frame BASE so every
- * variant gets it, rather than the ring riding only the `filled` variant. Static
- * surfaces (Badge, Alert, `dot`) intentionally have no entry here.
+ * The hover / press clauses ALONE for INTERACTIVE variants
+ * (`{ backgroundColor: "hover:color10 press:color8" }`). Use it when a frame
+ * supplies its own resting background (an override that keeps the kit's
+ * interaction steps); for the usual fill + interaction use {@link VARIANT_CONTROL}.
+ * The keyboard-focus ring is NOT here — it's variant-independent, see
+ * `focusRingStyle` in `./focus-ring`. Static variants (`dot`, `gradient`) have no
+ * entry.
  */
-export const VARIANT_INTERACTION = {
-  filled: {
-    hoverStyle: { backgroundColor: "$color10" },
-    pressStyle: { backgroundColor: "$color8" },
-  },
-  light: {
-    hoverStyle: { backgroundColor: "$color5" },
-    pressStyle: { backgroundColor: "$color6" },
-  },
-  outline: {
-    hoverStyle: { backgroundColor: "$color3" },
-    pressStyle: { backgroundColor: "$color4" },
-  },
-  subtle: {
-    hoverStyle: { backgroundColor: "$color4" },
-    pressStyle: { backgroundColor: "$color5" },
-  },
-  default: {
-    hoverStyle: { backgroundColor: "$color4" },
-    pressStyle: { backgroundColor: "$color5" },
-  },
-  white: {
-    hoverStyle: { backgroundColor: "$color2" },
-    pressStyle: { backgroundColor: "$color3" },
-  },
-  transparent: {
-    hoverStyle: { backgroundColor: "$color3" },
-    pressStyle: { backgroundColor: "$color4" },
-  },
-} as const;
+export const VARIANT_INTERACTION = build<{
+  readonly [K in InteractiveVariantKey]: InteractionOf<K>;
+}>((_key, s) =>
+  s.hover && s.press ? { backgroundColor: `hover:${s.hover} press:${s.press}` } : undefined,
+);
+
+/**
+ * Fill + interaction as ONE flat value per property, per variant
+ * (`filled → { backgroundColor: "color9 hover:color10 press:color8" }`). The
+ * interactive-control frame ladder (Button / ActionIcon). Excludes the pill-only
+ * `dot`; `gradient` carries only its transparent base (no hover/press colour).
+ */
+export const VARIANT_CONTROL = build<{
+  readonly [K in Exclude<VariantKey, "dot">]: ControlOf<K>;
+}>((key, s) => {
+  if (key === "dot") return undefined;
+  const backgroundColor =
+    s.hover && s.press ? `${s.fill} hover:${s.hover} press:${s.press}` : s.fill;
+  return s.border ? { backgroundColor, borderColor: s.border } : { backgroundColor };
+});
 
 /**
  * EMPHASIS foreground — labels, titles, glyphs that sit on the fill. This is the
  * ladder used by `Button`/`ActionIcon` text, `Badge` text, and `Alert.Title`.
+ * Single tokens (no clauses): `ControlIconProvider` reads `.color` as data.
  */
-export const VARIANT_FOREGROUND_EMPHASIS = {
-  filled: { color: "$color1" },
-  light: { color: "$color11" },
-  outline: { color: "$color11" },
-  subtle: { color: "$color11" },
-  default: { color: "$color12" },
-  white: { color: "$color9" },
-  transparent: { color: "$color11" },
-  dot: { color: "$color12" },
-  gradient: { color: "$white" },
-} as const;
+export const VARIANT_FOREGROUND_EMPHASIS = build<{
+  readonly [K in VariantKey]: ForegroundOf<K, "emphasis">;
+}>((_key, s) => ({ color: s.emphasis }));
 
 /**
  * MUTED foreground — body copy that should read softer than a label. Only the
- * `filled` variant inverts to `$color1` (it sits on the strong `$color9` fill);
- * every other variant uses `$color12`. Used by `Alert.Message`.
+ * `filled` variant inverts to `color1` (it sits on the strong `color9` fill);
+ * `gradient` is white; every other variant uses `color12`. Used by `Alert.Message`.
  */
-export const VARIANT_FOREGROUND_MUTED = {
-  filled: { color: "$color1" },
-  light: { color: "$color12" },
-  outline: { color: "$color12" },
-  subtle: { color: "$color12" },
-  default: { color: "$color12" },
-  white: { color: "$color12" },
-  transparent: { color: "$color12" },
-  dot: { color: "$color12" },
-  gradient: { color: "$white" },
-} as const;
+export const VARIANT_FOREGROUND_MUTED = build<{
+  readonly [K in VariantKey]: ForegroundOf<K, "muted">;
+}>((_key, s) => ({ color: s.muted }));
+
+/*
+ * Back-compat re-exports: the focus ring moved to `./focus-ring` (it is not a
+ * colour-variant concern), but ~20 call sites import it from here / style-props.
+ */
+export { FOCUS_RING, focusRingStyle } from "./focus-ring";

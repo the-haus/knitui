@@ -19,6 +19,31 @@ A guardrail test asserts the pairing: a component that applies the ring without
 being focusable fails CI. That exists because the failure is invisible in review —
 the styles look right, the ring simply never fires.
 
+## The ring is configuration
+
+The ring is drawn from three names rather than per-component style tables:
+
+```tsx
+// a real <button> on the web, so it is focusable
+<UnstyledButton
+  outlineStyle="solid"
+  outlineColor="focus-visible:focusRingColor"
+  outlineWidth={FOCUS_RING_VARIABLES.focusRingWidth}
+/>
+```
+
+- `focusRingColor` is a theme key present in every theme (the theme's `color8`),
+  so `theme="red"` gives a red ring automatically.
+- `focusRingWidth` (2) and `focusRingOffset` (0) are config variables. In
+  Tamagui 3.0.x only colour props accept variable names in their types, so write
+  the numbers from `FOCUS_RING_VARIABLES` (exported by `@knitui/core`).
+
+Re-colour the ring for a subtree without re-rendering:
+
+```tsx
+<ThemeUpdate focusRingColor="red9">…</ThemeUpdate>
+```
+
 ## What the kit gives you
 
 - **Real semantic elements on the web.** `Button` renders `<button>`, `TextInput`

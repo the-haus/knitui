@@ -58,10 +58,10 @@ export interface OverlayTransitionResult {
   /**
    * Tamagui animation-driver props for the frame. Empty on web (the CSS
    * transition lives in {@link OverlayTransitionResult.style}); on native it
-   * carries `{ transition, animateOnly }` so the RN driver animates the returned
+   * carries a scoped `{ transition }` so the RN driver animates the returned
    * opacity/transform. See the `.native` sibling.
    */
-  animation: { transition?: TransitionValue; animateOnly?: string[] };
+  animation: { transition?: TransitionValue };
 }
 
 const DEFAULT_TRANSITION: MantineTransition = "fade";

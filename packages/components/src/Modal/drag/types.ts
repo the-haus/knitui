@@ -1,13 +1,25 @@
 import type * as React from "react";
 import type { SharedValue } from "react-native-reanimated";
 
-import type { ViewStyle } from "@knitui/core";
-
 import type { OverlayProps } from "../../Overlay";
 import type { DragAxis } from "./useDragDismiss";
 
 /** Pointer-events modes the host accepts (RN/RNW shared subset). */
 export type PointerEventsMode = "auto" | "none" | "box-none" | "box-only";
+
+/**
+ * The flex layout a drag host re-creates (see {@link DragDismissHostProps.style}).
+ * Deliberately narrow: plain literals assignable to BOTH a React Native style (the
+ * native `Animated.View` host) and Tamagui style props (the web `Box` host spreads
+ * them as props), so neither host needs a cast.
+ */
+export interface DragHostLayout {
+  flex?: number;
+  alignSelf?: "auto" | "stretch" | "center" | "flex-start" | "flex-end";
+  flexDirection?: "row" | "column";
+  alignItems?: "stretch" | "center" | "flex-start" | "flex-end";
+  justifyContent?: "center" | "flex-start" | "flex-end" | "space-between";
+}
 
 /** Props for the animated drag host (carries the panel's dismiss translation). */
 export interface DragDismissHostProps {
@@ -22,7 +34,7 @@ export interface DragDismissHostProps {
    * wraps a panel that relies on it (e.g. Modal's centred, `maxHeight:100%`
    * panel), so the panel keeps sizing/centring correctly inside the host.
    */
-  style?: ViewStyle;
+  style?: DragHostLayout;
   /**
    * `box-none` lets the host's empty area (the margin around a centred panel) pass
    * clicks through to the scrim behind it while children still receive events.

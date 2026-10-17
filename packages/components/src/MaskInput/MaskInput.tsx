@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { styleable } from "@knitui/core";
 import { assignRef, useCallbackRef, useUncontrolled } from "@knitui/hooks";
 
 import { InputBase, type InputBaseProps } from "../InputBase";
@@ -81,7 +82,7 @@ export interface MaskInputProps extends MaskInputBaseProps {
  * comes from the Tamagui `theme` prop + palette ramp — never a Mantine `color`
  * prop.
  */
-export const MaskInput = InputBase.styleable<MaskInputProps>(function MaskInput(props, ref) {
+export const MaskInput = styleable<MaskInputProps>(InputBase, function MaskInput(props, ref) {
   const {
     mask,
     tokens,

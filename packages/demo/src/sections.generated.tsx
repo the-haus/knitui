@@ -46,17 +46,6 @@ export const demoSections: DemoSection[] = [
     ),
   },
   {
-    id: "ThemeIcon",
-    title: "ThemeIcon",
-    group: "Data display",
-    fullBleed: false,
-    Component: lazy(() =>
-      import("@knitui/components/src/ThemeIcon/ThemeIcon.stories").then((m) => ({
-        default: () => <StorySection mod={m as Record<string, unknown>} title="ThemeIcon" />,
-      })),
-    ),
-  },
-  {
     id: "List",
     title: "List",
     group: "Data Display",
@@ -90,6 +79,17 @@ export const demoSections: DemoSection[] = [
     ),
   },
   {
+    id: "ThemeIcon",
+    title: "ThemeIcon",
+    group: "Data Display",
+    fullBleed: false,
+    Component: lazy(() =>
+      import("@knitui/components/src/ThemeIcon/ThemeIcon.stories").then((m) => ({
+        default: () => <StorySection mod={m as Record<string, unknown>} title="ThemeIcon" />,
+      })),
+    ),
+  },
+  {
     id: "Tree",
     title: "Tree",
     group: "Data Display",
@@ -108,6 +108,17 @@ export const demoSections: DemoSection[] = [
     Component: lazy(() =>
       import("@knitui/components/src/TreeSelect/TreeSelect.stories").then((m) => ({
         default: () => <StorySection mod={m as Record<string, unknown>} title="TreeSelect" />,
+      })),
+    ),
+  },
+  {
+    id: "VirtualList",
+    title: "VirtualList",
+    group: "Data Display",
+    fullBleed: false,
+    Component: lazy(() =>
+      import("@knitui/components/src/VirtualList/VirtualList.stories").then((m) => ({
+        default: () => <StorySection mod={m as Record<string, unknown>} title="VirtualList" />,
       })),
     ),
   },
@@ -218,6 +229,19 @@ export const demoSections: DemoSection[] = [
     Component: lazy(() =>
       import("@knitui/dates/src/DecadeLevelGroup/DecadeLevelGroup.stories").then((m) => ({
         default: () => <StorySection mod={m as Record<string, unknown>} title="DecadeLevelGroup" />,
+      })),
+    ),
+  },
+  {
+    id: "InlineDateTimePicker",
+    title: "InlineDateTimePicker",
+    group: "Dates",
+    fullBleed: false,
+    Component: lazy(() =>
+      import("@knitui/dates/src/InlineDateTimePicker/InlineDateTimePicker.stories").then((m) => ({
+        default: () => (
+          <StorySection mod={m as Record<string, unknown>} title="InlineDateTimePicker" />
+        ),
       })),
     ),
   },
@@ -1658,6 +1682,17 @@ export const demoSections: DemoSection[] = [
     Component: lazy(() =>
       import("@knitui/sheet/src/Sheet.stories").then((m) => ({
         default: () => <StorySection mod={m as Record<string, unknown>} title="Sheet" />,
+      })),
+    ),
+  },
+  {
+    id: "SwipeDeck",
+    title: "SwipeDeck",
+    group: "Other",
+    fullBleed: false,
+    Component: lazy(() =>
+      import("@knitui/carousel/src/deck/SwipeDeck.stories").then((m) => ({
+        default: () => <StorySection mod={m as Record<string, unknown>} title="SwipeDeck" />,
       })),
     ),
   },

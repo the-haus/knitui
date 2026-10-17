@@ -151,8 +151,8 @@ export const Transitions: Story = {
     const [transition, setTransition] = React.useState<(typeof TRANSITIONS)[number]>("pop");
     const [opened, setOpened] = React.useState(true);
     return (
-      <Box gap="$lg" alignItems="center" padding="$xl">
-        <Box flexDirection="row" flexWrap="wrap" gap="$xs" maxWidth={520} justifyContent="center">
+      <Box gap="lg" alignItems="center" padding="xl">
+        <Box flexDirection="row" flexWrap="wrap" gap="xs" maxWidth={520} justifyContent="center">
           {TRANSITIONS.map((name) => (
             <Button
               key={name}
@@ -185,10 +185,10 @@ export const Positions: Story = {
     <Box
       flexDirection="row"
       flexWrap="wrap"
-      gap="$lg"
+      gap="lg"
       alignItems="center"
       justifyContent="center"
-      padding="$xl"
+      padding="xl"
     >
       {POSITIONS.map((position) => (
         <Tooltip key={position} label={position} position={position} opened>
@@ -204,7 +204,7 @@ export const Positions: Story = {
 /** Tooltip with an arrow pointing at its target; arrow size is configurable. */
 export const WithArrow: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       <Tooltip {...args} label="Small arrow" withArrow arrowSize={4} position="top">
         <Button variant="default">Small arrow</Button>
       </Tooltip>
@@ -237,7 +237,7 @@ export const Theme: Story = {
 /** Disabled tooltip — even with `opened` forced it never shows the label. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Tooltip {...args} label="This will show" disabled={false}>
         <Button variant="default">Enabled</Button>
       </Tooltip>
@@ -253,7 +253,7 @@ export const Disabled: Story = {
 /** Multiline label — wraps long content instead of truncating at 320 px. */
 export const Multiline: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Tooltip
         {...args}
         label="This is a single-line tooltip that truncates at 320 px wide."
@@ -276,7 +276,7 @@ export const Multiline: Story = {
 /** Open and close delays add a intentional pause before the label appears or disappears. */
 export const Delays: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Tooltip {...args} label="Instant (no delay)" openDelay={0} closeDelay={0}>
         <Button variant="default">No delay</Button>
       </Tooltip>
@@ -295,13 +295,13 @@ export const Controlled: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Tooltip {...args} label="Controlled tooltip" opened={opened}>
           <Button variant="default" onPress={() => setOpened((o) => !o)}>
             {opened ? "Click to hide" : "Click to show"}
           </Button>
         </Tooltip>
-        <Text fontSize="$sm" color="$color10">
+        <Text fontSize="sm" color="color10">
           Tooltip is: {opened ? "open" : "closed"}
         </Text>
       </Box>
@@ -312,7 +312,7 @@ export const Controlled: Story = {
 /** Touch and focus events can trigger the tooltip in addition to (or instead of) hover. */
 export const Events: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Tooltip
         {...args}
         label="Hover only (default)"
@@ -340,7 +340,7 @@ export const Events: Story = {
 /** Optional elevation via the `shadow` prop — the shared ladder from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center" padding="$xl">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center" padding="xl">
       {SHADOWS.map((shadow) => (
         <Tooltip key={shadow} {...args} label={`shadow ${shadow}`} shadow={shadow} opened>
           <Button variant="default">{shadow}</Button>
@@ -358,8 +358,8 @@ export const Styles: Story = {
       label="Styled tooltip"
       opened
       styles={{
-        dropdown: { backgroundColor: "$blue9" },
-        label: { color: "$color1", fontWeight: "700" },
+        dropdown: { backgroundColor: "blue9" },
+        label: { color: "color1", fontWeight: "700" },
       }}
     >
       <Button variant="default">Styled slots</Button>

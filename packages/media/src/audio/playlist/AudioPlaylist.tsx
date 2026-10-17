@@ -138,7 +138,7 @@ function AudioPlaylistRoot(props: AudioPlaylistProps): React.ReactElement {
         ref={setFrameRef}
         testID={testID}
         width={width}
-        maxWidth={maxWidth}
+        {...(maxWidth != null ? { maxWidth } : null)}
         {...accessor.get("root")}
       >
         {showTrackList ? <TrackList /> : null}

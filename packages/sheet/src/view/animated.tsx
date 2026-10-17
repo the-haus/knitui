@@ -16,6 +16,9 @@ import type { AnimatedOverlayProps, FrameHostProps } from "./animated.types";
  */
 
 const FILL: ViewStyle = { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 };
+// Hoisted per layer so a render never allocates the static part of the style.
+const PANEL_FILL: ViewStyle = { ...FILL, zIndex: 1 };
+const SCRIM_FILL: ViewStyle = { ...FILL, zIndex: 0 };
 
 /** The sub-pixel step the transform alternates by to be sent again (see below). */
 const RESEND_PX = 0.01;
@@ -47,7 +50,7 @@ export function AnimatedFrameHost({ offset, children }: FrameHostProps) {
     return { transform: [{ translateY: offset.value + resend.value }] };
   }, []);
 
-  return <Animated.View style={[FILL, { zIndex: 1 }, style]}>{children}</Animated.View>;
+  return <Animated.View style={[PANEL_FILL, style]}>{children}</Animated.View>;
 }
 
 /** The scrim: fades with the panel offset; passes taps through to `Overlay`. */
@@ -65,7 +68,7 @@ export function AnimatedOverlay({
   }, [fadeStart, closed, maxOpacity]);
 
   return (
-    <Animated.View style={[FILL, { zIndex: 0 }, style]} pointerEvents="box-none">
+    <Animated.View style={[SCRIM_FILL, style]} pointerEvents="box-none">
       <Overlay onPress={onPress} zIndex={0} {...overlayProps} />
     </Animated.View>
   );

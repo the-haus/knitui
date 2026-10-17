@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 import { useKeyboardActions, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
@@ -16,33 +16,38 @@ export type NavLinkVariant = "filled" | "light" | "subtle";
 /* -------------------------------------------------------------------------- */
 
 const NavLinkRoot = styled(Box, {
-  name: "NavLink",
+  displayName: "NavLink",
   flexDirection: "row",
   alignItems: "center",
-  paddingHorizontal: "$sm",
-  paddingVertical: "$xs",
-  borderRadius: "$xs",
-  gap: "$xs",
+  paddingHorizontal: "sm",
+  paddingVertical: "xs",
+  borderRadius: "xs",
+  gap: "xs",
   ...webCursor("pointer"),
   userSelect: "none",
 
   variants: {
     variant: {
       filled: {
-        hoverStyle: { backgroundColor: "$color4" },
-        pressStyle: { backgroundColor: "$color5" },
+        backgroundColor: "hover:color4 press:color5",
       },
       light: {
-        hoverStyle: { backgroundColor: "$color3" },
-        pressStyle: { backgroundColor: "$color4" },
+        backgroundColor: "hover:color3 press:color4",
       },
       subtle: {
-        hoverStyle: { backgroundColor: "$color3" },
-        pressStyle: { backgroundColor: "$color4" },
+        backgroundColor: "hover:color3 press:color4",
       },
     },
     active: {
       true: {},
+    },
+    // The active fill per variant, a static body each (the render passes
+    // `activeFill={active ? variant : undefined}`). Declared after `variant`, so
+    // its clauses replace that variant's hover/press slots.
+    activeFill: {
+      filled: { backgroundColor: "color9 hover:color10 press:color8" },
+      light: { backgroundColor: "color4 hover:color5 press:color6" },
+      subtle: { backgroundColor: "transparent" },
     },
     disabled: {
       true: { opacity: 0.4, pointerEvents: "none" },
@@ -54,30 +59,40 @@ const NavLinkRoot = styled(Box, {
 });
 
 const NavLinkBody = styled(Box, {
-  name: "NavLinkBody",
+  displayName: "NavLinkBody",
   flex: 1,
   flexDirection: "column",
   justifyContent: "center",
 });
 
 const NavLinkLabel = styled(Text, {
-  name: "NavLinkLabel",
-  fontSize: "$sm",
+  displayName: "NavLinkLabel",
+  fontSize: "sm",
+  color: "color",
   userSelect: "none",
-  numberOfLines: 1,
+
+  variants: {
+    // Label text on the filled accent background.
+    onAccent: {
+      true: { color: "color1" },
+    },
+  } as const,
 });
 
+/** `noWrap`: truncate the label / description to one line. */
+const NO_WRAP = { numberOfLines: 1 } as const;
+
 const NavLinkDescription = styled(Text, {
-  name: "NavLinkDescription",
-  fontSize: "$xs",
-  color: "$color",
+  displayName: "NavLinkDescription",
+  fontSize: "xs",
+  color: "color",
   opacity: 0.65,
   userSelect: "none",
   numberOfLines: 2,
 });
 
 const NavLinkSection = styled(Box, {
-  name: "NavLinkSection",
+  displayName: "NavLinkSection",
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
@@ -85,16 +100,16 @@ const NavLinkSection = styled(Box, {
 
 /** The chevron indicator — rotates when the nav link is expanded. */
 const NavLinkChevron = styled(Text, {
-  name: "NavLinkChevron",
-  fontSize: "$xs",
-  color: "$color",
+  displayName: "NavLinkChevron",
+  fontSize: "xs",
+  color: "color",
   userSelect: "none",
 });
 
 const NavLinkChildren = styled(Box, {
-  name: "NavLinkChildren",
+  displayName: "NavLinkChildren",
   flexDirection: "column",
-  paddingLeft: "$lg",
+  paddingLeft: "lg",
 });
 
 /* -------------------------------------------------------------------------- */
@@ -103,8 +118,8 @@ const NavLinkChildren = styled(Box, {
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ label: { color: "$red9" } }}` is
- * sugar for `<NavLink.Label color="$red9" />`. The `leftSection`/`rightSection`
+ * of the styled part it targets, so `styles={{ label: { color: "red9" } }}` is
+ * sugar for `<NavLink.Label color="red9" />`. The `leftSection`/`rightSection`
  * keys both target the `NavLink.Section` part (the two positional sections share
  * one styled part); `chevron` targets the auto-chevron shown when children exist.
  */
@@ -145,6 +160,7 @@ type NavLinkRootProps = Omit<
   GetProps<typeof NavLinkRoot>,
   | "variant"
   | "active"
+  | "activeFill"
   | "children"
   | "disabled"
   | "onChange"
@@ -179,7 +195,7 @@ export interface NavLinkProps extends NavLinkRootProps {
   disableRightSectionRotation?: boolean;
   /** Keep nested children mounted when collapsed. @default true */
   keepMounted?: boolean;
-  /** Left indentation applied to nested children. @default '$lg' */
+  /** Left indentation applied to nested children. @default 'lg' */
   childrenOffset?: GetProps<typeof NavLinkChildren>["paddingLeft"];
   /** Disables the link. @default false */
   disabled?: boolean;
@@ -187,7 +203,7 @@ export interface NavLinkProps extends NavLinkRootProps {
   styles?: SlotStyles<NavLinkStyles>;
 }
 
-const NavLinkComponent = NavLinkRoot.styleable<NavLinkProps>(function NavLink(props, ref) {
+const NavLinkComponent = styleable<NavLinkProps>(NavLinkRoot, function NavLink(props, ref) {
   const {
     label,
     description,
@@ -202,7 +218,7 @@ const NavLinkComponent = NavLinkRoot.styleable<NavLinkProps>(function NavLink(pr
     onChange,
     disableRightSectionRotation = false,
     keepMounted = true,
-    childrenOffset = "$lg",
+    childrenOffset = "lg",
     disabled = false,
     onPress,
     styles,
@@ -237,16 +253,8 @@ const NavLinkComponent = NavLinkRoot.styleable<NavLinkProps>(function NavLink(pr
   // makes it focusable + activatable on web (tabIndex + Space/Enter → onActivate)
   // and maps to accessibility actions on native; `disabled` drops it from the tab
   // order. See the focus contract in `internal/variant-colors.ts` (`FOCUS_RING`).
+  //
   const focusProps = useKeyboardActions({ onActivate: handlePress }, { disabled });
-
-  // Active-variant inline styles
-  const activeStyle: object = active
-    ? variant === "filled"
-      ? { backgroundColor: "$color9" }
-      : variant === "light"
-        ? { backgroundColor: "$color4" }
-        : { backgroundColor: "transparent" }
-    : {};
 
   return (
     <Box {...s.get("wrapper")}>
@@ -254,6 +262,7 @@ const NavLinkComponent = NavLinkRoot.styleable<NavLinkProps>(function NavLink(pr
         ref={ref}
         variant={variant}
         active={active}
+        activeFill={active ? variant : undefined}
         disabled={disabled}
         onPress={handlePress}
         // NavLinkRoot is a plain Box, so it owns link semantics by default.
@@ -261,8 +270,9 @@ const NavLinkComponent = NavLinkRoot.styleable<NavLinkProps>(function NavLink(pr
         role="link"
         aria-expanded={hasChildren ? isOpen : undefined}
         aria-disabled={disabled || undefined}
+        // The active link is the current location (WAI-ARIA `aria-current`).
+        aria-current={active ? "page" : undefined}
         {...s.get("root")}
-        {...(activeStyle as GetProps<typeof NavLinkRoot>)}
         {...rest}
         {...focusProps}
       >
@@ -273,18 +283,15 @@ const NavLinkComponent = NavLinkRoot.styleable<NavLinkProps>(function NavLink(pr
         <NavLinkBody {...s.get("body")}>
           {label != null ? (
             <NavLinkLabel
-              {...s.merge("label", {
-                numberOfLines: noWrap ? 1 : undefined,
-                color: active && variant === "filled" ? "$color1" : "$color",
-              })}
+              onAccent={active && variant === "filled"}
+              {...(noWrap ? NO_WRAP : null)}
+              {...s.get("label")}
             >
               {label}
             </NavLinkLabel>
           ) : null}
           {description != null ? (
-            <NavLinkDescription
-              {...s.merge("description", { numberOfLines: noWrap ? 1 : undefined })}
-            >
+            <NavLinkDescription {...(noWrap ? NO_WRAP : null)} {...s.get("description")}>
               {description}
             </NavLinkDescription>
           ) : null}

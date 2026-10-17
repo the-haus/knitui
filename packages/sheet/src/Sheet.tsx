@@ -35,6 +35,11 @@ import { Surface } from "./view/Surface";
 
 const DEFAULT_SNAP_POINTS = [80, 10];
 
+/** The handle's accessible name, per platform (hoisted: one object). */
+const HANDLE_A11Y = isWeb
+  ? { "aria-label": "Sheet drag handle" }
+  : { accessibilityLabel: "Sheet drag handle" };
+
 function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const {
     opened,
@@ -434,18 +439,14 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     style,
   };
 
+  const onHandlePress = React.useCallback(() => {
+    // The click that ends a drag begun on the handle is not a press.
+    if (suppressHandlePressRef.current) return;
+    motionRef.current.cycle(positionRef.current);
+  }, []);
   const showHandle = slots.Handle !== undefined || withHandle;
   const handleNode = showHandle ? (
-    <UnstyledButton
-      onPress={() => {
-        // The click that ends a drag begun on the handle is not a press.
-        if (suppressHandlePressRef.current) return;
-        motionRef.current.cycle(positionRef.current);
-      }}
-      {...(isWeb
-        ? { "aria-label": "Sheet drag handle" }
-        : { accessibilityLabel: "Sheet drag handle" })}
-    >
+    <UnstyledButton onPress={onHandlePress} {...HANDLE_A11Y}>
       <SheetHandleRow>
         <SheetHandleBar {...s.get("handle")} {...slots.Handle?.props} />
       </SheetHandleRow>
@@ -471,8 +472,12 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
       </SheetFooter>
     ) : null;
 
-  const onOverlayPress = dismissOnOverlayPress ? () => setOpenRef.current(false) : undefined;
-  const resolvedOverlayProps = { ...s.get("overlay"), ...overlayProps };
+  const onOverlayPress = dismissOnOverlayPress ? requestClose : undefined;
+  const overlaySlot = s.get("overlay");
+  const resolvedOverlayProps = React.useMemo(
+    () => ({ ...overlaySlot, ...overlayProps }),
+    [overlaySlot, overlayProps],
+  );
 
   /* ── Render ───────────────────────────────────────────────────────────── */
 

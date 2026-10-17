@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 import { useId, useUncontrolled } from "@knitui/hooks";
 
 import { Box, type BoxProps } from "../Box";
@@ -117,7 +123,7 @@ const TabsSlotStylesContext = React.createContext<SlotStyles<TabsStyles> | undef
 /* -------------------------------------------------------------------------- */
 
 const TabsListFrame = styled(Box, {
-  name: "TabsList",
+  displayName: "TabsList",
   context: TabsStyleContext,
   flexDirection: "row",
   flexWrap: "nowrap",
@@ -140,18 +146,18 @@ const TabsListFrame = styled(Box, {
     variant: {
       default: {
         borderBottomWidth: 2,
-        borderBottomColor: "$color4",
+        borderBottomColor: "color4",
       },
       outline: {
         borderBottomWidth: 2,
-        borderBottomColor: "$color4",
+        borderBottomColor: "color4",
       },
       pills: {
         borderBottomWidth: 0,
-        gap: "$xs",
-        backgroundColor: "$color2",
-        borderRadius: "$sm",
-        padding: "$xs",
+        gap: "xs",
+        backgroundColor: "color2",
+        borderRadius: "sm",
+        padding: "xs",
       },
     },
     grow: {
@@ -161,6 +167,13 @@ const TabsListFrame = styled(Box, {
 
   defaultVariants: { orientation: "horizontal", variant: "default", size: "md" },
 });
+
+/** The flipped list separator (`inverted`), shared — never allocated per render. */
+const LIST_INVERTED_BORDER = {
+  borderBottomWidth: 0,
+  borderTopWidth: 2,
+  borderTopColor: "color4",
+} as const;
 
 type TabsListFrameProps = Omit<
   GetProps<typeof TabsListFrame>,
@@ -176,7 +189,7 @@ export interface TabsListProps extends TabsListFrameProps {
   children?: React.ReactNode;
 }
 
-const TabsList = TabsListFrame.styleable<TabsListProps>(function TabsList(props, ref) {
+const TabsList = styleable<TabsListProps>(TabsListFrame, function TabsList(props, ref) {
   const { children, grow, justify = "flex-start", ...rest } = props;
   const ctx = React.useContext(TabsContext);
   const s = useTabsSlots();
@@ -244,10 +257,7 @@ const TabsList = TabsListFrame.styleable<TabsListProps>(function TabsList(props,
 
   // When `inverted`, the list sits after the panels, so its separator moves to
   // the TOP edge (default/outline variants) to keep meeting the panel.
-  const invertedBorder: Partial<GetProps<typeof TabsListFrame>> =
-    ctx.inverted && ctx.variant !== "pills"
-      ? { borderBottomWidth: 0, borderTopWidth: 2, borderTopColor: "$color4" }
-      : {};
+  const invertedBorder = ctx.inverted && ctx.variant !== "pills" ? LIST_INVERTED_BORDER : null;
 
   return (
     <TabsListFrame
@@ -274,7 +284,7 @@ const TabsList = TabsListFrame.styleable<TabsListProps>(function TabsList(props,
 /* -------------------------------------------------------------------------- */
 
 const TabTabFrame = styled(Box, {
-  name: "TabsTab",
+  displayName: "TabsTab",
   context: TabsStyleContext,
   flexDirection: "row",
   alignItems: "center",
@@ -290,33 +300,50 @@ const TabTabFrame = styled(Box, {
   variants: {
     variant: {
       default: {
-        backgroundColor: "transparent",
+        backgroundColor: "transparent hover:color2 press:color3",
         marginBottom: -2,
         borderBottomWidth: 2,
         borderBottomColor: "transparent",
-        hoverStyle: { backgroundColor: "$color2" },
-        pressStyle: { backgroundColor: "$color3" },
       },
       outline: {
-        backgroundColor: "transparent",
+        backgroundColor: "transparent hover:color2 press:color3",
         marginBottom: -2,
         borderWidth: 1,
         borderBottomWidth: 0,
         borderColor: "transparent",
-        borderTopLeftRadius: "$xs",
-        borderTopRightRadius: "$xs",
-        hoverStyle: { backgroundColor: "$color2" },
-        pressStyle: { backgroundColor: "$color3" },
+        borderTopLeftRadius: "xs",
+        borderTopRightRadius: "xs",
       },
       pills: {
-        borderRadius: "$sm",
-        backgroundColor: "transparent",
-        hoverStyle: { backgroundColor: "$color3" },
-        pressStyle: { backgroundColor: "$color4" },
+        borderRadius: "sm",
+        backgroundColor: "transparent hover:color3 press:color4",
       },
     },
     active: {
       true: {},
+    },
+    // `inverted` + default variant: the underline moves to the TOP edge so it
+    // still meets the panel that now sits above the list. Declared after
+    // `variant` so it overrides that variant's bottom edge.
+    flip: {
+      true: {
+        marginBottom: 0,
+        marginTop: -2,
+        borderBottomWidth: 0,
+        borderTopWidth: 2,
+        borderTopColor: "transparent",
+      },
+    },
+    // The active-tab accent, one static body per look (the render maps
+    // variant x active x flip onto it — no per-render style object). Declared
+    // after `variant`/`flip` so the accent wins over their resting edge.
+    indicator: {
+      bottom: { borderBottomColor: "color9", borderBottomWidth: 2 },
+      top: { borderTopColor: "color9", borderTopWidth: 2 },
+      pill: {
+        backgroundColor: "background",
+        boxShadow: "0px 1px 2px 0px dropShadowColor",
+      },
     },
     // Tab trigger derives height + paddingHorizontal from the shared
     // `controlVariant` (same row as a Button of the same key), with the gap
@@ -341,7 +368,7 @@ const TabTabFrame = styled(Box, {
 });
 
 const TabLabel = styled(Text, {
-  name: "TabsTabLabel",
+  displayName: "TabsTabLabel",
   context: TabsStyleContext,
   fontWeight: "500",
   userSelect: "none",
@@ -349,8 +376,8 @@ const TabLabel = styled(Text, {
 
   variants: {
     active: {
-      true: { fontWeight: "600", color: "$color11" },
-      false: { color: "$color" },
+      true: { fontWeight: "600", color: "color11" },
+      false: { color: "color" },
     },
     variant: {
       default: {},
@@ -367,14 +394,14 @@ const TabLabel = styled(Text, {
 });
 
 const TabSection = styled(Box, {
-  name: "TabsTabSection",
+  displayName: "TabsTabSection",
   alignItems: "center",
   justifyContent: "center",
 });
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). Each key maps to the props
- * of the styled part it targets, so `styles={{ tab: { backgroundColor: "$red4" } }}`
+ * of the styled part it targets, so `styles={{ tab: { backgroundColor: "red4" } }}`
  * is sugar for an inline prop on every `Tabs.Tab`. Distributed via
  * `TabsSlotStylesContext` so it reaches the consumer-rendered parts.
  */
@@ -384,7 +411,10 @@ export interface TabsStyles {
   /** Props for each `Tabs.Tab` trigger (`.Tab`) — its stylable frame surface.
    * `active`/`disabled`/`size`/`variant` are state/context-driven and `value`/
    * `children` are the part's own, so the sugar targets the frame like siblings. */
-  tab?: Omit<GetProps<typeof TabTabFrame>, "active" | "disabled" | "size" | "variant">;
+  tab?: Omit<
+    GetProps<typeof TabTabFrame>,
+    "active" | "disabled" | "size" | "variant" | "flip" | "indicator"
+  >;
   /** Props for the label text inside each tab (`.Tab` label). */
   label?: GetProps<typeof TabLabel>;
   /** Props for the left/right section wrapper inside each tab (`.Section`). */
@@ -407,7 +437,7 @@ const useTabsSlots = () =>
 
 export interface TabsTabProps extends Omit<
   GetProps<typeof TabTabFrame>,
-  "active" | "disabled" | "size" | "variant"
+  "active" | "disabled" | "size" | "variant" | "flip" | "indicator"
 > {
   /** Value that identifies this tab (must match the associated `Tabs.Panel`). */
   value: string;
@@ -421,7 +451,7 @@ export interface TabsTabProps extends Omit<
   disabled?: boolean;
 }
 
-const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref) {
+const TabsTab = styleable<TabsTabProps>(TabTabFrame, function TabsTab(props, ref) {
   const press = usePressScale();
   const { value, children, leftSection, rightSection, disabled, ...rest } = props;
   const ctx = React.useContext(TabsContext);
@@ -452,32 +482,14 @@ const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref)
   // When `inverted`, the underline indicator (default variant only) moves to the
   // TOP edge so it still meets the panel that now sits above the list.
   const flipEdge = ctx.inverted && ctx.variant === "default";
-
-  // Base-edge override for the flipped underline.
-  const edgeStyle: Partial<GetProps<typeof TabTabFrame>> = flipEdge
-    ? {
-        marginBottom: 0,
-        marginTop: -2,
-        borderBottomWidth: 0,
-        borderTopWidth: 2,
-        borderTopColor: "transparent",
-      }
-    : {};
-
-  // Active accent styles applied inline (variant-specific)
-  const activeStyle: Partial<GetProps<typeof TabTabFrame>> =
-    ctx.variant === "pills"
-      ? isActive
-        ? {
-            backgroundColor: "$background",
-            boxShadow: "0px 1px 2px 0px $dropShadowColor",
-          }
-        : {}
-      : isActive
-        ? flipEdge
-          ? { borderTopColor: "$color9", borderTopWidth: 2 }
-          : { borderBottomColor: "$color9", borderBottomWidth: 2 }
-        : {};
+  // The active accent: a raised pill, or the underline on the panel-facing edge.
+  const indicator = !isActive
+    ? undefined
+    : ctx.variant === "pills"
+      ? "pill"
+      : flipEdge
+        ? "top"
+        : "bottom";
 
   const labelSlot = s.get("label");
   const LabelWrapper = React.useCallback(
@@ -508,10 +520,10 @@ const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref)
       variant={ctx.variant}
       size={ctx.size}
       active={isActive}
+      flip={flipEdge}
+      indicator={indicator}
       disabled={disabled}
       onPress={handlePress}
-      {...edgeStyle}
-      {...activeStyle}
       // `tab` slot sugar sits UNDER the explicit per-part props (`rest`), so an
       // inline prop on `<Tabs.Tab>` always wins ("explicit beats sugar").
       {...s.merge("tab", rest)}
@@ -534,7 +546,7 @@ const TabsTab = TabTabFrame.styleable<TabsTabProps>(function TabsTab(props, ref)
 /* -------------------------------------------------------------------------- */
 
 const TabsPanelFrame = styled(Box, {
-  name: "TabsPanel",
+  displayName: "TabsPanel",
   flex: 1,
 });
 
@@ -547,7 +559,7 @@ export interface TabsPanelProps extends GetProps<typeof TabsPanelFrame> {
   keepMounted?: boolean;
 }
 
-const TabsPanel = TabsPanelFrame.styleable<TabsPanelProps>(function TabsPanel(props, ref) {
+const TabsPanel = styleable<TabsPanelProps>(TabsPanelFrame, function TabsPanel(props, ref) {
   const { value, children, keepMounted: keepMountedProp, ...rest } = props;
   const ctx = React.useContext(TabsContext);
   const { register } = React.useContext(TabsPanelRegistryContext);
@@ -586,7 +598,7 @@ const TabsPanel = TabsPanelFrame.styleable<TabsPanelProps>(function TabsPanel(pr
 /* -------------------------------------------------------------------------- */
 
 const TabsFrame = styled(Box, {
-  name: "Tabs",
+  displayName: "Tabs",
   context: TabsStyleContext,
   flexDirection: "column",
 
@@ -664,7 +676,7 @@ export interface TabsProps extends Omit<
   styles?: SlotStyles<TabsStyles>;
 }
 
-const TabsComponent = TabsFrame.styleable<TabsProps>(function Tabs(props, ref) {
+const TabsComponent = styleable<TabsProps>(TabsFrame, function Tabs(props, ref) {
   const {
     value,
     defaultValue,

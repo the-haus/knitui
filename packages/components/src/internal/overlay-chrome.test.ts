@@ -27,9 +27,9 @@ describe("useOverlayChrome", () => {
   });
 
   it("reads a component-specific extra slot via get()", () => {
-    const styles: SlotStyles<DemoOverlayStyles> = { item: { color: "$red9" } };
+    const styles: SlotStyles<DemoOverlayStyles> = { item: { color: "red9" } };
     const s = useOverlayChrome<DemoOverlayStyles>(styles, ["item"], "Demo");
-    expect(s.get("item")).toEqual({ color: "$red9" });
+    expect(s.get("item")).toEqual({ color: "red9" });
   });
 
   describe("merge (explicit beats sugar)", () => {

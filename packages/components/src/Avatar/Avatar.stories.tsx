@@ -119,7 +119,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side, at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Avatar key={variant} {...args} variant={variant} autoColor={false} theme="blue" />
       ))}
@@ -130,7 +130,7 @@ export const Variants: Story = {
 /** The seven token sizes, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Avatar key={size} {...args} size={size} />
       ))}
@@ -144,7 +144,7 @@ export const Sizes: Story = {
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <Avatar key={shadow} {...args} size="lg" shadow={shadow} name={shadow} />
       ))}
@@ -155,7 +155,7 @@ export const Shadows: Story = {
 /** Initials are derived from the name — one word gives up to two letters, two+ words give the first letter of each. */
 export const WithInitials: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Avatar {...args} name="Jane Doe" />
       <Avatar {...args} name="Alice" />
       <Avatar {...args} name="Bob Charles Dean" />
@@ -168,7 +168,7 @@ export const WithInitials: Story = {
 export const AutoColor: Story = {
   args: { autoColor: true, variant: "filled" },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {["Alice Brown", "Carlos Ray", "Diana Prince", "Ethan Hunt", "Fiona Green", "George Luz"].map(
         (name) => (
           <Avatar key={name} {...args} name={name} />
@@ -181,7 +181,7 @@ export const AutoColor: Story = {
 /** An image is rendered clipped to the avatar circle; if loading fails the initials placeholder is shown. */
 export const WithImage: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Avatar
         {...args}
         src="https://i.pravatar.cc/150?img=1"
@@ -209,7 +209,7 @@ export const WithImage: Story = {
 export const CustomPlaceholder: Story = {
   args: { name: undefined, autoColor: false },
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Avatar {...args} variant="filled" theme="blue">
         <Text>⭐</Text>
       </Avatar>
@@ -226,7 +226,7 @@ export const CustomPlaceholder: Story = {
 /** `Avatar.Group` stacks avatars with overlap; `spacing` controls the overlap distance in px. */
 export const Group: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Avatar.Group>
         <Avatar {...args} name="Ann Bee" />
         <Avatar {...args} name="Cal Dee" />
@@ -247,9 +247,9 @@ export const Group: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Avatar
               key={size}
@@ -269,7 +269,7 @@ export const Matrix: Story = {
 /** Gradient fills — the themed default ramp, a two-color shorthand, a token gradient, and a multi-step stops gradient. */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Avatar {...args} variant="gradient" autoColor={false} name="TH" />
       <Avatar
         {...args}
@@ -282,7 +282,7 @@ export const Gradient: Story = {
         {...args}
         variant="gradient"
         autoColor={false}
-        gradient={{ from: "$blue9", to: "$teal9" }}
+        gradient={{ from: "blue9", to: "teal9" }}
         name="TK"
       />
       <Avatar
@@ -306,7 +306,7 @@ export const Gradient: Story = {
 /** A handful of curated gradient presets — both two-color and multi-step. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <Avatar
           key={name}
@@ -324,7 +324,7 @@ export const GradientPresets: Story = {
 /** With no `gradient` prop, `variant="gradient"` falls back to the active theme's ramp. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "orange", "pink", "teal"] as const).map((theme) => (
         <Avatar
           key={theme}
@@ -342,7 +342,7 @@ export const GradientThemed: Story = {
 /** A gradient fill across the seven token sizes. */
 export const GradientSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Avatar
           key={size}
@@ -401,8 +401,8 @@ export const Styles: Story = {
     autoColor: false,
     size: "xl",
     styles: {
-      root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-      text: { color: "$red9", fontWeight: "700" },
+      root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+      text: { color: "red9", fontWeight: "700" },
     },
   },
 };

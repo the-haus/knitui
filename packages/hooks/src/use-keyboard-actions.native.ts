@@ -1,7 +1,8 @@
 import { useMemo, useRef } from "react";
-import type { AccessibilityActionEvent, AccessibilityActionInfo } from "react-native";
 
 import type {
+  AccessibilityActionEvent,
+  AccessibilityActionInfo,
   KeyboardActionProps,
   KeyboardActions,
   UseKeyboardActionsOptions,

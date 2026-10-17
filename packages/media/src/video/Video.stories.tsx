@@ -88,11 +88,11 @@ export const CustomControlBar: Story = {
     aspectRatio: 16 / 9,
     controls: (
       <Group justify="space-between" align="center" width="100%">
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           <Video.PlayPause />
           <Video.Time />
         </Group>
-        <Group gap="$xs" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
           <Video.Mute />
           <Video.Fullscreen />
         </Group>
@@ -157,8 +157,8 @@ export const CustomStyledCaptions: Story = {
     aspectRatio: 16 / 9,
     textTracks: [{ src: CAPTIONS_VTT, label: "English", language: "en", default: true }],
     styles: {
-      captions: { backgroundColor: "rgba(20,20,40,0.85)", borderRadius: "$lg" },
-      captionText: { fontSize: 22, fontWeight: "700", color: "$yellow9" },
+      captions: { backgroundColor: "rgba(20,20,40,0.85)", borderRadius: "lg" },
+      captionText: { fontSize: 22, fontWeight: "700", color: "#f5d90a" },
     },
   },
 };
@@ -181,7 +181,7 @@ export const Styles: Story = {
   args: {
     aspectRatio: 16 / 9,
     styles: {
-      root: { borderRadius: "$xl", borderWidth: 2, borderColor: "$blue9" },
+      root: { borderRadius: "xl", borderWidth: 2, borderColor: "blue9" },
       controlBar: { backgroundColor: "rgba(0,0,0,0.55)" },
     },
   },
@@ -192,19 +192,19 @@ export const SwapSource: Story = {
   render: (args) => {
     const [src, setSrc] = React.useState(SAMPLE);
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Video {...args} source={src} aspectRatio={16 / 9} />
-        <Group gap="$sm">
+        <Group gap="sm">
           <Text
             onPress={() => setSrc(SAMPLE)}
-            color={src === SAMPLE ? "$blue9" : "$color11"}
+            color={src === SAMPLE ? "blue9" : "color11"}
             style={{ cursor: "pointer" }}
           >
             Sintel
           </Text>
           <Text
             onPress={() => setSrc(SAMPLE_2)}
-            color={src === SAMPLE_2 ? "$blue9" : "$color11"}
+            color={src === SAMPLE_2 ? "blue9" : "color11"}
             style={{ cursor: "pointer" }}
           >
             Big Buck Bunny
@@ -223,7 +223,7 @@ export const SwapSource: Story = {
  */
 export const TwoPlayers: Story = {
   render: () => (
-    <Box gap="$lg" maxWidth={720} width="100%">
+    <Box gap="lg" maxWidth={720} width="100%">
       <Video source={SAMPLE} poster="https://media.w3.org/2010/05/sintel/poster.png" />
       <Video source={SAMPLE_2} poster="https://media.w3.org/2010/05/bunny/poster.png" />
     </Box>

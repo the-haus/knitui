@@ -4,12 +4,13 @@ import {
   type GetProps,
   isWeb,
   type RadiusTokens,
+  styleable,
   styled,
   type TamaguiElement,
   Theme,
   withStaticProperties,
 } from "@knitui/core";
-import { useMergedRef, useUncontrolled } from "@knitui/hooks";
+import { useId, useMergedRef, useUncontrolled } from "@knitui/hooks";
 
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
@@ -123,6 +124,10 @@ interface MenuContextValue {
    * (first item, when `manageFocus`).
    */
   pendingFocus: React.MutableRefObject<"first" | "last" | null>;
+  /** Id of the trigger (the dropdown's `aria-labelledby`). */
+  targetId: string;
+  /** Id of the `role="menu"` frame (the trigger's `aria-controls`). */
+  dropdownId: string;
   /** Resolved per-slot style sugar, distributed onto the parts that read it. */
   slots: {
     dropdown?: GetProps<typeof MenuDropdownFrame>;
@@ -347,6 +352,9 @@ function MenuRoot(props: MenuProps) {
   const resolvedTrapFocus = trapFocus ?? manageFocus;
   const resolvedReturnFocus = returnFocus ?? manageFocus;
   const pendingFocus = React.useRef<"first" | "last" | null>(null);
+  const uid = useId();
+  const targetId = `${uid}-target`;
+  const dropdownId = `${uid}-dropdown`;
 
   // Delayed open/close for hover triggers. A single timer is enough since open
   // and close are mutually exclusive intents.
@@ -391,6 +399,8 @@ function MenuRoot(props: MenuProps) {
       loop,
       manageFocus,
       pendingFocus,
+      targetId,
+      dropdownId,
       slots: {
         dropdown: dropdownSlot,
         item: itemSlot,
@@ -412,6 +422,8 @@ function MenuRoot(props: MenuProps) {
       menuItemTabIndex,
       loop,
       manageFocus,
+      targetId,
+      dropdownId,
       dropdownSlot,
       itemSlot,
       itemLabelSlot,
@@ -469,29 +481,37 @@ export interface MenuTargetProps {
   refProp?: string;
 }
 
-type HoverHandlers = { onHoverIn?: () => void; onHoverOut?: () => void };
+type HoverHandlers = {
+  onHoverIn?: () => void;
+  onHoverOut?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+};
 type KeyHandlers = { onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void };
 
 function MenuTarget({ children, refProp = "ref" }: MenuTargetProps) {
   const ctx = useMenuContext();
   const hover = ctx.trigger === "hover" || ctx.trigger === "click-hover";
 
-  // For hover triggers, open/close on pointer enter/leave (web; no-op on
-  // native — there the press-toggle from Popover.Target drives it). Press always
-  // toggles via Popover.Target, which keeps the menu keyboard/touch accessible.
-  // Compose with the child's own hover handlers (mirrors Tooltip's
-  // `buildTargetHandlers`) so a consumer's `onHoverIn`/`onHoverOut` isn't dropped.
+  // For hover triggers, open/close on pointer enter/leave. Press always toggles
+  // via Popover.Target, which keeps the menu keyboard/touch accessible. Compose
+  // with the child's own handlers so a consumer's are never dropped: on web the
+  // listeners are `onMouseEnter`/`onMouseLeave` (v3 does not wire `onHoverIn`/
+  // `onHoverOut` alone — see `hoverProps`), so the child's same-named
+  // mouse handler is chained and its own `onHoverIn`/`onHoverOut` stay untouched
+  // (Tamagui still fires them); on native the `onHoverIn`/`onHoverOut` pair is
+  // chained instead.
   const childProps = children.props as HoverHandlers & KeyHandlers;
   const withHover = hover
     ? React.cloneElement(
         children,
         hoverProps({
           onHoverIn: () => {
-            childProps.onHoverIn?.();
+            (isWeb ? childProps.onMouseEnter : childProps.onHoverIn)?.();
             ctx.openWithDelay();
           },
           onHoverOut: () => {
-            childProps.onHoverOut?.();
+            (isWeb ? childProps.onMouseLeave : childProps.onHoverOut)?.();
             ctx.closeWithDelay();
           },
         }) as Partial<HoverHandlers> & React.Attributes,
@@ -517,9 +537,42 @@ function MenuTarget({ children, refProp = "ref" }: MenuTargetProps) {
     ctx.open();
   };
 
-  const withKeys = React.cloneElement(withHover, { onKeyDown } as KeyHandlers & React.Attributes);
+  // ARIA menu-button wiring: the trigger names the popup kind, its open state and
+  // (while open) the menu it controls; the menu points back via `aria-labelledby`.
+  const ariaProps = {
+    id: ctx.targetId,
+    "aria-haspopup": "menu" as const,
+    "aria-expanded": ctx.opened,
+    ...(ctx.opened ? { "aria-controls": ctx.dropdownId } : null),
+  };
 
-  return <Popover.Target refProp={refProp}>{withKeys}</Popover.Target>;
+  // Hover triggers: a press only OPENS (Mantine's `click-hover` semantics). The
+  // pointer's hover-in has already opened the menu by the time the click lands, so
+  // a toggling press would shut it again under the cursor. Press-to-open keeps
+  // the menu reachable by touch and keyboard (Enter/Space); Escape, an outside
+  // press or hovering out close it.
+  const childOnPress = (children.props as { onPress?: (event: unknown) => void }).onPress;
+  const pressProps = hover
+    ? {
+        onPress: (event: unknown) => {
+          childOnPress?.(event);
+          ctx.clearTimer();
+          if (!ctx.opened) ctx.open();
+        },
+      }
+    : null;
+
+  const withKeys = React.cloneElement(withHover, {
+    onKeyDown,
+    ...ariaProps,
+    ...pressProps,
+  } as KeyHandlers & typeof ariaProps & React.Attributes);
+
+  return (
+    <Popover.Target refProp={refProp} withPressToggle={!hover}>
+      {withKeys}
+    </Popover.Target>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -527,25 +580,34 @@ function MenuTarget({ children, refProp = "ref" }: MenuTargetProps) {
 /* -------------------------------------------------------------------------- */
 
 const MenuDropdownFrame = styled(Box, {
-  name: "MenuDropdown",
+  displayName: "MenuDropdown",
   flexDirection: "column",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$xs",
+  paddingVertical: "xs",
+  paddingHorizontal: "xs",
   minWidth: 180,
-  gap: "$xxs",
+  gap: "xxs",
 });
 
 export interface MenuDropdownProps extends GetProps<typeof MenuDropdownFrame> {}
 
-const MenuDropdown = MenuDropdownFrame.styleable<MenuDropdownProps>(
+const MenuDropdown = styleable<MenuDropdownProps>(
+  MenuDropdownFrame,
   function MenuDropdown(props, ref) {
     const { children, ...rest } = props;
     const ctx = useMenuContext();
     const hover = ctx.trigger === "hover" || ctx.trigger === "click-hover";
 
-    // Keep the menu open while the pointer is inside the dropdown (hover triggers).
+    // Keep the menu open while the pointer is inside the dropdown (hover triggers):
+    // entering cancels the close the trigger's hover-out just scheduled (`open()`
+    // alone left that timer armed, so the menu shut under the pointer).
     const hoverHandlers = hover
-      ? hoverProps({ onHoverIn: ctx.open, onHoverOut: ctx.closeWithDelay })
+      ? hoverProps({
+          onHoverIn: () => {
+            ctx.clearTimer();
+            ctx.open();
+          },
+          onHoverOut: ctx.closeWithDelay,
+        })
       : undefined;
 
     /*
@@ -603,6 +665,8 @@ const MenuDropdown = MenuDropdownFrame.styleable<MenuDropdownProps>(
           {...ctx.slots.dropdown}
           {...rest}
           role="menu"
+          id={ctx.dropdownId}
+          aria-labelledby={ctx.targetId}
           onKeyDown={onKeyDown}
         >
           {children}
@@ -617,17 +681,17 @@ const MenuDropdown = MenuDropdownFrame.styleable<MenuDropdownProps>(
 /* -------------------------------------------------------------------------- */
 
 const MenuItemFrame = styled(Box, {
-  name: "MenuItem",
+  displayName: "MenuItem",
   role: "menuitem",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$sm",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$sm",
-  borderRadius: "$xs",
+  gap: "sm",
+  paddingVertical: "xs",
+  paddingHorizontal: "sm",
+  borderRadius: "xs",
   ...webCursor("pointer"),
-  hoverStyle: { backgroundColor: "$color4" },
-  pressStyle: { backgroundColor: "$color5" },
+  backgroundColor: "hover:color4 press:color5",
+
   ...focusRingStyle,
 
   variants: {
@@ -636,7 +700,7 @@ const MenuItemFrame = styled(Box, {
         opacity: 0.5,
         pointerEvents: "none",
         ...webCursor("default"),
-        hoverStyle: { backgroundColor: "transparent" },
+        backgroundColor: "hover:transparent",
       },
     },
   } as const,
@@ -645,15 +709,15 @@ const MenuItemFrame = styled(Box, {
 });
 
 const MenuItemLabel = styled(Text, {
-  name: "MenuItemLabel",
+  displayName: "MenuItemLabel",
   flex: 1,
-  fontSize: "$sm",
-  color: "$color12",
+  fontSize: "sm",
+  color: "color12",
   userSelect: "none",
 });
 
 const MenuItemSection = styled(Box, {
-  name: "MenuItemSection",
+  displayName: "MenuItemSection",
   alignItems: "center",
   justifyContent: "center",
 });
@@ -675,7 +739,7 @@ export interface MenuItemProps extends MenuItemFrameProps {
   onPress?: (event: unknown) => void;
 }
 
-const MenuItemComponent = MenuItemFrame.styleable<MenuItemProps>(function MenuItem(props, ref) {
+const MenuItemComponent = styleable<MenuItemProps>(MenuItemFrame, function MenuItem(props, ref) {
   const ctx = useMenuContext();
   const { children, leftSection, rightSection, disabled, closeMenuOnClick, onPress, ...rest } =
     props;
@@ -719,11 +783,11 @@ const MenuItemComponent = MenuItemFrame.styleable<MenuItemProps>(function MenuIt
       onPress={handlePress}
     >
       {/* Menu items are subtle/text-colored: any `@knitui/icons` icon in a section
-          auto-sizes to the `$sm` label font and takes the label's `$color12`
+          auto-sizes to the `sm` label font and takes the label's `color12`
           foreground (an explicit `color` here overrides the `subtle` variant fg). */}
       {leftSection ? (
         <MenuItemSection {...sectionSlot}>
-          <ControlIconProvider size="sm" variant="subtle" color="$color12">
+          <ControlIconProvider size="sm" variant="subtle" color="color12">
             {leftSection}
           </ControlIconProvider>
         </MenuItemSection>
@@ -731,7 +795,7 @@ const MenuItemComponent = MenuItemFrame.styleable<MenuItemProps>(function MenuIt
       {renderTextChild(children, LabelWrapper)}
       {rightSection ? (
         <MenuItemSection {...sectionSlot}>
-          <ControlIconProvider size="sm" variant="subtle" color="$color12">
+          <ControlIconProvider size="sm" variant="subtle" color="color12">
             {rightSection}
           </ControlIconProvider>
         </MenuItemSection>
@@ -745,12 +809,12 @@ const MenuItemComponent = MenuItemFrame.styleable<MenuItemProps>(function MenuIt
 /* -------------------------------------------------------------------------- */
 
 const MenuLabel = styled(Text, {
-  name: "MenuLabel",
-  paddingVertical: "$xs",
-  paddingHorizontal: "$sm",
-  fontSize: "$xs",
+  displayName: "MenuLabel",
+  paddingVertical: "xs",
+  paddingHorizontal: "sm",
+  fontSize: "xs",
   fontWeight: "600",
-  color: "$color11",
+  color: "color11",
   userSelect: "none",
 });
 
@@ -758,23 +822,24 @@ export type MenuLabelProps = GetProps<typeof MenuLabel>;
 
 // Wrap the styled frame so the `label` slot sugar (carried on context) reaches it;
 // the inline `...rest` props win over the slot ("explicit beats sugar").
-const MenuLabelComponent = MenuLabel.styleable<MenuLabelProps>(function MenuLabelSlot(props, ref) {
+const MenuLabelComponent = styleable<MenuLabelProps>(MenuLabel, function MenuLabelSlot(props, ref) {
   const ctx = useMenuContext();
   return <MenuLabel ref={ref} {...ctx.slots.label} {...props} />;
 });
 
 const MenuDivider = styled(Box, {
-  name: "MenuDivider",
+  displayName: "MenuDivider",
   height: 1,
-  marginVertical: "$xs",
-  marginHorizontal: "$0",
-  backgroundColor: "$borderColor",
+  marginVertical: "xs",
+  marginHorizontal: 0,
+  backgroundColor: "borderColor",
 });
 
 export type MenuDividerProps = GetProps<typeof MenuDivider>;
 
 // Wrap the styled frame so the `divider` slot sugar (carried on context) reaches it.
-const MenuDividerComponent = MenuDivider.styleable<MenuDividerProps>(
+const MenuDividerComponent = styleable<MenuDividerProps>(
+  MenuDivider,
   function MenuDividerSlot(props, ref) {
     const ctx = useMenuContext();
     return <MenuDivider ref={ref} {...ctx.slots.divider} {...props} />;

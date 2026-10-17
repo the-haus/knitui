@@ -74,7 +74,7 @@ export const Playground: Story = {
 /** Every visual variant side by side at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$lg" width={320}>
+    <Box gap="lg" width={320}>
       {VARIANTS.map((variant) => (
         <PillsInput key={variant} {...args} variant={variant} label={variant}>
           <Pill.Group>
@@ -90,7 +90,7 @@ export const Variants: Story = {
 /** The full seven-step size scale, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$lg" width={320}>
+    <Box gap="lg" width={320}>
       {SIZES.map((size) => (
         <PillsInput key={size} {...args} size={size} label={`size: ${size}`}>
           <Pill.Group>
@@ -106,7 +106,7 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the input shell. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$lg" width={320}>
+    <Box gap="lg" width={320}>
       {SHADOWS.map((shadow) => (
         <PillsInput key={shadow} {...args} shadow={shadow} label={shadow}>
           <Pill.Group>
@@ -122,13 +122,13 @@ export const Shadows: Story = {
 /** Variant × size matrix for visual regression across all combinations. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$md">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={variant} gap="md">
+          <Text fontSize="xs" color="color11">
             {variant}
           </Text>
-          <Box gap="$sm">
+          <Box gap="sm">
             {SIZES.map((size) => (
               <PillsInput key={size} variant={variant} size={size}>
                 <Pill.Group>
@@ -178,7 +178,7 @@ export const WithError: Story = {
 /** Loading state — a spinner stands in for a section; position via `loadingPosition`. */
 export const Loading: Story = {
   render: (args) => (
-    <Box gap="$lg" width={320}>
+    <Box gap="lg" width={320}>
       <PillsInput {...args} label="Loading right" loading loadingPosition="right">
         <Pill.Group>
           <Pill withRemoveButton>react</Pill>
@@ -246,7 +246,7 @@ export const Controlled: Story = {
     }
 
     return (
-      <Box width={320} gap="$sm">
+      <Box width={320} gap="sm">
         <PillsInput {...args} label="Tags" description="Press Enter to add, Backspace to remove.">
           <Pill.Group>
             {tags.map((tag) => (
@@ -266,7 +266,7 @@ export const Controlled: Story = {
             onKeyDown={handleKeyDown}
           />
         </PillsInput>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           tags: {tags.join(", ") || "—"}
         </Text>
       </Box>
@@ -283,9 +283,9 @@ export const Styles: Story = {
         label="Styled tags"
         leftSection={<Text>⭐</Text>}
         styles={{
-          root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-          label: { color: "$blue11" },
-          leftSection: { backgroundColor: "$red9" },
+          root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+          label: { color: "blue11" },
+          leftSection: { backgroundColor: "red9" },
         }}
       >
         <Pill.Group>

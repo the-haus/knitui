@@ -30,60 +30,49 @@ import type {
 /** Audio control size — the kit's full size scale (see `../control-size`). */
 export type AudioSize = MediaSize;
 
-/**
- * Build a precisely-typed `{ onHoverIn?, onHoverOut? }` object to spread onto a
- * styled `Box`. Tamagui resolves these web hover events at runtime (no-ops on
- * native), but the generated style-prop types don't surface them, so a direct
- * attribute fails to typecheck. Mirrors the helper in `@knitui/media/video`.
- */
-export const hoverProps = (handlers: {
-  onHoverIn?: () => void;
-  onHoverOut?: () => void;
-}): { onHoverIn?: () => void; onHoverOut?: () => void } => handlers;
-
 /* -------------------------------------------------------------------------- */
 /* Styled frames                                                              */
 /* -------------------------------------------------------------------------- */
 
 /** Outer player card. A surface-toned container, NOT the black video frame. */
 export const AudioFrame = styled(Box, {
-  name: "Audio",
+  displayName: "Audio",
   position: "relative",
   width: "100%",
   flexDirection: "column",
-  backgroundColor: "$color2",
-  borderRadius: "$lg",
+  backgroundColor: "color2",
+  borderRadius: "lg",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  paddingHorizontal: "$md",
-  paddingVertical: "$sm",
-  gap: "$xs",
+  borderColor: "borderColor",
+  paddingHorizontal: "md",
+  paddingVertical: "sm",
+  gap: "xs",
 });
 
 /** The metadata header (artwork + title/artist). */
 export const AudioHeaderFrame = styled(Box, {
-  name: "AudioHeader",
+  displayName: "AudioHeader",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$sm",
+  gap: "sm",
 });
 
 /** Artwork thumbnail. */
 export const AudioArtwork = styled(Box, {
-  name: "AudioArtwork",
+  displayName: "AudioArtwork",
   width: 48,
   height: 48,
-  borderRadius: "$sm",
+  borderRadius: "sm",
   overflow: "hidden",
-  backgroundColor: "$color5",
+  backgroundColor: "color5",
 });
 
 /** The control-bar container that holds the transport + scrubber rows. */
 export const AudioControlBarFrame = styled(Box, {
-  name: "AudioControlBar",
+  displayName: "AudioControlBar",
   width: "100%",
   flexDirection: "column",
-  gap: "$xs",
+  gap: "xs",
 });
 
 /* -------------------------------------------------------------------------- */

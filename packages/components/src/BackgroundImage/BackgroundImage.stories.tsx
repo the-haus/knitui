@@ -68,21 +68,16 @@ export const WithOverlay: Story = {
   args: {
     width: 400,
     height: 220,
-    padding: "$lg",
+    padding: "lg",
     justifyContent: "flex-end",
   },
   render: (args) => (
     <BackgroundImage {...args}>
-      <Box
-        backgroundColor="rgba(0,0,0,0.45)"
-        padding="$sm"
-        borderRadius="$sm"
-        alignSelf="flex-start"
-      >
-        <Text color="white" fontWeight="700" fontSize="$lg">
+      <Box backgroundColor="rgba(0,0,0,0.45)" padding="sm" borderRadius="sm" alignSelf="flex-start">
+        <Text color="white" fontWeight="700" fontSize="lg">
           Mountain landscape
         </Text>
-        <Text color="white" fontSize="$xs" opacity={0.85}>
+        <Text color="white" fontSize="xs" opacity={0.85}>
           Photo by Unsplash
         </Text>
       </Box>
@@ -93,17 +88,17 @@ export const WithOverlay: Story = {
 /** All five resize modes side by side — shows how the image fills each frame. */
 export const ResizeModes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RESIZE_MODES.map((mode) => (
-        <Box key={mode} alignItems="center" gap="$xs">
+        <Box key={mode} alignItems="center" gap="xs">
           <BackgroundImage {...args} resizeMode={mode} width={160} height={100}>
-            <Box flex={1} justifyContent="flex-end" padding="$xs">
+            <Box flex={1} justifyContent="flex-end" padding="xs">
               <Text
                 color="white"
-                fontSize="$xxs"
+                fontSize="xxs"
                 fontWeight="600"
                 backgroundColor="rgba(0,0,0,0.5)"
-                paddingHorizontal="$xs"
+                paddingHorizontal="xs"
               >
                 {mode}
               </Text>
@@ -121,13 +116,13 @@ export const Rounded: Story = {
     radius: "xl",
     width: 400,
     height: 200,
-    padding: "$lg",
+    padding: "lg",
     justifyContent: "center",
     alignItems: "center",
   },
   render: (args) => (
     <BackgroundImage {...args}>
-      <Text color="white" fontWeight="700" fontSize="$xl">
+      <Text color="white" fontWeight="700" fontSize="xl">
         radius="xl"
       </Text>
     </BackgroundImage>
@@ -137,9 +132,9 @@ export const Rounded: Story = {
 /** Sweep of all radius values showing how corners are clipped. */
 export const RadiusScale: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RADIUS_VALUES.map((radius) => (
-        <Box key={radius} alignItems="center" gap="$xs">
+        <Box key={radius} alignItems="center" gap="xs">
           <BackgroundImage
             {...args}
             radius={radius}
@@ -151,9 +146,9 @@ export const RadiusScale: Story = {
             <Text
               color="white"
               fontWeight="600"
-              fontSize="$xs"
+              fontSize="xs"
               backgroundColor="rgba(0,0,0,0.5)"
-              paddingHorizontal="$xs"
+              paddingHorizontal="xs"
             >
               {radius}
             </Text>
@@ -167,9 +162,9 @@ export const RadiusScale: Story = {
 /** Sweep of all shadow levels showing the elevation ladder behind the image frame. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} alignItems="center" gap="$xs">
+        <Box key={shadow} alignItems="center" gap="xs">
           <BackgroundImage
             {...args}
             shadow={shadow}
@@ -182,9 +177,9 @@ export const Shadows: Story = {
             <Text
               color="white"
               fontWeight="600"
-              fontSize="$xs"
+              fontSize="xs"
               backgroundColor="rgba(0,0,0,0.5)"
-              paddingHorizontal="$xs"
+              paddingHorizontal="xs"
             >
               {shadow}
             </Text>
@@ -205,7 +200,7 @@ export const FixedSize: Story = {
   },
   render: (args) => (
     <BackgroundImage {...args}>
-      <Text color="white" fontWeight="700" fontSize="$md">
+      <Text color="white" fontWeight="700" fontSize="md">
         240 x 240
       </Text>
     </BackgroundImage>
@@ -217,7 +212,7 @@ export const FullWidthBanner: Story = {
   args: {
     width: "100%",
     height: 180,
-    padding: "$xl",
+    padding: "xl",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -230,7 +225,7 @@ export const FullWidthBanner: Story = {
   ],
   render: (args) => (
     <BackgroundImage {...args}>
-      <Text color="white" fontWeight="800" fontSize="$xxl" textAlign="center">
+      <Text color="white" fontWeight="800" fontSize="xxl" textAlign="center">
         Full-width banner
       </Text>
     </BackgroundImage>
@@ -242,17 +237,17 @@ export const Styles: Story = {
   args: {
     width: 400,
     height: 200,
-    padding: "$lg",
+    padding: "lg",
     justifyContent: "center",
     alignItems: "center",
     styles: {
-      root: { borderColor: "$blue7", borderWidth: 4, borderRadius: "$xl" },
+      root: { borderColor: "blue7", borderWidth: 4, borderRadius: "xl" },
       image: { opacity: 0.5 },
     },
   },
   render: (args) => (
     <BackgroundImage {...args}>
-      <Text color="white" fontWeight="700" fontSize="$xl">
+      <Text color="white" fontWeight="700" fontSize="xl">
         Styled frame + image
       </Text>
     </BackgroundImage>

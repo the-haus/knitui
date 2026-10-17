@@ -42,15 +42,15 @@ const SHADOWS = ["xs", "sm", "md", "lg", "xl"] as const;
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <UnstyledButton
           key={shadow}
           {...args}
           shadow={shadow}
-          padding="$md"
-          borderRadius="$md"
-          backgroundColor="$color2"
+          padding="md"
+          borderRadius="md"
+          backgroundColor="color2"
         >
           <Text>{shadow}</Text>
         </UnstyledButton>
@@ -69,13 +69,12 @@ export const CustomStyled: Story = {
   render: (args) => (
     <UnstyledButton
       {...args}
-      padding="$md"
-      borderRadius="$md"
-      backgroundColor="$blue8"
-      pressStyle={{ opacity: 0.8 }}
-      hoverStyle={{ backgroundColor: "$blue9" }}
+      padding="md"
+      borderRadius="md"
+      backgroundColor="blue8 hover:blue9"
+      opacity="press:0.8"
     >
-      <Text color="$color1" fontWeight="700">
+      <Text color="color1" fontWeight="700">
         Custom styled
       </Text>
     </UnstyledButton>
@@ -89,10 +88,10 @@ export const WithIcon: Story = {
       {...args}
       flexDirection="row"
       alignItems="center"
-      gap="$sm"
-      padding="$sm"
-      borderRadius="$sm"
-      hoverStyle={{ backgroundColor: "$color4" }}
+      gap="sm"
+      padding="sm"
+      borderRadius="sm"
+      backgroundColor="hover:color4"
     >
       <Text>⭐</Text>
       <Text>Favourite</Text>
@@ -103,14 +102,14 @@ export const WithIcon: Story = {
 /** Multiple unstyled buttons in a row, demonstrating composition as a toolbar. */
 export const Grouped: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["Bold", "Italic", "Underline"] as const).map((label) => (
         <UnstyledButton
           key={label}
           {...args}
-          padding="$sm"
-          borderRadius="$sm"
-          hoverStyle={{ backgroundColor: "$color4" }}
+          padding="sm"
+          borderRadius="sm"
+          backgroundColor="hover:color4"
         >
           <Text fontWeight="700">{label}</Text>
         </UnstyledButton>
@@ -124,15 +123,15 @@ export const PressCounter: Story = {
   render: (args) => {
     const [count, setCount] = React.useState(0);
     return (
-      <Box alignItems="center" gap="$md">
+      <Box alignItems="center" gap="md">
         <UnstyledButton
           {...args}
           onPress={() => setCount((c) => c + 1)}
-          padding="$md"
-          borderRadius="$md"
-          backgroundColor="$color4"
-          hoverStyle={{ backgroundColor: "$color5" }}
-          pressStyle={{ opacity: 0.7 }}
+          padding="md"
+          borderRadius="md"
+          backgroundColor="color4 hover:color5"
+
+          opacity="press:0.7"
         >
           <Text>Click me</Text>
         </UnstyledButton>

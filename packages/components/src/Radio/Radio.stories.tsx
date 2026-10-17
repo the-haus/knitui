@@ -61,7 +61,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <Radio key={variant} {...args} variant={variant} label={variant} />
       ))}
@@ -72,7 +72,7 @@ export const Variants: Story = {
 /** All seven sizes from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Radio key={size} {...args} size={size} label={size} />
       ))}
@@ -83,7 +83,7 @@ export const Sizes: Story = {
 /** Theme changes the active accent ramp. */
 export const Theme: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Radio {...args} theme="blue" defaultChecked label="Blue" />
       <Radio {...args} theme="green" defaultChecked label="Green" />
       <Radio {...args} theme="red" defaultChecked label="Red" />
@@ -94,7 +94,7 @@ export const Theme: Story = {
 /** Disabled state — the control is visually dimmed and cannot be toggled. */
 export const Disabled: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <Radio {...args} disabled label="Unchecked disabled" />
       <Radio {...args} disabled defaultChecked label="Checked disabled" />
     </Box>
@@ -127,14 +127,14 @@ export const Controlled: Story = {
   render: (args) => {
     const [checked, setChecked] = React.useState(false);
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Radio
           {...args}
           checked={checked}
           onChange={setChecked}
           label={checked ? "Checked" : "Unchecked"}
         />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           checked: {String(checked)}
         </Text>
       </Box>
@@ -158,13 +158,13 @@ export const GroupControlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string>("apple");
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Radio.Group label="Favourite fruit" value={value} onChange={setValue}>
           <Radio {...args} value="apple" label="Apple" />
           <Radio {...args} value="orange" label="Orange" />
           <Radio {...args} value="pear" label="Pear" />
         </Radio.Group>
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           selected: {value}
         </Text>
       </Box>
@@ -200,7 +200,7 @@ export const Card: Story = {
     const [value, setValue] = React.useState<string>("standard");
     return (
       <Radio.Group value={value} onChange={setValue}>
-        <Box flexDirection="row" flexWrap="wrap" gap="$md">
+        <Box flexDirection="row" flexWrap="wrap" gap="md">
           {(
             [
               { value: "standard", title: "Standard", description: "5–7 business days" },
@@ -208,8 +208,8 @@ export const Card: Story = {
               { value: "overnight", title: "Overnight", description: "Next business day" },
             ] as const
           ).map((option) => (
-            <Radio.Card key={option.value} value={option.value} padding="$md" width={160}>
-              <Box flexDirection="row" alignItems="center" gap="$sm">
+            <Radio.Card key={option.value} value={option.value} padding="md" width={160}>
+              <Box flexDirection="row" alignItems="center" gap="sm">
                 <Radio.Indicator
                   checked={value === option.value}
                   variant={args.variant}
@@ -217,7 +217,7 @@ export const Card: Story = {
                 />
                 <Box>
                   <Text fontWeight="600">{option.title}</Text>
-                  <Text fontSize="$xs" color="$color11">
+                  <Text fontSize="xs" color="color11">
                     {option.description}
                   </Text>
                 </Box>
@@ -236,10 +236,10 @@ export const CardShadows: Story = {
     const [value, setValue] = React.useState<string>("md");
     return (
       <Radio.Group value={value} onChange={setValue}>
-        <Box flexDirection="row" flexWrap="wrap" gap="$lg" padding="$md">
+        <Box flexDirection="row" flexWrap="wrap" gap="lg" padding="md">
           {(["xs", "sm", "md", "lg", "xl"] as const).map((shadow) => (
-            <Radio.Card key={shadow} value={shadow} shadow={shadow} padding="$md" width={140}>
-              <Box flexDirection="row" alignItems="center" gap="$sm">
+            <Radio.Card key={shadow} value={shadow} shadow={shadow} padding="md" width={140}>
+              <Box flexDirection="row" alignItems="center" gap="sm">
                 <Radio.Indicator
                   checked={value === shadow}
                   variant={args.variant}
@@ -258,9 +258,9 @@ export const CardShadows: Story = {
 /** `Radio.Indicator` — a standalone visual-only indicator not tied to any input. */
 export const Indicator: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" gap="$sm" alignItems="center">
+        <Box key={size} flexDirection="row" gap="sm" alignItems="center">
           <Radio.Indicator size={size} variant={args.variant} checked={false} />
           <Radio.Indicator size={size} variant={args.variant} checked />
         </Box>
@@ -272,9 +272,9 @@ export const Indicator: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Radio
               key={size}
@@ -296,8 +296,8 @@ export const Styles: Story = {
     label: "Custom styled radio",
     defaultChecked: true,
     styles: {
-      circle: { borderColor: "$blue7", borderWidth: 2 },
-      label: { color: "$blue9", fontWeight: "700" },
+      circle: { borderColor: "blue7", borderWidth: 2 },
+      label: { color: "blue9", fontWeight: "700" },
     },
   },
 };

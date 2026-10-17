@@ -16,7 +16,23 @@ controls have press feedback, height transitions have a component:
 <Collapse in={open}>…</Collapse>
 ```
 
-See [Motion](/docs/foundations/motion) for the tokens and presets.
+For a styled element, the `transition` prop plus flat `enter:` / `exit:` /
+`hover:` clauses is usually all you need, and it runs on the UI thread on native
+and as CSS on the web:
+
+```tsx
+<Box transition="fast" scale="1 press:0.97" opacity="1 enter:0 exit:0" />
+```
+
+React to the end of a transition with `onTransition` rather than a timer that
+guesses its duration:
+
+```tsx
+<Box transition="medium" onTransition={(e) => e.phase === "end" && setSettled(true)} />
+```
+
+See [Motion](/docs/foundations/motion) for the tokens, presets and the object form
+of `transition`.
 
 ## When you animate yourself
 

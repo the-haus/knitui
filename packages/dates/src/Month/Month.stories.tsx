@@ -58,13 +58,13 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<DateStringValue | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Month
           {...args}
           getDayProps={(date) => ({ selected: date === value })}
           __onDayClick={(_event, date) => setValue(date)}
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Selected: {value ?? "none"}
         </Text>
       </Box>
@@ -138,7 +138,7 @@ export const StyledSlots: Story = {
     <Month
       month={MONTH}
       withWeekNumbers
-      styles={{ weekNumberLabel: { color: "$blue9", fontWeight: "700" } }}
+      styles={{ weekNumberLabel: { color: "blue9", fontWeight: "700" } }}
     />
   ),
 };
@@ -146,10 +146,10 @@ export const StyledSlots: Story = {
 /** Every size token. */
 export const Sizes: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {(["xs", "sm", "md", "lg"] as const).map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$sm" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="sm" color="color11">
             {size}
           </Text>
           <Month month={MONTH} size={size} />

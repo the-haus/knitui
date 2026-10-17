@@ -80,7 +80,7 @@ export const Playground: Story = {};
 /** Currency prefix and suffix with two fixed decimal places. */
 export const CurrencyDisplay: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <NumberFormatter
         {...args}
         value={1234567.5}
@@ -116,14 +116,14 @@ export const CurrencyDisplay: Story = {
 /** Fixed decimal scale pads trailing zeros so the decimal column always aligns. */
 export const FixedDecimalScale: Story = {
   render: (args) => (
-    <Box gap="$sm">
-      <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box gap="sm">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>fixedDecimalScale=false</Text>
         <NumberFormatter {...args} value={5} decimalScale={2} fixedDecimalScale={false} />
         <NumberFormatter {...args} value={5.1} decimalScale={2} fixedDecimalScale={false} />
         <NumberFormatter {...args} value={5.12} decimalScale={2} fixedDecimalScale={false} />
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>fixedDecimalScale=true</Text>
         <NumberFormatter {...args} value={5} decimalScale={2} fixedDecimalScale />
         <NumberFormatter {...args} value={5.1} decimalScale={2} fixedDecimalScale />
@@ -137,8 +137,8 @@ export const FixedDecimalScale: Story = {
 /** Different thousands grouping styles — standard, Indian lakh, and CJK wan. */
 export const ThousandsGroupStyles: Story = {
   render: (args) => (
-    <Box gap="$sm">
-      <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box gap="sm">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>thousand</Text>
         <NumberFormatter
           {...args}
@@ -147,7 +147,7 @@ export const ThousandsGroupStyles: Story = {
           thousandsGroupStyle="thousand"
         />
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>lakh</Text>
         <NumberFormatter
           {...args}
@@ -156,11 +156,11 @@ export const ThousandsGroupStyles: Story = {
           thousandsGroupStyle="lakh"
         />
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>wan</Text>
         <NumberFormatter {...args} value={1234567890} thousandSeparator thousandsGroupStyle="wan" />
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>none</Text>
         <NumberFormatter {...args} value={1234567890} thousandsGroupStyle="none" />
       </Box>
@@ -172,12 +172,12 @@ export const ThousandsGroupStyles: Story = {
 /** Negative values — with and without the allowNegative guard. */
 export const NegativeValues: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
-      <Box gap="$xs" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
+      <Box gap="xs" alignItems="center">
         <Text>allowNegative=true</Text>
         <NumberFormatter {...args} value={-42000} thousandSeparator allowNegative />
       </Box>
-      <Box gap="$xs" alignItems="center">
+      <Box gap="xs" alignItems="center">
         <Text>allowNegative=false</Text>
         <NumberFormatter {...args} value={-42000} thousandSeparator allowNegative={false} />
       </Box>
@@ -189,8 +189,8 @@ export const NegativeValues: Story = {
 /** Custom decimal and thousands separator characters for locale-specific formatting. */
 export const CustomSeparators: Story = {
   render: (args) => (
-    <Box gap="$sm">
-      <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box gap="sm">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>European (. thousands, , decimal)</Text>
         <NumberFormatter
           {...args}
@@ -201,7 +201,7 @@ export const CustomSeparators: Story = {
           fixedDecimalScale
         />
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>Space thousands</Text>
         <NumberFormatter
           {...args}
@@ -219,18 +219,18 @@ export const CustomSeparators: Story = {
 /** Edge cases: empty value, non-finite input, and zero. */
 export const EdgeCases: Story = {
   render: () => (
-    <Box gap="$sm">
-      <Box flexDirection="row" gap="$md" alignItems="center">
+    <Box gap="sm">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>Empty value (renders nothing):</Text>
         <Text>[</Text>
         <NumberFormatter value="" />
         <Text>]</Text>
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>Zero with fixed decimals:</Text>
         <NumberFormatter value={0} decimalScale={2} fixedDecimalScale prefix="$" />
       </Box>
-      <Box flexDirection="row" gap="$md" alignItems="center">
+      <Box flexDirection="row" gap="md" alignItems="center">
         <Text>Very large number:</Text>
         <NumberFormatter value={999999999999} thousandSeparator />
       </Box>

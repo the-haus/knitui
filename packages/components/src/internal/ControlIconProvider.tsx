@@ -50,7 +50,7 @@ export function ControlIconProvider({
   stroke,
   children,
 }: ControlIconProviderProps) {
-  const token = color ?? VARIANT_FOREGROUND_EMPHASIS[variant]?.color ?? "$color12";
+  const token = color ?? VARIANT_FOREGROUND_EMPHASIS[variant]?.color ?? "color12";
   // Theme-free on web, theme-subscribing on native — see `use-icon-color.ts`.
   const resolvedColor = useIconColor(token);
 

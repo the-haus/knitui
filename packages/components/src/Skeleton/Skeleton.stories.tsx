@@ -28,7 +28,7 @@ const meta = {
     circle: false,
     animate: true,
     width: 200,
-    height: "$xs",
+    height: "xs",
   },
   argTypes: {
     visible: {
@@ -63,11 +63,11 @@ export const Playground: Story = {};
 /** A block of stacked skeletons mimicking a text-heavy content card. */
 export const TextBlock: Story = {
   render: (args) => (
-    <Box gap="$sm" width={320}>
-      <Skeleton {...args} height="$xxs" width={240} />
-      <Skeleton {...args} height="$xxs" width={320} />
-      <Skeleton {...args} height="$xxs" width={300} />
-      <Skeleton {...args} height="$xxs" width={180} />
+    <Box gap="sm" width={320}>
+      <Skeleton {...args} height="xxs" width={240} />
+      <Skeleton {...args} height="xxs" width={320} />
+      <Skeleton {...args} height="xxs" width={300} />
+      <Skeleton {...args} height="xxs" width={180} />
     </Box>
   ),
   args: { width: undefined, height: undefined },
@@ -76,10 +76,10 @@ export const TextBlock: Story = {
 /** Circle variant — useful for avatar placeholders; height is mirrored onto width. */
 export const Circle: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
-      <Skeleton {...args} circle height="$md" />
-      <Skeleton {...args} circle height="$xl" />
-      <Skeleton {...args} circle height="$xxl" />
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
+      <Skeleton {...args} circle height="md" />
+      <Skeleton {...args} circle height="xl" />
+      <Skeleton {...args} circle height="xxl" />
       <Skeleton {...args} circle height={96} />
     </Box>
   ),
@@ -89,11 +89,11 @@ export const Circle: Story = {
 /** All supported radius values applied to the same block. */
 export const Radii: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {RADII.map((radius) => (
-        <Box key={radius} gap="$xs" alignItems="center">
-          <Skeleton {...args} radius={radius} width={80} height="$xl" />
-          <Text fontSize="$xxs" lineHeight="$xxs">
+        <Box key={radius} gap="xs" alignItems="center">
+          <Skeleton {...args} radius={radius} width={80} height="xl" />
+          <Text fontSize="xxs" lineHeight="xxs">
             {radius}
           </Text>
         </Box>
@@ -106,11 +106,11 @@ export const Radii: Story = {
 /** Elevation shadow ladder applied via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs" alignItems="center">
-          <Skeleton {...args} shadow={shadow} animate={false} width={80} height="$xl" />
-          <Text fontSize="$xxs" lineHeight="$xxs">
+        <Box key={shadow} gap="xs" alignItems="center">
+          <Skeleton {...args} shadow={shadow} animate={false} width={80} height="xl" />
+          <Text fontSize="xxs" lineHeight="xxs">
             {shadow}
           </Text>
         </Box>
@@ -122,19 +122,19 @@ export const Shadows: Story = {
 
 /** Animate disabled — static placeholder with no pulse. Useful for reduced-motion contexts. */
 export const NoAnimation: Story = {
-  args: { animate: false, width: 200, height: "$xs" },
+  args: { animate: false, width: 200, height: "xs" },
 };
 
 /** When visible is false the real children are rendered and the placeholder is gone. */
 export const ContentLoaded: Story = {
   render: (args) => (
-    <Skeleton {...args} visible={false} width={280} height="$xl">
+    <Skeleton {...args} visible={false} width={280} height="xl">
       <Box
-        backgroundColor="$color3"
-        padding="$md"
-        borderRadius="$sm"
+        backgroundColor="color3"
+        padding="md"
+        borderRadius="sm"
         width={280}
-        height="$xl"
+        height="xl"
         justifyContent="center"
         alignItems="center"
       >
@@ -150,25 +150,25 @@ export const Controlled: Story = {
   render: (args) => {
     const [loading, setLoading] = React.useState(true);
     return (
-      <Box gap="$lg" alignItems="center">
-        <Box gap="$sm" width={280}>
-          <Skeleton {...args} visible={loading} height="$xxs" width={240}>
+      <Box gap="lg" alignItems="center">
+        <Box gap="sm" width={280}>
+          <Skeleton {...args} visible={loading} height="xxs" width={240}>
             <Text>Jane Doe</Text>
           </Skeleton>
-          <Skeleton {...args} visible={loading} height="$xxs" width={180}>
+          <Skeleton {...args} visible={loading} height="xxs" width={180}>
             <Text>Senior Engineer</Text>
           </Skeleton>
-          <Skeleton {...args} visible={loading} height="$xxs" width={200}>
+          <Skeleton {...args} visible={loading} height="xxs" width={200}>
             <Text>jane@example.com</Text>
           </Skeleton>
         </Box>
         <Box
           render="button"
           onPress={() => setLoading((v) => !v)}
-          backgroundColor="$color5"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
-          borderRadius="$sm"
+          backgroundColor="color5"
+          paddingHorizontal="md"
+          paddingVertical="sm"
+          borderRadius="sm"
           style={{ cursor: "pointer" }}
         >
           <Text>{loading ? "Finish loading" : "Reset to loading"}</Text>
@@ -184,17 +184,17 @@ export const CardLayout: Story = {
   render: (args) => (
     <Box
       flexDirection="row"
-      gap="$md"
-      padding="$lg"
-      borderRadius="$md"
-      backgroundColor="$color2"
+      gap="md"
+      padding="lg"
+      borderRadius="md"
+      backgroundColor="color2"
       width={340}
     >
-      <Skeleton {...args} circle height="$xxl" />
-      <Box gap="$sm" flex={1} justifyContent="center">
-        <Skeleton {...args} height="$xxs" width="60%" />
-        <Skeleton {...args} height="$xxs" width="90%" />
-        <Skeleton {...args} height="$xxs" width="75%" />
+      <Skeleton {...args} circle height="xxl" />
+      <Box gap="sm" flex={1} justifyContent="center">
+        <Skeleton {...args} height="xxs" width="60%" />
+        <Skeleton {...args} height="xxs" width="90%" />
+        <Skeleton {...args} height="xxs" width="75%" />
       </Box>
     </Box>
   ),
@@ -209,16 +209,16 @@ export const CardLayout: Story = {
  */
 export const Group: Story = {
   render: (args) => (
-    <SkeletonGroup width={340} gap="$md" delayMs={150}>
+    <SkeletonGroup width={340} gap="md" delayMs={150}>
       <Skeleton {...args} width="100%" height={160} radius="md" />
-      <Box flexDirection="row" gap="$md" alignItems="center">
-        <Skeleton {...args} circle height="$xxl" />
-        <Box gap="$sm" flex={1}>
-          <Skeleton {...args} height="$xxs" width="60%" />
-          <Skeleton {...args} height="$xxs" width="90%" />
+      <Box flexDirection="row" gap="md" alignItems="center">
+        <Skeleton {...args} circle height="xxl" />
+        <Box gap="sm" flex={1}>
+          <Skeleton {...args} height="xxs" width="60%" />
+          <Skeleton {...args} height="xxs" width="90%" />
         </Box>
       </Box>
-      <Skeleton {...args} height="$xxs" width="75%" />
+      <Skeleton {...args} height="xxs" width="75%" />
     </SkeletonGroup>
   ),
   args: { width: undefined, height: undefined },

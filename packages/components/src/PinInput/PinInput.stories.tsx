@@ -74,9 +74,9 @@ export const Playground: Story = {};
 /** The seven token sizes from xxs to xxl, rendered side by side. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={size} flexDirection="row" gap="md" alignItems="center">
           <Box width={40}>
             <Text>{size}</Text>
           </Box>
@@ -90,9 +90,9 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the field row. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={shadow} flexDirection="row" gap="md" alignItems="center">
           <Box width={40}>
             <Text>{shadow}</Text>
           </Box>
@@ -135,7 +135,7 @@ export const Controlled: Story = {
     const [completed, setCompleted] = React.useState<string | null>(null);
 
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <PinInput
           {...args}
           value={value}
@@ -161,7 +161,7 @@ export const Styles: Story = {
   args: {
     length: 4,
     styles: {
-      field: { wrapperProps: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 } },
+      field: { wrapperProps: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 } },
     },
   },
 };

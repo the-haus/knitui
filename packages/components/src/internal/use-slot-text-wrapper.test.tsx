@@ -18,7 +18,7 @@ describe("useSlotTextWrapper", () => {
   it("keeps a STABLE wrapper identity across re-renders (no remount) while slot props are referentially stable", () => {
     // A stable slot-props reference, mirroring `slotStyles(...).get(key)` which
     // returns the same object while the caller's `styles` prop is stable.
-    const slotProps = { color: "$blue10" } as const;
+    const slotProps = { color: "blue10" } as const;
     const seen: React.ComponentType<{ children: React.ReactNode }>[] = [];
 
     function Probe({ tick }: { tick: number }) {
@@ -46,8 +46,8 @@ describe("useSlotTextWrapper", () => {
       seen.push(useSlotTextWrapper(Text, slot));
       return null;
     }
-    const { rerender } = render(<Probe slot={{ color: "$blue10" }} />);
-    rerender(<Probe slot={{ color: "$red10" }} />);
+    const { rerender } = render(<Probe slot={{ color: "blue10" }} />);
+    rerender(<Probe slot={{ color: "red10" }} />);
     expect(seen[1]).not.toBe(seen[0]);
   });
 
@@ -62,7 +62,7 @@ describe("useSlotTextWrapper", () => {
 
     function Probe({ tick }: { tick: number }) {
       // New object every render, same value — the idiomatic call.
-      const Wrapper = useSlotTextWrapper(Text, { color: "$blue10" });
+      const Wrapper = useSlotTextWrapper(Text, { color: "blue10" });
       seen.push(Wrapper);
       return <Wrapper>label-{tick}</Wrapper>;
     }
@@ -79,7 +79,7 @@ describe("useSlotTextWrapper", () => {
 
   it("updates in place rather than remounting when slot props are an inline literal", () => {
     function Probe({ tick }: { tick: number }) {
-      const Wrapper = useSlotTextWrapper(Text, { color: "$blue10" });
+      const Wrapper = useSlotTextWrapper(Text, { color: "blue10" });
       return (
         <Wrapper>
           <Text testID="leaf">{tick}</Text>
@@ -99,7 +99,7 @@ describe("useSlotTextWrapper", () => {
   it("still produces a new wrapper when an inline slot prop is added or removed", () => {
     const seen: React.ComponentType<{ children: React.ReactNode }>[] = [];
     function Probe({ withColor }: { withColor: boolean }) {
-      seen.push(useSlotTextWrapper(Text, withColor ? { color: "$blue10" } : {}));
+      seen.push(useSlotTextWrapper(Text, withColor ? { color: "blue10" } : {}));
       return null;
     }
     const { rerender } = render(<Probe withColor={false} />);

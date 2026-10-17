@@ -9,6 +9,9 @@ import type { FileButtonComponent, FileButtonInternalProps } from "./FileButton.
 /* Web implementation                                                         */
 /* -------------------------------------------------------------------------- */
 
+/** The picker input is never shown; one shared style object (no per-render allocation). */
+const HIDDEN_INPUT_STYLE: React.CSSProperties = { display: "none" };
+
 const FileButtonImpl = React.forwardRef<HTMLInputElement, FileButtonInternalProps>(
   function FileButton(props, ref) {
     const {
@@ -67,7 +70,7 @@ const FileButtonImpl = React.forwardRef<HTMLInputElement, FileButtonInternalProp
           capture={capture}
           disabled={disabled}
           onChange={handleChange}
-          style={{ display: "none" }}
+          style={HIDDEN_INPUT_STYLE}
         />
         {renderTrigger(children, onClick, { ...triggerProps, disabled })}
       </>

@@ -9,8 +9,8 @@ import { getViewportWidth, subscribeViewportWidth } from "./viewport-store";
  * The active breakpoint band for the current viewport width — cross-platform
  * (web reads `window`, native reads `Dimensions`, both via the shared
  * `viewport-store`). Bands are min-width based and share `@knitui/core`'s
- * breakpoint scale, so this stays in lockstep with the `$gtSm`-style Tamagui
- * media props.
+ * breakpoint scale, so this stays in lockstep with the `gtSm:` media clauses
+ * in style values (`p="sm gtSm:lg"`).
  *
  * SSR-safe: the server snapshot resolves the {@link MediaQueryProvider} seed
  * width (and otherwise `"base"`), which is also what the first hydrating client

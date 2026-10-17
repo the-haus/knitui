@@ -477,11 +477,11 @@ export const Styles: Story = {
       renderItem={renderItem}
       // Per-slot `styles` sugar — every key maps to a styled part.
       styles={{
-        root: { borderRadius: 16, borderWidth: 2, borderColor: "$blue8" },
+        root: { borderRadius: 16, borderWidth: 2, borderColor: "blue8" },
         slide: { padding: 8 },
         control: { variant: "filled", radius: "md" },
-        dot: { backgroundColor: "$blue6" },
-        activeDot: { backgroundColor: "$blue10" },
+        dot: { backgroundColor: "blue6" },
+        activeDot: { backgroundColor: "blue10" },
       }}
       style={frame}
       testID="carousel"

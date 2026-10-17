@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Breadcrumbs } from "./Breadcrumbs";
 
@@ -117,9 +118,31 @@ describe("Breadcrumbs", () => {
         <span>B</span>
       </Breadcrumbs>,
     );
-    expect(screen.getByTestId("crumbs-sep")).toHaveStyle({
-      marginLeft: "40px",
-      marginRight: "40px",
-    });
+    // v3 emits `marginHorizontal` as one `margin-inline` atomic rule.
+    const rules = cssRulesOf(screen.getByTestId("crumbs-sep")).join("\n");
+    expect(rules).toContain("margin-inline: 40px");
+    expect(rules).not.toContain("margin-inline: 4px");
+  });
+
+  it("renders a <nav> landmark host", () => {
+    render(
+      <Breadcrumbs>
+        <span>A</span>
+        <span>B</span>
+      </Breadcrumbs>,
+    );
+    expect(screen.getByRole("navigation", { name: "Breadcrumb" }).tagName).toBe("NAV");
+  });
+
+  it("spaces separators with the xs token by default", () => {
+    render(
+      <Breadcrumbs styles={{ separator: { testID: "sep" } }}>
+        <span>A</span>
+        <span>B</span>
+      </Breadcrumbs>,
+    );
+    expect(cssRulesOf(screen.getByTestId("sep")).join("\n")).toContain(
+      "margin-inline: var(--t-space-xs)",
+    );
   });
 });

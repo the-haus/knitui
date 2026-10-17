@@ -71,7 +71,7 @@ const meta = {
     },
     radius: {
       control: "text",
-      description: "Theme radius token (e.g. `$sm`) or any CSS value.",
+      description: "Theme radius token (e.g. `sm`) or any CSS value.",
     },
     shadow: {
       control: "select",
@@ -99,7 +99,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <ThemeIcon key={variant} {...args} variant={variant}>
           <IconStar />
@@ -112,7 +112,7 @@ export const Variants: Story = {
 /** The five sizes, from xs to xl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <ThemeIcon key={size} {...args} size={size}>
           <IconStar />
@@ -125,7 +125,7 @@ export const Sizes: Story = {
 /** Each elevation level from the shared shadow ladder. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {SHADOWS.map((shadow) => (
         <ThemeIcon key={shadow} {...args} shadow={shadow}>
           <IconStar />
@@ -138,7 +138,7 @@ export const Shadows: Story = {
 /** The palette ramp follows the active theme. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <ThemeIcon key={theme} {...args} theme={theme}>
           <IconStar />
@@ -151,11 +151,11 @@ export const Themed: Story = {
 /**
  * `variant="gradient"` fills the chip with a linear gradient. With no `gradient`
  * prop it falls back to the theme ramp; otherwise pass a two-color shorthand,
- * `$colorN` tokens, or a multi-step `stops` array. The icon auto-colors white.
+ * `colorN` ramp names, or a multi-step `stops` array. The icon auto-colors white.
  */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <ThemeIcon {...args} variant="gradient">
         <IconStar />
       </ThemeIcon>
@@ -166,7 +166,7 @@ export const Gradient: Story = {
       >
         <IconStar />
       </ThemeIcon>
-      <ThemeIcon {...args} variant="gradient" gradient={{ from: "$blue9", to: "$teal9" }}>
+      <ThemeIcon {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
         <IconStar />
       </ThemeIcon>
       <ThemeIcon
@@ -190,7 +190,7 @@ export const Gradient: Story = {
 /** A set of curated gradient presets — handy starting points. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <ThemeIcon key={name} {...args} variant="gradient" gradient={gradient}>
           <IconStar />
@@ -203,7 +203,7 @@ export const GradientPresets: Story = {
 /** `variant="gradient"` with no `gradient` prop derives the gradient from each theme. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {GRADIENT_THEMES.map((theme) => (
         <ThemeIcon key={theme} {...args} variant="gradient" theme={theme}>
           <IconStar />
@@ -216,7 +216,7 @@ export const GradientThemed: Story = {
 /** One gradient (Sunset) across the full size scale. */
 export const GradientSizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <ThemeIcon
           key={size}

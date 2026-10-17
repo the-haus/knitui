@@ -2,6 +2,13 @@
 // `expect` for the jsdom-rendered component trees.
 import "@testing-library/jest-dom";
 
+// Tamagui v3 guard: fail on leaked v2 `…Style` props, "removed in v3" APIs and
+// `$`-prefixed tokens (docs/v3/conventions.md §8). Installed first so the benign
+// message filters below still run before it.
+import { installTamaguiV3Guard } from "../../scripts/jest/v3-guard";
+
+installTamaguiV3Guard();
+
 // The media engines are PROCESS-WIDE singletons in production (one real `<audio>`
 // / `<video>`). Reset them between tests so each starts from a clean shared
 // player — otherwise one test's playback/active-player state would leak into the

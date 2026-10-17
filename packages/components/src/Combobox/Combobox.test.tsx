@@ -3,9 +3,22 @@ import * as React from "react";
 import type { GetRef, TamaguiElement } from "@knitui/core";
 
 import { Combobox } from ".";
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { Button } from "../Button";
 import { fireEvent, render, screen, waitForElementToBeRemoved } from "../test-utils";
+import { getComboboxOptionId } from "./Combobox";
 import { useCombobox } from "./use-combobox";
+
+/**
+ * A bare text field standing in for InputBase: input targets anchor the dropdown
+ * through a `rootRef` prop, which a raw `<input>` would leak to the DOM.
+ */
+const Field = React.forwardRef<
+  HTMLInputElement,
+  React.ComponentProps<"input"> & { rootRef?: React.Ref<HTMLElement> }
+>(function Field({ rootRef: _rootRef, ...props }, ref) {
+  return <input ref={ref} {...props} />;
+});
 
 const SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 
@@ -20,7 +33,7 @@ describe("Combobox", () => {
     render(
       <Combobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
       </Combobox>,
     );
@@ -31,7 +44,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options>
@@ -49,7 +62,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options>
@@ -66,7 +79,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options aria-label="Fruit">
@@ -82,7 +95,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox size={size}>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options>
@@ -99,7 +112,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox onOptionSubmit={onOptionSubmit}>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options>
@@ -117,7 +130,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox onOptionSubmit={onOptionSubmit}>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options>
@@ -137,7 +150,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options>
@@ -155,7 +168,7 @@ describe("Combobox", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Group label="Fruit">
@@ -209,7 +222,7 @@ describe("Combobox", () => {
       <>
         <OpenCombobox>
           <Combobox.Target>
-            <input placeholder="search" />
+            <Field placeholder="search" />
           </Combobox.Target>
           <Combobox.Dropdown ref={dropdownRef}>
             <Combobox.Options ref={optionsRef}>
@@ -245,7 +258,7 @@ describe("Combobox public statics (Gaps 1 & 3)", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.OptionsDropdown
@@ -267,7 +280,7 @@ describe("Combobox public statics (Gaps 1 & 3)", () => {
     render(
       <OpenCombobox>
         <Combobox.Target>
-          <input placeholder="search" />
+          <Field placeholder="search" />
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.OptionsDropdown data={[]} nothingFoundMessage="No results" />
@@ -280,8 +293,133 @@ describe("Combobox public statics (Gaps 1 & 3)", () => {
 
   it("ClearButton is independently stylable and fires onClear", () => {
     const onClear = jest.fn();
-    render(<Combobox.ClearButton onClear={onClear} backgroundColor="$color3" />);
+    render(<Combobox.ClearButton onClear={onClear} backgroundColor="color3" />);
     fireEvent.click(screen.getByLabelText("Clear value"));
     expect(onClear).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Combobox v3 styling + a11y contract", () => {
+  const css = (el: Element) => cssRulesOf(el).join("\n");
+
+  function Open({ size }: { size?: React.ComponentProps<typeof Combobox>["size"] }) {
+    return (
+      <OpenCombobox size={size}>
+        <Combobox.Target>
+          <Field placeholder="search" />
+        </Combobox.Target>
+        <Combobox.Dropdown>
+          <Combobox.Options aria-label="Fruit" testID="options">
+            <Combobox.Group label="Group">
+              <Combobox.Option value="a" active testID="active">
+                Apple
+              </Combobox.Option>
+              <Combobox.Option value="b" selected testID="selected">
+                Banana
+              </Combobox.Option>
+              <Combobox.Option value="c" testID="idle">
+                Cherry
+              </Combobox.Option>
+            </Combobox.Group>
+          </Combobox.Options>
+          <Combobox.Empty testID="empty">Nothing</Combobox.Empty>
+        </Combobox.Dropdown>
+      </OpenCombobox>
+    );
+  }
+
+  it("does not leak component names as DOM `name` attributes", () => {
+    render(<Open />);
+    expect(screen.getByRole("listbox").getAttribute("name")).toBeNull();
+    for (const option of screen.getAllByRole("option")) {
+      expect(option.getAttribute("name")).toBeNull();
+    }
+  });
+
+  it("paints active / selected / idle rows from the variant + clause ladder", () => {
+    render(<Open />);
+    const resting = (id: string) =>
+      cssRulesOf(screen.getByTestId(id))
+        .filter((r) => r.includes("background-color") && !r.includes(":where("))
+        .join("\n");
+    expect(resting("active")).toMatch(/var\(--color3\)/);
+    expect(resting("selected")).toMatch(/var\(--color4\)/);
+    expect(resting("idle")).toBe("");
+    expect(css(screen.getByTestId("idle"))).toMatch(/:hover\) \{background-color: var\(--color4\)/);
+  });
+
+  it("sizes every context-bound leaf from the root `size` (styled context)", () => {
+    const { unmount } = render(<Open size="xs" />);
+    const xs = css(screen.getByTestId("empty"));
+    unmount();
+    render(<Open size="xl" />);
+    const xl = css(screen.getByTestId("empty"));
+    // Different size keys resolve to different font-size / padding rules.
+    expect(xs).toMatch(/font-size/);
+    expect(xl).toMatch(/font-size/);
+    expect(xs).not.toEqual(xl);
+  });
+
+  it("renders the group with role=group and its heading", () => {
+    render(<Open />);
+    const group = screen.getByRole("group");
+    expect(group).toHaveTextContent("Group");
+    expect(screen.getByRole("listbox", { name: "Fruit" }).contains(group)).toBe(true);
+  });
+
+  // v3 emits the individual CSS `rotate` property, not a `transform: rotate()`.
+  it("rotates the chevron while opened", () => {
+    render(
+      <>
+        <Combobox.Chevron testID="closed" />
+        <Combobox.Chevron testID="open" opened />
+      </>,
+    );
+    expect(css(screen.getByTestId("open"))).toMatch(/rotate: 180deg/);
+    expect(css(screen.getByTestId("closed"))).not.toMatch(/rotate: 180deg/);
+  });
+
+  it("gives OptionsDropdown rows ids that aria-activedescendant can target", () => {
+    render(
+      <OpenCombobox>
+        <Combobox.Target>
+          <Field placeholder="search" />
+        </Combobox.Target>
+        <Combobox.Dropdown>
+          <Combobox.OptionsDropdown
+            data={[{ value: "a b", label: "Two words" }]}
+            activeValue="a b"
+            optionIdPrefix="list"
+          />
+        </Combobox.Dropdown>
+      </OpenCombobox>,
+    );
+    const id = getComboboxOptionId("list", "a b");
+    expect(id).not.toMatch(/\s/);
+    expect(document.getElementById(id)).toBe(screen.getByRole("option"));
+  });
+
+  it("does not submit options in readOnly mode", () => {
+    const onOptionSubmit = jest.fn();
+    render(
+      <OpenCombobox readOnly onOptionSubmit={onOptionSubmit}>
+        <Combobox.Target>
+          <Field placeholder="search" />
+        </Combobox.Target>
+        <Combobox.Dropdown>
+          <Combobox.Options>
+            <Combobox.Option value="a">Apple</Combobox.Option>
+          </Combobox.Options>
+        </Combobox.Dropdown>
+      </OpenCombobox>,
+    );
+    fireEvent.click(screen.getByText("Apple"));
+    expect(onOptionSubmit).not.toHaveBeenCalled();
+  });
+
+  it("keeps input focus when an option is pressed (mousedown is prevented)", () => {
+    render(<Open />);
+    // `fireEvent` returns `false` when a handler called `preventDefault()`.
+    expect(fireEvent.mouseDown(screen.getByTestId("idle"))).toBe(false);
   });
 });

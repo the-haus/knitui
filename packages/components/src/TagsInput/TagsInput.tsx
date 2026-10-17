@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { withStaticProperties } from "@knitui/core";
-import { useCallbackRef, useUncontrolled } from "@knitui/hooks";
+import { useCallbackRef, useId, useUncontrolled } from "@knitui/hooks";
 
 import {
   Combobox,
@@ -20,6 +20,7 @@ import {
   composeTriggerRightSection,
   defaultOptionsFilter,
   flattenComboboxOptions,
+  getComboboxOptionId,
   getParsedComboboxData,
   isComboboxGroup,
   type OptionsDropdownProps,
@@ -47,7 +48,7 @@ type TagsInputFieldProps = Omit<
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the
  * TagsInput part surface. Each key maps to the props of the part it targets, so
- * `styles={{ pill: { bg: "$color3" } }}` is sugar for `<TagsInput.Pill bg="$color3" />`.
+ * `styles={{ pill: { bg: "color3" } }}` is sugar for `<TagsInput.Pill bg="color3" />`.
  */
 export interface TagsInputStyles {
   /** Props for the state-machine root (`TagsInput.Root` → `<Combobox>`). */
@@ -121,6 +122,13 @@ function splitTags(value: string, splitChars: string[]): string[] {
 interface TagsInputContextValue {
   /** The shared combobox store (open state + keyboard target). */
   combobox: ReturnType<typeof useCombobox>;
+  /** id wiring `aria-controls` (field) ↔ the suggestion dropdown. */
+  dropdownId: string;
+  /**
+   * Whether there is suggestion data at all. Only then is the field an ARIA
+   * `combobox` (a free-text tag field with no suggestions stays a plain textbox).
+   */
+  hasSuggestions: boolean;
   size: ComboboxSize;
   /** Step-down pill size derived from the field size. */
   pillSize: PillProps["size"];
@@ -435,6 +443,8 @@ function TagsInputRoot(props: TagsInputRootProps) {
   });
 
   const [activeValue, setActiveValue] = React.useState<string | null>(null);
+  // SSR-safe id linking the field's `aria-controls` to the suggestion dropdown.
+  const dropdownId = useId(__triggerProps?.id ? `${__triggerProps.id}-dropdown` : undefined);
   // Set on a user-typed search change so the next `flatOptions` recompute highlights
   // the first match (Mantine's `selectFirstOptionOnChange`); a ref avoids racing the
   // filter memo and scopes the behaviour to actual input changes.
@@ -633,6 +643,8 @@ function TagsInputRoot(props: TagsInputRootProps) {
   const ctx = React.useMemo<TagsInputContextValue>(
     () => ({
       combobox,
+      dropdownId,
+      hasSuggestions: parsed.length > 0,
       size,
       pillSize,
       disabled,
@@ -664,6 +676,8 @@ function TagsInputRoot(props: TagsInputRootProps) {
     // context (it is rebuilt every render and only the Trigger reads it).
     [
       combobox,
+      dropdownId,
+      parsed.length,
       size,
       pillSize,
       disabled,
@@ -847,6 +861,22 @@ const TagsInputTrigger = React.forwardRef<TagsInputRef, TagsInputTriggerProps>(
             <TagsInputPills>
               {pills}
               <PillsInput.Field
+                {...(ctx.hasSuggestions
+                  ? {
+                      role: "combobox" as const,
+                      "aria-autocomplete": "list" as const,
+                      "aria-controls": ctx.dropdownId,
+                      "aria-expanded": ctx.combobox.opened,
+                      ...(ctx.combobox.opened && ctx.activeValue != null
+                        ? {
+                            "aria-activedescendant": getComboboxOptionId(
+                              ctx.dropdownId,
+                              ctx.activeValue,
+                            ),
+                          }
+                        : null),
+                    }
+                  : null)}
                 placeholder={placeholder}
                 value={ctx.search}
                 disabled={ctx.disabled}
@@ -877,9 +907,9 @@ const TagsInputDropdown = React.forwardRef<
 >(function TagsInputDropdown(props, ref) {
   const ctx = useTagsInputContext();
   const s = slotStyles<TagsInputStyles>(ctx.styles, TAGS_INPUT_SLOT_KEYS, "TagsInput");
-  const { children, ...rest } = props;
+  const { id = ctx.dropdownId, children, ...rest } = props;
   return (
-    <Combobox.Dropdown ref={ref} {...s.get("dropdown")} {...rest}>
+    <Combobox.Dropdown ref={ref} id={id} {...s.get("dropdown")} {...rest}>
       {children ?? <TagsInputOptions />}
     </Combobox.Dropdown>
   );
@@ -919,6 +949,7 @@ function TagsInputOptions(props: TagsInputOptionsProps) {
       withScrollArea={ctx.withScrollArea}
       maxDropdownHeight={ctx.maxDropdownHeight}
       renderOption={ctx.renderOption}
+      optionIdPrefix={ctx.dropdownId}
       // The `option`/`group`/`empty` slots reach each rendered row through OptionsDropdown.
       optionProps={s.get("option")}
       groupProps={s.get("group")}

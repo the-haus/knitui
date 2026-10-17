@@ -1,4 +1,4 @@
-import { createTheme } from "./create-theme";
+import { createTheme, type KnitTamaguiConfig } from "./create-theme";
 import { deepMerge } from "./merge";
 import type { ThemeOptions } from "./options";
 
@@ -27,5 +27,5 @@ export const mergeThemeOptions = (...optionSets: ThemeOptions[]): ThemeOptions =
  * extendTheme(themePresets.vibrant, { brand: "#7C3AED" })
  * ```
  */
-export const extendTheme = (...optionSets: ThemeOptions[]) =>
+export const extendTheme = (...optionSets: ThemeOptions[]): KnitTamaguiConfig =>
   createTheme(mergeThemeOptions(...optionSets));

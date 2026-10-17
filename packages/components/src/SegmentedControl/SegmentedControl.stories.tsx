@@ -88,10 +88,10 @@ export const Playground: Story = {};
 /** The seven token sizes, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
-        <Box key={size} flexDirection="row" alignItems="center" gap="$md">
-          <Text width="$sm" fontSize="$xs" color="$color10">
+        <Box key={size} flexDirection="row" alignItems="center" gap="md">
+          <Text width="sm" fontSize="xs" color="color10">
             {size}
           </Text>
           <SegmentedControl {...args} size={size} data={FRAMEWORKS} />
@@ -104,10 +104,10 @@ export const Sizes: Story = {
 /** The five shadow levels from the shared elevation ladder, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} flexDirection="row" alignItems="center" gap="$md">
-          <Text width="$sm" fontSize="$xs" color="$color10">
+        <Box key={shadow} flexDirection="row" alignItems="center" gap="md">
+          <Text width="sm" fontSize="xs" color="color10">
             {shadow}
           </Text>
           <SegmentedControl {...args} shadow={shadow} data={FRAMEWORKS} />
@@ -142,9 +142,9 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("React");
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <SegmentedControl {...args} value={value} onChange={setValue} />
-        <Text fontSize={13} color="$color10">
+        <Text fontSize={13} color="color10">
           Selected: <Text fontWeight="600">{value}</Text>
         </Text>
       </Box>
@@ -172,7 +172,7 @@ export const RichLabels: Story = {
 /** The palette ramp follows the active theme — same control, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <SegmentedControl key={theme} {...args} theme={theme} defaultValue="React" />
       ))}
@@ -185,8 +185,8 @@ export const Styles: Story = {
   args: {
     defaultValue: "React",
     styles: {
-      root: { backgroundColor: "$blue3" },
-      label: { color: "$blue9", fontWeight: "700" },
+      root: { backgroundColor: "blue3" },
+      label: { color: "blue9", fontWeight: "700" },
     },
   },
 };

@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Highlight } from "./Highlight";
 
@@ -119,5 +120,17 @@ describe("Highlight", () => {
       </Highlight>,
     );
     expect(ref.current).not.toBeNull();
+  });
+
+  it("keeps the inherited Text surface on the wrapper", () => {
+    render(
+      <Highlight highlight="b" size="lg" testID="hl">
+        abc
+      </Highlight>,
+    );
+    expect(cssRulesOf(screen.getByTestId("hl")).join("\n")).toContain(
+      "font-size: var(--f-size-lg)",
+    );
+    expect(screen.getByTestId("hl").hasAttribute("highlight")).toBe(false);
   });
 });

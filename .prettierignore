@@ -25,3 +25,11 @@ packages/emoji/src/emojis/
 # they must stay byte-identical to what the generators emit — formatting them here
 # would make every check-generated run report drift.
 apps/docs/src/generated/
+
+# Agent worktrees (git-ignored local checkouts)
+.claude/worktrees/
+# Visual harness artifacts and generated story manifest
+visual/out/
+visual/manifest.json
+# Codemod golden fixtures: input/output must stay byte-exact for test.mjs
+scripts/codemods/tamagui-v3/__fixtures__/

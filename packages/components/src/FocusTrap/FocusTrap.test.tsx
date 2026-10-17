@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { TamaguiElement } from "@knitui/core";
 
-import { render, screen } from "../test-utils";
+import { fireEvent, render, screen } from "../test-utils";
 import { FocusTrap } from "./FocusTrap";
 
 describe("FocusTrap", () => {
@@ -52,5 +52,56 @@ describe("FocusTrap", () => {
 
     expect(marker).toBeInTheDocument();
     expect(marker).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("moves focus into the region on activation and cycles Tab within it", () => {
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    outside.focus();
+    render(
+      <FocusTrap>
+        <div>
+          <button>First</button>
+          <button>Last</button>
+        </div>
+      </FocusTrap>,
+    );
+    const first = screen.getByRole("button", { name: "First" });
+    const last = screen.getByRole("button", { name: "Last" });
+    expect(document.activeElement).toBe(first);
+    last.focus();
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+    outside.remove();
+  });
+
+  it("prefers the data-autofocus marker as the initial target", () => {
+    render(
+      <FocusTrap>
+        <div>
+          <button>Other</button>
+          <button data-autofocus>Preferred</button>
+        </div>
+      </FocusTrap>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Preferred" }));
+  });
+
+  it("keeps the child's own ref while attaching the trap (React 19 ref-as-prop)", () => {
+    const own = React.createRef<HTMLDivElement>();
+    const errors = jest.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <FocusTrap>
+        <div ref={own}>
+          <button>Inside</button>
+        </div>
+      </FocusTrap>,
+    );
+    expect(own.current).toBeInstanceOf(HTMLDivElement);
+    // Reading the removed `element.ref` would log a React 19 deprecation error.
+    expect(errors).not.toHaveBeenCalledWith(expect.stringContaining("element.ref"));
+    errors.mockRestore();
   });
 });

@@ -1,6 +1,6 @@
 import { breakpoints as bp } from "./scales";
 
-/** Responsive media queries. Use as style props: `$gtSm={{ ... }}`. */
+/** Responsive media queries. Use as flat-value clauses: `p="sm gtSm:lg"`, `display="none sm:flex"`. */
 export const media = {
   xs: { maxWidth: bp.xs },
   sm: { maxWidth: bp.sm },

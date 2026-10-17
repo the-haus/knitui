@@ -19,7 +19,7 @@ The numbered rules below map 1:1 onto the numbered comments in
    (`CELL_WIDTH`/`CELL_FONT`) — the calendar twin of components' `controlMetrics`.
    No magic pixels. Express variants with raw ladder values at module-load (never
    `getTokenValue`, which needs the live config).
-4. **Theme-ramp colors only.** `$color1…$color12` / semantic neutrals — never hex,
+4. **Theme-ramp colors only.** `color1…color12` / semantic neutrals — never hex,
    never a Mantine-style `color` prop. Accent is the Tamagui `theme=` prop, so
    `theme="red"` recolors with zero per-component logic.
 5. **Styled Frame + leaf parts**, each opting into the context.
@@ -38,10 +38,10 @@ props on a composed part` — **explicit beats sugar**.
     normalized through `toDateString` once.
 11. **A11y on both axes.** Web (`role`/`aria-*`) and native (`accessibility*` via
     `internal/a11y` `controlA11yProps`) set side-by-side — neither replaces the other.
-12. **Interaction in style, not state.** `webCursor`, real `hoverStyle`/`pressStyle`,
+12. **Interaction in style, not state.** `web:` cursor clauses, real `hover:`/`press:` clauses,
     a `disabled` variant (Mantine parity: 0.3 + `pointerEvents: "none"`). No runtime
     hover state machines.
-13. **`.styleable` wrapper** forwarding a ref + the frame's style props (the dates norm).
+13. **`styleable()` wrapper** forwarding a ref + the frame's style props (the dates norm).
 14. **`withStaticProperties`** exposing the slot markers (single source of truth) and
     the styled parts, so consumers can compose and `styled(X.Part, …)`.
 15. **Compiler-safe styling.** The `apps/web` build runs the Tamagui optimizing

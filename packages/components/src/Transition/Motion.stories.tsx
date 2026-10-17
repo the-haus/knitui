@@ -40,12 +40,12 @@ function MotionTile({
             {...motion}
             width={96}
             height={96}
-            borderRadius="$md"
-            backgroundColor="$color9"
+            borderRadius="md"
+            backgroundColor="color9"
             alignItems="center"
             justifyContent="center"
           >
-            <Text color="$color1" fontSize="$xs">
+            <Text color="color1" fontSize="xs">
               {animation}
             </Text>
           </Box>
@@ -67,7 +67,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          "Configurable, preset-driven animation. `useMotionPreset(name, { transition?, duration? })` resolves a named recipe (or an inline preset, or `false`) into spreadable `{ transition, enterStyle, exitStyle, animateOnly }` props. Spread them onto any frame and wrap it in `AnimatePresence` for enter + exit. Reduced motion is honoured automatically. Presets use cross-platform Tamagui shorthand transforms, so they render identically on web and native.",
+          "Configurable, preset-driven animation. `useMotionPreset(name, { transition?, duration? })` resolves a named recipe (or an inline preset, or `false`) into spreadable v3 props (`{ transition, opacity: 'enter:0 exit:0', y: 'enter:30px exit:30px', … }`). Spread them onto any frame and wrap it in `AnimatePresence` for enter + exit. Reduced motion is honoured automatically. Presets use cross-platform Tamagui shorthand transforms, so they render identically on web and native.",
       },
     },
   },
@@ -80,7 +80,7 @@ export const Playground: StoryObj<PlaygroundArgs> = {
   render: (args) => {
     const [open, setOpen] = React.useState(true);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Button onPress={() => setOpen((o) => !o)}>{open ? "Hide" : "Show"}</Button>
         <MotionTile animation={args.animation} duration={args.duration} open={open} />
       </Box>
@@ -102,7 +102,7 @@ export const GlobalConfig: StoryObj<{ durationScale: number; disabled: boolean }
     const [open, setOpen] = React.useState(true);
     return (
       <MotionConfig durationScale={args.durationScale} disabled={args.disabled}>
-        <Box gap="$md" alignItems="center">
+        <Box gap="md" alignItems="center">
           <Button onPress={() => setOpen((o) => !o)}>{open ? "Hide" : "Show"}</Button>
           <MotionTile animation="pop" open={open} />
         </Box>
@@ -128,7 +128,7 @@ export const AllPresets: StoryObj = {
       return () => clearInterval(id);
     }, []);
     return (
-      <Box flexDirection="row" flexWrap="wrap" gap="$md" maxWidth={560} justifyContent="center">
+      <Box flexDirection="row" flexWrap="wrap" gap="md" maxWidth={560} justifyContent="center">
         {PRESET_NAMES.map((name) => (
           <MotionTile key={name} animation={name} open={open} />
         ))}

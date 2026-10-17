@@ -25,7 +25,7 @@ otherwise wire yourself:
 
 | It mounts | Why you need it |
 | --- | --- |
-| `TamaguiProvider` with the kit's config | Tokens, themes and the `$token` prop vocabulary |
+| `TamaguiProvider` with the kit's config | Tokens, themes and the bare-name token vocabulary |
 | The color-scheme controller | `defaultColorScheme="system"` follows the OS; `useColorScheme()` reads and sets it |
 | `GestureHandlerRootView` | Sliders, drag-to-dismiss, carousels and sheets need it at the root |
 | The portal host | `Modal`, `Drawer`, `Popover`, `Tooltip` and `Portal` teleport their content here |
@@ -35,6 +35,10 @@ otherwise wire yourself:
   portal host, and overlays start rendering into the wrong layer.
 </Callout>
 
+If your app uses `react-native-safe-area-context`, put its `SafeAreaProvider`
+**outside** `Provider`. Tamagui v3's provider can read safe-area context to
+publish inset tokens, and the inside-out order throws `NO_INSETS_ERROR` at startup.
+
 ## 2. Render something
 
 ```tsx
@@ -42,7 +46,7 @@ import { Button, Card, Group, Text, TextInput } from "@knitui/components";
 
 export function SignIn() {
   return (
-    <Card padding="lg" gap="$md">
+    <Card padding="lg" gap="md">
       <Text fontWeight="600">Sign in</Text>
       <TextInput label="Email" placeholder="you@example.com" />
       <Group>
@@ -82,17 +86,26 @@ once covers the whole library:
 
 ## 4. Style with tokens, not numbers
 
-Every style prop takes a token: `p="$md"`, `gap="$sm"`, `br="$lg"`, `c="$color11"`.
+Every style prop takes a token: `p="md"`, `gap="sm"`, `br="lg"`, `c="color11"`.
 Tokens keep spacing and colour consistent and make theming work.
 
 ```tsx
-<Box p="$lg" gap="$md" br="$md" bg="$color2" borderColor="$borderColor" borderWidth={1}>
-  <Text c="$color11">Inside a themed surface</Text>
+<Box p="lg" gap="md" br="md" bg="color2" borderColor="borderColor" borderWidth={1}>
+  <Text c="color11">Inside a themed surface</Text>
 </Box>
 ```
 
-Raw numbers still work where you need them (`p={13}`), but a token is almost
-always the right answer. See [Tokens](/docs/foundations/tokens).
+Token names are bare (no `$`): a string is a token, a number is a raw value. Raw
+numbers still work where you need them (`p={13}`), but a token is almost always
+the right answer. See [Tokens](/docs/foundations/tokens).
+
+States and breakpoints go **inside the value** they change:
+
+```tsx
+<Box bg="color2 hover:color3 press:color4" p="sm gtMd:lg" />
+```
+
+See [Style props](/docs/api/style-props) for the full clause grammar.
 
 ## 5. Go deeper
 

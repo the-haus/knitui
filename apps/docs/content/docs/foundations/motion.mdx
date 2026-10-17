@@ -1,44 +1,103 @@
 export const meta = {
   title: "Motion",
   description:
-    "Motion tokens, presets and the press-scale hook — one definition of timing shared by web transitions and native worklets.",
+    "Motion tokens, the unified transition presets, enter/exit clauses and the press-scale hook — one definition of timing shared by web and native.",
 };
 
 # Motion
 
 Motion in the kit is tokenised like everything else: durations and easings have
-names, and components reference the names.
+names, and components reference the names. One table —
+[`packages/core/src/config/motion.ts`](https://github.com/the-haus/knitui/blob/main/packages/core/src/config/motion.ts) —
+is the source of truth for both animation drivers.
 
 <MotionTable />
 
-Read them from `@knitui/core`:
+Read the primitives from `@knitui/core`:
 
 ```tsx
-import { DURATIONS, EASINGS } from "@knitui/core";
+import { DURATIONS, EASINGS, MOTION_PRESETS } from "@knitui/core";
 ```
+
+## The `transition` prop
+
+`transition` names a preset from the table above. With Tamagui v3 a preset is the
+**same motion on every driver**: the web CSS driver and the native Reanimated
+driver are both built from `MOTION_PRESETS`, so `transition="bouncy"` is one
+spring on iOS, Android and the web.
+
+```tsx
+<Box transition="fast" bg="color2 hover:color3" />
+```
+
+Use the object form to restrict or retime it:
+
+```tsx
+<Box
+  transition={{ preset: "fast", properties: "transform, opacity", enter: "medium", exit: "fast" }}
+/>
+<Box transition={{ preset: "ease-out", duration: 250 }} />   // keep the curve, retime it
+<Box transition="100ms ease-out" />                          // a duration is plain CSS
+<Box transition="none" />                                    // set, never animate
+```
+
+`properties` replaces v2's `animateOnly`: a property the transition does not name
+is set rather than animated. `transition="none"` animates nothing and completes
+exits immediately.
+
+## Enter and exit
+
+Mount and unmount styles are clauses on the properties they change — there are no
+`enterStyle` / `exitStyle` objects:
+
+```tsx
+<AnimatePresence>
+  {open ? (
+    <Box key="panel" transition="medium" opacity="1 enter:0 exit:0" y="0 enter:8px exit:8px" />
+  ) : null}
+</AnimatePresence>
+```
+
+Raw lengths inside a clause need units (`8px`); a bare `8` would be read as a
+token name.
+
+To act when a transition finishes, use `onTransition`:
+
+```tsx
+<Box
+  transition="medium"
+  onTransition={({ phase, cause, finished }) => {
+    if (phase === "end" && cause === "exit") cleanUp();
+  }}
+/>
+```
+
+`phase` is `"start"` or `"end"`; `cause` is `"enter"`, `"exit"` or `"update"`.
 
 ## Presets
 
-A preset pairs a duration with an easing and a property set, so "fade in" means
+A motion preset pairs a transition with enter / exit values, so "fade in" means
 the same thing everywhere:
 
 ```tsx
-import { motionPresets, useMotionPreset } from "@knitui/core";
+import { motionPresets, useMotionPreset } from "@knitui/components";
 
 const motion = useMotionPreset("fade");
 ```
 
-Overlay components (`Popover`, `Tooltip`, `HoverCard`, `Modal`, `Drawer`) accept a
-preset by name through their `animation` prop, and they animate **out** before
-unmounting — which is why they share one transition engine rather than each
-running their own timer.
+`useMotionPreset` resolves a named recipe to plain props (a `transition` plus the
+matching `enter:` / `exit:` clauses) that you pass to an animated frame, with
+reduced motion already applied. Overlay components (`Popover`, `Tooltip`,
+`HoverCard`, `Modal`, `Drawer`) accept a preset by name through their `animation`
+prop, and they animate **out** before unmounting — which is why they share one
+transition engine rather than each running their own timer.
 
 <Example id="components/overlays/transition" story="Playground" />
 
 ## Press feedback
 
 ```tsx
-import { usePressScale } from "@knitui/core";
+import { usePressScale } from "@knitui/components";
 ```
 
 `usePressScale` is the shared press-down animation: a small scale on the UI thread

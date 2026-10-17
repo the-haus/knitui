@@ -18,7 +18,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Mark renders highlighted inline text — a semantic `<mark>` on web with a tinted fill. The tint comes from the active theme ramp (`$color5` fill, `$color12` text), so the `theme` prop recolors it with no per-component logic. Inherits the full `Text` surface (`size`, `fw`, `truncate`, …).",
+          "Mark renders highlighted inline text — a semantic `<mark>` on web with a tinted fill. The tint comes from the active theme ramp (`color5` fill, `color12` text), so the `theme` prop recolors it with no per-component logic. Inherits the full `Text` surface (`size`, `fw`, `truncate`, …).",
       },
     },
   },
@@ -55,7 +55,7 @@ export const Playground: Story = {};
 /** Every accent theme applied to the same highlighted word. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {THEMES.map((t) => (
         <Mark key={t} {...args} theme={t}>
           {t}
@@ -68,7 +68,7 @@ export const Themed: Story = {
 /** Inherited Text sizes from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <Mark key={size} {...args} size={size}>
           {size}

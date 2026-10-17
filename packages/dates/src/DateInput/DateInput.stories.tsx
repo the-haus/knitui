@@ -138,8 +138,8 @@ export const SlotStylesSugar: Story = {
           value={value}
           onChange={setValue}
           styles={{
-            input: { borderRadius: "$lg" },
-            dropdown: { padding: "$md" },
+            input: { borderRadius: "lg" },
+            dropdown: { padding: "md" },
           }}
         />
       </Frame>

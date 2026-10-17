@@ -23,41 +23,42 @@ export type { AudioSize };
 
 /** Outer playlist card. */
 export const AudioPlaylistFrame = styled(Box, {
-  name: "AudioPlaylist",
+  displayName: "AudioPlaylist",
   position: "relative",
   width: "100%",
   flexDirection: "column",
-  backgroundColor: "$color2",
-  borderRadius: "$lg",
+  backgroundColor: "color2",
+  borderRadius: "lg",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  paddingHorizontal: "$md",
-  paddingVertical: "$sm",
-  gap: "$sm",
+  borderColor: "borderColor",
+  paddingHorizontal: "md",
+  paddingVertical: "sm",
+  gap: "sm",
 });
 
 /** The scrollable track list container. */
 export const AudioTrackListFrame = styled(Box, {
-  name: "AudioTrackList",
+  displayName: "AudioTrackList",
   width: "100%",
   flexDirection: "column",
-  gap: "$xxs",
+  gap: "xxs",
 });
 
 /** A single track row. */
 export const AudioTrackRow = styled(Box, {
-  name: "AudioTrackRow",
+  displayName: "AudioTrackRow",
   flexDirection: "row",
   alignItems: "center",
-  gap: "$sm",
-  paddingHorizontal: "$sm",
-  paddingVertical: "$xs",
-  borderRadius: "$sm",
+  gap: "sm",
+  paddingHorizontal: "sm",
+  paddingVertical: "xs",
+  borderRadius: "sm",
   cursor: "pointer",
-  hoverStyle: { backgroundColor: "$color4" },
+  backgroundColor: "hover:color4",
   variants: {
     active: {
-      true: { backgroundColor: "$color5" },
+      // The active row keeps its fill under hover (the hover slot is per-clause).
+      true: { backgroundColor: "color5 hover:color5" },
     },
   } as const,
 });

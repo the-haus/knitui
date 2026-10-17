@@ -61,7 +61,7 @@ const meta = {
   },
   args: {
     position: "bottom-start",
-    offset: "$xs",
+    offset: "xs",
     withArrow: false,
     withOverlay: false,
     trapFocus: false,
@@ -80,14 +80,14 @@ const meta = {
     },
     offset: {
       control: "select",
-      options: ["$xxs", "$xs", "$sm", "$md", "$lg", "$xl", "$xxl", 4, 8, 12],
+      options: ["xxs", "xs", "sm", "md", "lg", "xl", "xxl", 4, 8, 12],
       description: "Gap between the target and dropdown as a space token or px number.",
     },
     withArrow: { control: "boolean", description: "Show an arrow pointing at the target." },
     arrowSize: { control: "number", description: "Arrow edge length in px." },
     arrowOffset: {
       control: "select",
-      options: ["$xxs", "$xs", "$sm", "$md", "$lg", "$xl", "$xxl", 4, 5, 8],
+      options: ["xxs", "xs", "sm", "md", "lg", "xl", "xxl", 4, 5, 8],
     },
     arrowRadius: { control: "number" },
     withOverlay: {
@@ -144,11 +144,11 @@ export const Playground: Story = {
       <Popover.Target>
         <Button>Toggle popover</Button>
       </Popover.Target>
-      <Popover.Dropdown padding="$md">
-        <Text fontWeight="600" marginBottom="$xs">
+      <Popover.Dropdown padding="md">
+        <Text fontWeight="600" marginBottom="xs">
           Popover content
         </Text>
-        <Text color="$color11" fontSize={14}>
+        <Text color="color11" fontSize={14}>
           This is the dropdown body. Adjust props in the Controls panel.
         </Text>
       </Popover.Dropdown>
@@ -161,19 +161,19 @@ export const Controlled: Story = {
   render: (args) => {
     const [opened, setOpened] = React.useState(false);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <Popover {...args} opened={opened} onChange={setOpened}>
           <Popover.Target>
             <Button variant="outline">{opened ? "Close popover" : "Open popover"}</Button>
           </Popover.Target>
-          <Popover.Dropdown padding="$md">
-            <Text marginBottom="$sm">Controlled dropdown is open.</Text>
+          <Popover.Dropdown padding="md">
+            <Text marginBottom="sm">Controlled dropdown is open.</Text>
             <Button size="xs" variant="subtle" onPress={() => setOpened(false)}>
               Dismiss
             </Button>
           </Popover.Dropdown>
         </Popover>
-        <Text fontSize={12} color="$color11">
+        <Text fontSize={12} color="color11">
           opened: {String(opened)}
         </Text>
       </Box>
@@ -184,7 +184,7 @@ export const Controlled: Story = {
 /** Arrow pointing at the target, shown at several placements. */
 export const WithArrow: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["top", "bottom", "left", "right"] as const).map((position) => (
         <Popover key={position} {...args} withArrow position={position} defaultOpened>
           <Popover.Target>
@@ -192,7 +192,7 @@ export const WithArrow: Story = {
               {position}
             </Button>
           </Popover.Target>
-          <Popover.Dropdown padding="$sm">
+          <Popover.Dropdown padding="sm">
             <Text fontSize={12}>{position}</Text>
           </Popover.Dropdown>
         </Popover>
@@ -208,7 +208,7 @@ export const Disabled: Story = {
       <Popover.Target>
         <Button disabled>Disabled trigger</Button>
       </Popover.Target>
-      <Popover.Dropdown padding="$md">
+      <Popover.Dropdown padding="md">
         <Text>This will never appear.</Text>
       </Popover.Dropdown>
     </Popover>
@@ -222,11 +222,11 @@ export const WithOverlay: Story = {
       <Popover.Target>
         <Button>Open with overlay</Button>
       </Popover.Target>
-      <Popover.Dropdown padding="$md">
-        <Text fontWeight="600" marginBottom="$xs">
+      <Popover.Dropdown padding="md">
+        <Text fontWeight="600" marginBottom="xs">
           Modal-style popover
         </Text>
-        <Text color="$color11" fontSize={14}>
+        <Text color="color11" fontSize={14}>
           A translucent overlay sits behind this dropdown.
         </Text>
       </Popover.Dropdown>
@@ -241,11 +241,11 @@ export const WithRoles: Story = {
       <Popover.Target>
         <Button>Open dialog</Button>
       </Popover.Target>
-      <Popover.Dropdown padding="$md">
-        <Text fontWeight="600" marginBottom="$xs">
+      <Popover.Dropdown padding="md">
+        <Text fontWeight="600" marginBottom="xs">
           Accessible dialog
         </Text>
-        <Text color="$color11" fontSize={14}>
+        <Text color="color11" fontSize={14}>
           The target has aria-haspopup="dialog" and the dropdown has role="dialog".
         </Text>
       </Popover.Dropdown>
@@ -261,7 +261,7 @@ export const TargetWidth: Story = {
         <Popover.Target>
           <Button fullWidth>Wide trigger</Button>
         </Popover.Target>
-        <Popover.Dropdown padding="$md">
+        <Popover.Dropdown padding="md">
           <Text fontSize={14}>This dropdown stretches to match the trigger above.</Text>
         </Popover.Dropdown>
       </Popover>
@@ -279,10 +279,10 @@ const SHADOWS = ["xs", "sm", "md", "lg", "xl"] as const;
  */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="flex-start">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs" alignItems="center" position="relative" width={160}>
-          <Text fontSize="$xs" color="$color11">
+        <Box key={shadow} gap="xs" alignItems="center" position="relative" width={160}>
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
           <Popover {...args} shadow={shadow} defaultOpened withinPortal={false}>
@@ -291,7 +291,7 @@ export const Shadows: Story = {
                 {shadow}
               </Button>
             </Popover.Target>
-            <Popover.Dropdown padding="$md">
+            <Popover.Dropdown padding="md">
               <Text fontSize={14}>shadow="{shadow}"</Text>
             </Popover.Dropdown>
           </Popover>
@@ -309,18 +309,18 @@ export const Styles: Story = {
       withArrow
       defaultOpened
       styles={{
-        dropdown: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-        arrow: { background: "$blue3", borderColor: "$blue7", borderWidth: 1, radius: 0 },
+        dropdown: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+        arrow: { background: "blue3", borderColor: "blue7", borderWidth: 1, radius: 0 },
       }}
     >
       <Popover.Target>
         <Button>Styled popover</Button>
       </Popover.Target>
-      <Popover.Dropdown padding="$md">
-        <Text fontWeight="600" marginBottom="$xs">
+      <Popover.Dropdown padding="md">
+        <Text fontWeight="600" marginBottom="xs">
           Styled dropdown
         </Text>
-        <Text color="$color11" fontSize={14}>
+        <Text color="color11" fontSize={14}>
           The dropdown frame and arrow are recolored via the `styles` map.
         </Text>
       </Popover.Dropdown>
@@ -337,8 +337,8 @@ export const Transitions: Story = {
   render: (args) => {
     const [transition, setTransition] = React.useState<(typeof TRANSITIONS)[number]>("pop");
     return (
-      <Box gap="$lg" alignItems="center">
-        <Box flexDirection="row" flexWrap="wrap" gap="$xs" maxWidth={540} justifyContent="center">
+      <Box gap="lg" alignItems="center">
+        <Box flexDirection="row" flexWrap="wrap" gap="xs" maxWidth={540} justifyContent="center">
           {TRANSITIONS.map((name) => (
             <Button
               key={name}
@@ -354,11 +354,11 @@ export const Transitions: Story = {
           <Popover.Target>
             <Button>Toggle “{transition}”</Button>
           </Popover.Target>
-          <Popover.Dropdown padding="$md">
-            <Text fontWeight="600" marginBottom="$xs">
+          <Popover.Dropdown padding="md">
+            <Text fontWeight="600" marginBottom="xs">
               {transition}
             </Text>
-            <Text color="$color11" fontSize={14}>
+            <Text color="color11" fontSize={14}>
               Open and close to watch the “{transition}” transition.
             </Text>
           </Popover.Dropdown>
@@ -371,16 +371,16 @@ export const Transitions: Story = {
 /** Compound API — Target + Dropdown composed inside a single Popover root. */
 export const CompoundAPI: Story = {
   render: (args) => (
-    <Box gap="$lg">
+    <Box gap="lg">
       <Popover {...args}>
         <Popover.Target>
           <Button leftSection={<Text>⭐</Text>}>With icon trigger</Button>
         </Popover.Target>
-        <Popover.Dropdown padding="$md" minWidth={200}>
-          <Text fontWeight="600" marginBottom="$xs">
+        <Popover.Dropdown padding="md" minWidth={200}>
+          <Text fontWeight="600" marginBottom="xs">
             Actions
           </Text>
-          <Box gap="$xs">
+          <Box gap="xs">
             <Button variant="subtle" size="sm" justify="flex-start">
               <Text>✏️</Text> Edit
             </Button>

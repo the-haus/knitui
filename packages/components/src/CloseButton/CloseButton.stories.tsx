@@ -96,7 +96,7 @@ export const Playground: Story = {};
 /** Every visual variant side by side at the default size. */
 export const Variants: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {VARIANTS.map((variant) => (
         <CloseButton key={variant} {...args} variant={variant} aria-label={`Close (${variant})`} />
       ))}
@@ -107,7 +107,7 @@ export const Variants: Story = {
 /** The full seven-step size scale, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <CloseButton key={size} {...args} size={size} aria-label={`Close (${size})`} />
       ))}
@@ -118,7 +118,7 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation ladder, from `xs` to `xl`. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
         <CloseButton key={shadow} {...args} shadow={shadow} aria-label={`Close (${shadow})`} />
       ))}
@@ -149,7 +149,7 @@ export const CustomAriaLabel: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
         <CloseButton key={theme} {...args} theme={theme} aria-label={`Close (${theme})`} />
       ))}
@@ -163,7 +163,7 @@ export const Themed: Story = {
  */
 export const Gradient: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       <CloseButton {...args} variant="gradient" aria-label="Close (themed gradient)" />
       <CloseButton
         {...args}
@@ -174,7 +174,7 @@ export const Gradient: Story = {
       <CloseButton
         {...args}
         variant="gradient"
-        gradient={{ from: "$blue9", to: "$teal9" }}
+        gradient={{ from: "blue9", to: "teal9" }}
         aria-label="Close (token gradient)"
       />
       <CloseButton
@@ -197,7 +197,7 @@ export const Gradient: Story = {
 /** Curated gradient presets for the gradient variant. */
 export const GradientPresets: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {Object.entries(GRADIENT_PRESETS).map(([name, gradient]) => (
         <CloseButton
           key={name}
@@ -211,10 +211,10 @@ export const GradientPresets: Story = {
   ),
 };
 
-/** Themed gradient (no `gradient` prop) — the `$color5`→`$color9` ramp follows the active theme. */
+/** Themed gradient (no `gradient` prop) — the `color5`→`color9` ramp follows the active theme. */
 export const GradientThemed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {(["blue", "red", "green", "orange", "pink", "teal"] as const).map((theme) => (
         <CloseButton
           key={theme}
@@ -231,9 +231,9 @@ export const GradientThemed: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <CloseButton
               key={size}
@@ -254,7 +254,7 @@ export const Styles: Story = {
     variant: "subtle",
     size: "md",
     styles: {
-      icon: { color: "$red9" },
+      icon: { color: "red9" },
     },
   },
 };

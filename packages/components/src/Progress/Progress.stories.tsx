@@ -72,10 +72,10 @@ export const Playground: Story = {};
 /** All seven track thicknesses from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SIZES.map((size) => (
-        <Box key={size} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={size} gap="xs">
+          <Text fontSize="xs" color="color11">
             {size}
           </Text>
           <Progress {...args} size={size} value={60} />
@@ -88,10 +88,10 @@ export const Sizes: Story = {
 /** Edge values — 0 %, 50 % and 100 % fill. */
 export const Values: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {([0, 25, 50, 75, 100] as const).map((value) => (
-        <Box key={value} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={value} gap="xs">
+          <Text fontSize="xs" color="color11">
             {value}%
           </Text>
           <Progress {...args} value={value} />
@@ -114,7 +114,7 @@ export const Animated: Story = {
 /** Vertical orientation — pair with an explicit height on the root. */
 export const Vertical: Story = {
   render: (args) => (
-    <Box flexDirection="row" gap="$lg" alignItems="flex-end" height={120}>
+    <Box flexDirection="row" gap="lg" alignItems="flex-end" height={120}>
       {SIZES.map((size) => (
         <Progress key={size} {...args} size={size} orientation="vertical" height={120} value={60} />
       ))}
@@ -132,10 +132,10 @@ export const Vertical: Story = {
 /** Palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
-        <Box key={theme} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={theme} gap="xs">
+          <Text fontSize="xs" color="color11">
             {theme}
           </Text>
           <Progress {...args} theme={theme} value={65} />
@@ -148,10 +148,10 @@ export const Themed: Story = {
 /** Elevation shadow ladder applied via the inherited `shadow` prop. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} gap="$xs">
-          <Text fontSize="$xs" color="$color11">
+        <Box key={shadow} gap="xs">
+          <Text fontSize="xs" color="color11">
             {shadow}
           </Text>
           <Progress {...args} shadow={shadow} value={60} />
@@ -167,7 +167,7 @@ export const Shadows: Story = {
  */
 export const CompoundStacked: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {/* Three sections, no labels */}
       <Progress.Root size="lg">
         <Progress.Section value={30} theme="blue" withAria />
@@ -198,8 +198,8 @@ export const Styles: Story = {
     size: "xl",
     label: "65%",
     styles: {
-      section: { backgroundColor: "$red9" },
-      label: { color: "$color1", fontWeight: "700" },
+      section: { backgroundColor: "red9" },
+      label: { color: "color1", fontWeight: "700" },
     },
   },
 };
@@ -209,10 +209,10 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState(40);
     return (
-      <Box gap="$md">
+      <Box gap="md">
         <Progress {...args} value={value} />
-        <Box flexDirection="row" alignItems="center" gap="$sm">
-          <Text fontSize="$xs" color="$color11">
+        <Box flexDirection="row" alignItems="center" gap="sm">
+          <Text fontSize="xs" color="color11">
             0
           </Text>
           <input
@@ -223,10 +223,10 @@ export const Controlled: Story = {
             onChange={(e) => setValue(Number(e.target.value))}
             style={{ flex: 1 }}
           />
-          <Text fontSize="$xs" color="$color11">
+          <Text fontSize="xs" color="color11">
             100
           </Text>
-          <Text fontSize="$xs" color="$color11" minWidth="$md">
+          <Text fontSize="xs" color="color11" minWidth="md">
             {value}%
           </Text>
         </Box>

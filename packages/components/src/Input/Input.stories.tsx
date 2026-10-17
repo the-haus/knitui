@@ -45,7 +45,7 @@ const meta = {
     },
     radius: {
       control: "text",
-      description: "Theme radius token (e.g. `$sm`) or any CSS value.",
+      description: "Theme radius token (e.g. `sm`) or any CSS value.",
     },
     disabled: { control: "boolean" },
     pointer: { control: "boolean", description: "Use a pointer cursor (e.g. select-like inputs)." },
@@ -80,7 +80,7 @@ export const Playground: Story = {
 /** The three chrome variants. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {VARIANTS.map((variant) => (
         <Input key={variant} {...args} variant={variant} placeholder={variant} />
       ))}
@@ -91,7 +91,7 @@ export const Variants: Story = {
 /** The seven token sizes from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {SIZES.map((size) => (
         <Input key={size} {...args} size={size} placeholder={`size: ${size}`} />
       ))}
@@ -102,7 +102,7 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       {SHADOWS.map((shadow) => (
         <Input key={shadow} {...args} shadow={shadow} placeholder={shadow} />
       ))}
@@ -114,7 +114,7 @@ export const Shadows: Story = {
 export const WithSections: Story = {
   decorators: [(Story) => <Box width={320}>{<Story />}</Box>],
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <Input {...args} leftSection={<IconSearch />} placeholder="Search" />
       <Input {...args} leftSection={<Text>@</Text>} placeholder="username" />
       <Input {...args} rightSection={<Text>.com</Text>} placeholder="domain" />
@@ -131,7 +131,7 @@ export const WithSections: Story = {
 /** Loading indicator, positioned left or right. */
 export const Loading: Story = {
   render: (args) => (
-    <Box gap="$md" width={320}>
+    <Box gap="md" width={320}>
       <Input {...args} loading loadingPosition="right" placeholder="loading right" />
       <Input {...args} loading loadingPosition="left" placeholder="loading left" />
     </Box>
@@ -152,7 +152,7 @@ export const ReadOnly: Story = {
 
 /** Error state — toggles the error border and `aria-invalid`. */
 export const Error: Story = {
-  args: { error: true, value: "invalid@", placeholder: "email" },
+  args: { error: true, defaultValue: "invalid@", placeholder: "email" },
   decorators: [(Story) => <Box width={320}>{<Story />}</Box>],
 };
 
@@ -194,8 +194,8 @@ export const Styles: Story = {
       leftSection={<Text>@</Text>}
       placeholder="username"
       styles={{
-        root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-        leftSection: { backgroundColor: "$red9" },
+        root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+        leftSection: { backgroundColor: "red9" },
       }}
     />
   ),
@@ -207,9 +207,9 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("");
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Input {...args} value={value} onChangeText={setValue} placeholder="Type something" />
-        <Text fontSize={12} color="$color11">
+        <Text fontSize={12} color="color11">
           value: {value || "—"}
         </Text>
       </Box>

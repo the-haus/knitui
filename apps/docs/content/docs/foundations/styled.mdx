@@ -1,7 +1,7 @@
 export const meta = {
   title: "styled()",
   description:
-    "The escape hatch: extend any kit frame with your own variants, and what .styleable() means for extraction.",
+    "Extend any kit frame with your own variants: static bodies first, styled.dynamic and .resolve for computed styles, styleable() only for behaviour.",
 };
 
 # styled()
@@ -14,16 +14,16 @@ import { Box } from "@knitui/components";
 
 export const Panel = styled(Box, {
   name: "Panel",
-  padding: "$lg",
-  borderRadius: "$md",
-  backgroundColor: "$color2",
+  padding: "lg",
+  borderRadius: "md",
+  backgroundColor: "color2 hover:color3",
   borderWidth: 1,
-  borderColor: "$borderColor",
+  borderColor: "borderColor",
 
   variants: {
     tone: {
-      quiet: { backgroundColor: "$color1" },
-      loud: { backgroundColor: "$color3", borderColor: "$color7" },
+      quiet: { backgroundColor: "color1" },
+      loud: { backgroundColor: "color3 hover:color4", borderColor: "color7" },
     },
     raised: {
       true: { shadow: "md" },
@@ -33,18 +33,114 @@ export const Panel = styled(Box, {
 ```
 
 ```tsx
-<Panel tone="loud" raised p="$xl" />
+<Panel tone="loud" raised p="xl" />
 ```
+
+Token values are bare names (`"lg"`, `"color2"`): a string is a token lookup, a
+number is a raw value. Interaction states live inside the value they change
+(`"color2 hover:color3"`); there are no `hoverStyle` / `pressStyle` objects. See
+[Style props](/docs/api/style-props) for the full clause grammar.
 
 `as const` on `variants` is load-bearing — it is what makes `tone` a union instead
 of `string` in the resulting props.
 
 ## Import it from `@knitui/core`
 
-The kit's `styled` is Tamagui's factory with `.styleable()` output memoized. It is
-the only `styled` on the kit's surface — `@knitui/core` deliberately stops
-re-exporting Tamagui's raw one, so you cannot accidentally get a frame that skips
-the memoization.
+The kit's `styled` is Tamagui v3's factory, re-exported as-is (including
+`styled.dynamic`). Import it, and every other styling API, from `@knitui/core`
+rather than from `tamagui` / `@tamagui/*`, so your app resolves the same copy the
+kit does.
+
+## Choose the lightest construct
+
+The Tamagui compiler can flatten a styled component into a plain host element with
+atomic CSS (web) or hoisted styles (native). A behaviour wrapper can never be
+flattened. So the order of preference is:
+
+| Need | Use | Flattens? |
+| --- | --- | --- |
+| Props that map to fixed styles | `styled(Base, { variants })` with static bodies | yes |
+| Styles computed from one prop's value | `styled.dynamic<T>((value, env) => ({…}))` | yes, when the prop is static |
+| Styles derived from several props | `Frame.resolve((props, env) => ({…}))` | the result stays a styled component |
+| State, effects, refs, context, handlers | `styleable(Frame, render)` from `@knitui/core` | no (always `neverFlatten`) |
+
+### Static variant bodies
+
+Keep bodies literal: no spreads of runtime objects, no handlers, no `theme` keys.
+If you generate a table, build it at module scope into a literal-shaped object.
+
+### `styled.dynamic` — a variant computed from its value
+
+```tsx
+import { styled, type SizeTokens } from "@knitui/core";
+
+const Swatch = styled(Box, {
+  variants: {
+    size: styled.dynamic<SizeTokens | number>((size, { tokens }) => ({
+      width: tokens.size[size] ?? size,
+      height: tokens.size[size] ?? size,
+    })),
+  } as const,
+});
+```
+
+The function receives the value and the style environment (`tokens`, `theme`,
+`font`, …). It runs once per clause, so `size="sm md:lg"` works, and the compiler
+evaluates it when the prop is static. v2's spread variants (`"...size"`,
+`":number"`, `":string"`) and plain-function variants **no longer run in v3** —
+convert them to `styled.dynamic`.
+
+The kit's own components do not use one token for `size` — they read
+[`controlMetrics`](/docs/foundations/sizing) inside a `styled.dynamic`, because
+height, font, padding and radius need to move independently.
+
+### `.resolve` — styles from several props
+
+```tsx
+const Alert = styled(Box, {
+  variants: {
+    tone: styled.dynamic<"neutral" | "critical">(),
+    disabled: { true: { opacity: 0.5 } },
+  } as const,
+}).resolve((props, { theme }) => ({
+  borderColor: props.tone === "critical" && !props.disabled ? theme.red8 : undefined,
+}));
+```
+
+A bare `styled.dynamic<T>()` declares the prop type (and stops it reaching the DOM);
+the resolver gets the complete props and the environment. `.resolve` returns a new
+component and never mutates the original; resolvers run parent first.
+
+### `styleable()` — real behaviour only
+
+```tsx
+import { styleable, type GetProps } from "@knitui/core";
+
+interface CounterProps extends GetProps<typeof PanelFrame> {
+  initial?: number;
+}
+
+export const Counter = styleable<CounterProps>(PanelFrame, function Counter(props, ref) {
+  const { initial = 0, ...rest } = props;
+  const [count, setCount] = useState(initial);
+  return <PanelFrame ref={ref} onPress={() => setCount((c) => c + 1)} {...rest} />;
+});
+```
+
+`styleable()` replaces v2's `Frame.styleable(render)`. It wraps v3's
+`createStyledHOC`, memoizes the result, and names it after the render function. The
+result is still a Tamagui component: it can be passed to `styled()`, to another
+`styleable()`, and to `withStaticProperties` (apply that *after* `styleable`).
+There is also an inferred form — `styleable(Frame, (props: { onToggle?: () => void }, ref) => …)`
+— that keeps the frame's variants in the result type.
+
+<Callout>
+  Every public kit component with behaviour is a `styleable()` HOC, so the compiler
+  cannot flatten it. That is a deliberate trade of maximal flattening for
+  composability; it is also why the docs measure a JS budget per route. Your own
+  leaves built from plain `styled(Box)` + variants **can** flatten, so a
+  performance-critical leaf is a reasonable place to avoid `styleable()`.
+</Callout>
 
 ## What you can extend
 
@@ -53,33 +149,10 @@ Any component whose frame is exported. Most components expose theirs
 `UnstyledButtonFrame`), and every layout primitive is a plain `styled(Box)`. Start
 from the closest frame rather than from `Box` — you inherit the variant ladders.
 
-## Variants that read tokens
+## `undefined` vs `null`
 
-```tsx
-variants: {
-  size: {
-    "...size": (token) => ({ height: token, paddingHorizontal: token }),
-  },
-} as const
-```
-
-The spread-variant form maps a whole token scale in one go. Note the kit's own
-components do **not** use it for `size` — they read
-[`controlMetrics`](/docs/foundations/sizing) instead, because height, font, padding
-and radius need to move independently rather than all following one token.
-
-## Extraction and `.styleable()`
-
-<Callout>
-  Most kit components are built with `.styleable()`, which implies `neverFlatten` —
-  the runtime wrapper survives so composition and slot styling keep working. The
-  Tamagui compiler therefore cannot flatten them into pure CSS, and the web output
-  keeps react-native-web's shape. That is a deliberate trade of maximal flattening
-  for composability; it is also why the docs measure a JS budget per route.
-</Callout>
-
-Your own `styled()` components made from plain `Box` **can** flatten, so a
-performance-critical leaf is a reasonable place to avoid `.styleable()`.
+In v3 an explicitly passed `undefined` prop counts as **absent**: `<Panel tone={undefined}>`
+gets the default `tone`. To switch a default off, pass `null`.
 
 ## When not to reach for it
 

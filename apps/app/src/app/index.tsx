@@ -48,7 +48,7 @@ export default function SectionsScreen() {
   const grouped = useGroupedSections(query);
 
   return (
-    <Stack flex={1} bg="$background">
+    <Stack flex={1} bg="background">
       <RouterStack.Screen
         options={{
           title: "Knit UI",
@@ -59,8 +59,8 @@ export default function SectionsScreen() {
           ),
         }}
       />
-      <Stack px="$lg" pt="$md" pb="$sm" gap="$sm">
-        <Title order={4} c="$color11">
+      <Stack px="lg" pt="md" pb="sm" gap="sm">
+        <Title order={4} c="color11">
           {demoSections.length} sections
         </Title>
         <TextInput
@@ -79,8 +79,8 @@ export default function SectionsScreen() {
         stickySectionHeadersEnabled={false}
         ItemSeparatorComponent={() => <Separator />}
         renderSectionHeader={({ section }) => (
-          <Box bg="$background" px="$lg" pt="$md" pb="$xs">
-            <Text c="$color9" fz={11} fontWeight="700" textTransform="uppercase">
+          <Box bg="background" px="lg" pt="md" pb="xs">
+            <Text c="color9" fz={11} fontWeight="700" textTransform="uppercase">
               {section.title}
             </Text>
           </Box>
@@ -89,8 +89,8 @@ export default function SectionsScreen() {
           <SectionRow section={item} onPress={() => router.push(`/section/${item.id}`)} />
         )}
         ListEmptyComponent={
-          <Center py="$xl">
-            <Paragraph c="$color11">No sections match “{query}”.</Paragraph>
+          <Center py="xl">
+            <Paragraph c="color11">No sections match “{query}”.</Paragraph>
           </Center>
         }
       />
@@ -107,9 +107,9 @@ function SectionRow({ section, onPress }: { section: DemoSection; onPress: () =>
       android_ripple={{ color: theme.color5?.val }}
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
-      <Box flexDirection="row" alignItems="center" justifyContent="space-between" px="$lg" py="$md">
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" px="lg" py="md">
         <Paragraph>{section.title}</Paragraph>
-        <Paragraph c="$color10">›</Paragraph>
+        <Paragraph c="color10">›</Paragraph>
       </Box>
     </Pressable>
   );

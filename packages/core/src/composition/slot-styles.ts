@@ -7,7 +7,7 @@
  * Consumers import `slotStyles` / `SlotStyles` / `pick` from `@knitui/core`.
  *
  * The kit has ONE styling model: style props on the parts themselves (compose
- * `<Notification.Title color="$red9" />` and you're done). The `styles` prop is
+ * `<Notification.Title color="red9" />` and you're done). The `styles` prop is
  * thin, optional sugar over that — a map from a component's named slots to props
  * spread onto the corresponding styled part. It replaces the ad-hoc
  * `labelProps` / `iconProps` / `closeButtonProps` sprawl with one consistent

@@ -25,7 +25,7 @@ type Story = StoryObj<typeof Sheet>;
 
 function Title({ children }: { children: React.ReactNode }) {
   return (
-    <Text fontSize="$xl" fontWeight="700">
+    <Text fontSize="xl" fontWeight="700">
       {children}
     </Text>
   );
@@ -33,10 +33,10 @@ function Title({ children }: { children: React.ReactNode }) {
 
 function DemoContent({ lines = 6 }: { lines?: number }) {
   return (
-    <Stack gap="$sm" padding="$lg">
+    <Stack gap="sm" padding="lg">
       <Title>Sheet title</Title>
       {Array.from({ length: lines }, (_, i) => (
-        <Text key={i} color="$color11">
+        <Text key={i} color="color11">
           Drag the handle to cycle snap points, or fling down to dismiss. Row {i + 1}.
         </Text>
       ))}
@@ -87,7 +87,7 @@ export const CustomHandle: Story = {
       <>
         <Button onPress={() => setOpened(true)}>Open with custom handle</Button>
         <Sheet opened={opened} onClose={() => setOpened(false)}>
-          <Sheet.Handle backgroundColor="$blue9" width={64} height={6} />
+          <Sheet.Handle backgroundColor="blue9" width={64} height={6} />
           <Sheet.Frame>
             <DemoContent />
           </Sheet.Frame>
@@ -144,7 +144,7 @@ export const WithHeaderAndFooter: Story = {
               flexDirection="row"
               alignItems="center"
               justifyContent="space-between"
-              paddingVertical="$xs"
+              paddingVertical="xs"
             >
               <Title>Header</Title>
               <Button size="sm" variant="subtle" onPress={() => setOpened(false)}>
@@ -174,7 +174,7 @@ export const Sizes: Story = {
     const [size, setSize] = React.useState<"sm" | "md" | "lg" | "xl" | null>(null);
     return (
       <>
-        <Stack flexDirection="row" gap="$sm">
+        <Stack flexDirection="row" gap="sm">
           {(["sm", "md", "lg", "xl"] as const).map((sz) => (
             <Button key={sz} onPress={() => setSize(sz)}>
               {sz}
@@ -200,9 +200,9 @@ export const Styles: Story = {
           opened={opened}
           onClose={() => setOpened(false)}
           styles={{
-            root: { backgroundColor: "$blue2" },
+            root: { backgroundColor: "blue2" },
             overlay: { backgroundColor: "#1a1a2e", backgroundOpacity: 0.75 },
-            handle: { backgroundColor: "$blue8" },
+            handle: { backgroundColor: "blue8" },
           }}
         >
           <DemoContent />
@@ -226,9 +226,9 @@ export const ControlledOnly: Story = {
           snapPoints={[60]}
         >
           <Sheet.Frame>
-            <Box padding="$lg" gap="$md">
+            <Box padding="lg" gap="md">
               <Title>Confirm</Title>
-              <Text color="$color11">This sheet only closes with the button below.</Text>
+              <Text color="color11">This sheet only closes with the button below.</Text>
               <Button onPress={() => setOpened(false)}>Close</Button>
             </Box>
           </Sheet.Frame>

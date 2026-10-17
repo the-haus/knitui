@@ -15,8 +15,11 @@ export type { SheetScrollViewProps } from "./ScrollView.shared";
  * list otherwise) is implemented on native in `ScrollView.native.tsx`; on web the
  * browser handles nested scrolling natively, so this stays a plain wrapper.
  */
+/** Fills the space between the fixed header / footer (hoisted style object). */
+const FLEX_FILL = { flex: 1 } as const;
+
 export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollViewProps>(
   function SheetScrollView(props, ref) {
-    return <ScrollArea ref={ref} style={{ flex: 1 }} {...props} />;
+    return <ScrollArea ref={ref} style={FLEX_FILL} {...props} />;
   },
 );

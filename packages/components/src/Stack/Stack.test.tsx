@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Stack } from "./Stack";
 
@@ -21,11 +22,12 @@ describe("Stack", () => {
     "renders with align %s",
     (align) => {
       render(
-        <Stack align={align}>
+        <Stack align={align} testID="stack">
           <span>child {align}</span>
         </Stack>,
       );
       expect(screen.getByText(`child ${align}`)).toBeInTheDocument();
+      expect(screen.getByTestId("stack")).toHaveStyle({ alignItems: align });
     },
   );
 
@@ -33,11 +35,12 @@ describe("Stack", () => {
     "renders with justify %s",
     (justify) => {
       render(
-        <Stack justify={justify}>
+        <Stack justify={justify} testID="stack">
           <span>j {justify}</span>
         </Stack>,
       );
       expect(screen.getByText(`j ${justify}`)).toBeInTheDocument();
+      expect(screen.getByTestId("stack")).toHaveStyle({ justifyContent: justify });
     },
   );
 
@@ -47,7 +50,23 @@ describe("Stack", () => {
     expect(ref.current).not.toBeNull();
   });
 
-  it("supports the Tamagui v2 render host prop", () => {
+  it("is a vertical stack with an md gap by default", () => {
+    render(<Stack testID="stack" />);
+    expect(screen.getByTestId("stack")).toHaveStyle({
+      flexDirection: "column",
+      alignItems: "stretch",
+    });
+    expect(cssRulesOf(screen.getByTestId("stack")).join("\n")).toContain("gap: var(--t-space-md)");
+  });
+
+  it("takes a per-breakpoint gap clause", () => {
+    render(<Stack testID="stack" gap="sm md:lg" />);
+    const rules = cssRulesOf(screen.getByTestId("stack")).join("\n");
+    expect(rules).toContain("gap: var(--t-space-sm)");
+    expect(rules).toMatch(/@media[^{]*\{[^}]*gap: var\(--t-space-lg\)/);
+  });
+
+  it("supports the render host prop", () => {
     const { container } = render(
       <Stack render="ul">
         <li>Item</li>

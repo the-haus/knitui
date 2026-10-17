@@ -6,9 +6,17 @@ export const meta = {
 
 # Tokens
 
-Every style prop in the kit takes a token: `p="$md"`, `gap="$sm"`, `br="$lg"`,
-`fz="$sm"`. Tokens are what make spacing consistent, theming possible, and a
+Every style prop in the kit takes a token: `p="md"`, `gap="sm"`, `br="lg"`,
+`fz="sm"`. Tokens are what make spacing consistent, theming possible, and a
 design change a one-line edit.
+
+Token names are **bare** — there is no `$` prefix. A **string** is a token lookup
+and a **number** is a raw value, so `p="md"` is `space.md` and `p={12}` is 12
+pixels (points on native). The same rule applies to the numeric-looking keys:
+`zIndex="3"` is the `zIndex.3` token (300), `zIndex={3}` is a raw 3.
+
+There is no `true` "default" token on any scale: component defaults come from
+[`controlMetrics`](/docs/foundations/sizing), which default to `md`.
 
 The tables below are generated from
 [`packages/core/src/config/scales.ts`](https://github.com/the-haus/knitui/blob/main/packages/core/src/config/scales.ts),
@@ -16,15 +24,18 @@ so they are the values your components actually resolve.
 
 ## One key, several scales
 
-A token key resolves **per property**. `$md` on `height` is `size.md`; on
+A token key resolves **per property**. `md` on `height` is `size.md`; on
 `padding` it is `space.md`; on `fontSize` it is `fontSize.md`; on `borderRadius`
 it is `radius.md`. That is why a single `size="md"` can set a control's height,
 padding, font and radius coherently.
 
 ```tsx
-<Box p="$md" br="$md" height="$md" />
+<Box p="md" br="md" height="md" />
 // padding 12 · radius 8 · height 40
 ```
+
+When the same key would be ambiguous — say, a `size` token on a padding prop —
+qualify it with its scale: `p="size.md"`.
 
 <AllTokenScales />
 
@@ -45,17 +56,21 @@ hump rather than a climb, and the reasoning is worth reading:
 
 <BreakpointTable />
 
-Use them through `useMedia()` or [`@knitui/mediaquery`](/docs/mediaquery/playground) —
-see [Responsive](/docs/foundations/responsive).
+In style values they are condition modifiers — `p="sm gtMd:lg"` — and in
+JavaScript they are the keys `useMedia()` reports. For SSR-safe queries use
+[`@knitui/mediaquery`](/docs/mediaquery/playground). See
+[Responsive](/docs/foundations/responsive).
 
 ## Colour tokens
 
 Colour comes from the active theme rather than a fixed scale, so it lives on its
 own page: [Color & themes](/docs/foundations/color-and-themes).
 
-The short version: `$color1` … `$color12` is a 12-step ramp of the active theme,
-plus semantic aliases (`$background`, `$borderColor`, `$color`, `$placeholderColor`)
-and state variants (`$backgroundHover`, `$borderColorFocus`, …).
+The short version: `color1` … `color12` is a 12-step ramp of the active theme,
+plus semantic aliases (`background`, `borderColor`, `color`, `placeholderColor`)
+and state variants (`backgroundHover`, `borderColorFocus`, …). They are written
+bare as well: `bg="background"`, `c="color11"`. The only fixed colour tokens are
+`white` and `black`; use the CSS keyword `transparent` directly.
 
 ## Shorthands
 

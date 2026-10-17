@@ -24,7 +24,7 @@ const meta = {
     shadow: undefined,
     radius: undefined,
     orientation: "vertical",
-    padding: "$lg",
+    padding: "lg",
   },
   argTypes: {
     withBorder: { control: "boolean", description: "Adds a 1 px border around the card." },
@@ -45,7 +45,7 @@ const meta = {
     },
     padding: {
       control: "select",
-      options: ["$xs", "$sm", "$md", "$lg", "$xl"],
+      options: ["xs", "sm", "md", "lg", "xl"],
       description: "Inner padding token.",
     },
   },
@@ -67,10 +67,10 @@ export const Playground: Story = {
   render: (args) => (
     <Card {...args}>
       <Card.Header>
-        <Text fontWeight="600" fontSize="$md">
+        <Text fontWeight="600" fontSize="md">
           Card heading
         </Text>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Supporting subtitle text
         </Text>
       </Card.Header>
@@ -79,7 +79,7 @@ export const Playground: Story = {
         other components.
       </Text>
       <Card.Footer>
-        <Text fontSize="$xs" color="$color10">
+        <Text fontSize="xs" color="color10">
           Footer note
         </Text>
       </Card.Footer>
@@ -92,22 +92,22 @@ export const CompoundAPI: Story = {
   render: (args) => (
     <Card {...args} withBorder>
       <Card.Header>
-        <Text fontWeight="700" fontSize="$lg">
+        <Text fontWeight="700" fontSize="lg">
           Article title
         </Text>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Published 31 May 2026
         </Text>
       </Card.Header>
-      <Text lineHeight="$xl">
+      <Text lineHeight="xl">
         A short excerpt that gives the reader a preview of what this card is about. Keep it concise
         and scannable.
       </Text>
       <Card.Footer>
-        <Text fontSize="$xs" color="$color10">
+        <Text fontSize="xs" color="color10">
           ⭐ 128 likes
         </Text>
-        <Text fontSize="$xs" color="$color10">
+        <Text fontSize="xs" color="color10">
           💬 34 comments
         </Text>
       </Card.Footer>
@@ -118,23 +118,23 @@ export const CompoundAPI: Story = {
 /** Card.Section spans edge-to-edge, negating the card padding; withBorder adds dividers. */
 export const WithSections: Story = {
   render: (args) => (
-    <Card {...args} withBorder padding="$lg">
+    <Card {...args} withBorder padding="lg">
       <Card.Section
-        backgroundColor="$color4"
+        backgroundColor="color4"
         height={140}
         justifyContent="center"
         alignItems="center"
       >
-        <Text fontSize="$xxl">🖼️</Text>
+        <Text fontSize="xxl">🖼️</Text>
       </Card.Section>
-      <Text fontWeight="600" fontSize="$md" marginTop="$sm">
+      <Text fontWeight="600" fontSize="md" marginTop="sm">
         Section with image area
       </Text>
-      <Text fontSize="$sm" color="$color11">
+      <Text fontSize="sm" color="color11">
         The top section bleeds to the card edges; body content stays inset.
       </Text>
-      <Card.Section withBorder inheritPadding paddingVertical="$sm">
-        <Text fontSize="$xs" color="$color10">
+      <Card.Section withBorder inheritPadding paddingVertical="sm">
+        <Text fontSize="xs" color="color10">
           ★ Featured content
         </Text>
       </Card.Section>
@@ -145,23 +145,18 @@ export const WithSections: Story = {
 /** Horizontal orientation lays out children side by side — useful for media + text layouts. */
 export const HorizontalOrientation: Story = {
   render: (args) => (
-    <Card {...args} orientation="horizontal" withBorder padding="$md">
-      <Card.Section
-        backgroundColor="$color4"
-        width={90}
-        justifyContent="center"
-        alignItems="center"
-      >
-        <Text fontSize="$xxl">📦</Text>
+    <Card {...args} orientation="horizontal" withBorder padding="md">
+      <Card.Section backgroundColor="color4" width={90} justifyContent="center" alignItems="center">
+        <Text fontSize="xxl">📦</Text>
       </Card.Section>
-      <Box flex={1} gap="$xs">
-        <Text fontWeight="600" fontSize="$sm">
+      <Box flex={1} gap="xs">
+        <Text fontWeight="600" fontSize="sm">
           Product name
         </Text>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Short description of the product or item in this card.
         </Text>
-        <Text fontSize="$sm" color="$color9" fontWeight="700">
+        <Text fontSize="sm" color="color9" fontWeight="700">
           $29.99
         </Text>
       </Box>
@@ -172,13 +167,13 @@ export const HorizontalOrientation: Story = {
 /** Multiple shadow depths side by side — xs through xl. */
 export const ShadowDepths: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="flex-start">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="flex-start">
       {(["xs", "sm", "md", "lg", "xl"] as const).map((shadow) => (
         <Card key={shadow} {...args} shadow={shadow} width={150}>
-          <Text fontWeight="600" fontSize="$sm">
+          <Text fontWeight="600" fontSize="sm">
             shadow="{shadow}"
           </Text>
-          <Text fontSize="$xs" color="$color11">
+          <Text fontSize="xs" color="color11">
             Elevation level
           </Text>
         </Card>
@@ -187,7 +182,7 @@ export const ShadowDepths: Story = {
   ),
   decorators: [
     (Story) => (
-      <Box padding="$xl">
+      <Box padding="xl">
         <Story />
       </Box>
     ),
@@ -199,10 +194,10 @@ export const WithBorder: Story = {
   args: { withBorder: true },
   render: (args) => (
     <Card {...args}>
-      <Text fontWeight="600" fontSize="$sm">
+      <Text fontWeight="600" fontSize="sm">
         Bordered card
       </Text>
-      <Text fontSize="$sm" color="$color11">
+      <Text fontSize="sm" color="color11">
         A 1 px border wraps the entire surface, useful when cards sit on a background of the same
         colour.
       </Text>
@@ -226,17 +221,17 @@ export const Plain: Story = {
 export const Styles: Story = {
   args: {
     styles: {
-      header: { backgroundColor: "$blue3", padding: "$sm", borderRadius: "$sm" },
-      footer: { backgroundColor: "$red3", padding: "$sm", borderRadius: "$sm" },
+      header: { backgroundColor: "blue3", padding: "sm", borderRadius: "sm" },
+      footer: { backgroundColor: "red3", padding: "sm", borderRadius: "sm" },
     },
   },
   render: (args) => (
     <Card {...args} withBorder>
       <Card.Header>
-        <Text fontWeight="600" fontSize="$md">
+        <Text fontWeight="600" fontSize="md">
           Card heading
         </Text>
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Supporting subtitle text
         </Text>
       </Card.Header>
@@ -244,7 +239,7 @@ export const Styles: Story = {
         The `header` and `footer` slots tint these regions while the body content stays untouched.
       </Text>
       <Card.Footer>
-        <Text fontSize="$xs" color="$color10">
+        <Text fontSize="xs" color="color10">
           Footer note
         </Text>
       </Card.Footer>

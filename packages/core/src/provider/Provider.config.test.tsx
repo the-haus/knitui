@@ -51,7 +51,7 @@ describe("Provider config registration", () => {
     );
 
     expect(getConfig()).toBe(appConfig);
-    expect(rawColorTokens(getConfig())).toContain("$probe");
+    expect(rawColorTokens(getConfig())).toContain("probe");
   });
 
   it("keeps the app config active when a later render re-asserts it", () => {

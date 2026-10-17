@@ -18,9 +18,9 @@ export default function SectionScreen() {
 
   if (!section) {
     return (
-      <Center flex={1} bg="$background">
+      <Center flex={1} bg="background">
         <RouterStack.Screen options={{ title: "Not found" }} />
-        <Paragraph c="$color11">Unknown section “{id}”.</Paragraph>
+        <Paragraph c="color11">Unknown section “{id}”.</Paragraph>
       </Center>
     );
   }
@@ -33,10 +33,10 @@ export default function SectionScreen() {
       contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
     >
       <RouterStack.Screen options={{ title: section.title }} />
-      <Stack gap="$xl" p="$xl" bg="$background" flex={1}>
+      <Stack gap="xl" p="xl" bg="background" flex={1}>
         <Suspense
           fallback={
-            <Center flex={1} py="$xl">
+            <Center flex={1} py="xl">
               <Loader theme="blue" />
             </Center>
           }

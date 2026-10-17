@@ -55,7 +55,7 @@ export const Playground: Story = {
     return (
       <Frame>
         <TimePicker {...args} value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11" marginTop="$sm">
+        <Text fontSize="sm" color="color11" marginTop="sm">
           Value: {value === "" ? "empty" : value}
         </Text>
       </Frame>
@@ -195,7 +195,7 @@ export const WithValidation: Story = {
 /** Read-only and disabled states. */
 export const States: Story = {
   render: () => (
-    <Box gap="$md" width={280}>
+    <Box gap="md" width={280}>
       <TimePicker label="Read only" readOnly value="10:30" onChange={() => {}} />
       <TimePicker label="Disabled" disabled value="10:30" onChange={() => {}} />
     </Box>
@@ -207,7 +207,7 @@ export const Sizes: Story = {
   render: () => {
     const [value, setValue] = React.useState("10:30");
     return (
-      <Box gap="$md" width={280}>
+      <Box gap="md" width={280}>
         {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
           <TimePicker key={size} label={size} size={size} value={value} onChange={setValue} />
         ))}
@@ -229,9 +229,9 @@ export const SlotStylesSugar: Story = {
           value={value}
           onChange={setValue}
           styles={{
-            field: { borderRadius: "$lg" },
-            colon: { color: "$color11" },
-            dropdown: { padding: "$xs" },
+            field: { borderRadius: "lg" },
+            colon: { color: "color11" },
+            dropdown: { padding: "xs" },
           }}
         />
       </Frame>

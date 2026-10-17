@@ -30,7 +30,9 @@ require("../../scripts/maplibre-worker.cjs").copyMaplibreWorker(
   path.join(projectRoot, "public", "maplibre"),
 );
 
-// 5. Run the Tamagui compiler (kit config + components baked in). Flattens the
-//    kit's styled() components and extracts atomic CSS for the web output;
-//    a no-op style cost on native. Wraps last so it sees the resolver tweaks.
+// 5. Run the Tamagui v3 compiler (@tamagui/cli/metro; kit config + components
+//    baked in). It is the only compiler on v3 (no babel plugin): it flattens the
+//    kit's styled() components, extracts atomic CSS for web and hoists static
+//    styles on native. Wraps last so it sees the resolver tweaks. After a
+//    Tamagui config change restart with `npx expo start -c`.
 module.exports = withKnitui(config);

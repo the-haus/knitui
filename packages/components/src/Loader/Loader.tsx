@@ -4,13 +4,14 @@ import {
   createStyledContext,
   DURATIONS,
   type GetProps,
+  styleable,
   styled,
   withStaticProperties,
 } from "@knitui/core";
 
 import { Box } from "../Box";
 import { resolveSizePx } from "../internal/control-metrics";
-import { heightVariant, type SizeKey, squareSizeVariantFallthrough } from "../internal/style-props";
+import { heightVariant, type SizeKey, squareSizeOf, tableVariant } from "../internal/style-props";
 import { LoopView, useLoopingAnimation } from "../internal/use-looping-animation";
 
 type LoaderSize = SizeKey;
@@ -23,12 +24,24 @@ const LoaderContext = createStyledContext<{ size: LoaderSize | number }>({
 });
 
 /** Ring stroke derived from the resolved frame diameter — ONE formula for both the
- * keyed and `:number` cases, so the stroke is never a second hand-tuned px map. */
+ * keyed and numeric cases, so the stroke is never a second hand-tuned px map. */
 const ringBorderWidth = (diameter: number) => Math.max(2, Math.round(diameter / 10));
 
 /**
+ * The ring's `size` variant: the square (width/height/minWidth from the size
+ * scale, or a raw px number) PLUS the stroke derived from the resolved diameter.
+ * A `tableVariant` fallthrough, so it is memoised per value (one fragment per
+ * size, no per-render allocation) and runs per clause. Resolution happens on the
+ * first render of a size, after the config exists — never at module load.
+ */
+const ringSizeVariant = tableVariant({}, (value: LoaderSize | number) => ({
+  ...squareSizeOf(value),
+  borderWidth: ringBorderWidth(resolveSizePx(value)),
+}));
+
+/**
  * Multi-type loading indicator — mirrors Mantine's `Loader` (`oval` | `dots` |
- * `bars`). Accent comes from the active theme's ramp (`$color9`) via the `theme`
+ * `bars`). Accent comes from the active theme's ramp (`color9`) via the `theme`
  * prop, never a `color` prop. Motion is driven cross-platform by the shared
  * looping primitive (`useLoopingAnimation`): a compositor `@keyframes` loop on
  * web / a reanimated UI-thread loop on native — no `setInterval`, no per-frame
@@ -36,7 +49,7 @@ const ringBorderWidth = (diameter: number) => Math.max(2, Math.round(diameter / 
  * Mantine-named multi-type variant.)
  */
 const LoaderFrame = styled(Box, {
-  name: "Loader",
+  displayName: "Loader",
   context: LoaderContext,
   flexDirection: "row",
   alignItems: "center",
@@ -49,54 +62,37 @@ const LoaderFrame = styled(Box, {
   defaultVariants: { size: DEFAULT_SIZE },
 });
 
-// The ring diameter is the frame height (the `$xxs…$xxl` size tokens are the same
+// The ring diameter is the frame height (the `xxs…xxl` size tokens are the same
 // heights `heightVariant` uses), so width/height come straight from the size scale
-// as TOKENS — no module-load resolution. The stroke is DERIVED from the resolved
-// diameter at render (see `LoaderRing`), flowing from the same single height scale
-// rather than a second hardcoded ladder.
-const LoaderRingFrame = styled(Box, {
-  name: "LoaderRing",
+// as TOKENS. The stroke is DERIVED from the resolved diameter inside the `size`
+// variant (`ringSizeVariant`), flowing from the same single height scale rather
+// than a second hardcoded ladder. A plain styled frame: no render function.
+const LoaderRing = styled(Box, {
+  displayName: "LoaderRing",
   context: LoaderContext,
   borderRadius: 9999,
-  borderColor: "$color5",
-  borderTopColor: "$color9",
-  borderRightColor: "$color9",
+  borderColor: "color5",
+  borderTopColor: "color9",
+  borderRightColor: "color9",
 
   variants: {
-    size: squareSizeVariantFallthrough,
+    size: ringSizeVariant,
   } as const,
 
   defaultVariants: { size: DEFAULT_SIZE },
 });
 
-/**
- * Rotating ring rendition (`oval`). A track ring with two accent-coloured arcs. The
- * stroke is resolved from the size at RENDER (`ringBorderWidth(resolveSizePx(size))`)
- * so it scales with the diameter via the token system, never a build-time px map.
- */
-const LoaderRing = LoaderRingFrame.styleable(function LoaderRing(props, ref) {
-  const { size = DEFAULT_SIZE, ...rest } = props;
-  return (
-    <LoaderRingFrame
-      ref={ref}
-      size={size}
-      borderWidth={ringBorderWidth(resolveSizePx(size as LoaderSize | number))}
-      {...rest}
-    />
-  );
-});
-
 /** Single dot/bar element — each pulses its opacity on a staggered loop. */
 const LoaderDot = styled(Box, {
-  name: "LoaderDot",
+  displayName: "LoaderDot",
   borderRadius: 9999,
-  backgroundColor: "$color9",
+  backgroundColor: "color9",
 });
 
 const LoaderBar = styled(Box, {
-  name: "LoaderBar",
-  borderRadius: "$xs",
-  backgroundColor: "$color9",
+  displayName: "LoaderBar",
+  borderRadius: "xs",
+  backgroundColor: "color9",
 });
 
 type LoaderFrameProps = Omit<GetProps<typeof LoaderFrame>, "aria-label" | "role" | "size" | "type">;
@@ -126,7 +122,7 @@ const STEPS = [0, 1, 2] as const;
 // handled inside the hook (it returns a static, animation-free frame).
 const PULSE_MS = [560, 640, 720] as const;
 
-const LoaderComponent = LoaderFrame.styleable<LoaderProps>(function Loader(props, ref) {
+const LoaderComponent = styleable<LoaderProps>(LoaderFrame, function Loader(props, ref) {
   const {
     type = "oval",
     size = DEFAULT_SIZE,

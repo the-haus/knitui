@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { declarationsUnder, hasFocusRing, restingCss } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { Accordion } from "./Accordion";
 
@@ -227,5 +228,68 @@ describe("Accordion", () => {
   it("exposes Accordion.Label as a styled subpart", () => {
     render(<Accordion.Label testID="acc-label">Label</Accordion.Label>);
     expect(screen.getByTestId("acc-label")).toBeInTheDocument();
+  });
+
+  const resting = restingCss;
+
+  it("toggles a panel from the keyboard (Enter / Space) and is focusable", () => {
+    renderBasic();
+    const first = screen.getAllByRole("button")[0]!;
+    expect(first).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(first, { key: "Enter" });
+    expect(first).toHaveAttribute("aria-expanded", "true");
+    fireEvent.keyDown(first, { key: " " });
+    expect(first).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("hides a collapsed panel from assistive tech and reveals it when expanded", () => {
+    renderBasic();
+    const first = screen.getAllByRole("button")[0]!;
+    expect(screen.queryAllByRole("region")).toHaveLength(0);
+    fireEvent.click(first);
+    expect(screen.getByRole("region")).toHaveTextContent("Panel A");
+  });
+
+  it("gives controls hover/press fills and a focus ring", () => {
+    renderBasic();
+    const control = screen.getAllByRole("button")[0]!;
+    expect(declarationsUnder(control, ":hover")).toContain("background-color: var(--color2)");
+    expect(declarationsUnder(control, ":active")).toContain("background-color: var(--color3)");
+    expect(hasFocusRing(control)).toBe(true);
+  });
+
+  it("uses the filled ramp for filled controls", () => {
+    renderBasic({ variant: "filled" });
+    const control = screen.getAllByRole("button")[0]!;
+    expect(declarationsUnder(control, ":hover")).toContain("background-color: var(--color3)");
+  });
+
+  it("sizes the header with a min-height (it grows with a wrapped label)", () => {
+    renderBasic({ size: "lg" });
+    const header = resting(screen.getAllByRole("button")[0]!);
+    expect(header).toMatch(/min-height: var\(--t-size-lg\)/);
+    expect(header).not.toMatch(/(^|[^-])height:/);
+  });
+
+  it("applies a numeric or token radius to the root", () => {
+    const { container, unmount } = render(
+      <Accordion variant="contained" radius={6}>
+        <Accordion.Item value="a">
+          <Accordion.Control>A</Accordion.Control>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(resting(container.querySelector('[class*="_br-"]')!)).toMatch(/border-radius: 6px/);
+    unmount();
+    const r = render(
+      <Accordion variant="contained" radius="xl">
+        <Accordion.Item value="a">
+          <Accordion.Control>A</Accordion.Control>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(resting(r.container.querySelector('[class*="_br-"]')!)).toMatch(
+      /border-radius: var\(--t-radius-xl\)/,
+    );
   });
 });

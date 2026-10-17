@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Separator } from "./Separator";
 
@@ -62,5 +63,34 @@ describe("Separator", () => {
     // Labeled mode renders two lines flanking the label; both take the slot.
     expect(container.querySelectorAll('[data-testid="sep-line"]')).toHaveLength(2);
     expect(screen.getByTestId("sep-label")).toHaveTextContent("Section");
+  });
+
+  it("draws only the bottom border at the size thickness (md = 3px)", () => {
+    render(<Separator />);
+    const el = screen.getByRole("separator");
+    expect(el).toHaveStyle({ borderBottomWidth: "3px", borderTopWidth: "0px", height: "0px" });
+    expect(cssRulesOf(el).join("\n")).toContain("border-color: var(--borderColor)");
+  });
+
+  it("takes a raw px thickness and a line style", () => {
+    render(<Separator size={7} variant="dashed" />);
+    expect(screen.getByRole("separator")).toHaveStyle({
+      borderBottomWidth: "7px",
+      borderStyle: "dashed",
+    });
+  });
+
+  it("draws a vertical rule on the inline-start edge", () => {
+    render(<Separator orientation="vertical" size="lg" />);
+    expect(screen.getByRole("separator")).toHaveStyle({ borderLeftWidth: "4px", width: "0px" });
+  });
+
+  it("splits a labeled separator into two lines around the label", () => {
+    render(<Separator label="Or" size="sm" labelPosition="center" />);
+    const root = screen.getByRole("separator");
+    expect(root).toHaveStyle({ flexDirection: "row", alignItems: "center" });
+    const lines = Array.from(root.children).filter((c) => c.textContent === "");
+    expect(lines).toHaveLength(2);
+    for (const line of lines) expect(line).toHaveStyle({ borderBottomWidth: "2px", flexGrow: "1" });
   });
 });

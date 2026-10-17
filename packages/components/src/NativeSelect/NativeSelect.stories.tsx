@@ -76,7 +76,7 @@ export const Playground: Story = {
 /** The three chrome variants side by side. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md" width={280}>
+    <Box gap="md" width={280}>
       {VARIANTS.map((variant) => (
         <NativeSelect key={variant} {...args} variant={variant} label={variant} />
       ))}
@@ -87,7 +87,7 @@ export const Variants: Story = {
 /** The seven token sizes, from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md" width={280}>
+    <Box gap="md" width={280}>
       {SIZES.map((size) => (
         <NativeSelect key={size} {...args} size={size} label={`size: ${size}`} />
       ))}
@@ -98,7 +98,7 @@ export const Sizes: Story = {
 /** Each elevation of the inherited `shadow` prop applied to the input frame. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md" width={280}>
+    <Box gap="md" width={280}>
       {SHADOWS.map((shadow) => (
         <NativeSelect key={shadow} {...args} shadow={shadow} label={shadow} />
       ))}
@@ -109,9 +109,9 @@ export const Shadows: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$lg">
+    <Box gap="lg">
       {VARIANTS.map((variant) => (
-        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+        <Box key={variant} flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
           {SIZES.map((size) => (
             <Box key={size} width={200}>
               <NativeSelect
@@ -239,7 +239,7 @@ export const Grouped: Story = {
 /** Loading state — a spinner replaces the chevron; position via `loadingPosition`. */
 export const Loading: Story = {
   render: (args) => (
-    <Box gap="$md" width={280}>
+    <Box gap="md" width={280}>
       <NativeSelect {...args} label="Loading right" loading loadingPosition="right" />
       <NativeSelect {...args} label="Loading left" loading loadingPosition="left" />
     </Box>
@@ -261,9 +261,9 @@ export const Styles: Story = {
       label="Styled colour"
       leftSection={<Text>🎨</Text>}
       styles={{
-        root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-        label: { color: "$blue11" },
-        leftSection: { backgroundColor: "$red9" },
+        root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+        label: { color: "blue11" },
+        leftSection: { backgroundColor: "red9" },
       }}
     />
   ),
@@ -274,14 +274,14 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("red");
     return (
-      <Box gap="$sm" width={280}>
+      <Box gap="sm" width={280}>
         <NativeSelect
           {...args}
           label="Colour"
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
-        <Text fontSize={12} color="$color11">
+        <Text fontSize={12} color="color11">
           selected: {value}
         </Text>
       </Box>

@@ -50,9 +50,9 @@ export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<number | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <SpinInput {...args} value={value} onChange={setValue} />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Value: {value === null ? "empty" : value}
         </Text>
       </Box>
@@ -81,7 +81,7 @@ export const TwelveHourHours: Story = {
   render: () => {
     const [value, setValue] = React.useState<number | null>(null);
     return (
-      <Box gap="$md" alignItems="center">
+      <Box gap="md" alignItems="center">
         <SpinInput
           value={value}
           min={1}
@@ -92,7 +92,7 @@ export const TwelveHourHours: Story = {
           placeholder="hh"
           onChange={setValue}
         />
-        <Text fontSize="$sm" color="$color11">
+        <Text fontSize="sm" color="color11">
           Value: {value === null ? "empty" : value}
         </Text>
       </Box>

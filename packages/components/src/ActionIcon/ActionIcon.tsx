@@ -1,6 +1,12 @@
 import * as React from "react";
 
-import { createStyledContext, type GetProps, styled, withStaticProperties } from "@knitui/core";
+import {
+  createStyledContext,
+  type GetProps,
+  styleable,
+  styled,
+  withStaticProperties,
+} from "@knitui/core";
 
 import { Box } from "../Box";
 import { controlIconSize } from "../internal/control-icon-size";
@@ -38,13 +44,13 @@ const ActionIconContext = createStyledContext<{
 
 /**
  * Square icon-only button — mirrors Mantine's `ActionIcon`. Closest sibling to
- * `Button`: same theme-driven palette ramp ($color1…$color12), same pseudo
- * states. `variant` chooses how the ramp applies, `size` sets the (square)
+ * `Button`: same theme-driven palette ramp (`color1`…`color12`), same hover /
+ * press clauses. `variant` chooses how the ramp applies, `size` sets the (square)
  * metrics, `radius` the rounding. Accent comes from the `theme` prop, never a
  * `color` prop. `loading` swaps the icon for a `Loader` and blocks interaction.
  */
 const ActionIconFrame = styled(Box, {
-  name: "ActionIcon",
+  displayName: "ActionIcon",
   context: ActionIconContext,
   role: "button",
   flexDirection: "row",
@@ -53,7 +59,7 @@ const ActionIconFrame = styled(Box, {
   borderWidth: 1,
   borderColor: "transparent",
   ...webCursor("pointer"),
-  // Tactile press-dip — merges with the per-variant `pressStyle` color below and
+  // Tactile press-dip — composes with the per-variant `press:` colour below and
   // eases via the `usePressScale()` props applied on render (reduced-motion aware).
   ...pressScaleStyle,
   // Keyboard-focus ring (web) — variant-independent, so it lives on the base and
@@ -61,19 +67,16 @@ const ActionIconFrame = styled(Box, {
   ...focusRingStyle,
 
   variants: {
-    // Frame fill + pseudo states from the shared `variant-colors` ladder (same as
+    // Frame fill + hover/press clauses from the shared `variant-colors` ladder (same as
     // Button). `transparent` is overridden to ActionIcon's quieter behavior — a
     // fully transparent hover and no press — preserving its existing look.
     variant: {
       ...controlColorVariant,
       transparent: {
-        backgroundColor: "transparent",
-        hoverStyle: { backgroundColor: "transparent" },
+        backgroundColor: "transparent hover:transparent",
       },
     },
-    size: {
-      ...squareSizeRoundedVariant,
-    },
+    size: squareSizeRoundedVariant,
     radius: radiusVariant,
     disabled: {
       true: { opacity: 0.6, pointerEvents: "none" },
@@ -84,7 +87,7 @@ const ActionIconFrame = styled(Box, {
 });
 
 const ActionIconText = styled(Text, {
-  name: "ActionIconText",
+  displayName: "ActionIconText",
   context: ActionIconContext,
   userSelect: "none",
   lineHeight: 0,
@@ -114,7 +117,7 @@ const ActionIconText = styled(Text, {
  * controls the shared border between items (mirrors Mantine's `--ai-border-width`).
  */
 const ActionIconGroupFrame = styled(Box, {
-  name: "ActionIconGroup",
+  displayName: "ActionIconGroup",
   role: "group",
   flexDirection: "row",
   alignSelf: "flex-start",
@@ -128,52 +131,94 @@ const ActionIconGroupFrame = styled(Box, {
   defaultVariants: { orientation: "horizontal" },
 });
 
-type EdgeStyle = {
-  borderTopLeftRadius?: 0;
-  borderTopRightRadius?: 0;
-  borderBottomLeftRadius?: 0;
-  borderBottomRightRadius?: 0;
-  marginLeft?: number;
-  marginTop?: number;
-  borderWidth?: number;
+/**
+ * Inner-edge radius stripping per child position, as module constants. Only the
+ * corners that change are SET: v3 treats an explicit `undefined` style prop as
+ * "clear the variant value" (conventions §5), so outer corners are absent and
+ * keep the child's own radius. The overlap margin depends on `borderWidth`, so
+ * it is added separately (and pre-baked for the default `1`).
+ */
+const EDGE_RADIUS = {
+  horizontal: {
+    only: {},
+    first: { borderTopRightRadius: 0, borderBottomRightRadius: 0 },
+    middle: {
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+    },
+    last: { borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
+  },
+  vertical: {
+    only: {},
+    first: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+    middle: {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    },
+    last: { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
+  },
+} as const;
+
+type GroupOrientation = keyof typeof EDGE_RADIUS;
+type EdgePosition = keyof (typeof EDGE_RADIUS)["horizontal"];
+
+const edgePosition = (index: number, lastIndex: number): EdgePosition =>
+  lastIndex === 0 ? "only" : index === 0 ? "first" : index === lastIndex ? "last" : "middle";
+
+const overlapProp = (orientation: GroupOrientation) =>
+  orientation === "horizontal" ? "marginLeft" : "marginTop";
+
+/** The default-`borderWidth` (1) edges, fully pre-built. */
+const EDGE_DEFAULT = {
+  horizontal: {
+    only: EDGE_RADIUS.horizontal.only,
+    first: EDGE_RADIUS.horizontal.first,
+    middle: { ...EDGE_RADIUS.horizontal.middle, marginLeft: -1 },
+    last: { ...EDGE_RADIUS.horizontal.last, marginLeft: -1 },
+  },
+  vertical: {
+    only: EDGE_RADIUS.vertical.only,
+    first: EDGE_RADIUS.vertical.first,
+    middle: { ...EDGE_RADIUS.vertical.middle, marginTop: -1 },
+    last: { ...EDGE_RADIUS.vertical.last, marginTop: -1 },
+  },
+} as const;
+
+const edgeStyle = (orientation: GroupOrientation, position: EdgePosition, borderWidth: number) => {
+  if (borderWidth === 1) return EDGE_DEFAULT[orientation][position];
+  const overlap =
+    position === "middle" || position === "last"
+      ? { [overlapProp(orientation)]: -borderWidth }
+      : null;
+  return { ...EDGE_RADIUS[orientation][position], ...overlap, borderWidth };
 };
 
-export interface ActionIconGroupProps extends GetProps<typeof ActionIconGroupFrame> {
+export interface ActionIconGroupProps extends Omit<
+  GetProps<typeof ActionIconGroupFrame>,
+  "orientation"
+> {
+  /** Main axis. A single key: it also picks the edge-stripping. */
+  orientation?: GroupOrientation;
   /** Width of the dividing borders between icons. Default `1`. */
   borderWidth?: number;
 }
 
-const ActionIconGroup = ActionIconGroupFrame.styleable<ActionIconGroupProps>(
+const ActionIconGroup = styleable<ActionIconGroupProps>(
+  ActionIconGroupFrame,
   function ActionIconGroup(props, ref) {
     const { children, orientation = "horizontal", borderWidth = 1, ...rest } = props;
     const items = React.Children.toArray(children).filter(Boolean);
-    const horizontal = orientation === "horizontal";
     const lastIndex = items.length - 1;
 
     return (
       <ActionIconGroupFrame ref={ref} orientation={orientation} {...rest}>
         {items.map((child, i) => {
           if (!React.isValidElement(child)) return child;
-          const isFirst = i === 0;
-          const isLast = i === lastIndex;
-          const bw = borderWidth !== 1 ? { borderWidth } : undefined;
-          const edge: EdgeStyle = horizontal
-            ? {
-                borderTopLeftRadius: isFirst ? undefined : 0,
-                borderBottomLeftRadius: isFirst ? undefined : 0,
-                borderTopRightRadius: isLast ? undefined : 0,
-                borderBottomRightRadius: isLast ? undefined : 0,
-                marginLeft: isFirst ? undefined : -borderWidth,
-                ...bw,
-              }
-            : {
-                borderTopLeftRadius: isFirst ? undefined : 0,
-                borderTopRightRadius: isFirst ? undefined : 0,
-                borderBottomLeftRadius: isLast ? undefined : 0,
-                borderBottomRightRadius: isLast ? undefined : 0,
-                marginTop: isFirst ? undefined : -borderWidth,
-                ...bw,
-              };
+          const edge = edgeStyle(orientation, edgePosition(i, lastIndex), borderWidth);
           return React.cloneElement(child, { key: i, ...edge });
         })}
       </ActionIconGroupFrame>
@@ -187,21 +232,21 @@ const ActionIconGroup = ActionIconGroupFrame.styleable<ActionIconGroupProps>(
  * Gets the same edge-stripping as action icons from the group's child iteration.
  */
 const ActionIconGroupSection = styled(Box, {
-  name: "ActionIconGroupSection",
+  displayName: "ActionIconGroupSection",
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 1,
-  borderColor: "$borderColor",
-  backgroundColor: "$background",
+  borderColor: "borderColor",
+  backgroundColor: "background",
   variants: {
     size: {
-      xxs: { width: "$xxs", height: "$xxs", borderRadius: "$xs" },
-      xs: { width: "$xs", height: "$xs", borderRadius: "$xs" },
-      sm: { width: "$sm", height: "$sm", borderRadius: "$sm" },
-      md: { width: "$md", height: "$md", borderRadius: "$sm" },
-      lg: { width: "$lg", height: "$lg", borderRadius: "$md" },
-      xl: { width: "$xl", height: "$xl", borderRadius: "$md" },
-      xxl: { width: "$xxl", height: "$xxl", borderRadius: "$lg" },
+      xxs: { width: "xxs", height: "xxs", borderRadius: "xs" },
+      xs: { width: "xs", height: "xs", borderRadius: "xs" },
+      sm: { width: "sm", height: "sm", borderRadius: "sm" },
+      md: { width: "md", height: "md", borderRadius: "sm" },
+      lg: { width: "lg", height: "lg", borderRadius: "md" },
+      xl: { width: "xl", height: "xl", borderRadius: "md" },
+      xxl: { width: "xxl", height: "xxl", borderRadius: "lg" },
     },
   } as const,
   defaultVariants: { size: "md" },
@@ -226,7 +271,18 @@ const ACTION_ICON_SLOT_KEYS = [
   "loader",
 ] as const satisfies readonly (keyof ActionIconStyles)[];
 
-export interface ActionIconProps extends GetProps<typeof ActionIconFrame> {
+/**
+ * `size` / `variant` are narrowed to single values (no v3 clause programs): the
+ * render reads them as DATA (loader size, `ControlIconProvider`).
+ */
+export interface ActionIconProps extends Omit<
+  GetProps<typeof ActionIconFrame>,
+  "size" | "variant" | "disabled"
+> {
+  /** Size key, or a raw square edge (px number / CSS length). */
+  size?: ActionIconSize | number | (string & {});
+  variant?: ActionIconVariant;
+  disabled?: boolean;
   /**
    * Destination — renders a real `<a href>` (`role="link"`) on web; ignored on
    * native and while disabled/loading. See `Button`'s `href`.
@@ -244,12 +300,13 @@ export interface ActionIconProps extends GetProps<typeof ActionIconFrame> {
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
 
-const ActionIconComponent = ActionIconFrame.styleable<ActionIconProps>(
+const ActionIconComponent = styleable<ActionIconProps>(
+  ActionIconFrame,
   function ActionIcon(props, ref) {
     const {
       children,

@@ -1,7 +1,7 @@
 /**
  * Breakpoint resolution built on the single source of truth in `@knitui/core`
  * (`config/scales.ts`), so the imperative `useBreakpoint` / `useBreakpointValue`
- * hooks stay in lockstep with the Tamagui `$gtSm`-style media props.
+ * hooks stay in lockstep with the `gtSm:` media clauses in style values (`p="sm gtSm:lg"`).
  *
  * Bands are **min-width** based (mobile-first): the active breakpoint is the
  * largest token whose value is `<= width`. Widths below the smallest token

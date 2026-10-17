@@ -7,7 +7,7 @@
  * corners — no need to thread the resolved `borderRadius` down to the layer.
  *
  * Stop colors are resolved to concrete values via `resolveStops` because
- * `react-native-svg` can't paint `$colorN` tokens. See `gradient-shared.ts`.
+ * `react-native-svg` can't paint theme colour names. See `gradient-shared.ts`.
  *
  * The theme read + `useId` live INSIDE {@link GradientLayer}, which only mounts
  * when a gradient actually exists. In the hook they ran on every render of every

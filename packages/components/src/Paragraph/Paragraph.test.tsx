@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
 import { Paragraph } from "./Paragraph";
 
@@ -47,5 +48,21 @@ describe("Paragraph", () => {
     for (const size of SIZES) {
       expect(screen.getByText(`${size} paragraph`)).toBeInTheDocument();
     }
+  });
+
+  it("keeps the Text variants (size → font-size token)", () => {
+    render(<Paragraph size="lg">sized</Paragraph>);
+    expect(cssRulesOf(screen.getByText("sized")).join("\n")).toContain(
+      "font-size: var(--f-size-lg)",
+    );
+  });
+
+  it("lets the caller pick another host", () => {
+    render(<Paragraph render="div">as div</Paragraph>);
+    expect(screen.getByText("as div").tagName).toBe("DIV");
+  });
+
+  it("is a flattenable styled() component", () => {
+    expect(Paragraph.staticConfig.neverFlatten).toBeFalsy();
   });
 });

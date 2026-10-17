@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
-import { fireEvent, render, screen } from "../test-utils";
+import { act, fireEvent, render, screen } from "../test-utils";
 import { ColorPicker } from "./ColorPicker";
 
 describe("ColorPicker", () => {
@@ -113,5 +113,89 @@ describe("ColorPicker", () => {
     expect(screen.getByTestId("sat-slot")).toBeInTheDocument();
     // the styles slot lands on the same element exposing the saturation slider role
     expect(screen.getByTestId("sat-slot")).toHaveAttribute("role", "slider");
+  });
+
+  describe("drag", () => {
+    const stubRect = (el: Element) => {
+      el.getBoundingClientRect = () =>
+        ({
+          left: 0,
+          top: 0,
+          width: 200,
+          height: 100,
+          right: 200,
+          bottom: 100,
+          x: 0,
+          y: 0,
+        }) as DOMRect;
+    };
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      new MouseEvent(type, { bubbles: true, clientX, clientY });
+
+    it("drags the saturation area: onChange per move, onChangeEnd once on release", () => {
+      const onChange = jest.fn();
+      const onChangeEnd = jest.fn();
+      render(
+        <ColorPicker
+          defaultValue="#ff0000"
+          onChange={onChange}
+          onChangeEnd={onChangeEnd}
+          saturationLabel="Saturation"
+        />,
+      );
+      const area = screen.getByRole("slider", { name: "Saturation" });
+      stubRect(area);
+      act(() => {
+        area.dispatchEvent(pointer("pointerdown", 100, 50));
+      });
+      act(() => {
+        window.dispatchEvent(pointer("pointermove", 200, 0));
+      });
+      expect(onChange).toHaveBeenLastCalledWith("#ff0000");
+      act(() => {
+        window.dispatchEvent(pointer("pointermove", 0, 100));
+      });
+      expect(onChange).toHaveBeenLastCalledWith("#000000");
+      expect(onChangeEnd).not.toHaveBeenCalled();
+      act(() => {
+        window.dispatchEvent(pointer("pointerup", 0, 100));
+      });
+      expect(onChangeEnd).toHaveBeenCalledTimes(1);
+      expect(onChangeEnd).toHaveBeenCalledWith("#000000");
+      expect(area).toHaveAttribute("aria-valuenow", "0");
+    });
+
+    it("drags the hue slider and positions its thumb with inline style", () => {
+      const onChange = jest.fn();
+      render(<ColorPicker defaultValue="#ff0000" onChange={onChange} hueLabel="Hue" />);
+      const hue = screen.getByRole("slider", { name: "Hue" });
+      stubRect(hue);
+      act(() => {
+        hue.dispatchEvent(pointer("pointerdown", 100, 10));
+      });
+      act(() => {
+        window.dispatchEvent(pointer("pointerup", 100, 10));
+      });
+      expect(hue).toHaveAttribute("aria-valuenow", "180");
+      expect(onChange).toHaveBeenLastCalledWith("#00ffff");
+      const thumb = hue.lastElementChild as HTMLElement;
+      expect(thumb.style.left).toBe("50%");
+    });
+
+    it("nudges with the arrow keys", () => {
+      const onChangeEnd = jest.fn();
+      render(<ColorPicker defaultValue="#ff0000" onChangeEnd={onChangeEnd} hueLabel="Hue" />);
+      const hue = screen.getByRole("slider", { name: "Hue" });
+      fireEvent.keyDown(hue, { key: "ArrowRight" });
+      expect(onChangeEnd).toHaveBeenCalledWith("#ff4d00");
+    });
+
+    it("never leaks a `name` attribute from the styled config", () => {
+      const { container } = render(<ColorPicker name="color" />);
+      const named = Array.from(container.querySelectorAll("[name]"));
+      expect(named).toHaveLength(1);
+      expect(named[0]).toHaveAttribute("type", "hidden");
+      expect(named[0]).toHaveAttribute("name", "color");
+    });
   });
 });

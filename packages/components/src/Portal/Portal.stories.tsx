@@ -46,11 +46,11 @@ export const Playground: Story = {
   render: (args) => (
     <Portal {...args}>
       <Box
-        backgroundColor="$color2"
+        backgroundColor="color2"
         borderWidth={1}
-        borderColor="$borderColor"
-        borderRadius="$md"
-        padding="$md"
+        borderColor="borderColor"
+        borderRadius="md"
+        padding="md"
       >
         <Text>Portal content — teleported into the "root" host.</Text>
       </Box>
@@ -62,12 +62,12 @@ export const Playground: Story = {
 export const Inline: Story = {
   args: { hostName: undefined },
   render: (args) => (
-    <Box backgroundColor="$color3" padding="$md" borderRadius="$md" overflow="hidden">
-      <Text marginBottom="$sm" fontWeight="600">
+    <Box backgroundColor="color3" padding="md" borderRadius="md" overflow="hidden">
+      <Text marginBottom="sm" fontWeight="600">
         Parent with overflow: hidden
       </Text>
       <Portal {...args}>
-        <Box backgroundColor="$color5" padding="$sm" borderRadius="$sm">
+        <Box backgroundColor="color5" padding="sm" borderRadius="sm">
           <Text>Inline content — not teleported (no hostName).</Text>
         </Box>
       </Portal>
@@ -79,16 +79,16 @@ export const Inline: Story = {
 export const NamedHost: Story = {
   args: { hostName: "story-host" },
   render: (args) => (
-    <Box gap="$md" alignItems="flex-start">
-      <Box borderWidth={1} borderColor="$borderColor" borderRadius="$md" padding="$md" width={280}>
-        <Text fontWeight="600" marginBottom="$sm">
+    <Box gap="md" alignItems="flex-start">
+      <Box borderWidth={1} borderColor="borderColor" borderRadius="md" padding="md" width={280}>
+        <Text fontWeight="600" marginBottom="sm">
           Named PortalHost: "story-host"
         </Text>
         <PortalHost name="story-host" style={{ minHeight: 60 }} />
       </Box>
 
       <Portal {...args}>
-        <Box backgroundColor="$color5" borderRadius="$sm" padding="$sm">
+        <Box backgroundColor="color5" borderRadius="sm" padding="sm">
           <Text>⭐ Content teleported into "story-host"</Text>
         </Box>
       </Portal>
@@ -105,13 +105,13 @@ export const ControlledTrigger: Story = {
     const [open, setOpen] = React.useState(false);
 
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <Box
           render="button"
-          backgroundColor="$color5"
-          borderRadius="$sm"
-          paddingHorizontal="$md"
-          paddingVertical="$sm"
+          backgroundColor="color5"
+          borderRadius="sm"
+          paddingHorizontal="md"
+          paddingVertical="sm"
           style={{ cursor: "pointer" }}
           onPress={() => setOpen((v) => !v)}
         >
@@ -122,20 +122,20 @@ export const ControlledTrigger: Story = {
           <Portal {...args} hostName="root">
             <Box
               position="fixed"
-              bottom="$lg"
-              right="$lg"
-              backgroundColor="$color2"
+              bottom="lg"
+              right="lg"
+              backgroundColor="color2"
               borderWidth={1}
-              borderColor="$borderColor"
-              borderRadius="$md"
-              padding="$md"
+              borderColor="borderColor"
+              borderRadius="md"
+              padding="md"
               minWidth={220}
               pointerEvents="auto"
             >
-              <Text fontWeight="600" marginBottom="$xs">
+              <Text fontWeight="600" marginBottom="xs">
                 ⭐ Teleported overlay
               </Text>
-              <Text color="$color10">
+              <Text color="color10">
                 This content is teleported into the root host. Dismiss it with the button above.
               </Text>
             </Box>

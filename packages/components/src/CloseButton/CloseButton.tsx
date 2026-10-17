@@ -1,19 +1,23 @@
 import * as React from "react";
 
-import { type GetProps, styled, withStaticProperties } from "@knitui/core";
+import { type GetProps, styleable, styled, withStaticProperties } from "@knitui/core";
 import { IconX } from "@knitui/icons/IconX";
 
-import { ActionIcon } from "../ActionIcon";
+import { ActionIcon, type ActionIconVariant } from "../ActionIcon";
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
 import { type GradientValue, useGradient } from "../internal/gradient";
 import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
-import { fontSizePassthroughVariant, WEB_BUTTON_PROPS } from "../internal/style-props";
+import {
+  fontSizePassthroughVariant,
+  type SizeKey,
+  WEB_BUTTON_PROPS,
+} from "../internal/style-props";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 
 const CloseButtonFrame = styled(ActionIcon.Frame, {
-  name: "CloseButton",
+  displayName: "CloseButton",
 });
 
 /**
@@ -25,7 +29,7 @@ const CloseButtonFrame = styled(ActionIcon.Frame, {
  * `ControlIconProvider` / explicit `iconSize` in the render below.
  */
 const CloseButtonIcon = styled(Box, {
-  name: "CloseButtonIcon",
+  displayName: "CloseButtonIcon",
   alignItems: "center",
   justifyContent: "center",
   variants: {
@@ -33,7 +37,14 @@ const CloseButtonIcon = styled(Box, {
   } as const,
 });
 
-type CloseButtonFrameProps = Omit<GetProps<typeof CloseButtonFrame>, "children">;
+/**
+ * `size` / `variant` / `iconSize` are narrowed to single values (no v3 clause
+ * programs): the render reads them as DATA (`ControlIconProvider`).
+ */
+type CloseButtonFrameProps = Omit<
+  GetProps<typeof CloseButtonFrame>,
+  "children" | "size" | "variant" | "disabled"
+>;
 
 /**
  * Named style slots (Pillar B / `internal/styles.ts`). CloseButton is nearly a
@@ -53,8 +64,13 @@ export interface CloseButtonStyles {
 const CLOSE_BUTTON_SLOT_KEYS = ["icon"] as const satisfies readonly (keyof CloseButtonStyles)[];
 
 export interface CloseButtonProps extends CloseButtonFrameProps {
-  /** `✕` icon font size — a px number or CSS/token string. Falls back to the `size`-derived icon size. */
-  iconSize?: GetProps<typeof CloseButtonIcon>["iconSize"];
+  /** Size key, or a raw square edge (px number / CSS length). @default "md" */
+  size?: SizeKey | number | (string & {});
+  /** @default "subtle" */
+  variant?: ActionIconVariant;
+  disabled?: boolean;
+  /** `✕` icon size — a px number or size key. Falls back to the `size`-derived icon size. */
+  iconSize?: SizeKey | number | (string & {});
   /** Node to replace the default close icon. When set, `iconSize` is ignored. */
   icon?: React.ReactNode;
   /** Extra content rendered after the icon (e.g. a `VisuallyHidden` label). */
@@ -64,7 +80,7 @@ export interface CloseButtonProps extends CloseButtonFrameProps {
   /**
    * Gradient fill for `variant="gradient"` (ignored otherwise). Two-color
    * shorthand `{ from, to, deg }` or multi-step `{ stops, deg }`; colors accept
-   * `$colorN` ramp tokens or any CSS color. Defaults to the active theme ramp.
+   * `colorN` ramp names or any CSS color. Defaults to the active theme ramp.
    */
   gradient?: GradientValue;
 }
@@ -76,7 +92,8 @@ export interface CloseButtonProps extends CloseButtonFrameProps {
  * defaults to `variant="subtle"` and an `aria-label` of `"Close"`. Accent comes
  * from the `theme` prop + palette ramp, never a `color` prop.
  */
-const CloseButtonComponent = CloseButtonFrame.styleable<CloseButtonProps>(
+const CloseButtonComponent = styleable<CloseButtonProps>(
+  CloseButtonFrame,
   function CloseButton(props, ref) {
     const {
       iconSize,
@@ -86,6 +103,7 @@ const CloseButtonComponent = CloseButtonFrame.styleable<CloseButtonProps>(
       gradient,
       variant = "subtle",
       size = "md",
+      disabled,
       ...rest
     } = props;
 
@@ -123,7 +141,8 @@ const CloseButtonComponent = CloseButtonFrame.styleable<CloseButtonProps>(
         {...press}
         {...grad.frameProps}
         {...rest}
-        aria-disabled={rest.disabled || undefined}
+        disabled={disabled}
+        aria-disabled={disabled || undefined}
         // A real focusable `<button>` on web, like `ActionIcon` (whose frame this
         // is). Without it CloseButton was a `<div role="button">`: never a tab
         // stop, so the inherited focus ring could not fire and every dismiss ✕

@@ -41,6 +41,20 @@ type InputTextStyleProps = Pick<
   | "textTransform"
 >;
 
+/**
+ * The input-only colour style props (v3's `isInput` surface). Each takes a theme
+ * key (`"color10"`, `"red9"`) or a literal colour and resolves cross-platform: on
+ * web to a `::placeholder` / `::selection` / `caret-color` rule, on native to the
+ * resolved value handed to `TextInput`. Defaults: placeholder `color8`, selection
+ * `blue5`.
+ */
+export type InputColorStyleProps = {
+  placeholderTextColor?: TextStyle["color"];
+  selectionColor?: TextStyle["color"];
+  cursorColor?: TextStyle["color"];
+  selectionHandleColor?: TextStyle["color"];
+};
+
 export type InputValueChangePayload = {
   target: { value: string };
   currentTarget: { value: string };
@@ -221,6 +235,7 @@ export interface __BaseInputProps extends InputWrapperProps, __InputProps {
 
 export type InputSharedProps = __InputProps &
   InputTextStyleProps &
+  InputColorStyleProps &
   InputSharedCallbacks & {
     /** Determines whether the input should have error styles and aria-invalid attribute */
     error?: React.ReactNode;

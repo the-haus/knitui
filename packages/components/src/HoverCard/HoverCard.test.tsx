@@ -225,4 +225,66 @@ describe("HoverCard", () => {
     fireEvent.pointerDown(document.body);
     expect(screen.getByText("Persistent content")).toBeInTheDocument();
   });
+
+  it("waits closeDelay on leave and stays open while the pointer is over the dropdown", () => {
+    jest.useFakeTimers();
+    try {
+      render(
+        <HoverCard closeDelay={150} transitionProps={{ duration: 0 }}>
+          <HoverCard.Target>
+            <Button>Card trigger</Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown testID="card">Card content</HoverCard.Dropdown>
+        </HoverCard>,
+      );
+      const trigger = screen.getByRole("button", { name: "Card trigger" });
+      fireEvent.mouseEnter(trigger);
+      expect(screen.getByTestId("card")).toBeInTheDocument();
+
+      // Leaving the trigger schedules the close; entering the dropdown cancels it.
+      fireEvent.mouseLeave(trigger);
+      fireEvent.mouseEnter(screen.getByTestId("card"));
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.getByTestId("card")).toBeInTheDocument();
+
+      // Leaving the dropdown closes after closeDelay.
+      fireEvent.mouseLeave(screen.getByTestId("card"));
+      act(() => {
+        jest.advanceTimersByTime(149);
+      });
+      expect(screen.getByTestId("card")).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(screen.queryByTestId("card")).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("animates the dropdown out before unmounting it", () => {
+    jest.useFakeTimers();
+    try {
+      render(
+        <HoverCard closeDelay={0} transitionProps={{ duration: 150 }}>
+          <HoverCard.Target>
+            <Button>Exit trigger</Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown testID="card">Exit content</HoverCard.Dropdown>
+        </HoverCard>,
+      );
+      const trigger = screen.getByRole("button", { name: "Exit trigger" });
+      fireEvent.mouseEnter(trigger);
+      fireEvent.mouseLeave(trigger);
+      expect(screen.getByTestId("card")).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.queryByTestId("card")).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

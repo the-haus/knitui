@@ -59,9 +59,9 @@ export const Playground: Story = {};
 /** All three loader types side by side at the default size. */
 export const Types: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {TYPES.map((type) => (
-        <Box key={type} alignItems="center" gap="$sm">
+        <Box key={type} alignItems="center" gap="sm">
           <Loader {...args} type={type} />
           <Text>{type}</Text>
         </Box>
@@ -73,9 +73,9 @@ export const Types: Story = {
 /** The seven size keys, from xxs to xxl, using the default oval type. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
       {SIZES.map((size) => (
-        <Box key={size} alignItems="center" gap="$sm">
+        <Box key={size} alignItems="center" gap="sm">
           <Loader {...args} size={size} />
           <Text>{size}</Text>
         </Box>
@@ -87,9 +87,9 @@ export const Sizes: Story = {
 /** The inherited `shadow` elevation prop, from xs to xl. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {SHADOWS.map((shadow) => (
-        <Box key={shadow} alignItems="center" gap="$sm">
+        <Box key={shadow} alignItems="center" gap="sm">
           <Loader {...args} shadow={shadow} />
           <Text>{shadow}</Text>
         </Box>
@@ -106,9 +106,9 @@ export const CustomSize: Story = {
 /** The palette ramp follows the active theme — same component, different accent. */
 export const Themed: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$xl" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="xl" alignItems="center">
       {(["blue", "red", "green", "yellow", "pink"] as const).map((theme) => (
-        <Box key={theme} alignItems="center" gap="$sm">
+        <Box key={theme} alignItems="center" gap="sm">
           <Loader {...args} theme={theme} />
           <Text>{theme}</Text>
         </Box>
@@ -125,15 +125,15 @@ export const CustomLabel: Story = {
 /** Full type × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {TYPES.map((type) => (
-        <Box key={type} gap="$sm">
+        <Box key={type} gap="sm">
           <Text fontWeight="600">{type}</Text>
-          <Box flexDirection="row" flexWrap="wrap" gap="$lg" alignItems="center">
+          <Box flexDirection="row" flexWrap="wrap" gap="lg" alignItems="center">
             {SIZES.map((size) => (
-              <Box key={size} alignItems="center" gap="$xs">
+              <Box key={size} alignItems="center" gap="xs">
                 <Loader type={type} size={size} />
-                <Text fontSize="$xs">{size}</Text>
+                <Text fontSize="xs">{size}</Text>
               </Box>
             ))}
           </Box>

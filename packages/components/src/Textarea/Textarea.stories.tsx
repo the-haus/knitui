@@ -93,7 +93,7 @@ export const Playground: Story = {
 /** The three chrome variants — default, filled, and unstyled. */
 export const Variants: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       {VARIANTS.map((variant) => (
         <Textarea key={variant} {...args} variant={variant} placeholder={variant} />
       ))}
@@ -104,7 +104,7 @@ export const Variants: Story = {
 /** The seven token sizes from xxs to xxl. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       {SIZES.map((size) => (
         <Textarea key={size} {...args} size={size} placeholder={`size: ${size}`} />
       ))}
@@ -115,13 +115,13 @@ export const Sizes: Story = {
 /** Full variant × size matrix for visual regression. */
 export const Matrix: Story = {
   render: () => (
-    <Box gap="$xl">
+    <Box gap="xl">
       {VARIANTS.map((variant) => (
-        <Box key={variant} gap="$md">
-          <Text fontWeight="bold" fontSize="$xs" color="$color11">
+        <Box key={variant} gap="md">
+          <Text fontWeight="bold" fontSize="xs" color="color11">
             {variant}
           </Text>
-          <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="flex-start">
+          <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="flex-start">
             {SIZES.map((size) => (
               <Textarea
                 key={size}
@@ -141,7 +141,7 @@ export const Matrix: Story = {
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       {SHADOWS.map((shadow) => (
         <Textarea key={shadow} {...args} shadow={shadow} placeholder={`shadow: ${shadow}`} />
       ))}
@@ -247,7 +247,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState("");
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Textarea
           {...args}
           label="Your message"
@@ -256,7 +256,7 @@ export const Controlled: Story = {
           placeholder="Type here…"
           minRows={3}
         />
-        <Text fontSize="$xs" color="$color11">
+        <Text fontSize="xs" color="color11">
           {value.length} character{value.length !== 1 ? "s" : ""}
         </Text>
       </Box>
@@ -297,18 +297,18 @@ export const AutosizeControlled: Story = {
 /** Left / right sections should pin to the top edge in multiline mode. */
 export const WithSections: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       <Textarea
         {...args}
         label="With left section"
-        leftSection={<Text fontSize="$xs">@</Text>}
+        leftSection={<Text fontSize="xs">@</Text>}
         placeholder="Left section aligns to top…"
         minRows={4}
       />
       <Textarea
         {...args}
         label="With right section"
-        rightSection={<Text fontSize="$xs">✓</Text>}
+        rightSection={<Text fontSize="xs">✓</Text>}
         rightSectionPointerEvents="none"
         placeholder="Right section aligns to top…"
         minRows={4}
@@ -320,7 +320,7 @@ export const WithSections: Story = {
 /** The `resize` prop exposes the CSS drag handle — sweep all four options. */
 export const ResizeHandles: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       {RESIZE_OPTIONS.map((resize) => (
         <Textarea
           key={resize}
@@ -355,7 +355,7 @@ export const ReadOnly: Story = {
 /** Required field — `withAsterisk` appends the asterisk without forcing validation. */
 export const Required: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       <Textarea
         {...args}
         label="Required (required)"
@@ -378,7 +378,7 @@ export const Required: Story = {
 /** Loading indicator in either section — pins to the top edge in multiline mode. */
 export const Loading: Story = {
   render: (args) => (
-    <Box gap="$md" width={360}>
+    <Box gap="md" width={360}>
       <Textarea
         {...args}
         label="Loading left"
@@ -412,7 +412,7 @@ export const CharacterLimit: Story = {
     const MAX = 120;
     const [value, setValue] = React.useState("");
     return (
-      <Box gap="$sm">
+      <Box gap="sm">
         <Textarea
           {...args}
           label="Short bio"
@@ -422,7 +422,7 @@ export const CharacterLimit: Story = {
           placeholder={`Up to ${MAX} characters…`}
           minRows={3}
         />
-        <Text fontSize="$xs" color={value.length >= MAX ? "$red10" : "$color11"}>
+        <Text fontSize="xs" color={value.length >= MAX ? "red10" : "color11"}>
           {value.length} / {MAX}
         </Text>
       </Box>
@@ -446,8 +446,8 @@ export const Styles: Story = {
       placeholder="Write something…"
       minRows={3}
       styles={{
-        root: { backgroundColor: "$blue3", borderColor: "$blue7", borderWidth: 2 },
-        label: { color: "$blue11" },
+        root: { backgroundColor: "blue3", borderColor: "blue7", borderWidth: 2 },
+        label: { color: "blue11" },
       }}
     />
   ),

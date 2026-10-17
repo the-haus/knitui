@@ -1,6 +1,6 @@
 export const meta = {
   title: "Responsive",
-  description: "Breakpoints, breakpoint props, useMedia, and SSR-safe media queries with @knitui/mediaquery.",
+  description: "Breakpoints, media clauses in style values, useMedia, and SSR-safe media queries with @knitui/mediaquery.",
 };
 
 # Responsive
@@ -12,16 +12,32 @@ export const meta = {
 They come from the config, so [`createTheme({ breakpoints })`](/docs/foundations/theme-builder)
 rebuilds the media queries and every consumer follows.
 
-## Breakpoint props
+## Media clauses
 
-Any style prop accepts an object keyed by breakpoint:
+A breakpoint is a **modifier inside the value** of the property it changes:
 
 ```tsx
-<Box p={{ xxs: "$sm", md: "$lg" }} flexDirection={{ xxs: "column", sm: "row" }} />
-<SimpleGrid cols={{ xxs: 1, sm: 2, lg: 4 }} gap="$md" />
+<Box p="sm gtMd:lg" flexDirection="column gtSm:row" display="none gtXs:flex" />
 ```
 
-Values are min-width based and cascade upwards, so `xxs` is your base.
+Two families come from the config:
+
+- `xs:` … `xl:` match **at or below** that breakpoint (`max-width`);
+- `gtXs:` … `gtXl:` match **above** it (`min-width`).
+
+So a mobile-first value reads as "base, then `gt…:` overrides as the viewport
+grows". When the base or a breakpoint value is computed, use the object form:
+
+```tsx
+<Box p={{ default: compact ? "xs" : "sm", gtMd: "lg" }} />
+```
+
+Clause order does not matter, and state clauses (`hover:`, `press:`, `focus:`,
+`disabled:`) outrank media clauses. v2's media props (`$sm={{ … }}`,
+`$gtMd={{ … }}`) are gone.
+
+Container queries work the same way against the nearest element marked
+`container`: `w="100% @sm:50%"`.
 
 ## In JavaScript
 
@@ -30,7 +46,7 @@ import { useMedia } from "@knitui/core";
 
 function Nav() {
   const media = useMedia();
-  return media.sm ? <Sidebar /> : <Drawer />;
+  return media.gtSm ? <Sidebar /> : <Drawer />;
 }
 ```
 

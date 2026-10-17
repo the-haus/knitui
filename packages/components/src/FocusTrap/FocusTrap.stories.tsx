@@ -49,10 +49,10 @@ export const Playground: Story = {
     <FocusTrap {...args}>
       <Box
         borderWidth={2}
-        borderColor="$borderColor"
-        borderRadius="$md"
-        padding="$lg"
-        gap="$md"
+        borderColor="borderColor"
+        borderRadius="md"
+        padding="lg"
+        gap="md"
         width={320}
       >
         <Text fontWeight="700">Focus is trapped inside this box</Text>
@@ -69,15 +69,8 @@ export const Active: Story = {
   args: { active: true },
   render: (args) => (
     <FocusTrap {...args}>
-      <Box
-        borderWidth={2}
-        borderColor="$blue8"
-        borderRadius="$md"
-        padding="$lg"
-        gap="$md"
-        width={320}
-      >
-        <Text fontWeight="700" color="$blue10">
+      <Box borderWidth={2} borderColor="blue8" borderRadius="md" padding="lg" gap="md" width={320}>
+        <Text fontWeight="700" color="blue10">
           Trap active — Tab cycles within
         </Text>
         <TextInput placeholder="First field" />
@@ -92,19 +85,19 @@ export const Active: Story = {
 export const Inactive: Story = {
   args: { active: false },
   render: (args) => (
-    <Box gap="$md">
+    <Box gap="md">
       <TextInput placeholder="Outside — before" />
       <FocusTrap {...args}>
         <Box
           borderWidth={2}
-          borderColor="$gray6"
-          borderRadius="$md"
-          padding="$lg"
-          gap="$md"
+          borderColor="color6"
+          borderRadius="md"
+          padding="lg"
+          gap="md"
           width={320}
           opacity={0.6}
         >
-          <Text fontWeight="700" color="$gray10">
+          <Text fontWeight="700" color="color10">
             Trap inactive — focus flows through
           </Text>
           <TextInput placeholder="Inside field" />
@@ -121,18 +114,19 @@ export const WithInitialFocus: Story = {
   render: (args) => (
     <FocusTrap {...args}>
       <Box
+        theme="green"
         borderWidth={2}
-        borderColor="$green8"
-        borderRadius="$md"
-        padding="$lg"
-        gap="$md"
+        borderColor="color8"
+        borderRadius="md"
+        padding="lg"
+        gap="md"
         width={320}
       >
         <FocusTrap.InitialFocus />
-        <Text fontWeight="700" color="$green10">
+        <Text fontWeight="700" color="color10">
           Initial focus lands on the hidden marker
         </Text>
-        <Text fontSize="$sm" color="$color10">
+        <Text fontSize="sm" color="color10">
           The visually-hidden <Text fontWeight="700">InitialFocus</Text> marker (rendered before the
           inputs) receives focus first — no visible jump on open.
         </Text>
@@ -149,7 +143,7 @@ export const ControlledToggle: Story = {
   render: (args) => {
     const [active, setActive] = React.useState(false);
     return (
-      <Box gap="$lg" alignItems="center">
+      <Box gap="lg" alignItems="center">
         <Button onClick={() => setActive((v) => !v)} tabIndex={0}>
           {active ? "Disable trap" : "Enable trap"}
         </Button>
@@ -157,13 +151,13 @@ export const ControlledToggle: Story = {
         <FocusTrap {...args} active={active}>
           <Box
             borderWidth={2}
-            borderColor={active ? "$blue8" : "$gray6"}
-            borderRadius="$md"
-            padding="$lg"
-            gap="$md"
+            borderColor={active ? "blue8" : "color6"}
+            borderRadius="md"
+            padding="lg"
+            gap="md"
             width={320}
           >
-            <Text fontWeight="700" color={active ? "$blue10" : "$gray10"}>
+            <Text fontWeight="700" color={active ? "blue10" : "color10"}>
               {active ? "Trap is ON" : "Trap is OFF"}
             </Text>
             <TextInput placeholder="Field A" />
@@ -199,23 +193,23 @@ export const ModalLike: Story = {
           >
             <FocusTrap active>
               <Box
-                backgroundColor="$background"
-                borderRadius="$md"
-                padding="$xl"
-                gap="$md"
+                backgroundColor="background"
+                borderRadius="md"
+                padding="xl"
+                gap="md"
                 width={340}
                 shadow="xl"
               >
                 <FocusTrap.InitialFocus />
-                <Text fontWeight="700" fontSize="$lg">
+                <Text fontWeight="700" fontSize="lg">
                   Dialog title
                 </Text>
-                <Text color="$color10">
+                <Text color="color10">
                   Focus is trapped inside this dialog. Tab will cycle between the fields and the
                   close button.
                 </Text>
                 <TextInput placeholder="Your name" />
-                <Box flexDirection="row" gap="$md" justifyContent="flex-end">
+                <Box flexDirection="row" gap="md" justifyContent="flex-end">
                   <Button onClick={() => setOpen(false)} tabIndex={0} variant="default">
                     Cancel
                   </Button>

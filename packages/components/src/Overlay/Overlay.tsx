@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { type GetProps, isWeb, styled } from "@knitui/core";
+import { type GetProps, isWeb, styleable, styled } from "@knitui/core";
 
 import { Box, type BoxProps } from "../Box";
 import { radiusVariant } from "../internal/style-props";
@@ -14,12 +14,12 @@ import { radiusVariant } from "../internal/style-props";
  * objects so the strict style typing stays intact.
  */
 const OverlayFrame = styled(Box, {
-  name: "Overlay",
+  displayName: "Overlay",
   position: "absolute",
-  top: "$0",
-  left: "$0",
-  right: "$0",
-  bottom: "$0",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
   // The scrim catches clicks on the empty area (outside-press to dismiss). When
   // teleported, the portal host is `pointer-events: none`, so the scrim must
   // explicitly re-enable events to stay clickable.
@@ -58,6 +58,8 @@ function toRgba(color: BoxProps["backgroundColor"], opacity: number): BoxProps["
     // Non-hex (named/rgb/token/var) — let the caller's value pass straight through.
     return color;
   }
+  // Spaces inside the parentheses are safe: v3's flat-value grammar only splits
+  // clauses on top-level whitespace (verified in 3.0.18).
   return `rgba(${r}, ${g}, ${b}, ${opacity})` as BoxProps["backgroundColor"];
 }
 
@@ -74,10 +76,12 @@ export interface OverlayProps extends OverlayFrameProps {
   fixed?: boolean;
 }
 
+const FIXED = { position: "fixed" } as const;
+
 /** Web-only style props absent from Box's cross-platform style types. */
 type WebOnlyStyle = { backdropFilter?: string; backgroundImage?: string };
 
-export const Overlay = OverlayFrame.styleable<OverlayProps>(function Overlay(props, ref) {
+export const Overlay = styleable<OverlayProps>(OverlayFrame, function Overlay(props, ref) {
   const {
     backgroundOpacity = 0.6,
     backgroundColor: scrimBackgroundColor = "#000",
@@ -91,11 +95,11 @@ export const Overlay = OverlayFrame.styleable<OverlayProps>(function Overlay(pro
     ...rest
   } = props;
 
-  // `toRgba` yields a plain CSS color string; narrow to the exact Box style-prop
-  // type (a branded color token | CSS value) rather than widening to `any`.
-  const backgroundColor: BoxProps["backgroundColor"] = gradient
-    ? undefined
-    : toRgba(scrimBackgroundColor, backgroundOpacity);
+  // `toRgba` yields a plain CSS color string. Spread conditionally — an explicit `backgroundColor={undefined}`
+  // would still claim the call-site slot in v3 (conventions §5).
+  const background = gradient
+    ? null
+    : { backgroundColor: toRgba(scrimBackgroundColor, backgroundOpacity) };
 
   // `backdropFilter`/`backgroundImage` are web CSS props not in Box's style-prop
   // types; spread a precise object so the excess-property
@@ -108,8 +112,8 @@ export const Overlay = OverlayFrame.styleable<OverlayProps>(function Overlay(pro
   return (
     <OverlayFrame
       ref={ref}
-      position={fixed ? "fixed" : "absolute"}
-      backgroundColor={backgroundColor}
+      {...(fixed ? FIXED : null)}
+      {...background}
       zIndex={zIndex}
       {...webOnly}
       {...rest}

@@ -49,10 +49,10 @@ export const Playground: Story = {
     <KeyboardAvoidingView {...args}>
       <Box
         borderWidth={2}
-        borderColor="$borderColor"
-        borderRadius="$md"
-        padding="$lg"
-        gap="$md"
+        borderColor="borderColor"
+        borderRadius="md"
+        padding="lg"
+        gap="md"
         width={320}
       >
         <Text fontWeight="700">Sign in</Text>
@@ -69,21 +69,21 @@ export const LoginForm: Story = {
   render: (args) => (
     <KeyboardAvoidingView {...args}>
       <Box
-        backgroundColor="$background"
+        backgroundColor="background"
         borderWidth={1}
-        borderColor="$borderColor"
-        borderRadius="$md"
-        padding="$xl"
-        gap="$md"
+        borderColor="borderColor"
+        borderRadius="md"
+        padding="xl"
+        gap="md"
         width={360}
       >
-        <Text fontWeight="700" fontSize="$lg">
+        <Text fontWeight="700" fontSize="lg">
           Welcome back
         </Text>
-        <Text color="$color10">Enter your details to continue.</Text>
+        <Text color="color10">Enter your details to continue.</Text>
         <TextInput placeholder="you@example.com" />
         <TextInput placeholder="Password" />
-        <Box flexDirection="row" justifyContent="flex-end" gap="$md">
+        <Box flexDirection="row" justifyContent="flex-end" gap="md">
           <Button variant="default">Cancel</Button>
           <Button>Sign in</Button>
         </Box>

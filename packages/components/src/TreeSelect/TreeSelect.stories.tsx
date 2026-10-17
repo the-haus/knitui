@@ -131,7 +131,7 @@ export const Playground: Story = {};
 /** All seven sizes rendered side by side for quick visual comparison. */
 export const Sizes: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SIZES.map((size) => (
         <TreeSelect key={size} {...args} size={size} placeholder={size} />
       ))}
@@ -142,7 +142,7 @@ export const Sizes: Story = {
 /** The shadow elevation prop, inherited from Box, across all token levels. */
 export const Shadows: Story = {
   render: (args) => (
-    <Box flexDirection="row" flexWrap="wrap" gap="$md" alignItems="center">
+    <Box flexDirection="row" flexWrap="wrap" gap="md" alignItems="center">
       {SHADOWS.map((shadow) => (
         <TreeSelect key={shadow} {...args} shadow={shadow} placeholder={shadow} />
       ))}
@@ -199,7 +199,7 @@ export const Controlled: Story = {
   render: (args) => {
     const [value, setValue] = React.useState<string | null>(null);
     return (
-      <Box gap="$md" alignItems="flex-start">
+      <Box gap="md" alignItems="flex-start">
         <TreeSelect
           {...args}
           value={value}
@@ -207,8 +207,8 @@ export const Controlled: Story = {
           clearable
           placeholder="Pick a food…"
         />
-        <Text fontSize="$sm" color="$color10">
-          Selected value: {value ?? <Text color="$color8">none</Text>}
+        <Text fontSize="sm" color="color10">
+          Selected value: {value ?? <Text color="color8">none</Text>}
         </Text>
       </Box>
     );
@@ -229,8 +229,8 @@ export const Styles: Story = {
   args: {
     defaultValue: "apple",
     styles: {
-      trigger: { borderColor: "$blue7", borderWidth: 2 },
-      chevron: { color: "$blue9" },
+      trigger: { borderColor: "blue7", borderWidth: 2 },
+      chevron: { color: "blue9" },
     },
   },
 };

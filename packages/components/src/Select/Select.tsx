@@ -20,6 +20,7 @@ import {
   composeTriggerRightSection,
   defaultOptionsFilter,
   flattenComboboxOptions,
+  getComboboxOptionId,
   getOptionsLockup,
   getParsedComboboxData,
   type OptionsDropdownProps,
@@ -45,8 +46,8 @@ type SelectInputProps = Omit<
 /**
  * Named style slots (Pillar B / `internal/styles.ts`), keyed 1:1 with the Select
  * part surface. Each key maps to the props of the part it targets, so
- * `styles={{ option: { bg: "$color3" } }}` is sugar for
- * `<Select.Option bg="$color3" />`.
+ * `styles={{ option: { bg: "color3" } }}` is sugar for
+ * `<Select.Option bg="color3" />`.
  */
 export interface SelectStyles {
   /** Props for the state-machine root (`Select.Root` → `<Combobox>`). */
@@ -632,6 +633,9 @@ const SelectTrigger = React.forwardRef<SelectRef, SelectTriggerProps>(
           aria-autocomplete={ctx.searchable ? "list" : "none"}
           aria-controls={ctx.dropdownId}
           aria-expanded={ctx.combobox.opened}
+          {...(ctx.combobox.opened && ctx.activeValue != null
+            ? { "aria-activedescendant": getComboboxOptionId(ctx.dropdownId, ctx.activeValue) }
+            : null)}
           size={ctx.size}
           disabled={ctx.disabled}
           placeholder={placeholder}
@@ -708,6 +712,7 @@ function SelectOptions(props: SelectOptionsProps) {
       withScrollArea={ctx.withScrollArea}
       maxDropdownHeight={ctx.maxDropdownHeight}
       renderOption={ctx.renderOption}
+      optionIdPrefix={ctx.dropdownId}
       // The `option`/`group`/`empty` slots reach each rendered row through OptionsDropdown.
       optionProps={s.get("option")}
       groupProps={s.get("group")}
