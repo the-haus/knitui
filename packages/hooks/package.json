@@ -1,6 +1,6 @@
 {
   "name": "@knitui/hooks",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared React hooks used across Knit UI.",
   "license": "MIT",
   "author": "The Haus <joost@the.haus>",
