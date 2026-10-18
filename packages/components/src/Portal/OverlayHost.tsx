@@ -1,5 +1,5 @@
 import * as React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type ViewInstance } from "react-native";
 import { PortalHost } from "react-native-teleport";
 
 import type { OverlayHostProps } from "./types";
@@ -17,7 +17,7 @@ type OverlayHostContextValue = {
    * the host's window origin. `null` for the root host (it sits at the window
    * origin by construction).
    */
-  frameRef: React.RefObject<View | null> | null;
+  frameRef: React.RefObject<ViewInstance | null> | null;
 };
 
 const ROOT_VALUE: OverlayHostContextValue = { name: ROOT_OVERLAY_HOST, depth: 0, frameRef: null };
@@ -87,7 +87,7 @@ function register(name: string, depth: number): () => void {
 export function OverlayHost({ name, children }: OverlayHostProps) {
   const parent = React.useContext(OverlayHostContext);
   const depth = parent.depth + 1;
-  const frameRef = React.useRef<View>(null);
+  const frameRef = React.useRef<ViewInstance>(null);
 
   const value = React.useMemo<OverlayHostContextValue>(
     () => ({ name, depth, frameRef }),
@@ -136,6 +136,6 @@ export function useTopmostOverlayHost(): string {
  * @internal The scoped host's measurable frame (or `null` under the root host),
  * for the native floating engine's container-origin math.
  */
-export function useOverlayHostFrame(): React.RefObject<View | null> | null {
+export function useOverlayHostFrame(): React.RefObject<ViewInstance | null> | null {
   return React.useContext(OverlayHostContext).frameRef;
 }

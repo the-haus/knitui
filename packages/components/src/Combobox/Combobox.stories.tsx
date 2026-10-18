@@ -3,12 +3,11 @@ import type { ComponentProps } from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { useMergedRef } from "@knitui/hooks";
-
 import { Combobox } from ".";
 import { Box } from "../Box";
 import { Button } from "../Button";
 import { Text } from "../Text";
+import { TextInput } from "../TextInput";
 import { useCombobox } from "./use-combobox";
 
 const SIZES = ["xxs", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
@@ -83,33 +82,14 @@ type Story = StoryObj<ComponentProps<typeof Combobox>>;
 /* -------------------------------------------------------------------------- */
 
 /**
- * A minimal inline text input used as a combobox target in stories. `Combobox.Target`
- * passes the anchor ref as `rootRef` (the kit inputs' visible-frame ref); a raw
- * `<input>` would leak it to the DOM, so it is merged into the input's own ref.
+ * The combobox target used in stories: the kit `TextInput`, so the stories run on
+ * native too (a raw `<input>` has no React Native host). `Combobox.Target` passes the
+ * anchor ref as `rootRef`, which the kit inputs attach to their visible frame.
  */
-function SearchInput({
-  rootRef,
-  ref,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
-  rootRef?: React.Ref<HTMLInputElement>;
-  ref?: React.Ref<HTMLInputElement>;
-}) {
-  const mergedRef = useMergedRef(ref, rootRef);
-  return (
-    <input
-      {...props}
-      ref={mergedRef}
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: 4,
-        padding: "6px 10px",
-        fontSize: 14,
-        width: 200,
-        outline: "none",
-      }}
-    />
-  );
+const SEARCH_INPUT_STYLES = { root: { width: 200 } } as const;
+
+function SearchInput(props: ComponentProps<typeof TextInput>) {
+  return <TextInput size="sm" styles={SEARCH_INPUT_STYLES} {...props} />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -139,8 +119,8 @@ export const Playground: Story = {
             <SearchInput
               placeholder="Search fruit…"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChangeText={(text) => {
+                setSearch(text);
                 store.openDropdown();
               }}
               onFocus={() => store.openDropdown()}
@@ -214,7 +194,14 @@ export const Shadows: Story = {
       {SHADOWS.map((shadow) => {
         const store = useCombobox({ defaultOpened: true });
         return (
-          <Box key={shadow} gap="xs" alignItems="center" position="relative" width={200}>
+          <Box
+            key={shadow}
+            gap="xs"
+            alignItems="center"
+            position="relative"
+            width={200}
+            minHeight={160}
+          >
             <Text fontSize="xs" color="color11">
               {shadow}
             </Text>
@@ -259,8 +246,8 @@ export const Controlled: Story = {
             <SearchInput
               placeholder="Search fruit…"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChangeText={(text) => {
+                setSearch(text);
                 store.openDropdown();
               }}
               onFocus={() => store.openDropdown()}

@@ -32,6 +32,7 @@
  */
 import * as React from "react";
 import { type SharedValue, useDerivedValue } from "react-native-reanimated";
+import { isWeb } from "@knitui/core";
 
 import {
   BlurMask,
@@ -326,61 +327,81 @@ function AudioVisualizerImpl(
   // once by the two worklets below. Fusing costs one extra variant pass per frame —
   // pure arithmetic into a buffer, and most variants emit only fill OR stroke shapes
   // — and removes a SharedValue write, a mapper, and every allocation on the path.
-  // Explicit `dependencies` are REQUIRED on web (no Babel worklet plugin under Vite).
+  // Explicit `dependencies` are REQUIRED on web (no Babel worklet plugin under Vite),
+  // and passed ONLY on web: Reanimated 4.7 ignores them on native and warns when given.
   // Each builder returns `""` (a valid empty path) when the variant emits no shapes
   // of that kind, allocating no path (see `paths.ts`).
-  const fillPath = useDerivedValue<SkPath | string>(() => {
-    "worklet";
-    const w = size.value.width;
-    const h = size.value.height;
-    if (!readyValue.value || w <= 0 || h <= 0) return "";
-    // No-effects fast path (the default): pass the eased levels straight to the
-    // variant — `gain=1`/`floor=0`/`reverse=false` makes `prepareLevels` a no-op
-    // beyond a clamp the variant already does.
-    const lv =
-      gain === 1 && floor === 0 && !reverse
-        ? levels.value
-        : prepareLevels(levels.value, gain, floor, reverse, levelBuffer);
-    return buildFillPath(variantFn(lv, w, h, opts, shapeBuffer));
-  }, [levels, readyValue, size, variantFn, opts, gain, floor, reverse, shapeBuffer, levelBuffer]);
+  const fillPath = useDerivedValue<SkPath | string>(
+    () => {
+      "worklet";
+      const w = size.value.width;
+      const h = size.value.height;
+      if (!readyValue.value || w <= 0 || h <= 0) return "";
+      // No-effects fast path (the default): pass the eased levels straight to the
+      // variant — `gain=1`/`floor=0`/`reverse=false` makes `prepareLevels` a no-op
+      // beyond a clamp the variant already does.
+      const lv =
+        gain === 1 && floor === 0 && !reverse
+          ? levels.value
+          : prepareLevels(levels.value, gain, floor, reverse, levelBuffer);
+      return buildFillPath(variantFn(lv, w, h, opts, shapeBuffer));
+    },
+    isWeb
+      ? [levels, readyValue, size, variantFn, opts, gain, floor, reverse, shapeBuffer, levelBuffer]
+      : undefined,
+  );
 
-  const strokePath = useDerivedValue<SkPath | string>(() => {
-    "worklet";
-    const w = size.value.width;
-    const h = size.value.height;
-    if (!readyValue.value || w <= 0 || h <= 0) return "";
-    const lv =
-      gain === 1 && floor === 0 && !reverse
-        ? levels.value
-        : prepareLevels(levels.value, gain, floor, reverse, levelBuffer);
-    return buildStrokePath(variantFn(lv, w, h, opts, shapeBuffer));
-  }, [levels, readyValue, size, variantFn, opts, gain, floor, reverse, shapeBuffer, levelBuffer]);
+  const strokePath = useDerivedValue<SkPath | string>(
+    () => {
+      "worklet";
+      const w = size.value.width;
+      const h = size.value.height;
+      if (!readyValue.value || w <= 0 || h <= 0) return "";
+      const lv =
+        gain === 1 && floor === 0 && !reverse
+          ? levels.value
+          : prepareLevels(levels.value, gain, floor, reverse, levelBuffer);
+      return buildStrokePath(variantFn(lv, w, h, opts, shapeBuffer));
+    },
+    isWeb
+      ? [levels, readyValue, size, variantFn, opts, gain, floor, reverse, shapeBuffer, levelBuffer]
+      : undefined,
+  );
 
   // Stroke width depends only on size/variant (not levels), so probe the variant with
   // a constant zero row — no per-evaluation array (this used to build a `count`-length
   // one) and no dependency on the level stream. A derived value so it tracks resize
   // without a layout-measured number.
-  const strokeWidth = useDerivedValue<number>(() => {
-    "worklet";
-    const w = size.value.width;
-    const h = size.value.height;
-    if (w <= 0 || h <= 0) return 0;
-    return strokeWidthOf(variantFn(zeroLevels, w, h, opts, shapeBuffer));
-  }, [size, variantFn, opts, zeroLevels, shapeBuffer]);
+  const strokeWidth = useDerivedValue<number>(
+    () => {
+      "worklet";
+      const w = size.value.width;
+      const h = size.value.height;
+      if (w <= 0 || h <= 0) return 0;
+      return strokeWidthOf(variantFn(zeroLevels, w, h, opts, shapeBuffer));
+    },
+    isWeb ? [size, variantFn, opts, zeroLevels, shapeBuffer] : undefined,
+  );
 
   // Sweep gradient pivots on the canvas center.
-  const sweepCenter = useDerivedValue<{ x: number; y: number }>(() => {
-    "worklet";
-    return { x: size.value.width / 2, y: size.value.height / 2 };
-  }, [size]);
+  const sweepCenter = useDerivedValue<{ x: number; y: number }>(
+    () => {
+      "worklet";
+      return { x: size.value.width / 2, y: size.value.height / 2 };
+    },
+    isWeb ? [size] : undefined,
+  );
 
   // Linear gradient end point — along the chosen direction, tracking resize.
-  const gradEnd = useDerivedValue<{ x: number; y: number }>(() => {
-    "worklet";
-    return gradientDirection === "horizontal"
-      ? { x: size.value.width, y: 0 }
-      : { x: 0, y: size.value.height };
-  }, [size, gradientDirection]);
+  const gradEnd = useDerivedValue<{ x: number; y: number }>(
+    () => {
+      "worklet";
+      return gradientDirection === "horizontal"
+        ? { x: size.value.width, y: 0 }
+        : { x: 0, y: size.value.height };
+    },
+    isWeb ? [size, gradientDirection] : undefined,
+  );
 
   const style = React.useMemo(
     () => ({ width: width ?? ("100%" as const), height, backgroundColor }),

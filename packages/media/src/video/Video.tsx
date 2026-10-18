@@ -290,7 +290,9 @@ function VideoRoot(props: VideoProps): React.ReactElement {
   /* Web wiring: focusable ARIA region + keyboard + hover/cursor + fullscreen. */
   const [frameEl, setFrameEl] = React.useState<HTMLElement | null>(null);
   const setFrameRef = React.useCallback((node: TamaguiElement | null) => {
-    setFrameEl(node && "addEventListener" in node ? (node as unknown as HTMLElement) : null);
+    // `isWeb`, not `"addEventListener" in node`: React Native 0.88 host instances carry
+    // an `addEventListener` key (set to undefined) but no DOM API like `setAttribute`.
+    setFrameEl(isWeb && node ? (node as unknown as HTMLElement) : null);
   }, []);
 
   React.useEffect(() => {

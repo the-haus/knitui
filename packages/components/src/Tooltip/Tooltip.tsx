@@ -35,7 +35,7 @@ import { type MotionPresetName } from "../internal/motion";
 import { useOverlayChrome } from "../internal/overlay-chrome";
 import { type RadiusValue, radiusVariant, shadowVariant } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
-import { Portal, useOverlayHost } from "../Portal";
+import { OverlayPortal, useOverlayHost } from "../Portal";
 import { Text } from "../Text";
 import {
   type OverlayTransitionConfig,
@@ -592,7 +592,7 @@ const TooltipBase = styleable<TooltipProps>(TooltipLabelFrame, function Tooltip(
   const dropdownSlot = s.get("dropdown");
 
   const labelNode = !t.rendered ? null : (
-    <Portal hostName={withinPortal ? overlayHost : undefined}>
+    <OverlayPortal hostName={withinPortal ? overlayHost : undefined}>
       <Theme name={themeName}>
         <TooltipLabelFrame
           ref={floatingRef}
@@ -648,7 +648,7 @@ const TooltipBase = styleable<TooltipProps>(TooltipLabelFrame, function Tooltip(
           ) : null}
         </TooltipLabelFrame>
       </Theme>
-    </Portal>
+    </OverlayPortal>
   );
 
   return (

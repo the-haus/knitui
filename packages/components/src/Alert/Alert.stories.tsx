@@ -202,7 +202,7 @@ export const Gradient: Story = {
       >
         A two-color `from`/`to` gradient at 60°.
       </Alert>
-      <Alert {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }} title="Tokens">
+      <Alert {...args} variant="gradient" gradient={{ from: "blue8", to: "blue11" }} title="Tokens">
         Built from `colorN` theme names.
       </Alert>
       <Alert

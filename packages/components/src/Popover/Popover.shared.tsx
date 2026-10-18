@@ -39,7 +39,7 @@ import { useOverlayChrome } from "../internal/overlay-chrome";
 import { shadowVariant } from "../internal/style-props";
 import { type SlotStyles } from "../internal/styles";
 import { type OverlayProps } from "../Overlay";
-import { Portal, useOverlayHost } from "../Portal";
+import { OverlayPortal, useOverlayHost } from "../Portal";
 import {
   type OverlayTransitionConfig,
   useOverlayTransition,
@@ -743,7 +743,7 @@ export const PopoverDropdownView = styleable<PopoverDropdownViewProps>(
     const transitionStyle = waitingForPosition ? { ...t.style, opacity: 0 } : t.style;
 
     return (
-      <Portal hostName={ctx.withinPortal ? overlayHost : undefined}>
+      <OverlayPortal hostName={ctx.withinPortal ? overlayHost : undefined}>
         <Theme name={themeName}>
           {/* Keep the scrim and the dropdown frame as direct siblings (rather
               than hoisting the scrim above `<Theme>`) so their z-indices compare
@@ -800,7 +800,7 @@ export const PopoverDropdownView = styleable<PopoverDropdownViewProps>(
             ) : null}
           </PopoverDropdownFrame>
         </Theme>
-      </Portal>
+      </OverlayPortal>
     );
   },
 );

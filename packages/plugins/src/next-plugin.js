@@ -115,6 +115,9 @@ function withKnituiExperimental(nextConfig = {}) {
  * `react-native/Libraries/Image/AssetRegistry`, which ships as untranspiled
  * Flow/TS source and crashes Next's parser. RNW carries an API-compatible
  * `AssetRegistry` (`getAssetByID`/`registerAsset`), so alias the subpath to it.
+ * `react-native-svg`'s web build imports `@react-native/assets-registry/registry`,
+ * whose 0.88 source mixes an ESM `import` with `module.exports` and throws "ES Modules
+ * may not assign module.exports" under webpack, so it gets the same alias.
  *
  * Skia's web loader pulls `canvaskit-wasm`, whose bundle references Node's `fs`
  * for the SSR/Node path; in the browser bundle those have no equivalent, so
@@ -136,11 +139,12 @@ function withKnituiWebpack(nextConfig = {}) {
   return {
     ...nextConfig,
     webpack(config, options) {
+      const rnwAssetRegistry = require.resolve("react-native-web/dist/modules/AssetRegistry");
       config.resolve = config.resolve || {};
       config.resolve.alias = {
         ...config.resolve.alias,
-        "react-native/Libraries/Image/AssetRegistry":
-          require.resolve("react-native-web/dist/modules/AssetRegistry"),
+        "react-native/Libraries/Image/AssetRegistry": rnwAssetRegistry,
+        "@react-native/assets-registry/registry": rnwAssetRegistry,
       };
       if (!options.isServer) {
         config.resolve.fallback = {

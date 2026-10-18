@@ -225,7 +225,7 @@ export const Gradient: Story = {
       <Badge {...args} variant="gradient" gradient={{ from: "#4f46e5", to: "#ec4899", deg: 60 }}>
         Shorthand
       </Badge>
-      <Badge {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
+      <Badge {...args} variant="gradient" gradient={{ from: "blue8", to: "blue11" }}>
         Tokens
       </Badge>
       <Badge

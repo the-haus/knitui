@@ -2,6 +2,11 @@
 
 import dynamic from "next/dynamic";
 
+import { setWorkerUrl } from "@knitui/map/worker";
+
+// Map demos load maplibre's worker from /public (copied in by next.config.mjs).
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+
 // The demo gallery now renders every Storybook story (see `@knitui/demo`'s
 // generated sections), and some components (Portal, Tooltip, FocusTrap, …) reach
 // for `document` as they mount. Render the whole gallery client-only so static

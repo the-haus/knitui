@@ -49,10 +49,14 @@ export function useDotHost(
   // Native drives the transform on the UI thread. On web this still runs but its
   // result is unused (we paint via the ref instead) — calling it unconditionally
   // keeps the hook order stable across platforms, so this stays one file.
-  const animatedStyle = useAnimatedStyle(() => {
-    "worklet";
-    return compute(progress.value);
-  }, deps);
+  const animatedStyle = useAnimatedStyle(
+    () => {
+      "worklet";
+      return compute(progress.value);
+    },
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? deps : undefined,
+  );
 
   // Web: paint the transform imperatively — the UI-thread `useAnimatedStyle`
   // above doesn't re-run on value changes under this repo's web tooling.

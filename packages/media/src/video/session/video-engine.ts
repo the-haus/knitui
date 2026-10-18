@@ -8,7 +8,7 @@
  * once by {@link MediaProvider} and teleported into the active player's frame,
  * binding to this controller's player via the surface.
  */
-import "../expo-globals";
+import "../../shared/expo-globals";
 
 import { createVideoPlayer } from "expo-video";
 import * as React from "react";

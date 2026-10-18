@@ -1,5 +1,10 @@
 import * as React from "react";
-import { Gesture, type PanGesture } from "react-native-gesture-handler";
+import {
+  type NativeGesture,
+  type PanGesture,
+  type PanGestureConfig,
+  usePanGesture,
+} from "react-native-gesture-handler";
 import {
   cancelAnimation,
   type SharedValue,
@@ -40,7 +45,7 @@ export interface SheetDragParams {
   /** Spring config for the settle animation. */
   spring?: WithSpringConfig;
   /** Allow a child ScrollView to take over (handoff) — RNGH ref to compose with. */
-  scrollGesture?: ReturnType<typeof Gesture.Native>;
+  scrollGesture?: NativeGesture;
   /**
    * Live vertical scroll offset (px, ≥0) of a nested `Sheet.ScrollView`. When
    * present the gesture becomes scroll-aware (the handoff): while the sheet is
@@ -87,7 +92,7 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
   // A bare tap begins + finalizes without activating, so this stays false and the
   // safety net leaves it alone.
   const active = useSharedValue(false);
-  // Whether `onEnd` already committed a settle, so the `onFinalize` safety net
+  // Whether `onDeactivate` already committed a settle, so the `onFinalize` safety net
   // only runs when an activated drag was cancelled/interrupted before a clean end.
   const settled = useSharedValue(false);
   // Handoff bookkeeping (only meaningful when `coordinated`): whether the panel —
@@ -99,7 +104,12 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
   // Scroll-aware only when a nested ScrollView wired both the gesture + its offset.
   const coordinated = scrollGesture != null && scrollOffsetY != null;
 
-  return React.useMemo(() => {
+  // RNGH 3: the gesture is a hook taking ONE config object. Its identity is keyed
+  // on that object (the hook clones + remaps it in a `useMemo([config])` and pushes
+  // it to the native handler on change), so the config is memoized here with the
+  // same dependencies the former builder memo had — a stable config
+  // keeps the handler's config untouched across unrelated re-renders.
+  const panConfig = React.useMemo<PanGestureConfig>(() => {
     const minOffset = offsets.length > 0 ? offsets[0] : 0;
     const maxOffset = dismissible
       ? closed
@@ -107,25 +117,26 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         ? offsets[offsets.length - 1]
         : closed;
 
-    let gesture = Gesture.Pan()
-      .enabled(enabled)
+    return {
+      enabled,
       // Only claim the touch once it has travelled vertically — taps, presses,
       // and horizontal swipes inside the panel are left to their own handlers.
-      .activeOffsetY([-ACTIVATION_THRESHOLD, ACTIVATION_THRESHOLD]);
-    // Coordinate with a child ScrollView so scroll-at-top hands off to the sheet
-    // and the two never fight (the handoff path; see useScrollHandoff).
-    if (scrollGesture) gesture = gesture.simultaneousWithExternalGesture(scrollGesture);
-
-    return gesture
-      .onBegin(() => {
+      activeOffsetY: [-ACTIVATION_THRESHOLD, ACTIVATION_THRESHOLD],
+      // Coordinate with a child ScrollView so scroll-at-top hands off to the sheet
+      // and the two never fight (the handoff path). RNGH 3 registers this relation
+      // symmetrically on both handlers (v2's `simultaneousWithExternalGesture` was
+      // declared on the Pan side only; the native orchestrator already treated
+      // either side's declaration as mutual).
+      simultaneousWith: scrollGesture,
+      onBegin: () => {
         "worklet";
         // Touch-down (may still be a tap). Reset the cycle flags but leave any
         // running open/close/settle spring alone — cancelling here would freeze a
         // mid-flight panel under a tap that never becomes a drag.
         active.value = false;
         settled.value = false;
-      })
-      .onStart(() => {
+      },
+      onActivate: () => {
         "worklet";
         // Activation (a real drag crossed the threshold). Catch the panel wherever
         // its spring currently is and hand it to the finger with no jump — capture
@@ -139,8 +150,8 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         sheetOwns.value = start.sheetOwns;
         handoff.value = start.handoff;
         scheduleOnRN(onStart);
-      })
-      .onUpdate((e) => {
+      },
+      onUpdate: (e) => {
         "worklet";
         const r = handoffUpdate({
           coordinated,
@@ -155,8 +166,8 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         sheetOwns.value = r.sheetOwns;
         handoff.value = r.handoff;
         offset.value = r.offset;
-      })
-      .onEnd((e) => {
+      },
+      onDeactivate: (e) => {
         "worklet";
         // The list was scrolling, not the panel: don't settle the sheet (a
         // downward fling on the list must not collapse it) — let native momentum
@@ -180,20 +191,21 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         settled.value = true;
         settleOffset(offset, result.offset, e.velocityY, config);
         scheduleOnRN(onSettle, result);
-      })
-      .onFinalize(() => {
+      },
+      onFinalize: () => {
         "worklet";
         // Safety net for an *activated* drag that was interrupted/cancelled before
-        // a clean `onEnd` (e.g. the OS stole the gesture) — it would otherwise
+        // a clean `onDeactivate` (e.g. the OS stole the gesture) — it would otherwise
         // leave the panel parked wherever the finger left it. Re-settle to the
         // nearest *visible* snap. Deliberately never the closed offset: only a
-        // real release (`onEnd`) or the overlay press may dismiss, so an aborted
+        // real release (`onDeactivate`) or the overlay press may dismiss, so an aborted
         // drag can't accidentally close the sheet.
         if (!active.value || settled.value || offsets.length === 0) return;
         const i = nearestSnapIndex(offset.value, offsets);
         settleOffset(offset, offsets[i], 0, config);
         scheduleOnRN(onSettle, { index: i, offset: offsets[i], dismiss: false });
-      });
+      },
+    };
   }, [
     offset,
     panStart,
@@ -213,4 +225,6 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
     onSettle,
     onScrollRelease,
   ]);
+
+  return usePanGesture(panConfig);
 }

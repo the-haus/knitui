@@ -1,5 +1,5 @@
 import type * as React from "react";
-import type { ScrollView as RNScrollView } from "react-native";
+import type { ScrollViewInstance as RNScrollView } from "react-native";
 
 export interface DragScrollParams {
   /** Ref to the native-scroll track's `Animated.ScrollView`. */

@@ -11,7 +11,7 @@ import {
 
 import { Box } from "../Box";
 import { Image, type ImageProps } from "../Image";
-import { type GradientValue, useGradient } from "../internal/gradient";
+import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import {
   controlTextColorVariant,
   type CssString,
@@ -228,7 +228,7 @@ const AvatarComponent = styleable<AvatarProps>(AvatarFrame, function Avatar(prop
 
   // Gradient fill (only when `variant="gradient"`): web paints a CSS
   // `backgroundImage`; native renders the `layer` behind the placeholder.
-  const grad = useGradient(variant === "gradient" ? gradient : undefined);
+  const grad = useGradient(gradientForVariant(variant, gradient));
 
   // Reset the load-error state whenever the source changes.
   const [errored, setErrored] = React.useState(false);

@@ -13,6 +13,8 @@
  * even when the call site is guarded — reading it off the namespace defers the
  * lookup to runtime, where `undefined` is exactly what the guard expects.
  */
+import "../../shared/expo-globals";
+
 import * as ExpoAudio from "expo-audio";
 
 import type {

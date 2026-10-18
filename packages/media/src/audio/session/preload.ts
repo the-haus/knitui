@@ -6,6 +6,8 @@
  * return synchronously, so we wrap them to keep the package's `Promise`-based
  * contract uniform across call sites.
  */
+import "../../shared/expo-globals";
+
 import {
   clearPreloadedSource as expoClear,
   clearAllPreloadedSources as expoClearAll,

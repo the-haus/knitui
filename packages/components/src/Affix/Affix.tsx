@@ -3,7 +3,7 @@ import * as React from "react";
 import { type GetProps, isWeb, styleable, styled } from "@knitui/core";
 
 import { Box } from "../Box";
-import { Portal, useOverlayHost } from "../Portal";
+import { OverlayPortal, useOverlayHost } from "../Portal";
 
 /** Default screen `z-index` for the Affix layer (mirrors Mantine's `modal`). */
 const DEFAULT_Z_INDEX = 200;
@@ -77,5 +77,5 @@ export const Affix = styleable<AffixProps>(AffixFrame, function Affix(props, ref
   // writes an explicit `undefined` edge (which would claim the call-site slot).
   const frame = <AffixFrame ref={ref} {...rest} zIndex={zIndex} {...position} />;
 
-  return withinPortal ? <Portal hostName={overlayHost}>{frame}</Portal> : frame;
+  return withinPortal ? <OverlayPortal hostName={overlayHost}>{frame}</OverlayPortal> : frame;
 });

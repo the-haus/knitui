@@ -2,8 +2,7 @@
 //
 // maplibre-gl v6 can't find its worker inside a bundle (see
 // packages/map/src/worker.ts), so every web surface that renders a map serves
-// `maplibre-gl-worker.mjs` plus the `maplibre-gl-shared.mjs` it imports, and
-// calls `setWorkerUrl("/maplibre/maplibre-gl-worker.mjs")`.
+// `maplibre-gl-worker.mjs` (self-contained since maplibre-gl 6.13) and calls `setWorkerUrl("/maplibre/maplibre-gl-worker.mjs")`.
 //
 // Called from next.config / metro.config rather than a package script, because
 // CI invokes `next build` directly and would skip a prebuild hook. CommonJS so
@@ -12,7 +11,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const MAPLIBRE_WORKER_FILES = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
+const MAPLIBRE_WORKER_FILES = ["maplibre-gl-worker.mjs"];
 
 /** The installed maplibre-gl `dist/` directory, resolved from `fromDir`. */
 function maplibreDistDir(fromDir) {
@@ -21,7 +20,7 @@ function maplibreDistDir(fromDir) {
 }
 
 /**
- * Copy the worker and its shared chunk into `destDir`. Files whose contents already
+ * Copy the worker into `destDir`. Files whose contents already
  * match are left alone, so repeated dev reloads don't touch the disk.
  */
 function copyMaplibreWorker(fromDir, destDir) {

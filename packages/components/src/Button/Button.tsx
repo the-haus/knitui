@@ -14,7 +14,7 @@ import {
 import { Box } from "../Box";
 import { controlIconSize } from "../internal/control-icon-size";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
-import { type GradientValue, useGradient } from "../internal/gradient";
+import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
 import {
@@ -267,7 +267,7 @@ const ButtonComponent = styleable<ButtonProps>(ButtonFrame, function Button(prop
 
   // Gradient fill (only when `variant="gradient"`): web paints a CSS
   // `backgroundImage`; native renders the `layer` (an SVG fill) behind content.
-  const grad = useGradient(variant === "gradient" ? gradient : undefined);
+  const grad = useGradient(gradientForVariant(variant, gradient));
 
   // Reduced-motion-aware press easing (neutralises the base dip when reduced).
   const press = usePressScale();

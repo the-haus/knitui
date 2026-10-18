@@ -166,7 +166,7 @@ export const Gradient: Story = {
       >
         <IconStar />
       </ThemeIcon>
-      <ThemeIcon {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
+      <ThemeIcon {...args} variant="gradient" gradient={{ from: "blue8", to: "blue11" }}>
         <IconStar />
       </ThemeIcon>
       <ThemeIcon

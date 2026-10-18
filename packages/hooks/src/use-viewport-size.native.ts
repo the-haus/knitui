@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dimensions } from "react-native";
+import { Dimensions, type ScaledSize } from "react-native";
 
 import type { ViewportSize } from "./use-viewport-size.shared";
 
@@ -25,9 +25,12 @@ export function useViewportSize(): ViewportSize {
   });
 
   useEffect(() => {
-    const subscription = Dimensions.addEventListener("change", ({ window }) => {
-      setSize({ width: window.width, height: window.height });
-    });
+    const subscription = Dimensions.addEventListener(
+      "change",
+      ({ window }: { window: ScaledSize }) => {
+        setSize({ width: window.width, height: window.height });
+      },
+    );
     return () => subscription.remove();
   }, []);
 

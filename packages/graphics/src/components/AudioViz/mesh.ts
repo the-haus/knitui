@@ -101,34 +101,35 @@ export interface MeshOptions {
 
 /**
  * The same uniform values, but over buffers the RENDERER owns and reuses — the
- * per-frame form (see {@link buildMeshUniformsInto}). `Float32Array` because that is
- * what `<Shader uniforms>` accepts alongside plain arrays, and what the GPU receives
- * either way, so nothing is lost by writing straight into it.
+ * per-frame form (see {@link buildMeshUniformsInto}). Plain `number[]`, not
+ * `Float32Array`: React Native Skia 2.14's native recorder reads a typed-array uniform
+ * through its generic indexable path, which takes only the first 4 values, so
+ * `u_points` (12 floats) arrived as 4 and native threw "Incorrect uniform size".
  */
 export type MeshUniformsFlat = {
-  u_resolution: Float32Array;
+  u_resolution: number[];
   u_count: number;
   u_softness: number;
-  u_points: Float32Array;
-  u_intensity: Float32Array;
-  u_colors: Float32Array;
+  u_points: number[];
+  u_intensity: number[];
+  u_colors: number[];
 };
 
 /** The reused uniform buffers behind {@link buildMeshUniformsInto}. */
 export interface MeshUniformScratch {
-  u_resolution: Float32Array;
-  u_points: Float32Array;
-  u_intensity: Float32Array;
-  u_colors: Float32Array;
+  u_resolution: number[];
+  u_points: number[];
+  u_intensity: number[];
+  u_colors: number[];
 }
 
 /** Allocate the reusable uniform buffers for one renderer instance. */
 export function createMeshUniformScratch(): MeshUniformScratch {
   return {
-    u_resolution: new Float32Array(2),
-    u_points: new Float32Array(MAX_MESH_POINTS * 2),
-    u_intensity: new Float32Array(MAX_MESH_POINTS),
-    u_colors: new Float32Array(MAX_MESH_POINTS * 3),
+    u_resolution: new Array<number>(2).fill(0),
+    u_points: new Array<number>(MAX_MESH_POINTS * 2).fill(0),
+    u_intensity: new Array<number>(MAX_MESH_POINTS).fill(0),
+    u_colors: new Array<number>(MAX_MESH_POINTS * 3).fill(0),
   };
 }
 
@@ -146,7 +147,7 @@ function activeMeshPoints(opts: MeshOptions): number {
 /**
  * The shared mesh math — the ONE implementation, writing into any index-assignable
  * targets (plain arrays for {@link buildMeshUniforms}, the renderer's reused
- * `Float32Array`s for {@link buildMeshUniformsInto}). Every slot up to
+ * buffers for {@link buildMeshUniformsInto}). Every slot up to
  * `MAX_MESH_POINTS` is written, including the inactive tail (zeroed), so a reused
  * buffer can never show a previous frame's extra blob. Worklet.
  */
@@ -238,7 +239,7 @@ export function buildMeshUniforms(
 
 /**
  * {@link buildMeshUniforms} into caller-owned buffers: the numbers land in
- * `scratch`'s `Float32Array`s and only the small record wrapping them is fresh —
+ * `scratch`'s reused arrays and only the small record wrapping them is fresh —
  * which it must be, since reanimated skips a SharedValue write whose value is
  * identical by reference, and `<Shader>` would then never see the new frame.
  *

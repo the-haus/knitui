@@ -52,10 +52,17 @@ let warnedMissingWorker = false;
  * map is created. Without one, maplibre v6 falls back to deriving it from
  * `import.meta.url`. Under webpack/Next that yields an empty string: no worker, no
  * tiles, and no error. Warn about that case in dev.
+ *
+ * maplibre only cache-busts the worker URL it derives itself, so a configured URL
+ * gets `?v=<version>` here. Otherwise a browser could keep a cached worker
+ * from an older maplibre-gl next to a newer main bundle.
  */
 function applyWorkerUrl(): void {
-  const url = getConfiguredWorkerUrl();
-  if (url) {
+  const configured = getConfiguredWorkerUrl();
+  if (configured) {
+    const url = configured.includes("?")
+      ? configured
+      : `${configured}?v=${maplibregl.getVersion()}`;
     if (maplibregl.getWorkerUrl() !== url) maplibregl.setWorkerUrl(url);
     return;
   }
@@ -68,9 +75,9 @@ function applyWorkerUrl(): void {
   ) {
     warnedMissingWorker = true;
     console.warn(
-      "Map: maplibre-gl has no worker URL, so tiles will not load. Serve maplibre-gl-worker.mjs " +
-        'and maplibre-gl-shared.mjs, then call setWorkerUrl() from "@knitui/map/worker" once ' +
-        "at startup. See https://knitui.dev/docs/map#web-worker",
+      "Map: maplibre-gl has no worker URL, so tiles will not load. Serve maplibre-gl-worker.mjs, " +
+        'then call setWorkerUrl() from "@knitui/map/worker" once at startup. ' +
+        "See https://knitui.dev/docs/map#web-worker",
     );
   }
 }

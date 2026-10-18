@@ -15,6 +15,12 @@
  */
 import { withKnitui } from "@knitui/plugins/next-plugin";
 
+import maplibreWorker from "../../scripts/maplibre-worker.cjs";
+
+// maplibre-gl v6 needs its worker served as a static file; `page.tsx` points
+// `setWorkerUrl` at it (see scripts/maplibre-worker.cjs).
+maplibreWorker.copyMaplibreWorker(import.meta.dirname, `${import.meta.dirname}/public/maplibre`);
+
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: [

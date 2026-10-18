@@ -2,7 +2,7 @@ import * as React from "react";
 import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 
 import { Overlay } from "@knitui/components";
-import type { ViewStyle } from "@knitui/core";
+import { isWeb, type ViewStyle } from "@knitui/core";
 
 import { overlayOpacity } from "../engine";
 import type { AnimatedOverlayProps, FrameHostProps } from "./animated.types";
@@ -45,10 +45,14 @@ export function AnimatedFrameHost({ offset, children }: FrameHostProps) {
   React.useEffect(() => {
     resend.value = resend.value === 0 ? RESEND_PX : 0;
   });
-  const style = useAnimatedStyle(() => {
-    "worklet";
-    return { transform: [{ translateY: offset.value + resend.value }] };
-  }, []);
+  const style = useAnimatedStyle(
+    () => {
+      "worklet";
+      return { transform: [{ translateY: offset.value + resend.value }] };
+    },
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [] : undefined,
+  );
 
   return <Animated.View style={[PANEL_FILL, style]}>{children}</Animated.View>;
 }
@@ -62,10 +66,13 @@ export function AnimatedOverlay({
   onPress,
   overlayProps,
 }: AnimatedOverlayProps) {
-  const style = useAnimatedStyle(() => {
-    "worklet";
-    return { opacity: overlayOpacity(offset.value, fadeStart, closed, maxOpacity) };
-  }, [fadeStart, closed, maxOpacity]);
+  const style = useAnimatedStyle(
+    () => {
+      "worklet";
+      return { opacity: overlayOpacity(offset.value, fadeStart, closed, maxOpacity) };
+    },
+    isWeb ? [fadeStart, closed, maxOpacity] : undefined,
+  );
 
   return (
     <Animated.View style={[SCRIM_FILL, style]} pointerEvents="box-none">

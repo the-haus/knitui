@@ -47,7 +47,10 @@ export type { BaseLayoutConfig };
 export function sanitizeAnimationStyle(style: ViewStyle): ViewStyle {
   "worklet";
   if (style.zIndex !== undefined) {
-    style.zIndex = Number.isFinite(style.zIndex) ? Math.round(style.zIndex as number) : 0;
+    // RN 0.88 types ViewStyle as readonly; the worklet output is a fresh object.
+    (style as { zIndex?: number }).zIndex = Number.isFinite(style.zIndex)
+      ? Math.round(style.zIndex as number)
+      : 0;
   }
   return style;
 }

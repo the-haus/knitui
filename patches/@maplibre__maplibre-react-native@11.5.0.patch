@@ -1,0 +1,143 @@
+diff --git a/ios/components/annotations/callout/MLRNCalloutComponentView.mm b/ios/components/annotations/callout/MLRNCalloutComponentView.mm
+index 1fb1bde..6d5f63b 100644
+--- a/ios/components/annotations/callout/MLRNCalloutComponentView.mm
++++ b/ios/components/annotations/callout/MLRNCalloutComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import "MLRNCallout.h"
+diff --git a/ios/components/annotations/point-annotation/MLRNPointAnnotationComponentView.mm b/ios/components/annotations/point-annotation/MLRNPointAnnotationComponentView.mm
+index 9ebd2ba..7948e86 100644
+--- a/ios/components/annotations/point-annotation/MLRNPointAnnotationComponentView.mm
++++ b/ios/components/annotations/point-annotation/MLRNPointAnnotationComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import <React/UIView+React.h>
+diff --git a/ios/components/camera/MLRNCameraComponentView.mm b/ios/components/camera/MLRNCameraComponentView.mm
+index cd7c016..77a9f0d 100644
+--- a/ios/components/camera/MLRNCameraComponentView.mm
++++ b/ios/components/camera/MLRNCameraComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import "MLRNCamera.h"
+diff --git a/ios/components/images/MLRNImagesComponentView.mm b/ios/components/images/MLRNImagesComponentView.mm
+index acff651..dc7d248 100644
+--- a/ios/components/images/MLRNImagesComponentView.mm
++++ b/ios/components/images/MLRNImagesComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import "MLRNFollyConvert.h"
+diff --git a/ios/components/layer/MLRNLayerComponentView.mm b/ios/components/layer/MLRNLayerComponentView.mm
+index 3518309..6f2769a 100644
+--- a/ios/components/layer/MLRNLayerComponentView.mm
++++ b/ios/components/layer/MLRNLayerComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <MapLibre/MapLibre.h>
+ #import <React/RCTConversions.h>
+diff --git a/ios/components/map-view/MLRNMapViewComponentView.mm b/ios/components/map-view/MLRNMapViewComponentView.mm
+index f354c7b..dc5a0b3 100644
+--- a/ios/components/map-view/MLRNMapViewComponentView.mm
++++ b/ios/components/map-view/MLRNMapViewComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import "MLRNFollyConvert.h"
+diff --git a/ios/components/sources/geojson-source/MLRNGeoJSONSourceComponentView.mm b/ios/components/sources/geojson-source/MLRNGeoJSONSourceComponentView.mm
+index 7b4dbec..85501a0 100644
+--- a/ios/components/sources/geojson-source/MLRNGeoJSONSourceComponentView.mm
++++ b/ios/components/sources/geojson-source/MLRNGeoJSONSourceComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import "MLRNFollyConvert.h"
+diff --git a/ios/components/sources/image-source/MLRNImageSourceComponentView.mm b/ios/components/sources/image-source/MLRNImageSourceComponentView.mm
+index 5b24e30..320134f 100644
+--- a/ios/components/sources/image-source/MLRNImageSourceComponentView.mm
++++ b/ios/components/sources/image-source/MLRNImageSourceComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTConversions.h>
+ #import "MLRNFollyConvert.h"
+diff --git a/ios/components/sources/tile-sources/raster-dem-source/MLRNRasterDEMSourceComponentView.mm b/ios/components/sources/tile-sources/raster-dem-source/MLRNRasterDEMSourceComponentView.mm
+index cfd539c..469b508 100644
+--- a/ios/components/sources/tile-sources/raster-dem-source/MLRNRasterDEMSourceComponentView.mm
++++ b/ios/components/sources/tile-sources/raster-dem-source/MLRNRasterDEMSourceComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <MapLibre/MapLibre.h>
+ #import <React/RCTConversions.h>
+diff --git a/ios/components/sources/tile-sources/raster-source/MLRNRasterSourceComponentView.mm b/ios/components/sources/tile-sources/raster-source/MLRNRasterSourceComponentView.mm
+index e43ae79..1f28d54 100644
+--- a/ios/components/sources/tile-sources/raster-source/MLRNRasterSourceComponentView.mm
++++ b/ios/components/sources/tile-sources/raster-source/MLRNRasterSourceComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <MapLibre/MapLibre.h>
+ #import <React/RCTConversions.h>
+diff --git a/ios/components/sources/tile-sources/vector-source/MLRNVectorSourceComponentView.mm b/ios/components/sources/tile-sources/vector-source/MLRNVectorSourceComponentView.mm
+index a1943ea..b6d2bbd 100644
+--- a/ios/components/sources/tile-sources/vector-source/MLRNVectorSourceComponentView.mm
++++ b/ios/components/sources/tile-sources/vector-source/MLRNVectorSourceComponentView.mm
+@@ -5,7 +5,7 @@
+ #import <react/renderer/components/MapLibreReactNativeSpec/Props.h>
+ #import <react/renderer/components/MapLibreReactNativeSpec/RCTComponentViewHelpers.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <MapLibre/MapLibre.h>
+ #import <React/RCTConversions.h>

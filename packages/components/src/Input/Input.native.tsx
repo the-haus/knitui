@@ -7,6 +7,7 @@ import {
   registerFocusable,
   styleable,
   styled,
+  type TamaguiElement,
   useNativeInputRef,
   withStaticProperties,
 } from "@knitui/core";
@@ -44,11 +45,23 @@ import type {
 // (`INPUT_HOST_CONFIG`). `isInput` makes `placeholderTextColor` / `selectionColor`
 // / `cursorColor` theme-resolved colour props, and the underlying RN TextInput
 // identity stays stable across renders, so the controlled input is state-safe.
-const InputHostStyle = styled(TextInput, INPUT_HOST_CONFIG, INPUT_HOST_STATIC);
+// RN 0.88's TextInput type names a private instance class (`_TextInputInstance`)
+// that declaration emit can't reference, so the host is typed with a portable ref.
+const TextInputHost = TextInput as React.ComponentType<
+  RNTextInputProps & React.RefAttributes<TamaguiElement>
+>;
+const InputHostStyle = styled(TextInputHost, INPUT_HOST_CONFIG, INPUT_HOST_STATIC);
 
 const FILL_HEIGHT = { height: "100%" } as const;
 const NO_FONT_PADDING = { includeFontPadding: false } as const;
 const NO_POINTER_EVENTS = { pointerEvents: "none" } as const;
+// RN 0.88 dropped the `verticalAlign` TextInput prop; it survives as our alias.
+const VERTICAL_ALIGN_TO_TEXT_ALIGN_VERTICAL = {
+  auto: "auto",
+  top: "top",
+  bottom: "bottom",
+  middle: "center",
+} as const;
 
 // Native key payloads have no DOM event to defer to; consumers still call
 // `preventDefault`/`stopPropagation`, so hand them a no-op.
@@ -500,7 +513,7 @@ const InputComponent = styleable<NativeInputProps>(
       caretHidden,
       contextMenuHidden,
       selectTextOnFocus,
-      maxFontSizeMultiplier,
+      maxFontSizeMultiplier: maxFontSizeMultiplier ?? undefined,
       allowFontScaling,
       autoCapitalize,
       autoCorrect,
@@ -512,8 +525,8 @@ const InputComponent = styleable<NativeInputProps>(
       enablesReturnKeyAutomatically,
       dataDetectorTypes,
       scrollEnabled,
-      passwordRules,
-      rejectResponderTermination,
+      passwordRules: passwordRules ?? undefined,
+      rejectResponderTermination: rejectResponderTermination ?? undefined,
       spellCheck,
       lineBreakStrategyIOS,
       lineBreakModeIOS,
@@ -532,8 +545,10 @@ const InputComponent = styleable<NativeInputProps>(
       // Top-align multiline text by default so the explicit vertical padding is
       // measured from the top edge consistently (Android otherwise centers it). A
       // consumer-passed `textAlignVertical` still wins.
-      textAlignVertical: textAlignVertical ?? (multiline ? "top" : undefined),
-      verticalAlign,
+      textAlignVertical:
+        textAlignVertical ??
+        (verticalAlign ? VERTICAL_ALIGN_TO_TEXT_ALIGN_VERTICAL[verticalAlign] : undefined) ??
+        (multiline ? "top" : undefined),
       showSoftInputOnFocus,
     };
 
@@ -567,7 +582,7 @@ const InputComponent = styleable<NativeInputProps>(
         __defaultRightSection={__defaultRightSection}
       >
         <InputHostStyle
-          ref={composedRef as React.Ref<TextInput>}
+          ref={composedRef as React.Ref<TamaguiElement>}
           flex={1}
           minWidth={0}
           paddingVertical={multiline ? getTextareaPaddingVertical(effectiveSize) : 0}

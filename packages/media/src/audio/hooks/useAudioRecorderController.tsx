@@ -8,6 +8,8 @@
  * A single file works on both platforms — expo-audio's `.web` backend is a real
  * `MediaRecorder` recorder, so there is no platform split here anymore.
  */
+import "../../shared/expo-globals";
+
 import type { RecordingOptions as ExpoRecordingOptions } from "expo-audio";
 import { useAudioRecorder } from "expo-audio";
 import * as React from "react";

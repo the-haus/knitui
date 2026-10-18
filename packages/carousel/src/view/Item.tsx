@@ -1,5 +1,6 @@
 import * as React from "react";
 import Animated, { useAnimatedStyle, useDerivedValue } from "react-native-reanimated";
+import { isWeb } from "@knitui/core";
 
 import { itemProgress, rawIndex } from "../engine";
 import { sanitizeAnimationStyle } from "../layouts";
@@ -30,16 +31,23 @@ function ItemInner<T>({
   renderItem,
   renderPlaceholder,
 }: ItemProps<T>) {
-  const progress = useDerivedValue(() => {
-    "worklet";
-    if (!(size.value > 0)) return index;
-    return itemProgress(rawIndex(offset.value, size.value), index, count, loop);
-  }, [index, count, loop]);
+  const progress = useDerivedValue(
+    () => {
+      "worklet";
+      if (!(size.value > 0)) return index;
+      return itemProgress(rawIndex(offset.value, size.value), index, count, loop);
+    },
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [index, count, loop] : undefined,
+  );
 
-  const animatedStyle = useAnimatedStyle(() => {
-    "worklet";
-    return sanitizeAnimationStyle(animationStyle(progress.value, index));
-  }, [animationStyle, index]);
+  const animatedStyle = useAnimatedStyle(
+    () => {
+      "worklet";
+      return sanitizeAnimationStyle(animationStyle(progress.value, index));
+    },
+    isWeb ? [animationStyle, index] : undefined,
+  );
 
   // Per-slide visual box (`styles.slide`) — a styled child of the animated host,
   // which keeps owning the transform (never share a node with a Tamagui driver).

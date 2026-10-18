@@ -9,7 +9,7 @@ const DRAG_THRESHOLD = 5;
 /**
  * The `grabbing` cursor for the transform-mode track on web.
  *
- * The drag itself is RNGH's `Gesture.Pan()` (`useDragGesture`, shared with
+ * The drag itself is RNGH's `usePanGesture` (`useDragGesture`, shared with
  * native), which knows nothing about cursors — so a mouse user got no feedback
  * that the rail was moving with the pointer. Deliberately NO idle `grab`: the
  * cursor is untouched until travel passes `DRAG_THRESHOLD`, so hovering the

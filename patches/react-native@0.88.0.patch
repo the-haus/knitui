@@ -1,0 +1,14 @@
+diff --git a/package.json b/package.json
+index 5bd2b7e16ec581cbb9b81e5cf537dc5c18d149a2..517afb0ccf37f8ace11d013c1f5bc7848c23da18 100644
+--- a/package.json
++++ b/package.json
+@@ -206,9 +206,6 @@
+             "PlatformConstants": {
+               "unstableRequiresMainQueueSetup": true
+             },
+-            "SampleTurboModule": {
+-              "unstableRequiresMainQueueSetup": true
+-            },
+             "StatusBarManager": {
+               "unstableRequiresMainQueueSetup": true
+             }

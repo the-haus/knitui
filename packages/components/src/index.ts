@@ -412,6 +412,8 @@ export {
 export {
   OverlayHost,
   type OverlayHostProps,
+  OverlayPortal,
+  type OverlayPortalProps,
   Portal,
   PortalHost,
   type PortalHostProps,

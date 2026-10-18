@@ -18,7 +18,7 @@ export type { SheetScrollViewProps } from "./ScrollView.shared";
  * Scrollable content region for use inside a `Sheet.Frame` (React Native).
  *
  * This is where the scroll↔drag handoff lives. The scroller is wrapped in a
- * `GestureDetector` bound to the sheet's `Gesture.Native` (from context) so the
+ * `GestureDetector` bound to the sheet's `useNativeGesture()` (from context) so the
  * list and the sheet's Pan recognise **simultaneously** — the finger drives one
  * continuous gesture and the two hand off cleanly:
  *
@@ -48,22 +48,19 @@ export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollVie
     const expandedOffset = ctx?.expandedOffset ?? 0;
     const handoffEnabled = ctx?.handoffEnabled ?? false;
 
-    const onScroll = useAnimatedScrollHandler(
-      {
-        onScroll: (e) => {
-          "worklet";
-          const y = e.contentOffset.y;
-          if (scrollOffsetY) scrollOffsetY.value = y;
-          // While the sheet isn't fully expanded, keep the list pinned to the top
-          // so the drag drives the panel (and a mid-collapse list can't scroll).
-          if (sheetOffset && shouldPinToTop(handoffEnabled, sheetOffset.value, expandedOffset, y)) {
-            scrollTo(aref, 0, 0, false);
-            if (scrollOffsetY) scrollOffsetY.value = 0;
-          }
-        },
+    const onScroll = useAnimatedScrollHandler({
+      onScroll: (e) => {
+        "worklet";
+        const y = e.contentOffset.y;
+        if (scrollOffsetY) scrollOffsetY.value = y;
+        // While the sheet isn't fully expanded, keep the list pinned to the top
+        // so the drag drives the panel (and a mid-collapse list can't scroll).
+        if (sheetOffset && shouldPinToTop(handoffEnabled, sheetOffset.value, expandedOffset, y)) {
+          scrollTo(aref, 0, 0, false);
+          if (scrollOffsetY) scrollOffsetY.value = 0;
+        }
       },
-      [handoffEnabled, expandedOffset, scrollOffsetY, sheetOffset],
-    );
+    });
 
     // Expose a minimal `ScrollAreaHandle` so the ref contract matches the web
     // build. The custom-scrollbar affordances have no native analogue here.
@@ -90,7 +87,7 @@ export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollVie
         style={[{ flex: 1 }, style as never]}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps as never}
       >
         {children}
       </Animated.ScrollView>
@@ -100,7 +97,7 @@ export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollVie
     if (!ctx) return scroller;
 
     // Bind the scroller to the sheet's Native gesture so it recognises together
-    // with the sheet Pan (declared simultaneous on the Pan side).
+    // with the sheet Pan (declared via the Pan's `simultaneousWith`).
     return <GestureDetector gesture={ctx.scrollGesture}>{scroller}</GestureDetector>;
   },
 );

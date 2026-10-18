@@ -11,6 +11,7 @@ import type {
   ColorSchemePreference,
   ProviderProps,
 } from "./Provider.types";
+import { alwaysFocused, ScreenFocusContext } from "./ScreenFocusContext";
 import { useSystemColorScheme } from "./useSystemColorScheme";
 
 /**
@@ -77,6 +78,7 @@ export function SharedProvider({
   forceColorScheme,
   config = defaultConfig,
   backgroundColor = "background",
+  useScreenFocus,
   children,
   ...rest
 }: ProviderProps) {
@@ -126,7 +128,11 @@ export function SharedProvider({
            * on every platform. It sits inside `TamaguiProvider` so the host — and
            * any content teleported into it on web — stays within theme scope.
            */}
-          <PortalProvider>{children}</PortalProvider>
+          <PortalProvider>
+            <ScreenFocusContext.Provider value={useScreenFocus ?? alwaysFocused}>
+              {children}
+            </ScreenFocusContext.Provider>
+          </PortalProvider>
         </View>
       </TamaguiProvider>
     </ColorSchemeContext.Provider>

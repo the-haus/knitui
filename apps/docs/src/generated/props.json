@@ -1485,10 +1485,6 @@
       "type": "FlatClauseString | \"auto\" | \"isolate\" | \"unset\" | FlatStyleObject<\"auto\" | \"isolate\" | \"unset\" | undefined> | undefined"
     },
     {
-      "name": "isTVSelectable",
-      "type": "boolean | undefined"
-    },
-    {
       "name": "justify",
       "type": "string | undefined"
     },
@@ -3329,6 +3325,10 @@
       "type": "boolean | undefined"
     },
     {
+      "name": "svgVariables",
+      "type": "Record<string, string | number> | null | undefined"
+    },
+    {
       "name": "ta",
       "type": "Property.TextAlign | null"
     },
@@ -3587,22 +3587,6 @@
     {
       "name": "tt",
       "type": "Property.TextTransform | null"
-    },
-    {
-      "name": "tvParallaxMagnification",
-      "type": "number | undefined"
-    },
-    {
-      "name": "tvParallaxShiftDistanceX",
-      "type": "number | undefined"
-    },
-    {
-      "name": "tvParallaxShiftDistanceY",
-      "type": "number | undefined"
-    },
-    {
-      "name": "tvParallaxTiltAngle",
-      "type": "number | undefined"
     },
     {
       "name": "type",
@@ -7896,7 +7880,7 @@
         }
       ],
       "counts": {
-        "style": 833,
+        "style": 829,
         "system": 5,
         "own": 8
       }
@@ -62350,13 +62334,13 @@
         {
           "name": "ref",
           "bucket": "own",
-          "type": "Ref<RNView> | undefined",
+          "type": "Ref<default> | undefined",
           "required": false,
           "declaredIn": "packages/graphics/src/components/EffectView/EffectView.tsx"
         }
       ],
       "counts": {
-        "style": 90,
+        "style": 114,
         "own": 3
       }
     },
@@ -62382,7 +62366,7 @@
         {
           "name": "ref",
           "bucket": "own",
-          "type": "Ref<View> | undefined",
+          "type": "Ref<default> | undefined",
           "required": false,
           "declaredIn": "packages/graphics/src/components/EffectView/EffectView.tsx"
         },
@@ -62423,7 +62407,7 @@
         }
       ],
       "counts": {
-        "style": 90,
+        "style": 114,
         "own": 7
       }
     },

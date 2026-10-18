@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Platform, ScrollView } from "react-native";
+import { Platform, ScrollView, type ScrollViewInstance } from "react-native";
 
 import { type GetProps, styled } from "@knitui/core";
 import { useKeyboardHeight } from "@knitui/hooks";
@@ -44,36 +44,37 @@ export type KeyboardAwareScrollViewProps = GetProps<typeof Frame> & {
   ScrollViewComponent?: unknown;
 };
 
-export const KeyboardAwareScrollView = React.forwardRef<ScrollView, KeyboardAwareScrollViewProps>(
-  function KeyboardAwareScrollView(props, ref) {
-    const {
-      bottomOffset: _bottomOffset,
-      extraKeyboardSpace,
-      disableScrollOnKeyboardHide: _disableScrollOnKeyboardHide,
-      enabled: _enabled,
-      mode: _mode,
-      ScrollViewComponent: _ScrollViewComponent,
-      keyboardShouldPersistTaps = "handled",
-      contentContainerStyle,
-      ...rest
-    } = props;
+export const KeyboardAwareScrollView = React.forwardRef<
+  ScrollViewInstance,
+  KeyboardAwareScrollViewProps
+>(function KeyboardAwareScrollView(props, ref) {
+  const {
+    bottomOffset: _bottomOffset,
+    extraKeyboardSpace,
+    disableScrollOnKeyboardHide: _disableScrollOnKeyboardHide,
+    enabled: _enabled,
+    mode: _mode,
+    ScrollViewComponent: _ScrollViewComponent,
+    keyboardShouldPersistTaps = "handled",
+    contentContainerStyle,
+    ...rest
+  } = props;
 
-    const keyboardHeight = useKeyboardHeight();
-    // iOS handles the inset itself via `automaticallyAdjustKeyboardInsets`, so only
-    // pad on Android to avoid double-spacing.
-    const paddingBottom =
-      Platform.OS === "android" && keyboardHeight > 0
-        ? keyboardHeight + (extraKeyboardSpace ?? 0)
-        : undefined;
+  const keyboardHeight = useKeyboardHeight();
+  // iOS handles the inset itself via `automaticallyAdjustKeyboardInsets`, so only
+  // pad on Android to avoid double-spacing.
+  const paddingBottom =
+    Platform.OS === "android" && keyboardHeight > 0
+      ? keyboardHeight + (extraKeyboardSpace ?? 0)
+      : undefined;
 
-    return (
-      <Frame
-        ref={ref}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={[contentContainerStyle, paddingBottom != null && { paddingBottom }]}
-        {...rest}
-      />
-    );
-  },
-);
+  return (
+    <Frame
+      ref={ref}
+      keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+      automaticallyAdjustKeyboardInsets
+      contentContainerStyle={[contentContainerStyle, paddingBottom != null && { paddingBottom }]}
+      {...rest}
+    />
+  );
+});

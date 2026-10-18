@@ -10,7 +10,7 @@
  * caption files (`textTracks`) are pushed into the controller, which fetches,
  * parses, and paints them with the kit's own overlay.
  */
-import "../expo-globals";
+import "../../shared/expo-globals";
 
 import { VideoView, type VideoViewProps } from "expo-video";
 import * as React from "react";

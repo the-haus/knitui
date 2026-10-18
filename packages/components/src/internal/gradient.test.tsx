@@ -4,7 +4,12 @@ import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { Avatar } from "../Avatar";
 import { Button } from "../Button";
 import { render, screen } from "../test-utils";
-import { degToSvgCoords, gradientToCss, normalizeStops } from "./gradient-shared";
+import {
+  degToSvgCoords,
+  gradientForVariant,
+  gradientToCss,
+  normalizeStops,
+} from "./gradient-shared";
 import { themeColorToCssVar } from "./theme-color-web";
 
 /** The `background-image` the element's atomic classes paint (v3 hashed classes). */
@@ -84,6 +89,21 @@ describe("gradient helpers", () => {
   });
 });
 
+describe("gradientForVariant", () => {
+  it("is undefined unless the variant is gradient", () => {
+    expect(gradientForVariant("filled", { from: "red" })).toBeUndefined();
+    expect(gradientForVariant(undefined, undefined)).toBeUndefined();
+  });
+
+  it("passes an explicit gradient through and defaults a missing one to a stable value", () => {
+    const g = { from: "red", to: "blue" };
+    expect(gradientForVariant("gradient", g)).toBe(g);
+    const fallback = gradientForVariant("gradient", undefined);
+    expect(fallback).toEqual({});
+    expect(gradientForVariant("gradient", undefined)).toBe(fallback);
+  });
+});
+
 describe("gradient variant rendering (web)", () => {
   // Tamagui compiles `backgroundImage` to a hashed atomic class with the literal
   // gradient in an injected stylesheet, so we assert on the rule that class
@@ -97,6 +117,14 @@ describe("gradient variant rendering (web)", () => {
     const button = screen.getByRole("button");
     expect(button).toHaveTextContent("Go");
     expect(backgroundImageOf(button)).toContain("linear-gradient(45deg, #ff0000 0%, #0000ff 100%)");
+  });
+
+  it("paints the theme-ramp default when variant='gradient' has no gradient prop", () => {
+    render(<Button variant="gradient">Go</Button>);
+    const css = backgroundImageOf(screen.getByRole("button"));
+    expect(css).toContain("linear-gradient(45deg,");
+    expect(css).toContain(themeColorToCssVar("color5"));
+    expect(css).toContain(themeColorToCssVar("color9"));
   });
 
   it("does not paint a backgroundImage for non-gradient variants", () => {

@@ -28,7 +28,7 @@ type Easer = EasingFunction | EasingFunctionFactory;
  * worklet output) drives on the UI thread. Mirrors `LoopView` on web (a `Box`); the
  * spread API (`<LoopView {...loop} />`) is identical across platforms.
  */
-export const LoopView = Animated.View;
+export const LoopView: typeof Animated.View = Animated.View;
 
 /**
  * Promote a frame component into a reanimated host so a {@link useLoopingAnimation}
@@ -116,7 +116,7 @@ export function useLoopingAnimation(motion: LoopMotion): LoopStyle {
     // shimmer
     const offset = progress.value * distance;
     return { transform: axis === "y" ? [{ translateY: offset }] : [{ translateX: offset }] };
-  }, [reduced, kind, minOpacity, distance, axis]);
+  });
 
   return { style };
 }

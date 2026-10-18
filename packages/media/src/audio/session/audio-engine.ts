@@ -7,6 +7,8 @@
  * its `.web` backend (which owns its own internal `<audio>` element) in the
  * browser, so there is no surface element to create or teleport for audio.
  */
+import "../../shared/expo-globals";
+
 import { createAudioPlayer } from "expo-audio";
 import * as React from "react";
 

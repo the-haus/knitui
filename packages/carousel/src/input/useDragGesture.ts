@@ -1,12 +1,17 @@
 import * as React from "react";
-import { Gesture, type PanGesture } from "react-native-gesture-handler";
+import {
+  type PanGesture,
+  type PanGestureActiveEvent,
+  type PanGestureConfig,
+  usePanGesture,
+} from "react-native-gesture-handler";
 import { cancelAnimation, type SharedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
 import { clamp, settle } from "../engine";
 import { applySettle } from "../motion/animations";
 import type { ResolvedConfig } from "../motion/useCarouselCore";
-import type { WithAnimation } from "../types";
+import type { CarouselGestureConfig, WithAnimation } from "../types";
 
 export interface DragGestureParams {
   offset: SharedValue<number>;
@@ -15,7 +20,8 @@ export interface DragGestureParams {
   withAnimation: WithAnimation | undefined;
   maxScrollDistancePerSwipe?: number;
   minScrollDistancePerSwipe?: number;
-  gestureConfig?: (gesture: PanGesture) => PanGesture;
+  /** Extra pan config merged UNDER the kit's own (`enabled` may be overridden). */
+  gestureConfig?: CarouselGestureConfig;
   onStart: () => void;
   onSettle: () => void;
 }
@@ -24,6 +30,10 @@ export interface DragGestureParams {
  * The drag gesture, shared by native and web (RNGH supports both). Tracks the
  * finger into `offset` (with edge rubber-banding in non-loop mode) and runs the
  * pure `settle` on release to pick the resting offset.
+ *
+ * RNGH 3 hook API: the config object is memoized so `usePanGesture` (which keys
+ * its native config push on config identity) only reconfigures the handler when
+ * an input actually changes — same cadence as the old memoized builder.
  */
 export function useDragGesture(params: DragGestureParams): PanGesture {
   const {
@@ -51,7 +61,7 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
 
   const panStart = useSharedValue(0);
 
-  return React.useMemo(() => {
+  const panConfig = React.useMemo((): PanGestureConfig => {
     const process = (value: number): number => {
       "worklet";
       const s = size.value;
@@ -64,23 +74,25 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
       return value;
     };
 
-    let gesture = Gesture.Pan().enabled(enabled);
-    if (gestureConfig) gesture = gestureConfig(gesture);
-
-    return gesture
-      .onBegin(() => {
+    return {
+      enabled,
+      // Caller config sits between `enabled` (overridable, as the old builder
+      // callback could) and the kit's callbacks (always win).
+      ...gestureConfig,
+      onBegin: () => {
         "worklet";
         cancelAnimation(offset);
         panStart.value = offset.value;
         scheduleOnRN(onStart);
-      })
-      .onUpdate((e) => {
+      },
+      onUpdate: (e: PanGestureActiveEvent) => {
         "worklet";
         if (!(size.value > 0)) return;
         const translation = vertical ? e.translationY : e.translationX;
         offset.value = process(panStart.value + translation);
-      })
-      .onEnd((e) => {
+      },
+      // v3 `onDeactivate` == v2 `onEnd`: fires only when leaving ACTIVE.
+      onDeactivate: (e) => {
         "worklet";
         if (!(size.value > 0)) return;
         const velocity = vertical ? e.velocityY : e.velocityX;
@@ -97,7 +109,8 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
           minScrollDistancePerSwipe,
         });
         applySettle(offset, result, withAnimation, scrollAnimationDuration, onSettle);
-      });
+      },
+    };
   }, [
     offset,
     size,
@@ -117,4 +130,6 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
     onStart,
     onSettle,
   ]);
+
+  return usePanGesture(panConfig);
 }

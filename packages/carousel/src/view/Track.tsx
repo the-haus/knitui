@@ -2,6 +2,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { type SharedValue, useAnimatedReaction } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { isWeb } from "@knitui/core";
 
 import { prefetchWindow, rawIndex, visibleWindow } from "../engine";
 import type { AnimationStyle, RenderItem } from "../types";
@@ -120,7 +121,8 @@ function TrackInner<T>(props: TrackProps<T>) {
       if (center === prev || center === -1) return;
       scheduleOnRN(onCenter, center);
     },
-    [onCenter],
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [onCenter] : undefined,
   );
 
   return (

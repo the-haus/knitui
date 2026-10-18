@@ -1,5 +1,9 @@
 import * as React from "react";
-import { Gesture, type PanGesture } from "react-native-gesture-handler";
+import {
+  type PanGesture,
+  type PanGestureConfig,
+  usePanGesture,
+} from "react-native-gesture-handler";
 import {
   cancelAnimation,
   type SharedValue,
@@ -61,12 +65,12 @@ export interface DragDismissParams {
 }
 
 /**
- * A single-axis drag-to-dismiss `Gesture.Pan`, shared by `Modal` (axis `y`,
+ * A single-axis drag-to-dismiss pan (RNGH 3 `usePanGesture`), shared by `Modal` (axis `y`,
  * sign `-1` — drag up) and `Drawer` (per-edge axis/sign). Tracks the finger toward the
  * dismiss edge into `offset` (rubber-banding the wrong way), and on release runs
  * the pure {@link shouldDismiss} on the UI thread: dismiss → spring off-screen
  * then `onDismiss`; otherwise spring back to rest. Works on web and native (RNGH
- * `Gesture.Pan` supports both).
+ * `usePanGesture` supports both). Returns the gesture for a `<GestureDetector>`.
  */
 export function useDragDismiss(params: DragDismissParams): PanGesture {
   const { offset, axis, sign, extent, dismissTravel, enabled, threshold, spring, onDismiss } =
@@ -75,7 +79,7 @@ export function useDragDismiss(params: DragDismissParams): PanGesture {
   // Whether this cycle activated (crossed the threshold into a real drag). A bare
   // tap begins + finalizes without activating, so this stays false.
   const active = useSharedValue(false);
-  // Whether `onEnd` already committed a settle, so the `onFinalize` safety net only
+  // Whether `onDeactivate` already committed a settle, so the `onFinalize` safety net only
   // runs for an activated drag that was cancelled/interrupted before a clean end.
   const settled = useSharedValue(false);
   const config = spring ?? DEFAULT_DISMISS_SPRING;
@@ -84,25 +88,26 @@ export function useDragDismiss(params: DragDismissParams): PanGesture {
   // only the settle target differs (see `dismissTravel`).
   const exitTo = dismissTravel != null && dismissTravel > extent ? dismissTravel : extent;
 
-  return React.useMemo(() => {
+  // Config identity drives RNGH's re-configuration (`usePanGesture` re-sends the
+  // config to the native handler whenever the object changes), so memoize it on
+  // exactly the inputs the callbacks close over.
+  const panConfig = React.useMemo((): PanGestureConfig => {
     // Only claim the touch once it has travelled along the drag axis — taps,
     // control presses, and cross-axis swipes are left to their own handlers.
     const threshold2: [number, number] = [-ACTIVATION_THRESHOLD, ACTIVATION_THRESHOLD];
-    const gesture =
-      axis === "x"
-        ? Gesture.Pan().enabled(enabled).activeOffsetX(threshold2)
-        : Gesture.Pan().enabled(enabled).activeOffsetY(threshold2);
 
-    return gesture
-      .onBegin(() => {
+    return {
+      enabled,
+      ...(axis === "x" ? { activeOffsetX: threshold2 } : { activeOffsetY: threshold2 }),
+      onBegin: () => {
         "worklet";
         // Touch-down (may still be a tap). Reset the cycle flags but leave any
         // running settle spring alone — cancelling here would freeze a mid-flight
         // panel under a tap that never becomes a drag.
         active.value = false;
         settled.value = false;
-      })
-      .onStart(() => {
+      },
+      onActivate: () => {
         "worklet";
         // Activation (a real drag crossed the threshold). Catch the panel wherever
         // its spring currently is and hand it to the finger with no jump — grabbing
@@ -111,8 +116,8 @@ export function useDragDismiss(params: DragDismissParams): PanGesture {
         panStart.value = offset.value;
         cancelAnimation(offset);
         active.value = true;
-      })
-      .onUpdate((e) => {
+      },
+      onUpdate: (e) => {
         "worklet";
         const raw = axis === "x" ? e.translationX : e.translationY;
         // Map screen translation into dismiss-direction travel. Hard-clamp the
@@ -120,8 +125,8 @@ export function useDragDismiss(params: DragDismissParams): PanGesture {
         // TOWARD the edge — never further into the screen than its open position.
         const d = panStart.value + raw * sign;
         offset.value = d > 0 ? d : 0;
-      })
-      .onEnd((e) => {
+      },
+      onDeactivate: (e) => {
         "worklet";
         const velocity = (axis === "x" ? e.velocityX : e.velocityY) * sign;
         settled.value = true;
@@ -140,15 +145,16 @@ export function useDragDismiss(params: DragDismissParams): PanGesture {
         } else {
           offset.value = withSpring(0, { ...config, velocity });
         }
-      })
-      .onFinalize(() => {
+      },
+      onFinalize: () => {
         "worklet";
         // Safety net for an activated drag interrupted/cancelled before a clean
-        // `onEnd` (e.g. the OS stole the gesture) — spring back to rest. Never
+        // `onDeactivate` (e.g. the OS stole the gesture) — spring back to rest. Never
         // dismisses: only a real release may close the panel.
         if (!active.value || settled.value) return;
         offset.value = withSpring(0, config);
-      });
+      },
+    };
   }, [
     offset,
     panStart,
@@ -163,4 +169,6 @@ export function useDragDismiss(params: DragDismissParams): PanGesture {
     config,
     onDismiss,
   ]);
+
+  return usePanGesture(panConfig);
 }

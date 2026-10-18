@@ -287,7 +287,8 @@ export function useCarouselCore<T>(
         scheduleOnRN(reportIndex, real);
       }
     },
-    [count, rawCount, loop, externalProgress, progressSV, hasProgressCb],
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [count, rawCount, loop, externalProgress, progressSV, hasProgressCb] : undefined,
   );
 
   // Web: Reanimated's `useAnimatedReaction` does not re-run on shared-value

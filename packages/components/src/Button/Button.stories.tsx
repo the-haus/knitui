@@ -263,7 +263,7 @@ export const Gradient: Story = {
       <Button {...args} variant="gradient" gradient={{ from: "#4f46e5", to: "#ec4899", deg: 60 }}>
         Shorthand
       </Button>
-      <Button {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
+      <Button {...args} variant="gradient" gradient={{ from: "blue8", to: "blue11" }}>
         Tokens
       </Button>
       <Button {...args} variant="gradient" gradient={GRADIENT_PRESETS.Spectrum}>

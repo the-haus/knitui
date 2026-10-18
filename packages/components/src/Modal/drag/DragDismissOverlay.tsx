@@ -1,7 +1,7 @@
 import * as React from "react";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
-import type { ViewStyle } from "@knitui/core";
+import { isWeb, type ViewStyle } from "@knitui/core";
 
 import { Overlay } from "../../Overlay";
 import { dragOverlayOpacity } from "./engine";
@@ -22,10 +22,14 @@ export function DragDismissOverlay({
   onPress,
   overlayProps,
 }: DragDismissOverlayProps) {
-  const style = useAnimatedStyle(() => {
-    "worklet";
-    return { opacity: dragOverlayOpacity(offset.value, extent, maxOpacity) };
-  }, [extent, maxOpacity]);
+  const style = useAnimatedStyle(
+    () => {
+      "worklet";
+      return { opacity: dragOverlayOpacity(offset.value, extent, maxOpacity) };
+    },
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [extent, maxOpacity] : undefined,
+  );
 
   return (
     <Animated.View style={[FILL, { zIndex: 0 }, style]} pointerEvents="box-none">

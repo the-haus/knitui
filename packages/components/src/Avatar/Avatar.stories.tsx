@@ -282,7 +282,7 @@ export const Gradient: Story = {
         {...args}
         variant="gradient"
         autoColor={false}
-        gradient={{ from: "blue9", to: "teal9" }}
+        gradient={{ from: "blue8", to: "blue11" }}
         name="TK"
       />
       <Avatar

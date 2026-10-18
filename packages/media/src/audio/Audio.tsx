@@ -14,7 +14,7 @@
 import * as React from "react";
 
 import { Image, PortalHost, Stack, Text } from "@knitui/components";
-import { slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import { isWeb, slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
 
 import { useMediaCallbacks } from "../core/react/useMediaCallbacks";
 import { audioHostName, useRequireMediaProvider } from "../provider/context";
@@ -190,7 +190,9 @@ function AudioRoot(props: AudioProps): React.ReactElement {
   /* Web keyboard shortcuts on the focusable region. ------------------------ */
   const [frameEl, setFrameEl] = React.useState<HTMLElement | null>(null);
   const setFrameRef = React.useCallback((node: TamaguiElement | null) => {
-    setFrameEl(node && "addEventListener" in node ? (node as unknown as HTMLElement) : null);
+    // `isWeb`, not `"addEventListener" in node`: React Native 0.88 host instances carry
+    // an `addEventListener` key (set to undefined) but no DOM API like `setAttribute`.
+    setFrameEl(isWeb && node ? (node as unknown as HTMLElement) : null);
   }, []);
 
   React.useEffect(() => {

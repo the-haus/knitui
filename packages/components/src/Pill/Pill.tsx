@@ -10,7 +10,7 @@ import {
 
 import { Box } from "../Box";
 import { CloseButton, type CloseButtonProps } from "../CloseButton";
-import { type GradientValue, useGradient } from "../internal/gradient";
+import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import { renderTextChild } from "../internal/render-text-child";
 import {
   controlFontVariant,
@@ -230,7 +230,7 @@ const PillComponent = styleable<PillProps>(PillFrame, function Pill(props, ref) 
 
   // Gradient fill (only when `variant="gradient"`): web paints a CSS
   // `backgroundImage`; native renders the `layer` (an SVG fill) behind the label.
-  const grad = useGradient(variant === "gradient" ? gradient : undefined);
+  const grad = useGradient(gradientForVariant(variant, gradient));
   const group = React.useContext(PillGroupContext);
   const resolvedSize: PillSize = size ?? group?.size ?? "sm";
   const isDisabled = disabled ?? group?.disabled ?? false;

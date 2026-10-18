@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { Box } from "../Box";
+import { Slider } from "../Slider";
 import { Text } from "../Text";
 import { Progress } from "./Progress";
 
@@ -215,13 +216,13 @@ export const Controlled: Story = {
           <Text fontSize="xs" color="color11">
             0
           </Text>
-          <input
-            type="range"
+          <Slider
+            value={value}
+            onChange={setValue}
             min={0}
             max={100}
-            value={value}
-            onChange={(e) => setValue(Number(e.target.value))}
-            style={{ flex: 1 }}
+            flex={1}
+            thumbLabel="Progress"
           />
           <Text fontSize="xs" color="color11">
             100

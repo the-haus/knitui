@@ -21,9 +21,9 @@ function sameRecord<T extends object>(a: T | undefined, b: T | undefined): boole
  *
  * For configs that are documented — and used — as inline object literals, so they
  * arrive with a fresh identity on every render even when nothing changed. That
- * identity is load-bearing downstream: `useSheetDrag` keys its `useMemo` on the
- * spring config, and rebuilding that memo rebuilds the `Gesture.Pan()`, which makes
- * RNGH tear down and re-attach the native handler.
+ * identity is load-bearing downstream: `useSheetDrag` keys its pan-config `useMemo`
+ * on the spring config, and rebuilding that memo re-clones the `usePanGesture`
+ * config and re-pushes it to the native handler.
  *
  * Only valid for records whose values are PRIMITIVES (the comparison is one level
  * deep) — `WithSpringConfig` is exactly that. Assigning the ref during render is a

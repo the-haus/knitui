@@ -35,7 +35,7 @@
         "./config",
         "./package.json"
       ],
-      "exportCount": 158,
+      "exportCount": 160,
       "hasStories": false
     },
     {
@@ -70,7 +70,7 @@
         "./control-system",
         "./package.json"
       ],
-      "exportCount": 571,
+      "exportCount": 573,
       "hasStories": true
     },
     {
@@ -207,7 +207,7 @@
         ".",
         "./package.json"
       ],
-      "exportCount": 65,
+      "exportCount": 66,
       "hasStories": true
     },
     {
@@ -1319,6 +1319,12 @@
     {
       "name": "CarouselFrame",
       "kind": "component",
+      "package": "@knitui/carousel",
+      "packageSlug": "carousel"
+    },
+    {
+      "name": "CarouselGestureConfig",
+      "kind": "type",
       "package": "@knitui/carousel",
       "packageSlug": "carousel"
     },
@@ -4749,6 +4755,18 @@
       "packageSlug": "components"
     },
     {
+      "name": "OverlayPortal",
+      "kind": "component",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "OverlayPortalProps",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
       "name": "OverlayProps",
       "kind": "type",
       "package": "@knitui/components",
@@ -8003,6 +8021,18 @@
       "kind": "type",
       "package": "@knitui/map",
       "packageSlug": "map"
+    },
+    {
+      "name": "UseScreenFocus",
+      "kind": "type",
+      "package": "@knitui/core",
+      "packageSlug": "core"
+    },
+    {
+      "name": "useScreenFocused",
+      "kind": "hook",
+      "package": "@knitui/core",
+      "packageSlug": "core"
     },
     {
       "name": "useSetState",

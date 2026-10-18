@@ -1,8 +1,13 @@
 import * as React from "react";
-import { Gesture } from "react-native-gesture-handler";
+import { useNativeGesture } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 
-import { KeyboardAvoidingView, Portal, UnstyledButton, useOverlayHost } from "@knitui/components";
+import {
+  KeyboardAvoidingView,
+  OverlayPortal,
+  UnstyledButton,
+  useOverlayHost,
+} from "@knitui/components";
 import {
   type GetProps,
   isWeb,
@@ -151,9 +156,10 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
 
   // Same treatment for the spring config, for a sharper reason: `animationConfig`
   // is a flat record of primitives that every call site writes inline, and it is a
-  // dependency of `useSheetDrag`'s `useMemo`. A fresh identity there rebuilds the
-  // `Gesture.Pan()` object on every render, and RNGH responds by tearing down and
-  // re-attaching the native gesture handler — mid-drag, that is a dropped gesture.
+  // dependency of `useSheetDrag`'s pan-config `useMemo`. A fresh identity there
+  // rebuilds the `usePanGesture` config on every render, which re-clones it and
+  // re-pushes it to the native handler (and, under RNGH 2, tore the handler down
+  // and re-attached it — mid-drag, a dropped gesture).
   // Collapsing it to a stable reference while its values are unchanged fixes both
   // that and the redundant `useSheetMotion` recomputation below.
   const stableAnimationConfig = useStableRecord(animationConfig);
@@ -201,7 +207,9 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   // unaware of them (no coordination, current behaviour preserved).
   const scrollOffsetY = useSharedValue(0);
 
-  const scrollGesture = React.useMemo(() => Gesture.Native(), []);
+  // RNGH 3 hook: called unconditionally (stable handler tag for the component's
+  // life); on web it is simply never attached to a scroller.
+  const scrollGesture = useNativeGesture();
   const dragEnabled = !disableDrag && maxHeight > 0 && isOpen;
 
   const draggingRef = React.useRef(false);
@@ -510,7 +518,7 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     </Theme>
   );
 
-  return modal ? <Portal hostName={overlayHost}>{layer}</Portal> : layer;
+  return modal ? <OverlayPortal hostName={overlayHost}>{layer}</OverlayPortal> : layer;
 }
 
 const SheetComponent = React.forwardRef(SheetInner);

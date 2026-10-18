@@ -210,6 +210,7 @@ export const contentModules: Record<string, () => Promise<ContentModule>> = {
   "docs/guides/platform-differences": () => import("../../content/docs/guides/platform-differences.mdx"), // Platform differences
   "docs/guides/testing": () => import("../../content/docs/guides/testing.mdx"), // Testing
   "docs/guides/theming-an-app": () => import("../../content/docs/guides/theming-an-app.mdx"), // Theming an app
+  "docs/guides/upgrading-to-v1-1": () => import("../../content/docs/guides/upgrading-to-v1-1.mdx"), // Upgrading to Knit UI 1.1 (Expo SDK 58)
   "docs/guides/upgrading-to-v1": () => import("../../content/docs/guides/upgrading-to-v1.mdx"), // Upgrading to Knit UI 1.0 (Tamagui v3)
   "docs/hooks/use-app-state": () => import("../../content/docs/hooks/use-app-state.mdx"),
   "docs/hooks/use-callback-ref": () => import("../../content/docs/hooks/use-callback-ref.mdx"),

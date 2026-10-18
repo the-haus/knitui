@@ -4,7 +4,7 @@
  * app, and subscribers are woken only when the resolved breakpoint BAND changes,
  * so a fold/rotation that stays inside a band costs nothing.
  */
-import { Dimensions } from "react-native";
+import { Dimensions, type ScaledSize } from "react-native";
 
 import { resolveBreakpoint } from "./breakpoints";
 
@@ -30,7 +30,7 @@ function wireOnce(): void {
   // on `Dimensions` being ready.
   width = Dimensions.get("window").width;
   band = resolveBreakpoint(width);
-  Dimensions.addEventListener("change", ({ window }) => set(window.width));
+  Dimensions.addEventListener("change", ({ window }: { window: ScaledSize }) => set(window.width));
 }
 
 /** Current viewport width in px. Native always has a real value. */

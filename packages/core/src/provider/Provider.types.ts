@@ -29,4 +29,15 @@ export interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "de
    * it sits above the document and spans the whole window.
    */
   backgroundColor?: ViewProps["backgroundColor"];
+  /**
+   * A hook that returns whether the screen it is called in is focused, such as
+   * React Navigation's or Expo Router's `useIsFocused` (wrapped so it returns `true`
+   * outside a navigator). With it, the kit's overlays (Popover, Menu, Tooltip,
+   * Modal, Drawer, Sheet, Affix, …) stop drawing over the screen in front of a
+   * backgrounded stack screen, and come back, still open, when it is focused again.
+   *
+   * Without it every screen counts as focused, which was the behaviour before this
+   * prop existed. Pass a stable function: it is called as a hook inside each overlay.
+   */
+  useScreenFocus?: () => boolean;
 }

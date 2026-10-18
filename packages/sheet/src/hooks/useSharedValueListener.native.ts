@@ -39,6 +39,5 @@ export function useSharedValueListener<T>(
       if (filter && !filter(current)) return;
       scheduleOnRN(deliver, current);
     },
-    [sv, deliver, filter],
   );
 }

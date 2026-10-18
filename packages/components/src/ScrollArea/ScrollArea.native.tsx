@@ -1,6 +1,10 @@
 import * as React from "react";
-import { RefreshControl, type ScrollView } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { RefreshControl, type ScrollViewInstance } from "react-native";
+import {
+  GestureDetector,
+  type PanGestureConfig,
+  usePanGesture,
+} from "react-native-gesture-handler";
 import Animated, {
   cancelAnimation,
   useAnimatedReaction,
@@ -329,7 +333,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const reducedMotion = useReducedMotion();
 
     // The live native scroller (Autosize only; the Pan engine has none).
-    const scrollViewRef = React.useRef<ScrollView | null>(null);
+    const scrollViewRef = React.useRef<ScrollViewInstance | null>(null);
 
     // ── UI-thread state (shared values) ──────────────────────────────────────
     // Scroll offset lives here, not in React state: the thumb worklet reads it every
@@ -565,19 +569,16 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
 
     /* ---------------- native (Autosize) scroll handler ---------------- */
 
-    const scrollHandler = useAnimatedScrollHandler(
-      {
-        onScroll: (event) => {
-          "worklet";
-          scrollX.value = event.contentOffset.x;
-          scrollY.value = event.contentOffset.y;
-          if (needsJsScroll && shouldReportW(lastReportSV, reportIntervalMs)) {
-            runOnJS(reportScroll)(event.contentOffset.x, event.contentOffset.y);
-          }
-        },
+    const scrollHandler = useAnimatedScrollHandler({
+      onScroll: (event) => {
+        "worklet";
+        scrollX.value = event.contentOffset.x;
+        scrollY.value = event.contentOffset.y;
+        if (needsJsScroll && shouldReportW(lastReportSV, reportIntervalMs)) {
+          runOnJS(reportScroll)(event.contentOffset.x, event.contentOffset.y);
+        }
       },
-      [needsJsScroll, reportIntervalMs, lastReportSV, reportScroll],
-    );
+    });
 
     /* ---------------- Pan engine ---------------- */
 
@@ -615,21 +616,28 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       },
     );
 
-    const panGesture = React.useMemo(() => {
-      let g = Gesture.Pan()
-        .onBegin(() => {
+    // RNGH 3 hook API: the config object is memoized so its identity (which drives
+    // the handler re-configuration) only changes with the inputs it closes over.
+    const panConfig = React.useMemo(
+      (): PanGestureConfig => ({
+        // Only claim the axes we actually scroll, so a cross-axis drag (and a tap)
+        // passes through to ancestors / pressable children. Spread conditionally:
+        // an `undefined` offset key would be forwarded to the native config.
+        ...(axes.x ? { activeOffsetX: [-PAN_ACTIVATE_THRESHOLD, PAN_ACTIVATE_THRESHOLD] } : null),
+        ...(axes.y ? { activeOffsetY: [-PAN_ACTIVATE_THRESHOLD, PAN_ACTIVATE_THRESHOLD] } : null),
+        onBegin: () => {
           "worklet";
           cancelAnimation(scrollX);
           cancelAnimation(scrollY);
           panStartX.value = scrollX.value;
           panStartY.value = scrollY.value;
-        })
-        .onUpdate((e) => {
+        },
+        onUpdate: (e) => {
           "worklet";
           scrollX.value = clampW(panStartX.value - e.translationX, 0, maxXSV.value);
           scrollY.value = clampW(panStartY.value - e.translationY, 0, maxYSV.value);
-        })
-        .onEnd((e) => {
+        },
+        onDeactivate: (e) => {
           "worklet";
           // No momentum under reduced motion — settle where the finger lifted.
           if (reducedMotion) return;
@@ -647,13 +655,11 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
               rubberBandEffect: false,
             });
           }
-        });
-      // Only claim the axes we actually scroll, so a cross-axis drag (and a tap)
-      // passes through to ancestors / pressable children.
-      if (axes.x) g = g.activeOffsetX([-PAN_ACTIVATE_THRESHOLD, PAN_ACTIVATE_THRESHOLD]);
-      if (axes.y) g = g.activeOffsetY([-PAN_ACTIVATE_THRESHOLD, PAN_ACTIVATE_THRESHOLD]);
-      return g;
-    }, [axes.x, axes.y, reducedMotion, scrollX, scrollY, panStartX, panStartY, maxXSV, maxYSV]);
+        },
+      }),
+      [axes.x, axes.y, reducedMotion, scrollX, scrollY, panStartX, panStartY, maxXSV, maxYSV],
+    );
+    const panGesture = usePanGesture(panConfig);
 
     /* ---------------- geometry (layout decisions, JS) ---------------- */
 
@@ -832,7 +838,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       "worklet";
       const { offset } = thumbGeometryW(size.contentH, size.viewportH, yTrack, scrollY.value);
       return { transform: [{ translateY: offset }] };
-    }, [size.contentH, size.viewportH, yTrack]);
+    });
 
     const yThumbInsetStyle = useAnimatedStyle(() => {
       "worklet";
@@ -843,7 +849,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       "worklet";
       const { offset } = thumbGeometryW(size.contentW, size.viewportW, xTrack, scrollX.value);
       return { transform: [{ translateX: offset }] };
-    }, [size.contentW, size.viewportW, xTrack]);
+    });
 
     const xThumbInsetStyle = useAnimatedStyle(() => {
       "worklet";
@@ -903,7 +909,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       showsHorizontalScrollIndicator: false,
       scrollEventThrottle: 16,
       nestedScrollEnabled: true,
-      keyboardShouldPersistTaps,
+      keyboardShouldPersistTaps: keyboardShouldPersistTaps as never,
       ...(onRefresh
         ? {
             refreshControl: (
@@ -918,7 +924,7 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       ...(mergedViewportProps as object),
     };
 
-    const assignScroller = (node: ScrollView | null) => {
+    const assignScroller = (node: ScrollViewInstance | null) => {
       scrollViewRef.current = node;
       assignRef(viewportRef, node as unknown as TamaguiElement);
     };

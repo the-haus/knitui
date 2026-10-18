@@ -1,0 +1,68 @@
+diff --git a/dist/cjs/staticEvaluationIgnoredModules.cjs b/dist/cjs/staticEvaluationIgnoredModules.cjs
+index a5e959d..f54af0c 100644
+--- a/dist/cjs/staticEvaluationIgnoredModules.cjs
++++ b/dist/cjs/staticEvaluationIgnoredModules.cjs
+@@ -28,6 +28,7 @@ __export(staticEvaluationIgnoredModules_exports, {
+ module.exports = __toCommonJS(staticEvaluationIgnoredModules_exports);
+ var import_promises = require("node:fs/promises");
+ var import_node_path = require("node:path");
++var import_node_fs = require("node:fs");
+ const tamaguiStaticEvaluationModules = Object.freeze({
+ 	"react-native-safe-area-context": null,
+ 	"react-native-worklets": "react-native-worklets/lib/module/mock.js"
+@@ -42,6 +43,21 @@ function staticEvaluationIgnorePlugin(userIgnoredModules = []) {
+ 	return {
+ 		name: "tamagui-static-evaluation-ignore",
+ 		setup(build) {
++			// PATCH: reanimated >= 4.7 moved its native/JS split into `.native` files, which the
++			// native static bundle resolves; in Node those touch JSI and throw. Inside
++			// reanimated, resolve relative imports to their platform-neutral (JS) siblings.
++			build.onResolve({ filter: /^\.\.?\// }, (args) => {
++				if (!/[\\/]react-native-reanimated[\\/]src[\\/]/.test(args.importer)) {
++					return null;
++				}
++				const base = (0, import_node_path.join)(args.resolveDir, args.path);
++				for (const candidate of [`${base}.ts`, `${base}.tsx`, (0, import_node_path.join)(base, "index.ts")]) {
++					if ((0, import_node_fs.existsSync)(candidate)) {
++						return { path: candidate };
++					}
++				}
++				return null;
++			});
+ 			build.onResolve({ filter: /.*/ }, (args) => {
+ 				if (isIgnoredStaticEvaluationModule(args.path, userIgnoredModules)) {
+ 					return {
+diff --git a/dist/esm/staticEvaluationIgnoredModules.mjs b/dist/esm/staticEvaluationIgnoredModules.mjs
+index ca1f57c..96f3915 100644
+--- a/dist/esm/staticEvaluationIgnoredModules.mjs
++++ b/dist/esm/staticEvaluationIgnoredModules.mjs
+@@ -1,5 +1,6 @@
+ import { readFile } from "node:fs/promises";
+-import { dirname } from "node:path";
++import { existsSync } from "node:fs";
++import { dirname, join } from "node:path";
+ 
+ const tamaguiStaticEvaluationModules = Object.freeze({
+ 	"react-native-safe-area-context": null,
+@@ -15,6 +16,21 @@ function staticEvaluationIgnorePlugin(userIgnoredModules = []) {
+ 	return {
+ 		name: "tamagui-static-evaluation-ignore",
+ 		setup(build) {
++			// PATCH: reanimated >= 4.7 moved its native/JS split into `.native` files, which the
++			// native static bundle resolves; in Node those touch JSI and throw. Inside
++			// reanimated, resolve relative imports to their platform-neutral (JS) siblings.
++			build.onResolve({ filter: /^\.\.?\// }, (args) => {
++				if (!/[\\/]react-native-reanimated[\\/]src[\\/]/.test(args.importer)) {
++					return null;
++				}
++				const base = join(args.resolveDir, args.path);
++				for (const candidate of [`${base}.ts`, `${base}.tsx`, join(base, "index.ts")]) {
++					if (existsSync(candidate)) {
++						return { path: candidate };
++					}
++				}
++				return null;
++			});
+ 			build.onResolve({ filter: /.*/ }, (args) => {
+ 				if (isIgnoredStaticEvaluationModule(args.path, userIgnoredModules)) {
+ 					return {

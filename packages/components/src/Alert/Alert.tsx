@@ -12,7 +12,7 @@ import { useId } from "@knitui/hooks";
 import { Box } from "../Box";
 import { CloseButton, type CloseButtonProps } from "../CloseButton";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
-import { type GradientValue, useGradient } from "../internal/gradient";
+import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import { renderTextChild } from "../internal/render-text-child";
 import {
   controlTextColorVariant,
@@ -314,7 +314,7 @@ const AlertComponent = styleable<AlertProps>(AlertFrame, function Alert(props, r
 
   // Gradient fill (only when `variant="gradient"`): web paints a CSS
   // `backgroundImage`; native renders the `layer` behind the icon/body content.
-  const grad = useGradient(variant === "gradient" ? gradient : undefined);
+  const grad = useGradient(gradientForVariant(variant, gradient));
 
   const rootId = useId(typeof id === "string" ? id : undefined);
   const titleId = title ? `${rootId}-title` : undefined;

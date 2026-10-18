@@ -52,9 +52,10 @@ export function useSelectedIndex(progress: SharedValue<number>, count: number): 
     (next, prev) => {
       if (next !== prev) scheduleOnRN(setSelected, next);
     },
-    // A fresh array literal: reanimated appends worklet hashes to the dependency
-    // array in place, so it must not be shared with another reanimated hook.
-    [selectedFrom],
+    // Web-only deps (Reanimated 4.7 ignores them on native and warns). A fresh array
+    // literal: reanimated appends worklet hashes to the dependency array in place,
+    // so it must not be shared with another reanimated hook.
+    isWeb ? [selectedFrom] : undefined,
   );
 
   // Web: the UI-thread reaction above doesn't re-fire; the SharedValue listener does.

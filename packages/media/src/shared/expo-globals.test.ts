@@ -1,7 +1,7 @@
 /**
  * Guards the `globalThis.expo` install against tree-shaking. `expo-globals.ts` is
  * a side-effect-only module (`import "expo-modules-core"`), imported bare above
- * every runtime `expo-video` import. A package-wide `"sideEffects": false` lets
+ * every runtime `expo-video` / `expo-audio` import. A package-wide `"sideEffects": false` lets
  * webpack / esbuild / Rollup DROP such a bare import in production bundles, which
  * brings back the "Cannot read properties of undefined (reading 'SharedObject')"
  * crash on web. The package therefore lists the module in `sideEffects`, and
@@ -46,9 +46,10 @@ describe("expo-globals side effect survives bundling", () => {
   });
 
   it.each([
-    "src/video/expo-globals.ts",
-    "lib/module/video/expo-globals.js",
-    "lib/commonjs/video/expo-globals.js",
+    "src/shared/expo-globals.ts",
+    "src/shared/expo-globals.native.ts",
+    "lib/module/shared/expo-globals.js",
+    "lib/commonjs/shared/expo-globals.native.js",
   ])("marks %s as side-effectful", (file) => {
     expect(hasSideEffects(file)).toBe(true);
   });
@@ -60,14 +61,15 @@ describe("expo-globals side effect survives bundling", () => {
     },
   );
 
-  it("installs the global before every runtime expo-video import", () => {
+  it("installs the global before every runtime expo-video / expo-audio import", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(SRC)) {
-      if (/\.test\.tsx?$/.test(file)) continue;
+      // Native-only files never load the web builds that need the global.
+      if (/\.test\.tsx?$|\.(native|ios|android)\.tsx?$/.test(file)) continue;
       const text = readFileSync(file, "utf8");
-      const runtime = /^import (?!type\b)[^;]*from "expo-video";/m.exec(text);
+      const runtime = /^import (?!type\b)[^;]*from "expo-(video|audio)";/m.exec(text);
       if (!runtime) continue;
-      const globals = text.indexOf('import "../expo-globals";');
+      const globals = text.search(/^import "(\.\.\/)+shared\/expo-globals";/m);
       if (globals < 0 || globals > runtime.index) offenders.push(relative(SRC, file));
     }
     expect(offenders).toEqual([]);

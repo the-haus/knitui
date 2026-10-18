@@ -14,7 +14,7 @@
  */
 import * as React from "react";
 
-import { Portal } from "@knitui/components";
+import { Box, Portal } from "@knitui/components";
 
 import type { ExpoAudioController } from "../audio/controller/expo-controller";
 import { getSharedAudioSession } from "../audio/session/audio-engine";
@@ -86,26 +86,38 @@ export function MediaProvider({ children }: MediaProviderProps): React.ReactElem
           controller's imperative listener doesn't fire on iOS (see AudioStatusBridge). */}
       <AudioStatusBridge controller={engines.audio.session.controller as ExpoAudioController} />
 
-      {/* Audio has no element to teleport (expo-audio owns its own); the surface
+      {/* The surfaces sit in a hidden, zero-size box. A teleported surface is
+          re-parented into its player's host and the box doesn't touch it; but
+          while that host is missing (its screen is frozen in a navigation stack,
+          or it hasn't mounted yet), teleport leaves the content in place, and in
+          place used to mean the top of the app, drawn over whatever screen was in
+          front. Parked here it stays mounted but out of sight until the host is
+          back. Mounted only while a player is active: an idle provider renders no
+          kit view, so it needs no theme. */}
+      {audioActiveId || videoActiveId ? (
+        <Box position="absolute" width={0} height={0} overflow="hidden" pointerEvents="none">
+          {/* Audio has no element to teleport (expo-audio owns its own); the surface
           is an inert no-op, kept for symmetry with the video teleport. */}
-      {audioActiveId ? (
-        <Portal hostName={audioHostName(audioActiveId)}>
-          <AudioSurface controller={engines.audio.session.controller} />
-        </Portal>
-      ) : null}
+          {audioActiveId ? (
+            <Portal hostName={audioHostName(audioActiveId)}>
+              <AudioSurface controller={engines.audio.session.controller} />
+            </Portal>
+          ) : null}
 
-      {/* The single shared <video> teleports into the active video player's frame. */}
-      {videoActiveId ? (
-        <Portal hostName={videoHostName(videoActiveId)}>
-          <VideoSurface
-            controller={engines.video.session.controller}
-            contentFit={videoSurface?.contentFit ?? "contain"}
-            nativeControls={videoSurface?.nativeControls}
-            allowsPictureInPicture={videoSurface?.allowsPictureInPicture}
-            textTracks={videoSurface?.textTracks}
-            frameProps={SURFACE_FILL}
-          />
-        </Portal>
+          {/* The single shared <video> teleports into the active video player's frame. */}
+          {videoActiveId ? (
+            <Portal hostName={videoHostName(videoActiveId)}>
+              <VideoSurface
+                controller={engines.video.session.controller}
+                contentFit={videoSurface?.contentFit ?? "contain"}
+                nativeControls={videoSurface?.nativeControls}
+                allowsPictureInPicture={videoSurface?.allowsPictureInPicture}
+                textTracks={videoSurface?.textTracks}
+                frameProps={SURFACE_FILL}
+              />
+            </Portal>
+          ) : null}
+        </Box>
       ) : null}
     </MediaContext.Provider>
   );

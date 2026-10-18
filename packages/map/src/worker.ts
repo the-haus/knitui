@@ -4,8 +4,8 @@
  * maplibre-gl v6 is ESM-only and derives its worker URL from `import.meta.url`
  * at runtime. Inside a bundler (webpack, Next, Vite, Metro web) that never points
  * at a real file, so the map mounts, paints its background and never loads a
- * tile. Serve `maplibre-gl-worker.mjs` together with the `maplibre-gl-shared.mjs`
- * it imports, and point this at the worker once at startup:
+ * tile. Serve `maplibre-gl-worker.mjs` (self-contained since maplibre-gl 6.13) and
+ * point this at it once at startup:
  *
  * ```ts
  * import { setWorkerUrl } from "@knitui/map/worker";

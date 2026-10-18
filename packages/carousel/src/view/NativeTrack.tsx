@@ -1,8 +1,9 @@
 import * as React from "react";
-import type { ScrollView as RNScrollView } from "react-native";
+import type { ScrollViewInstance as RNScrollView } from "react-native";
 import Animated, { useAnimatedScrollHandler, useDerivedValue } from "react-native-reanimated";
 
 import { Box } from "@knitui/components";
+import { isWeb } from "@knitui/core";
 
 import { itemProgress, mod, rawIndex } from "../engine";
 import { useDragScroll } from "../input/useDragScroll";
@@ -78,7 +79,8 @@ function NativeTrackInner<T>({
         offset.value = -(vertical ? e.contentOffset.y : e.contentOffset.x);
       },
     },
-    [vertical],
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [vertical] : undefined,
   );
 
   // Register the imperative seek. Looping travels to the nearest ring copy of
@@ -273,11 +275,14 @@ function NativeSlideInner<T>({
   renderPlaceholder,
   slideStyle,
 }: NativeSlideProps<T>) {
-  const progress = useDerivedValue(() => {
-    "worklet";
-    if (!(size.value > 0)) return slot;
-    return itemProgress(rawIndex(offset.value, size.value), slot, slotCount, false);
-  }, [slot, slotCount]);
+  const progress = useDerivedValue(
+    () => {
+      "worklet";
+      if (!(size.value > 0)) return slot;
+      return itemProgress(rawIndex(offset.value, size.value), slot, slotCount, false);
+    },
+    isWeb ? [slot, slotCount] : undefined,
+  );
 
   return (
     <Box style={flowSlideStyle(vertical, pageSize)}>

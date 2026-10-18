@@ -5,11 +5,13 @@
  */
 import * as React from "react";
 
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 
 import { Provider } from "@knitui/core";
 
 import { Audio } from "../audio/Audio";
+import { styleTextOf } from "../__tests__/css-rules.test.helper";
+import { getSharedVideoSession } from "../video/session/video-engine";
 import { Video } from "../video/Video";
 import { MediaProvider } from "./MediaProvider";
 import { useMediaState } from "./useMediaState";
@@ -93,6 +95,44 @@ describe("<MediaProvider> (web)", () => {
     // The first player registered in each session becomes active (paused).
     expect(probe).toHaveAttribute("data-audio", "yes");
     expect(probe).toHaveAttribute("data-video", "yes");
+  });
+
+  /** Whether `el` sits inside the provider's hidden zero-size parking box. */
+  function isParked(el: Element): boolean {
+    for (let n = el.parentElement; n; n = n.parentElement) {
+      const css = styleTextOf(n).replace(/\s+/g, "");
+      if (
+        /width:0(px)?[;}]/.test(css) &&
+        /height:0(px)?[;}]/.test(css) &&
+        /overflow:hidden/.test(css)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  it("teleports the shared <video> out of the parking box into the active player", () => {
+    renderWithProvider(<Video source={VIDEO_SRC} />);
+    expect(isParked(document.querySelector("video")!)).toBe(false);
+  });
+
+  it("parks the shared <video> out of sight while the active player's host is missing", () => {
+    // An active player whose surface host isn't mounted, as on a frozen stack
+    // screen: teleport leaves the surface in place, which must not be on screen.
+    renderWithProvider(<div />);
+    const { session } = getSharedVideoSession();
+    try {
+      act(() => {
+        session.register("orphan-player", { source: VIDEO_SRC });
+        session.activate("orphan-player");
+      });
+      const video = document.querySelector("video");
+      expect(video).not.toBeNull();
+      expect(isParked(video!)).toBe(true);
+    } finally {
+      act(() => session.unregister("orphan-player"));
+    }
   });
 
   it("renders no media element when no player is mounted", () => {

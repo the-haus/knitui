@@ -5,6 +5,8 @@
  * are implemented over the Permissions API + a `getUserMedia` probe. A SINGLE
  * file drives both — there is no hand-written web permission path anymore.
  */
+import "../../shared/expo-globals";
+
 import type { PermissionResponse } from "expo";
 import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from "expo-audio";
 

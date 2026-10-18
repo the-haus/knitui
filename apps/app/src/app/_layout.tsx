@@ -7,6 +7,8 @@ import { Provider, useTheme } from "@knitui/core";
 import { MediaProvider } from "@knitui/demo";
 import { setWorkerUrl } from "@knitui/map/worker";
 
+import { useScreenFocus } from "../navigation/useScreenFocus";
+
 // Web only in effect: maps on web load maplibre's worker from public/maplibre
 // (copied in by metro.config.js). Native maps have no web worker.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
@@ -43,11 +45,14 @@ function ThemedStack() {
  * shared `<audio>`/`expo-video` element and teleports it into whichever `<Audio>`/
  * `<Video>` is active in the lazily-mounted `/section/[id]` route. Mounting it per
  * route would dispose the engine on every navigation.
+ *
+ * `useScreenFocus` tells the kit which stack screen is focused, so a screen you
+ * navigated away from stops drawing its open popovers over the one in front.
  */
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <Provider defaultColorScheme="light">
+      <Provider defaultColorScheme="light" useScreenFocus={useScreenFocus}>
         <MediaProvider>
           <StatusBar style="auto" />
           <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">

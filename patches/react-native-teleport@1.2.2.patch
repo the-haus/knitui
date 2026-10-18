@@ -1,0 +1,26 @@
+diff --git a/ios/PortalHostView.mm b/ios/PortalHostView.mm
+index 3c007de..300b69a 100644
+--- a/ios/PortalHostView.mm
++++ b/ios/PortalHostView.mm
+@@ -13,7 +13,7 @@
+ #import <react/renderer/components/TeleportViewSpec/RCTComponentViewHelpers.h>
+ #import <react/renderer/components/TeleportViewSpec/RNTPortalHostViewComponentDescriptor.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ using namespace facebook::react;
+ 
+diff --git a/ios/PortalView.mm b/ios/PortalView.mm
+index 0ebbb7b..a483fa8 100644
+--- a/ios/PortalView.mm
++++ b/ios/PortalView.mm
+@@ -15,7 +15,7 @@
+ #import <react/renderer/components/TeleportViewSpec/RNTPortalViewComponentDescriptor.h>
+ #import <react/renderer/components/TeleportViewSpec/RNTPortalViewShadowNode.h>
+ 
+-#import "RCTFabricComponentsPlugins.h"
++#import <React/RCTFabricComponentsPlugins.h>
+ 
+ #import <React/RCTSurfaceTouchHandler.h>
+ 

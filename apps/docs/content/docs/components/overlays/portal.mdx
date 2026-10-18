@@ -5,7 +5,43 @@ export const meta = {
 
 <ComponentHeader id="components/overlays/portal" />
 
-{/* scaffolded: replace this comment with real prose */}
+The kit's overlays (Popover, Menu, Tooltip, Combobox, Modal, Drawer, a modal Sheet, Affix) render through `OverlayPortal`, which teleports into the nearest `OverlayHost`, or the `"root"` host when there is none.
+
+## Overlays in a navigation stack
+
+A stack navigator keeps the screen you navigated away from mounted, but the `"root"` host it teleports into is shared by every screen. Without more information, a popover left open on that screen keeps drawing over the screen in front of it.
+
+Pass a screen-focus hook to `<Provider useScreenFocus>` to fix this. While a screen is unfocused, its overlays stay inside that (hidden) screen instead of teleporting. They come back, still open, when it is focused again. The hook is called inside every overlay, so it has to return `true` outside a navigator rather than throw, and it has to be the same function on every render.
+
+```tsx
+// Expo Router bundles its own React Navigation, so take the context from it.
+import { NavigationContext } from "expo-router/react-navigation";
+import * as React from "react";
+
+import { Provider } from "@knitui/core";
+
+function useScreenFocus(): boolean {
+  const navigation = React.useContext(NavigationContext);
+  const [focused, setFocused] = React.useState(true);
+  React.useEffect(() => {
+    if (!navigation) return undefined;
+    setFocused(navigation.isFocused());
+    const offFocus = navigation.addListener("focus", () => setFocused(true));
+    const offBlur = navigation.addListener("blur", () => setFocused(false));
+    return () => {
+      offFocus();
+      offBlur();
+    };
+  }, [navigation]);
+  return focused;
+}
+
+export default function RootLayout() {
+  return <Provider useScreenFocus={useScreenFocus}>{/* … */}</Provider>;
+}
+```
+
+With plain React Navigation, import `NavigationContext` from `@react-navigation/native` instead. Without `useScreenFocus`, every screen counts as focused and nothing changes. Read the current value yourself with `useScreenFocused()` from `@knitui/core`.
 
 ## Playground
 

@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import type { PanGesture } from "react-native-gesture-handler";
+import type { PanGestureConfig } from "react-native-gesture-handler";
 import type { SharedValue, WithSpringConfig, WithTimingConfig } from "react-native-reanimated";
 
 import type { LayoutChangeEvent, SlotStyles, StyleProp, ViewStyle } from "@knitui/core";
@@ -150,6 +150,29 @@ export interface CarouselRef {
   getCurrentIndex: () => number;
 }
 
+/**
+ * The subset of RNGH 3's `PanGestureConfig` a carousel caller may set via
+ * {@link CarouselProps.gestureConfig}: everything except the gesture lifecycle
+ * callbacks (owned by the drag engine) and the thread-selection flags
+ * (`runOnJS` / `disableReanimated` / `useAnimated` — the kit's callbacks are
+ * UI-thread worklets).
+ */
+export type CarouselGestureConfig = Omit<
+  PanGestureConfig,
+  | "onBegin"
+  | "onActivate"
+  | "onUpdate"
+  | "onDeactivate"
+  | "onFinalize"
+  | "onTouchesDown"
+  | "onTouchesMove"
+  | "onTouchesUp"
+  | "onTouchesCancel"
+  | "runOnJS"
+  | "disableReanimated"
+  | "useAnimated"
+>;
+
 export interface CarouselProps<T> {
   /* Data & render -------------------------------------------------------- */
   /** Eager data array. Provide this OR `source` (for lazy/remote data). */
@@ -271,8 +294,16 @@ export interface CarouselProps<T> {
   prefetchCount?: number;
   maxScrollDistancePerSwipe?: number;
   minScrollDistancePerSwipe?: number;
-  /** Mutate the underlying RNGH pan gesture (native). */
-  gestureConfig?: (gesture: PanGesture) => PanGesture;
+  /**
+   * Extra config for the underlying RNGH 3 pan gesture (`usePanGesture`) of the
+   * transform track — activation (`activeOffsetX`, `failOffsetY`,
+   * `minDistance`, `hitSlop`, …), relations (`simultaneousWith`,
+   * `requireToFail`, `block`) and `enabled`. Merged over the kit's defaults;
+   * the drag callbacks stay owned by the carousel. Memoize it (a new object
+   * each render re-sends the handler config). Ignored by `scrollMode="native"`.
+   * @example gestureConfig={{ activeOffsetX: [-10, 10], failOffsetY: [-5, 5] }}
+   */
+  gestureConfig?: CarouselGestureConfig;
   /** Enable mouse-wheel / trackpad scrolling (web, default true). */
   wheelEnabled?: boolean;
   /** Enable arrow / Home / End keyboard navigation (web, default true). */

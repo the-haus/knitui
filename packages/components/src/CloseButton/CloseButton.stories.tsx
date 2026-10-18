@@ -174,7 +174,7 @@ export const Gradient: Story = {
       <CloseButton
         {...args}
         variant="gradient"
-        gradient={{ from: "blue9", to: "teal9" }}
+        gradient={{ from: "blue8", to: "blue11" }}
         aria-label="Close (token gradient)"
       />
       <CloseButton

@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   type LayoutChangeEvent,
   View as RNView,
+  type ViewInstance,
   type ViewProps as RNViewProps,
   StyleSheet,
 } from "react-native";
@@ -19,7 +20,7 @@ export type ViewProps = RNViewProps & {
    * `style`; you pass data, never a component.
    */
   effects?: readonly EffectLayer[];
-  ref?: React.Ref<RNView>;
+  ref?: React.Ref<ViewInstance>;
   androidWarmup?: boolean;
 };
 

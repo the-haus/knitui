@@ -1,5 +1,9 @@
 import * as React from "react";
-import { Gesture, type PanGesture } from "react-native-gesture-handler";
+import {
+  type PanGesture,
+  type PanGestureActiveEvent,
+  usePanGesture,
+} from "react-native-gesture-handler";
 import { cancelAnimation, type SharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
@@ -61,20 +65,22 @@ export function useCardGesture(params: CardGestureParams): CardGesture {
     [tx, ty, sizeW, sizeH, onCommit],
   );
 
-  const gesture = React.useMemo(() => {
-    return Gesture.Pan()
-      .enabled(active)
-      .onBegin(() => {
+  // Memoized: `usePanGesture` re-sends the handler config on identity change.
+  const panConfig = React.useMemo(
+    () => ({
+      enabled: active,
+      onBegin: () => {
         "worklet";
         cancelAnimation(tx);
         cancelAnimation(ty);
-      })
-      .onUpdate((e) => {
+      },
+      onUpdate: (e: PanGestureActiveEvent) => {
         "worklet";
         tx.value = e.translationX;
         ty.value = e.translationY;
-      })
-      .onEnd((e) => {
+      },
+      // v3 `onDeactivate` == v2 `onEnd`: fires only when leaving ACTIVE.
+      onDeactivate: (e: PanGestureActiveEvent) => {
         "worklet";
         const w = sizeW.value;
         const h = sizeH.value;
@@ -102,8 +108,11 @@ export function useCardGesture(params: CardGestureParams): CardGesture {
           tx.value = withSpring(0);
           ty.value = withSpring(0);
         }
-      });
-  }, [tx, ty, sizeW, sizeH, directions, threshold, velocityThreshold, active, onCommit]);
+      },
+    }),
+    [tx, ty, sizeW, sizeH, directions, threshold, velocityThreshold, active, onCommit],
+  );
+  const gesture = usePanGesture(panConfig);
 
   return { gesture, flyOff };
 }

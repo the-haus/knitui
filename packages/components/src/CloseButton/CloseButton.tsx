@@ -6,7 +6,7 @@ import { IconX } from "@knitui/icons/IconX";
 import { ActionIcon, type ActionIconVariant } from "../ActionIcon";
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
-import { type GradientValue, useGradient } from "../internal/gradient";
+import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import { usePressScale } from "../internal/motion";
 import { renderTextChild } from "../internal/render-text-child";
 import {
@@ -113,7 +113,7 @@ const CloseButtonComponent = styleable<CloseButtonProps>(
 
     // Gradient fill (only when `variant="gradient"`): web paints a CSS
     // `backgroundImage`; native renders the `layer` (an SVG fill) behind the glyph.
-    const grad = useGradient(variant === "gradient" ? gradient : undefined);
+    const grad = useGradient(gradientForVariant(variant, gradient));
 
     // The frame inherits ActionIcon's base press-dip scale, but not ActionIcon's
     // render-time easing — supply it here so the dip eases (and snaps under reduced

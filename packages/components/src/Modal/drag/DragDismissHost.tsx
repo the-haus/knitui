@@ -1,5 +1,6 @@
 import * as React from "react";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import { isWeb } from "@knitui/core";
 
 import type { DragDismissHostProps } from "./types";
 
@@ -14,11 +15,15 @@ import type { DragDismissHostProps } from "./types";
  */
 export const DragDismissHost = React.forwardRef<Animated.View, DragDismissHostProps>(
   function DragDismissHost({ offset, axis, sign, style, pointerEvents, children }, ref) {
-    const animatedStyle = useAnimatedStyle(() => {
-      "worklet";
-      const t = sign * offset.value;
-      return { transform: axis === "x" ? [{ translateX: t }] : [{ translateY: t }] };
-    }, [axis, sign]);
+    const animatedStyle = useAnimatedStyle(
+      () => {
+        "worklet";
+        const t = sign * offset.value;
+        return { transform: axis === "x" ? [{ translateX: t }] : [{ translateY: t }] };
+      },
+      // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+      isWeb ? [axis, sign] : undefined,
+    );
 
     return (
       <Animated.View ref={ref} style={[style, animatedStyle]} pointerEvents={pointerEvents}>

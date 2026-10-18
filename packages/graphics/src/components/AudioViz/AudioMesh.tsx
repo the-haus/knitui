@@ -30,6 +30,7 @@ import {
   useReducedMotion,
   useSharedValue,
 } from "react-native-reanimated";
+import { isWeb } from "@knitui/core";
 
 import {
   Canvas,
@@ -208,18 +209,22 @@ function AudioMeshImpl(
   // Per-frame uniforms from the eased levels + the clock, written into buffers this
   // instance owns (only the small record wrapping them is fresh each frame — it has
   // to be, or reanimated skips the SharedValue write and `<Shader>` never updates).
-  // Explicit `dependencies` REQUIRED on web (no worklet Babel plugin under Vite).
+  // Explicit `dependencies` REQUIRED on web (no worklet Babel plugin under Vite), and
+  // passed ONLY on web: Reanimated 4.7 ignores them on native and warns when given.
   const scratch = React.useMemo(createMeshUniformScratch, []);
-  const uniforms = useDerivedValue<MeshUniformsFlat>(() => {
-    "worklet";
-    const w = size.value.width;
-    const h = size.value.height;
-    if (!readyValue.value || w <= 0 || h <= 0) {
-      return buildMeshUniformsInto(EMPTY_LEVELS, w, h, 0, meshOpts, scratch);
-    }
-    const t = drifting ? (clock.value / 1000) * speed : 0;
-    return buildMeshUniformsInto(levels.value, w, h, t, meshOpts, scratch);
-  }, [levels, size, clock, readyValue, meshOpts, speed, drifting, scratch]);
+  const uniforms = useDerivedValue<MeshUniformsFlat>(
+    () => {
+      "worklet";
+      const w = size.value.width;
+      const h = size.value.height;
+      if (!readyValue.value || w <= 0 || h <= 0) {
+        return buildMeshUniformsInto(EMPTY_LEVELS, w, h, 0, meshOpts, scratch);
+      }
+      const t = drifting ? (clock.value / 1000) * speed : 0;
+      return buildMeshUniformsInto(levels.value, w, h, t, meshOpts, scratch);
+    },
+    isWeb ? [levels, size, clock, readyValue, meshOpts, speed, drifting, scratch] : undefined,
+  );
 
   const style = React.useMemo(
     () => ({ width: width ?? ("100%" as const), height, backgroundColor }),

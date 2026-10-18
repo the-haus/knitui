@@ -1,5 +1,5 @@
 import * as React from "react";
-import { type Gesture } from "react-native-gesture-handler";
+import type { NativeGesture } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 
 /**
@@ -17,7 +17,7 @@ import type { SharedValue } from "react-native-reanimated";
 export interface SheetScrollContextValue {
   /** The RNGH `Native` gesture the sheet's Pan runs simultaneously with. The
    *  `Sheet.ScrollView` attaches it to its scroller so the two recognise together. */
-  scrollGesture: ReturnType<typeof Gesture.Native>;
+  scrollGesture: NativeGesture;
   /** Inner content vertical scroll offset (px, ≥0), written by the scroll view. */
   scrollOffsetY: SharedValue<number>;
   /** The panel translateY SharedValue (0 = fully open). */

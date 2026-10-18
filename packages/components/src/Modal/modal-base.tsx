@@ -8,7 +8,7 @@ import type { CloseButtonProps } from "../CloseButton";
 import { type MotionPreset, type MotionPresetName, useMotionPreset } from "../internal/motion";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Overlay, type OverlayProps } from "../Overlay";
-import { Portal, useOverlayHost } from "../Portal";
+import { OverlayPortal, useOverlayHost } from "../Portal";
 import { ModalBaseInner } from "./modal-base-inner";
 
 /**
@@ -302,7 +302,7 @@ export function ModalBase(props: ModalBaseProps) {
   // `keepMounted` stays in the tree and toggles `display` — entrance animates but
   // there is no exit (the node never leaves), mirroring `Dialog`/`Popover`.
   if (keepMounted) {
-    return <Portal hostName={withinPortal ? overlayHost : undefined}>{layer}</Portal>;
+    return <OverlayPortal hostName={withinPortal ? overlayHost : undefined}>{layer}</OverlayPortal>;
   }
 
   // Default: `AnimatePresence` holds the whole layer (scrim + content) in the tree
@@ -314,9 +314,9 @@ export function ModalBase(props: ModalBaseProps) {
   return (
     <AnimatePresence>
       {opened ? (
-        <Portal key="modal-layer" hostName={withinPortal ? overlayHost : undefined}>
+        <OverlayPortal key="modal-layer" hostName={withinPortal ? overlayHost : undefined}>
           {layer}
-        </Portal>
+        </OverlayPortal>
       ) : null}
     </AnimatePresence>
   );

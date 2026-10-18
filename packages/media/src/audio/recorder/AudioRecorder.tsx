@@ -12,7 +12,7 @@
  */
 import * as React from "react";
 
-import { slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
+import { isWeb, slotStyles, type TamaguiElement, withStaticProperties } from "@knitui/core";
 
 import { RECORDING_PRESETS } from "../engine/recording-presets";
 import { useAudioRecorderController } from "../hooks/useAudioRecorderController";
@@ -70,7 +70,9 @@ function AudioRecorderRoot(props: AudioRecorderProps): React.ReactElement {
   /* Focusable, labelled region (web). -------------------------------------- */
   const [frameEl, setFrameEl] = React.useState<HTMLElement | null>(null);
   const setFrameRef = React.useCallback((node: TamaguiElement | null) => {
-    setFrameEl(node && "addEventListener" in node ? (node as unknown as HTMLElement) : null);
+    // `isWeb`, not `"addEventListener" in node`: React Native 0.88 host instances carry
+    // an `addEventListener` key (set to undefined) but no DOM API like `setAttribute`.
+    setFrameEl(isWeb && node ? (node as unknown as HTMLElement) : null);
   }, []);
   React.useEffect(() => {
     const el = frameEl;

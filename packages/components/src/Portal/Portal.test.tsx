@@ -1,7 +1,16 @@
 import * as React from "react";
 
-import { render, screen } from "../test-utils";
-import { OverlayHost, Portal, PortalHost, useOverlayHost, useTopmostOverlayHost } from "./index";
+import { Provider } from "@knitui/core";
+
+import { fireEvent, render, screen } from "../test-utils";
+import {
+  OverlayHost,
+  OverlayPortal,
+  Portal,
+  PortalHost,
+  useOverlayHost,
+  useTopmostOverlayHost,
+} from "./index";
 
 describe("Portal", () => {
   it("teleports children into the root host by default", async () => {
@@ -99,5 +108,65 @@ describe("OverlayHost", () => {
 
     rerender(<TopProbe />);
     expect(screen.getByTestId("top")).toHaveTextContent("root");
+  });
+});
+
+describe("OverlayPortal", () => {
+  // A stand-in for a navigator's `useIsFocused`: the test drives "focus" through context.
+  const FocusContext = React.createContext(true);
+  const useTestScreenFocus = () => React.useContext(FocusContext);
+
+  function Counter() {
+    const [count, setCount] = React.useState(0);
+    return (
+      <button type="button" onClick={() => setCount((c) => c + 1)}>
+        count {count}
+      </button>
+    );
+  }
+
+  function App({ focused, withFocusHook = true }: { focused: boolean; withFocusHook?: boolean }) {
+    return (
+      <Provider useScreenFocus={withFocusHook ? useTestScreenFocus : undefined}>
+        <div data-testid="host">
+          <PortalHost name="overlay-test-host" />
+        </div>
+        <FocusContext.Provider value={focused}>
+          <div data-testid="screen">
+            <OverlayPortal hostName="overlay-test-host">
+              <Counter />
+            </OverlayPortal>
+          </div>
+        </FocusContext.Provider>
+      </Provider>
+    );
+  }
+
+  it("teleports into the host while its screen is focused", async () => {
+    render(<App focused />);
+    const button = await screen.findByRole("button");
+    expect(screen.getByTestId("host")).toContainElement(button);
+  });
+
+  it("stays inline in its own screen while unfocused, and returns with its state", async () => {
+    const { rerender } = render(<App focused />);
+    fireEvent.click(await screen.findByRole("button"));
+    expect(screen.getByRole("button")).toHaveTextContent("count 1");
+
+    rerender(<App focused={false} />);
+    expect(screen.getByTestId("screen")).toContainElement(screen.getByRole("button"));
+    expect(screen.getByTestId("host")).not.toContainElement(screen.getByRole("button"));
+
+    rerender(<App focused />);
+    const back = await screen.findByRole("button");
+    expect(screen.getByTestId("host")).toContainElement(back);
+    // Re-parented, not remounted: the overlay kept its state.
+    expect(back).toHaveTextContent("count 1");
+  });
+
+  it("always teleports when the app passes no useScreenFocus", async () => {
+    render(<App focused={false} withFocusHook={false} />);
+    const button = await screen.findByRole("button");
+    expect(screen.getByTestId("host")).toContainElement(button);
   });
 });

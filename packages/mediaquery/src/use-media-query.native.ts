@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { AccessibilityInfo, Appearance, Dimensions } from "react-native";
+import { AccessibilityInfo, Appearance, Dimensions, type ScaledSize } from "react-native";
 
 import type { ColorScheme, MediaEnvironment, MediaQueryInput } from "./query.shared";
 import { matchesQuery, parseMediaQuery, queryToString } from "./query.shared";
@@ -78,7 +78,7 @@ function wireOnce(): void {
   if (wired) return;
   wired = true;
 
-  Dimensions.addEventListener("change", ({ window }) => {
+  Dimensions.addEventListener("change", ({ window }: { window: ScaledSize }) => {
     setEnvironment({ width: window.width, height: window.height });
   });
   Appearance.addChangeListener(({ colorScheme }) => {

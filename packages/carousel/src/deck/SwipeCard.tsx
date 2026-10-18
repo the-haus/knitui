@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { isWeb } from "@knitui/core";
 
 import { DeckCardBox } from "./chrome";
 import { stampOpacityFor } from "./decide";
@@ -37,12 +38,23 @@ function NativeStamp({
   threshold: number;
   children: React.ReactNode;
 }) {
-  const style = useAnimatedStyle(() => {
-    "worklet";
-    return {
-      opacity: stampOpacityFor(direction, tx.value, ty.value, sizeW.value, sizeH.value, threshold),
-    };
-  }, [direction, threshold]);
+  const style = useAnimatedStyle(
+    () => {
+      "worklet";
+      return {
+        opacity: stampOpacityFor(
+          direction,
+          tx.value,
+          ty.value,
+          sizeW.value,
+          sizeH.value,
+          threshold,
+        ),
+      };
+    },
+    // Web-only deps: Reanimated 4.7 ignores them on native and warns when given.
+    isWeb ? [direction, threshold] : undefined,
+  );
   return (
     <Animated.View pointerEvents="none" style={[stampPosition(direction), style]}>
       {children}
@@ -107,16 +119,19 @@ export function SwipeCard(props: SwipeCardProps) {
     return () => registerTop(null);
   }, [isTop, registerTop, flyOff]);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    "worklet";
-    const state: DeckCardState = {
-      depth: depthSV.value,
-      isTop,
-      drag: { x: isTop ? tx.value : 0, y: isTop ? ty.value : 0 },
-      size: { width: sizeW.value, height: sizeH.value },
-    };
-    return sanitizeDeckStyle(effect(state));
-  }, [isTop, effect]);
+  const animatedStyle = useAnimatedStyle(
+    () => {
+      "worklet";
+      const state: DeckCardState = {
+        depth: depthSV.value,
+        isTop,
+        drag: { x: isTop ? tx.value : 0, y: isTop ? ty.value : 0 },
+        size: { width: sizeW.value, height: sizeH.value },
+      };
+      return sanitizeDeckStyle(effect(state));
+    },
+    isWeb ? [isTop, effect] : undefined,
+  );
 
   return (
     <GestureDetector gesture={gesture}>

@@ -117,18 +117,21 @@ describe("buildMeshUniformsInto", () => {
 
     expect(flat.u_count).toBe(ref.u_count);
     expect(flat.u_softness).toBe(ref.u_softness);
-    expect([...flat.u_resolution]).toEqual([...ref.u_resolution]);
-    // Float32 rounding is the only difference — and it is the precision the GPU
-    // receives from the plain-array form too.
-    for (let i = 0; i < MAX_MESH_POINTS * 2; i++) {
-      expect(flat.u_points[i]).toBeCloseTo(ref.u_points[i], 6);
-    }
-    for (let i = 0; i < MAX_MESH_POINTS; i++) {
-      expect(flat.u_intensity[i]).toBeCloseTo(ref.u_intensity[i], 6);
-    }
-    for (let i = 0; i < MAX_MESH_POINTS * 3; i++) {
-      expect(flat.u_colors[i]).toBeCloseTo(ref.u_colors[i], 6);
-    }
+    expect(flat.u_resolution).toEqual(ref.u_resolution);
+    expect(flat.u_points).toEqual(ref.u_points);
+    expect(flat.u_intensity).toEqual(ref.u_intensity);
+    expect(flat.u_colors).toEqual(ref.u_colors);
+  });
+
+  it("keeps every uniform buffer a plain full-length array", () => {
+    // React Native Skia 2.14's native recorder reads a typed-array uniform through
+    // its generic indexable path, which keeps only the first 4 values; u_points
+    // (12 floats) then crashed the app with "Incorrect uniform size".
+    const scratch = createMeshUniformScratch();
+    expect(Array.isArray(scratch.u_resolution) && scratch.u_resolution.length).toBe(2);
+    expect(Array.isArray(scratch.u_points) && scratch.u_points.length).toBe(MAX_MESH_POINTS * 2);
+    expect(Array.isArray(scratch.u_intensity) && scratch.u_intensity.length).toBe(MAX_MESH_POINTS);
+    expect(Array.isArray(scratch.u_colors) && scratch.u_colors.length).toBe(MAX_MESH_POINTS * 3);
   });
 
   it("clears the inactive tail when a reused scratch held MORE points before", () => {

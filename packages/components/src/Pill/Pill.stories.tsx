@@ -180,7 +180,7 @@ export const Gradient: Story = {
       <Pill {...args} variant="gradient" gradient={{ from: "#4f46e5", to: "#ec4899", deg: 60 }}>
         Tag
       </Pill>
-      <Pill {...args} variant="gradient" gradient={{ from: "blue9", to: "teal9" }}>
+      <Pill {...args} variant="gradient" gradient={{ from: "blue8", to: "blue11" }}>
         Tag
       </Pill>
       <Pill

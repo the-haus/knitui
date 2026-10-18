@@ -65,6 +65,19 @@ const DEFAULT_FROM = "color5";
 const DEFAULT_TO = "color9";
 const DEFAULT_DEG = 45;
 
+/**
+ * The gradient a component paints for its `variant` / `gradient` props: `undefined`
+ * unless `variant="gradient"`, and the theme-ramp default (`color5` → `color9` at
+ * 45°) when the variant is set without a `gradient` prop. A shared frozen object,
+ * so the default keeps a stable identity across renders.
+ */
+const DEFAULT_GRADIENT: GradientValue = Object.freeze({});
+export const gradientForVariant = (
+  variant: unknown,
+  gradient: GradientValue | undefined,
+): GradientValue | undefined =>
+  variant === "gradient" ? (gradient ?? DEFAULT_GRADIENT) : undefined;
+
 /** The resolved angle, defaulting to Mantine's 45°. */
 export const gradientDeg = (gradient: GradientValue): number => gradient.deg ?? DEFAULT_DEG;
 

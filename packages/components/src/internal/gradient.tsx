@@ -20,6 +20,7 @@ import type { GradientResult, GradientValue } from "./gradient-shared";
 import { gradientToCss } from "./gradient-shared";
 
 export type { GradientStop, GradientValue } from "./gradient-shared";
+export { gradientForVariant } from "./gradient-shared";
 
 /**
  * The no-gradient result, shared and frozen so the (overwhelmingly common)

@@ -4,6 +4,7 @@ export {
   useOverlayHost,
   useTopmostOverlayHost,
 } from "./OverlayHost";
+export { OverlayPortal, type OverlayPortalProps } from "./OverlayPortal";
 export type { OverlayHostProps, PortalHostProps, PortalProps, PortalProviderProps } from "./types";
 /**
  * Portal system — a thin re-export of `react-native-teleport`.
@@ -24,6 +25,9 @@ export type { OverlayHostProps, PortalHostProps, PortalProps, PortalProviderProp
  *   kit's overlays inside it teleport into THAT host rather than `"root"` (which
  *   lives in the window underneath the modal). They read the host through
  *   `useOverlayHost()`; `useTopmostOverlayHost()` serves app-global layers.
+ * - The kit's overlays render through `<OverlayPortal>`, which stops teleporting
+ *   while its screen is unfocused (`<Provider useScreenFocus>`), so a backgrounded
+ *   stack screen's popovers don't draw over the screen in front of it.
  *
  * @see https://kirillzyusko.github.io/react-native-teleport
  */

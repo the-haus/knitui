@@ -10,7 +10,7 @@ import {
 
 import { Box } from "../Box";
 import { ControlIconProvider } from "../internal/ControlIconProvider";
-import { type GradientValue, useGradient } from "../internal/gradient";
+import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import {
   pickVariants,
   radiusVariant,
@@ -99,7 +99,7 @@ const ThemeIconComponent = styleable<ThemeIconProps>(
 
     // Gradient fill (only when `variant="gradient"`): web paints a CSS
     // `backgroundImage`; native renders the `layer` (an SVG fill) behind the icon.
-    const grad = useGradient(variant === "gradient" ? gradient : undefined);
+    const grad = useGradient(gradientForVariant(variant, gradient));
 
     return (
       <ThemeIconFrame ref={ref} variant={variant} size={size} {...grad.frameProps} {...rest}>

@@ -3,7 +3,7 @@ import { AppState, type AppStateStatus } from "react-native";
 
 import type { AppVisibility } from "./use-app-state.shared";
 
-const normalize = (status: AppStateStatus | null | undefined): AppVisibility => {
+const normalize = (status: AppStateStatus | string | null | undefined): AppVisibility => {
   if (status === "active") return "active";
   if (status === "inactive") return "inactive";
   return "background";

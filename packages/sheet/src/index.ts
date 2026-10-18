@@ -3,7 +3,7 @@
  *
  * Native-first: the snap math lives in a platform-free, reanimated-free engine
  * (`./engine`, re-exported below for advanced use); the gesture is one RNGH
- * `Gesture.Pan` shared by both platforms; the panel animates declaratively on
+ * `usePanGesture` shared by both platforms; the panel animates declaratively on
  * native (`useAnimatedStyle`) and via an imperative painter on web. See
  * `docs/sheet-package-plan.md` for the full design.
  */
