@@ -216,7 +216,14 @@ export {
   type HoverCardTargetProps,
   type HoverCardWidth,
 } from "./HoverCard";
-export { createImage, Image, type ImageProps, type ImageStyles, type ImageType } from "./Image";
+export {
+  createImage,
+  Image,
+  type ImageProps,
+  type ImageStyles,
+  type ImageType,
+  type ImageWebProps,
+} from "./Image";
 export {
   Indicator,
   type IndicatorPosition,

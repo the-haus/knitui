@@ -121,7 +121,33 @@ export type ImageProps = Omit<ViewProps, "transition"> &
     objectPosition?: ImageObjectPosition;
     onLoad?: (event: ImageLoadEvent) => void;
     onError?: (event: ImageErrorEvent) => void;
-  };
+  } & ImageWebProps;
+
+/**
+ * Web-only `<img>` attributes, written on the real `<img>` (never its wrapper)
+ * and in the server HTML, so the browser's preload scanner sees them before
+ * hydration. Native drops them without a warning: expo-image picks from a
+ * `source` list by its own measured size.
+ *
+ * The intrinsic size is the SOURCE's: a source object's `width` / `height`
+ * (`src={{ uri, width: 1600, height: 900 }}`, or numeric `width` / `height`
+ * props, which the unified API turns into one) become the `<img>`'s `width` /
+ * `height` attributes, so the browser knows the picture's aspect ratio before
+ * a byte arrives.
+ */
+export type ImageWebProps = {
+  /** The `<img srcset>` candidates (`"a.avif 256w, b.avif 512w"`), web only. */
+  srcSet?: string;
+  /** The `<img sizes>` the browser picks a `srcSet` candidate by, web only. */
+  sizes?: string;
+  /** The `<img decoding>` hint: `"async"` off the main thread, `"sync"` for the one hero. Web only. */
+  decoding?: "async" | "sync" | "auto";
+  /**
+   * The `<img fetchpriority>`, web only. Wins over `priority` there (which maps
+   * `"high"` / `"low"` to it too).
+   */
+  fetchPriority?: "high" | "low" | "auto";
+};
 
 export type { ImageErrorEventData };
 
