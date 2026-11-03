@@ -426,6 +426,12 @@ describe("Image on web: responsive <img> attributes (Festimap K-01)", () => {
     expect(img).toHaveAttribute("height", "48");
   });
 
+  it('takes loading="eager" for the LCP image, on the <img>', () => {
+    render(<Image testID="hero" src="https://img.x/a.png" alt="A" loading="eager" />);
+    expect(screen.getByRole("img")).toHaveAttribute("loading", "eager");
+    expect(screen.getByTestId("hero")).not.toHaveAttribute("loading");
+  });
+
   it("lets fetchPriority win over priority", () => {
     render(<Image src="https://img.x/a.png" alt="A" priority="high" fetchPriority="low" />);
     expect(screen.getByRole("img")).toHaveAttribute("fetchpriority", "low");
@@ -500,6 +506,133 @@ describe("Image on web: responsive <img> attributes (Festimap K-01)", () => {
   });
 });
 
+describe("Image on web: format fallback through <picture> sources (Festimap K-01)", () => {
+  const AVIF = "https://img.x/i/h/256.avif 256w, https://img.x/i/h/512.avif 512w";
+  const WEBP = "https://img.x/i/h/256.webp 256w, https://img.x/i/h/512.webp 512w";
+  const SIZES = "(max-width: 767px) 100vw, 720px";
+  const sources = [{ type: "image/avif", srcSet: AVIF, sizes: SIZES }];
+
+  it("renders no <picture> without sources (or with an empty list)", () => {
+    const { container, rerender } = render(<Image src="https://img.x/a.webp" alt="A" />);
+    expect(container.querySelector("picture")).toBeNull();
+    rerender(<Image src="https://img.x/a.webp" alt="A" sources={[]} />);
+    expect(container.querySelector("picture")).toBeNull();
+  });
+
+  it("puts each <source> before the <img>, in order, inside a display: contents <picture>", () => {
+    const { container } = render(
+      <Image
+        testID="photo"
+        src={{ uri: "https://img.x/i/h/512.webp", width: 1600, height: 900 }}
+        srcSet={WEBP}
+        sizes={SIZES}
+        sources={[...sources, { type: "image/webp", srcSet: WEBP, media: "(min-width: 1px)" }]}
+        alt="P"
+      />,
+    );
+    const picture = container.querySelector("picture")!;
+    expect(picture).not.toBeNull();
+    expect(picture.style.display).toBe("contents");
+    // Inside the wrapper, which keeps the box.
+    expect(screen.getByTestId("photo")).toContainElement(picture);
+    const children = Array.from(picture.children).map((c) => c.tagName);
+    expect(children).toEqual(["SOURCE", "SOURCE", "IMG"]);
+    const [avif, webp] = Array.from(picture.querySelectorAll("source"));
+    expect(avif).toHaveAttribute("type", "image/avif");
+    expect(avif).toHaveAttribute("srcset", AVIF);
+    expect(avif).toHaveAttribute("sizes", SIZES);
+    expect(avif).not.toHaveAttribute("media");
+    expect(webp).toHaveAttribute("media", "(min-width: 1px)");
+    expect(webp).not.toHaveAttribute("sizes");
+    // The <img> keeps its own fallback candidates, size and fill.
+    const img = screen.getByRole("img");
+    expect(img).toHaveAttribute("src", "https://img.x/i/h/512.webp");
+    expect(img).toHaveAttribute("srcset", WEBP);
+    expect(img).toHaveAttribute("width", "1600");
+    expect(img.style.position).toBe("absolute");
+    expect(img.style.width).toBe("100%");
+  });
+
+  it("keeps the <img> as the element that loads and errors", () => {
+    const onLoad = jest.fn();
+    const onError = jest.fn();
+    const { container } = render(
+      <Image
+        src="https://img.x/a.webp"
+        placeholder="data:image/png;base64,iVBORw0KGgo="
+        sources={sources}
+        alt="A"
+        onLoad={onLoad}
+        onError={onError}
+      />,
+    );
+    const img = screen.getByRole("img");
+    expect(img.parentElement?.tagName).toBe("PICTURE");
+    fireEvent.load(img);
+    expect(onLoad).toHaveBeenCalledTimes(1);
+    // The placeholder layer still goes once the photo loads.
+    expect(Array.from(container.querySelectorAll("div")).some((d) => d.style.backgroundImage)).toBe(
+      false,
+    );
+    fireEvent.error(img);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it("swaps to fallbackSrc after an error, without the failed sources", () => {
+    render(
+      <Image
+        src="https://img.x/broken.webp"
+        srcSet={WEBP}
+        fallbackSrc="https://img.x/fb.png"
+        sources={sources}
+        alt="F"
+      />,
+    );
+    fireEvent.error(screen.getByRole("img"));
+    const img = screen.getByRole("img");
+    expect(img).toHaveAttribute("src", "https://img.x/fb.png");
+    // The failed candidates go with the primary: the browser can only pick the fallback.
+    expect(img.closest("picture")).toBeNull();
+    expect(img).not.toHaveAttribute("srcset");
+  });
+
+  it("is in the server HTML: <picture>, its sources, then the <img> with its attributes", () => {
+    const { renderToString } = jest.requireActual<typeof ReactDOMServer>("react-dom/server.node");
+    const html = renderToString(
+      <Provider defaultColorScheme="light">
+        <Image
+          src={{ uri: "https://img.x/i/h/512.webp", width: 1600, height: 900 }}
+          srcSet={WEBP}
+          sizes={SIZES}
+          sources={sources}
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
+          alt="S"
+          width="100%"
+          height={200}
+        />
+      </Provider>,
+    );
+    const picture = html.match(/<picture[^>]*>.*<\/picture>/)?.[0] ?? "";
+    expect(picture).toContain('style="display:contents"');
+    const source = picture.match(/<source[^>]*>/)?.[0] ?? "";
+    expect(source).toContain('type="image/avif"');
+    expect(source).toContain(`srcSet="${AVIF}"`);
+    expect(source).toContain(`sizes="${SIZES}"`);
+    expect(picture.indexOf("<source")).toBeLessThan(picture.indexOf("<img"));
+    const img = picture.match(/<img[^>]*>/)?.[0] ?? "";
+    expect(img).toContain(`srcSet="${WEBP}"`);
+    expect(img).toContain('src="https://img.x/i/h/512.webp"');
+    expect(img).toContain('width="1600"');
+    expect(img).toContain('height="900"');
+    expect(img).toContain('loading="eager"');
+    expect(img).toContain('decoding="async"');
+    expect(img).toContain('fetchPriority="high"');
+    expect(html.match(/<img/g)).toHaveLength(1);
+  });
+});
+
 describe("Image on native: web-only attributes", () => {
   // Required fresh under a mocked `isWeb` (no render: that would pull a second
   // React copy under isolateModules), as `resolveRadiusValue`'s tests do.
@@ -518,9 +651,11 @@ describe("Image on native: web-only attributes", () => {
     sizes: "1px",
     decoding: "async",
     fetchPriority: "high",
+    loading: "eager",
+    sources: [{ type: "image/avif", srcSet: "a.avif 1w" }],
   });
 
-  it("never hands srcSet / sizes / decoding / fetchPriority to native expo-image", () => {
+  it("never hands srcSet / sizes / decoding / fetchPriority / loading / sources to native expo-image", () => {
     expect(withIsWeb(false)(props())).toEqual({ source: { uri: "https://img.x/a.png" } });
   });
 

@@ -98,7 +98,7 @@ const DEFAULT_INLINE_PROPS = new Set([
   "onLoadEnd",
   "onDisplay",
   // The web `<img>`'s own attributes (`srcSet`, `sizes`, `decoding`,
-  // `fetchPriority`): never styles, so Tamagui must not read them.
+  // `fetchPriority`, `loading`) and its `<picture>`'s `sources`: never styles, so Tamagui must not read them.
   ...IMAGE_WEB_PROP_KEYS,
   // Identity/test hooks: forwarded untouched so the backend (e.g. expo-image's
   // outer view → `data-testid` on web) keeps them queryable rather than letting
@@ -232,7 +232,7 @@ function liftWebColors(rest: Record<string, unknown>): Record<string, string> | 
 
 /**
  * Native: drop the web `<img>` attributes (`srcSet`, `sizes`, `decoding`,
- * `fetchPriority`) from the backend's props, in place — they mean nothing to
+ * `fetchPriority`, `loading`) and the `<picture>`'s `sources` from the backend's props, in place — they mean nothing to
  * expo-image (it picks from a `source` list itself), so no unknown prop reaches
  * it. The web keeps them. Exported for the native-path test.
  */
@@ -577,6 +577,16 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
       };
       onError?.(errorEvent);
     }, [markErrored, onError]);
+
+    // The fallback is one URL: the primary's web candidates (`srcSet`,
+    // `sizes`, `<picture>` `sources`) go with it, or the browser would keep
+    // picking the variant that just failed over the `fallbackSrc`.
+    if (errored && fallbackSrc) {
+      const restProps = rest as Record<string, unknown>;
+      delete restProps.srcSet;
+      delete restProps.sizes;
+      delete restProps.sources;
+    }
 
     const finalProps: Record<string, unknown> = {
       ...rest,

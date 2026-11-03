@@ -5,7 +5,7 @@ import { View } from "react-native";
 
 import { createImage } from "./createImage";
 import { normalizeContentPosition, objectFitToContentFit } from "./shared";
-import type { ImageObjectFit, ImageObjectPosition, ImageType } from "./types";
+import type { ImageObjectFit, ImageObjectPosition, ImageType, ImageWebSource } from "./types";
 
 /**
  * Web `Image`: the same component and props as the native one (`Image.native.tsx`,
@@ -35,7 +35,11 @@ import type { ImageObjectFit, ImageObjectPosition, ImageType } from "./types";
  * server HTML: `srcSet` / `sizes` (the browser picks the candidate for the
  * layout width and the pixel ratio), `decoding`, `fetchPriority` (wins over
  * `priority`), and the source's intrinsic `width` / `height` as attributes, so
- * the aspect ratio is known before a byte arrives.
+ * the aspect ratio is known before a byte arrives. `sources` wraps the `<img>`
+ * in a `<picture>` (`display: contents`, so the box layout is untouched) with
+ * one `<source>` per format alternative before it — the standard format
+ * fallback (`<source type="image/avif">`, then a WebP `<img>`); the `<img>`
+ * stays the element that loads, errors and is measured.
  *
  * The placeholder is painted as a CSS background on a layer under the `<img>`
  * (not a second `<img>`): a `data:` URL (a decoded ThumbHash, say) is in the
@@ -64,6 +68,7 @@ type WebImageProps = {
   sizes?: string;
   decoding?: "async" | "sync" | "auto";
   fetchPriority?: "high" | "low" | "auto";
+  sources?: readonly ImageWebSource[];
   responsivePolicy?: string;
   accessibilityLabel?: string;
   alt?: string;
@@ -83,6 +88,9 @@ type WebImageProps = {
   recyclingKey?: unknown;
   style?: unknown;
 };
+
+/** The `<picture>` adds no box: the `<img>` still fills the wrapper. */
+const PICTURE: React.CSSProperties = { display: "contents" };
 
 const FILL: React.CSSProperties = {
   position: "absolute",
@@ -165,6 +173,7 @@ const WebImage = React.forwardRef<unknown, WebImageProps>(function WebImage(prop
     sizes,
     decoding,
     fetchPriority: fetchPriorityProp,
+    sources,
     responsivePolicy,
     accessibilityLabel,
     alt,
@@ -227,6 +236,36 @@ const WebImage = React.forwardRef<unknown, WebImageProps>(function WebImage(prop
     onLoadEnd?.();
   };
 
+  const pictureSources = sources && sources.length > 0 ? sources : undefined;
+  // The <img> loads, errors and fills the box, with or without a <picture>.
+  const img = uri ? (
+    <img
+      // A new source is a new element: the old bitmap never shows under the
+      // new URL (the <picture> carries the key when there is one).
+      key={pictureSources ? undefined : uri}
+      // Candidates before `src`: an `<img>` built by script that gets `src`
+      // first may start that fetch before it learns of the `srcset`.
+      {...(srcSet && { srcSet })}
+      {...(srcSet && sizes && { sizes })}
+      src={uri}
+      {...intrinsic}
+      {...(label !== undefined && { alt: label })}
+      loading={resolvedLoading}
+      {...(decoding && { decoding })}
+      // React 19 knows `fetchPriority`; older DOM typings don't.
+      {...(fetchPriority && ({ fetchPriority } as object))}
+      draggable={draggable}
+      onLoad={handleLoad}
+      onError={handleError}
+      style={{
+        ...FILL,
+        objectFit: contentFit,
+        objectPosition: objectPositionOf(contentPosition),
+        filter,
+      }}
+    />
+  ) : null;
+
   return (
     <View ref={ref as never} {...(rest as object)} style={[{ overflow: "hidden" }, style as never]}>
       {placeholderUri && loadedUri !== uri ? (
@@ -242,32 +281,25 @@ const WebImage = React.forwardRef<unknown, WebImageProps>(function WebImage(prop
           }}
         />
       ) : null}
-      {uri ? (
-        <img
-          // A new source is a new element: the old bitmap never shows under the new URL.
-          key={uri}
-          // Candidates before `src`: an `<img>` built by script that gets `src`
-          // first may start that fetch before it learns of the `srcset`.
-          {...(srcSet && { srcSet })}
-          {...(srcSet && sizes && { sizes })}
-          src={uri}
-          {...intrinsic}
-          {...(label !== undefined && { alt: label })}
-          loading={resolvedLoading}
-          {...(decoding && { decoding })}
-          // React 19 knows `fetchPriority`; older DOM typings don't.
-          {...(fetchPriority && ({ fetchPriority } as object))}
-          draggable={draggable}
-          onLoad={handleLoad}
-          onError={handleError}
-          style={{
-            ...FILL,
-            objectFit: contentFit,
-            objectPosition: objectPositionOf(contentPosition),
-            filter,
-          }}
-        />
-      ) : null}
+      {img && pictureSources ? (
+        // The standard format fallback: the first <source> whose `type` the
+        // browser decodes wins, else the <img>'s own candidates.
+        <picture key={uri} style={PICTURE}>
+          {pictureSources.map((entry, index) => (
+            <source
+              // Order is meaning here (the first match wins), so the index is the identity.
+              key={index}
+              type={entry.type}
+              srcSet={entry.srcSet}
+              {...(entry.sizes && { sizes: entry.sizes })}
+              {...(entry.media && { media: entry.media })}
+            />
+          ))}
+          {img}
+        </picture>
+      ) : (
+        img
+      )}
     </View>
   );
 });

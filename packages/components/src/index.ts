@@ -223,6 +223,7 @@ export {
   type ImageStyles,
   type ImageType,
   type ImageWebProps,
+  type ImageWebSource,
 } from "./Image";
 export {
   Indicator,
