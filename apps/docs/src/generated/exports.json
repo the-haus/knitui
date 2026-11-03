@@ -70,7 +70,7 @@
         "./control-system",
         "./package.json"
       ],
-      "exportCount": 573,
+      "exportCount": 575,
       "hasStories": true
     },
     {
@@ -3474,6 +3474,18 @@
     },
     {
       "name": "ImageType",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "ImageWebProps",
+      "kind": "type",
+      "package": "@knitui/components",
+      "packageSlug": "components"
+    },
+    {
+      "name": "ImageWebSource",
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"

@@ -385,7 +385,7 @@ describe("Image on web: shown as soon as the browser can", () => {
   });
 });
 
-describe("Image on web: responsive <img> attributes (Festimap K-01)", () => {
+describe("Image on web: responsive <img> attributes", () => {
   const SRCSET = "https://img.x/i/h/256.avif 256w, https://img.x/i/h/512.avif 512w";
   const SIZES = "(min-width: 1024px) 33vw, 100vw";
 
@@ -506,7 +506,7 @@ describe("Image on web: responsive <img> attributes (Festimap K-01)", () => {
   });
 });
 
-describe("Image on web: format fallback through <picture> sources (Festimap K-01)", () => {
+describe("Image on web: format fallback through <picture> sources", () => {
   const AVIF = "https://img.x/i/h/256.avif 256w, https://img.x/i/h/512.avif 512w";
   const WEBP = "https://img.x/i/h/256.webp 256w, https://img.x/i/h/512.webp 512w";
   const SIZES = "(max-width: 767px) 100vw, 720px";
