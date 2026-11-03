@@ -183,7 +183,7 @@ Each item is a separate PR with the harness diff at zero.
    - `themes.ts` imports the literal, so the runtime no longer imports theme-builder for the default theme.
    - `createTheme()` (the public API for custom themes) still builds at runtime, lazily.
 8. **Fix pre-existing bugs found in the audit:** the `$colorSubtitle` non-existent key in the Group and Paper stories.
-9. **Remove dead `essentials` exports** that v3 drops (`useProps`, `usePropsAndStyle`, `useStyle`, `SizeVariantSpreadFunction`, `VariantSpreadFunction`), after checking consumers (festimap) don't use them.
+9. **Remove dead `essentials` exports** that v3 drops (`useProps`, `usePropsAndStyle`, `useStyle`, `SizeVariantSpreadFunction`, `VariantSpreadFunction`), after checking downstream consumers don't use them.
 10. **Remove `fullscreen` / `focusable` confusion.** The kit's own `focusable` props on dates and ColorPicker map to `tabIndex`; keep them as kit API, but rename the internal variable for grep clarity. Optional.
 11. **Explicit-`undefined` audit.** Grep for props passed as `undefined` to override a `styled` default or context value, and switch those to `null`-tolerant patterns.
 12. **Jest console guard** (§3.4) and **perf scripts** (§3.5) merged.
@@ -445,7 +445,7 @@ For each, the work is: styleable conversion type (A = flatten to `styled`, B = k
 - **Apps:**
   - `apps/app/_layout.tsx` and `index.tsx`, `demo/DemoScreen.tsx` and `IconsSection.tsx` read `theme.X?.val` (still valid). Prefer `.get()` on web where a CSS var is fine.
   - Regenerate `sections.generated.tsx`.
-- **festimap** (first external consumer): a dry run of `@knitui/codemod` against it before the prerelease (see `docs/FESTIMAP_REQUESTS.md`).
+- **First external consumer**: a dry run of `@knitui/codemod` against it before the prerelease.
 - **LSP (optional, DX):** `@tamagui/lsp` binary, with token hover and clause completion. Its npm version still looked like 2.7.7 at research time; check before recommending it.
 
 ---
@@ -475,7 +475,7 @@ Run the complete harness on the finished branch:
 - **Jest:** all packages green, plus the new native-path project. Coverage ≥ v2 per component.
 - **Docs:** `next build` static export passes all CI checks (coverage, live-highlight, produced pages, CF budget), plus a Playwright crawl of `out/` failing on console errors or error boundaries.
 - **SSR:** `apps/web` and `apps/docs` hydrate without mismatch warnings (the theme CSS vars and the `inverse`-style sub-themes).
-- **Consumers:** festimap builds and runs on the prerelease after `@knitui/codemod --write`.
+- **Consumers:** downstream apps build and run on the prerelease after `@knitui/codemod --write`.
 - **Perf:** every §3.5 budget is met.
 - **Regression guards that stay in CI permanently:**
   - grep / lint: no `"$token"`, no `xxxStyle` props, no sigil checks, no `animateOnly`
@@ -492,7 +492,7 @@ Run the complete harness on the finished branch:
 - **New page:** `guides/upgrading-to-tamagui-v3.mdx`. Before / after table, codemod usage, removed APIs, behaviour changes (motion timings, precedence, explicit `undefined`), toolchain changes (babel → metro plugin) and SafeAreaProvider order.
 - **`@knitui/codemod`:** publish the Phase 2 codemod (`npx @knitui/codemod v3 --report r.md ./src`, then `--write`).
 - **Changesets:** major changesets for core, components, dates, media, carousel, sheet and plugins; patch / minor for packages that only bump deps. Use **pre mode** (`changeset pre enter next`) → `x.y.0-next.N` on the `next` dist-tag.
-- **Pilot:** festimap on `next`, fix feedback, then repeat.
+- **Pilot:** a downstream app on `next`, fix feedback, then repeat.
 
 ## 14. Phase 10: stable release
 
@@ -527,7 +527,7 @@ Run the complete harness on the finished branch:
 | Perf regressions from v3 runtime changes                                                                                                               | §3.5 baseline + budgets in CI; Phase 7 dedicated pass                                                               |
 | Metro stale cache confusion                                                                                                                            | Documented `-c` + cache dir wipe in the plugins README and troubleshooting docs                                     |
 | Docs props tables bloat from moved type paths                                                                                                          | Re-point the build-props classifier; compare props counts against v2 (the 3147-vs-8477 lesson)                      |
-| Consumer breakage (festimap and others)                                                                                                                | `@knitui/codemod`, migration guide, `next` prerelease pilot                                                         |
+| Consumer breakage                                                                                                                                      | `@knitui/codemod`, migration guide, `next` prerelease pilot                                                         |
 
 ---
 
