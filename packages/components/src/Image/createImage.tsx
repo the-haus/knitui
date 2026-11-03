@@ -17,6 +17,7 @@ import { slotStyles, type SlotStyles } from "../internal/styles";
 import { themeColorToCssVar } from "../internal/theme-color-web";
 import {
   attachImageStatics,
+  IMAGE_WEB_PROP_KEYS,
   normalizeContentPosition,
   objectFitToResizeMode,
   resizeModeToObjectFit,
@@ -96,6 +97,9 @@ const DEFAULT_INLINE_PROPS = new Set([
   "onProgress",
   "onLoadEnd",
   "onDisplay",
+  // The web `<img>`'s own attributes (`srcSet`, `sizes`, `decoding`,
+  // `fetchPriority`, `loading`) and its `<picture>`'s `sources`: never styles, so Tamagui must not read them.
+  ...IMAGE_WEB_PROP_KEYS,
   // Identity/test hooks: forwarded untouched so the backend (e.g. expo-image's
   // outer view → `data-testid` on web) keeps them queryable rather than letting
   // Tamagui consume them onto a host element it does not render here.
@@ -224,6 +228,17 @@ function liftWebColors(rest: Record<string, unknown>): Record<string, string> | 
     delete rest[key];
   }
   return lifted;
+}
+
+/**
+ * Native: drop the web `<img>` attributes (`srcSet`, `sizes`, `decoding`,
+ * `fetchPriority`, `loading`) and the `<picture>`'s `sources` from the backend's props, in place — they mean nothing to
+ * expo-image (it picks from a `source` list itself), so no unknown prop reaches
+ * it. The web keeps them. Exported for the native-path test.
+ */
+export function withoutWebOnlyProps<T extends Record<string, unknown>>(props: T): T {
+  if (!isWeb) for (const key of IMAGE_WEB_PROP_KEYS) delete props[key];
+  return props;
 }
 
 /** Frames `useWebCachedImageLoad` waits for the backend to put its `<img>` in the DOM. */
@@ -414,6 +429,7 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
     Record<string, unknown>
   >(function ImageBackendAdapter(backendProps, backendRef) {
     const { [TRANSITION_INLINE_ALIAS]: transitionValue, ...backendRest } = backendProps;
+    withoutWebOnlyProps(backendRest);
     const { ref, onLoad } = useWebCachedImageLoad(
       backendRef,
       backendRest.onLoad as ((...args: unknown[]) => void) | undefined,
@@ -561,6 +577,16 @@ export function createImage<C extends ComponentType<Record<string, unknown>>>(
       };
       onError?.(errorEvent);
     }, [markErrored, onError]);
+
+    // The fallback is one URL: the primary's web candidates (`srcSet`,
+    // `sizes`, `<picture>` `sources`) go with it, or the browser would keep
+    // picking the variant that just failed over the `fallbackSrc`.
+    if (errored && fallbackSrc) {
+      const restProps = rest as Record<string, unknown>;
+      delete restProps.srcSet;
+      delete restProps.sizes;
+      delete restProps.sources;
+    }
 
     const finalProps: Record<string, unknown> = {
       ...rest,

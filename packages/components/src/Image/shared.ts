@@ -16,6 +16,20 @@ import type {
 } from "./types";
 
 /**
+ * The web-only `<img>` / `<picture>` props (`ImageWebProps`): forwarded
+ * untouched to the web `<img>` (and `sources` to its `<picture>`), dropped
+ * before native expo-image sees them.
+ */
+export const IMAGE_WEB_PROP_KEYS = [
+  "srcSet",
+  "sizes",
+  "decoding",
+  "fetchPriority",
+  "loading",
+  "sources",
+] as const;
+
+/**
  * Pull a usable `src` value (URL string, `require()` number, or `{ uri }`
  * object) out of either the `src` or deprecated `source` prop. Returns
  * `undefined` when nothing renderable is present.

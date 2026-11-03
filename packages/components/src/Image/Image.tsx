@@ -5,7 +5,7 @@ import { View } from "react-native";
 
 import { createImage } from "./createImage";
 import { normalizeContentPosition, objectFitToContentFit } from "./shared";
-import type { ImageObjectFit, ImageObjectPosition, ImageType } from "./types";
+import type { ImageObjectFit, ImageObjectPosition, ImageType, ImageWebSource } from "./types";
 
 /**
  * Web `Image`: the same component and props as the native one (`Image.native.tsx`,
@@ -31,6 +31,20 @@ import type { ImageObjectFit, ImageObjectPosition, ImageType } from "./types";
  * display events with expo-image's payloads. `Image.prefetch` preloads through
  * the browser cache.
  *
+ * Web-only on top (`ImageWebProps`), written on the `<img>` itself and in the
+ * server HTML: `srcSet` / `sizes` (the browser picks the candidate for the
+ * layout width and the pixel ratio), `decoding`, `fetchPriority` (wins over
+ * `priority`), and the source's intrinsic `width` / `height` as attributes, so
+ * the aspect ratio is known before a byte arrives. `sources` wraps the `<img>`
+ * in a `<picture>` (`display: contents`, so the box layout is untouched) with
+ * one `<source>` per format alternative before it — the standard format
+ * fallback (`<source type="image/avif">`, then a WebP `<img>`); the `<img>`
+ * stays the element that loads, errors and is measured.
+ *
+ * The placeholder is painted as a CSS background on a layer under the `<img>`
+ * (not a second `<img>`): a `data:` URL (a decoded ThumbHash, say) is in the
+ * server HTML and paints before any script runs, and the photo decodes over it.
+ *
  * Not on web: BlurHash / ThumbHash placeholders (only URL placeholders render),
  * `tintColor`, `transition`, and the cache-management statics
  * (`clearMemoryCache` / `clearDiskCache` / `getCachePathAsync` /
@@ -50,6 +64,11 @@ type WebImageProps = {
   blurRadius?: number;
   priority?: "low" | "normal" | "high" | null;
   loading?: "lazy" | "eager";
+  srcSet?: string;
+  sizes?: string;
+  decoding?: "async" | "sync" | "auto";
+  fetchPriority?: "high" | "low" | "auto";
+  sources?: readonly ImageWebSource[];
   responsivePolicy?: string;
   accessibilityLabel?: string;
   alt?: string;
@@ -70,6 +89,9 @@ type WebImageProps = {
   style?: unknown;
 };
 
+/** The `<picture>` adds no box: the `<img>` still fills the wrapper. */
+const PICTURE: React.CSSProperties = { display: "contents" };
+
 const FILL: React.CSSProperties = {
   position: "absolute",
   left: 0,
@@ -85,6 +107,30 @@ function sourceUri(source: Source | Source[] | undefined): string | undefined {
   if (typeof first === "string") return first;
   return first.uri;
 }
+
+/** The first source's intrinsic size, when it names finite numbers. */
+function sourceSize(source: Source | Source[] | undefined): { width?: number; height?: number } {
+  const first = Array.isArray(source) ? source[0] : source;
+  if (first == null || typeof first !== "object") return {};
+  const finite = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+  const width = finite(first.width);
+  const height = finite(first.height);
+  return { ...(width && { width }), ...(height && { height }) };
+}
+
+/** expo-image's `contentFit` → the CSS `background-size` that paints the same. */
+const BACKGROUND_SIZE: Record<ImageObjectFit, string> = {
+  cover: "cover",
+  contain: "contain",
+  fill: "100% 100%",
+  none: "auto",
+  // Never upscaled: a small placeholder stays its own size, a big one fits.
+  "scale-down": "contain",
+};
+
+/** A URL as a CSS `url()` value, quoted so a `data:` URL's characters stay inside. */
+const cssUrl = (url: string) => `url("${url.replace(/["\\\n]/g, (c) => encodeURIComponent(c))}")`;
 
 /** A placeholder string is a URL, not a BlurHash / ThumbHash. */
 function isUrlLike(value: string): boolean {
@@ -123,6 +169,11 @@ const WebImage = React.forwardRef<unknown, WebImageProps>(function WebImage(prop
     blurRadius,
     priority,
     loading,
+    srcSet,
+    sizes,
+    decoding,
+    fetchPriority: fetchPriorityProp,
+    sources,
     responsivePolicy,
     accessibilityLabel,
     alt,
@@ -155,7 +206,9 @@ const WebImage = React.forwardRef<unknown, WebImageProps>(function WebImage(prop
 
   const filter = blurRadius ? `blur(${blurRadius}px)` : undefined;
   const label = accessibilityLabel ?? alt;
-  const fetchPriority = priority === "high" || priority === "low" ? priority : undefined;
+  const fetchPriority =
+    fetchPriorityProp ?? (priority === "high" || priority === "low" ? priority : undefined);
+  const intrinsic = sourceSize(source);
   const resolvedLoading =
     loading ?? (responsivePolicy == null || responsivePolicy === "static" ? "lazy" : undefined);
 
@@ -183,37 +236,70 @@ const WebImage = React.forwardRef<unknown, WebImageProps>(function WebImage(prop
     onLoadEnd?.();
   };
 
+  const pictureSources = sources && sources.length > 0 ? sources : undefined;
+  // The <img> loads, errors and fills the box, with or without a <picture>.
+  const img = uri ? (
+    <img
+      // A new source is a new element: the old bitmap never shows under the
+      // new URL (the <picture> carries the key when there is one).
+      key={pictureSources ? undefined : uri}
+      // Candidates before `src`: an `<img>` built by script that gets `src`
+      // first may start that fetch before it learns of the `srcset`.
+      {...(srcSet && { srcSet })}
+      {...(srcSet && sizes && { sizes })}
+      src={uri}
+      {...intrinsic}
+      {...(label !== undefined && { alt: label })}
+      loading={resolvedLoading}
+      {...(decoding && { decoding })}
+      // React 19 knows `fetchPriority`; older DOM typings don't.
+      {...(fetchPriority && ({ fetchPriority } as object))}
+      draggable={draggable}
+      onLoad={handleLoad}
+      onError={handleError}
+      style={{
+        ...FILL,
+        objectFit: contentFit,
+        objectPosition: objectPositionOf(contentPosition),
+        filter,
+      }}
+    />
+  ) : null;
+
   return (
     <View ref={ref as never} {...(rest as object)} style={[{ overflow: "hidden" }, style as never]}>
       {placeholderUri && loadedUri !== uri ? (
-        <img
-          src={placeholderUri}
-          alt=""
+        <div
           aria-hidden
-          draggable={draggable}
-          style={{ ...FILL, objectFit: placeholderContentFit, filter }}
-        />
-      ) : null}
-      {uri ? (
-        <img
-          // A new source is a new element: the old bitmap never shows under the new URL.
-          key={uri}
-          src={uri}
-          {...(label !== undefined && { alt: label })}
-          loading={resolvedLoading}
-          // React 19 knows `fetchPriority`; older DOM typings don't.
-          {...(fetchPriority && ({ fetchPriority } as object))}
-          draggable={draggable}
-          onLoad={handleLoad}
-          onError={handleError}
           style={{
             ...FILL,
-            objectFit: contentFit,
-            objectPosition: objectPositionOf(contentPosition),
+            backgroundImage: cssUrl(placeholderUri),
+            backgroundSize: BACKGROUND_SIZE[placeholderContentFit] ?? "contain",
+            backgroundPosition: objectPositionOf(contentPosition),
+            backgroundRepeat: "no-repeat",
             filter,
           }}
         />
       ) : null}
+      {img && pictureSources ? (
+        // The standard format fallback: the first <source> whose `type` the
+        // browser decodes wins, else the <img>'s own candidates.
+        <picture key={uri} style={PICTURE}>
+          {pictureSources.map((entry, index) => (
+            <source
+              // Order is meaning here (the first match wins), so the index is the identity.
+              key={index}
+              type={entry.type}
+              srcSet={entry.srcSet}
+              {...(entry.sizes && { sizes: entry.sizes })}
+              {...(entry.media && { media: entry.media })}
+            />
+          ))}
+          {img}
+        </picture>
+      ) : (
+        img
+      )}
     </View>
   );
 });
