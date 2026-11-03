@@ -1630,7 +1630,7 @@
     },
     {
       "name": "loading",
-      "type": "\"lazy\" | \"eager\" | undefined"
+      "type": "boolean | undefined"
     },
     {
       "name": "loadingIndicatorSource",
@@ -7769,6 +7769,14 @@
       ],
       "props": [
         {
+          "name": "decoding",
+          "bucket": "own",
+          "type": "\"auto\" | \"async\" | \"sync\" | undefined",
+          "required": false,
+          "description": "The `<img decoding>` hint: `\"async\"` off the main thread, `\"sync\"` for the one hero. Web only.",
+          "declaredIn": "packages/components/src/Image/types.ts"
+        },
+        {
           "name": "disabled",
           "bucket": "system",
           "type": "boolean | undefined",
@@ -7792,6 +7800,14 @@
           "declaredIn": "packages/components/src/Image/types.ts"
         },
         {
+          "name": "fetchPriority",
+          "bucket": "own",
+          "type": "\"auto\" | \"low\" | \"high\" | undefined",
+          "required": false,
+          "description": "The `<img fetchpriority>`, web only. Wins over `priority` there (which maps `\"high\"` / `\"low\"` to it too).",
+          "declaredIn": "packages/components/src/Image/types.ts"
+        },
+        {
           "name": "fit",
           "bucket": "own",
           "type": "ImageObjectFit | undefined",
@@ -7805,6 +7821,14 @@
           "required": false,
           "description": "CSS object-fit value. Defaults to \"cover\".",
           "default": "\"cover\"",
+          "declaredIn": "packages/components/src/Image/types.ts"
+        },
+        {
+          "name": "loading",
+          "bucket": "own",
+          "type": "\"lazy\" | \"eager\" | undefined",
+          "required": false,
+          "description": "The `<img loading>`, web only. Default `\"lazy\"` (the browser fetches an image as it nears the viewport); `\"eager\"` for the one above-the-fold (LCP) image, with `fetchPriority=\"high\"`.",
           "declaredIn": "packages/components/src/Image/types.ts"
         },
         {
@@ -7846,11 +7870,27 @@
           "declaredIn": "packages/components/src/Image/types.ts"
         },
         {
+          "name": "sizes",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "The `<img sizes>` the browser picks a `srcSet` candidate by, web only.",
+          "declaredIn": "packages/components/src/Image/types.ts"
+        },
+        {
           "name": "source",
           "bucket": "own",
           "type": "ImageSrc | undefined",
           "required": false,
           "description": "Deprecated — use src instead.",
+          "declaredIn": "packages/components/src/Image/types.ts"
+        },
+        {
+          "name": "sources",
+          "bucket": "own",
+          "type": "readonly ImageWebSource[] | undefined",
+          "required": false,
+          "description": "Format alternatives, web only: given (non-empty), the `<img>` is wrapped in a `<picture>` with one `<source>` per entry, in order, before it. The browser takes the first source whose `type` it decodes (and whose `media` matches); none does → the `<img>`'s own `src` / `srcSet`. So `sources={[{ type: \"image/avif\", srcSet: avif, sizes }]}` with a WebP `src` / `srcSet` downloads only the AVIF where it is supported and only the WebP elsewhere. The `<picture>` is `display: contents` (no box of its own), and the `<img>` stays the element that loads, errors and fills the box. Native ignores them: expo-image picks its own format.",
           "declaredIn": "packages/components/src/Image/types.ts"
         },
         {
@@ -7860,6 +7900,14 @@
           "required": false,
           "description": "Image URL or require() result.",
           "default": "https://picsum.photos/seed/knitui/400/300",
+          "declaredIn": "packages/components/src/Image/types.ts"
+        },
+        {
+          "name": "srcSet",
+          "bucket": "own",
+          "type": "string | undefined",
+          "required": false,
+          "description": "The `<img srcset>` candidates (`\"a.avif 256w, b.avif 512w\"`), web only.",
           "declaredIn": "packages/components/src/Image/types.ts"
         },
         {
@@ -7880,9 +7928,9 @@
         }
       ],
       "counts": {
-        "style": 829,
-        "system": 5,
-        "own": 8
+        "style": 828,
+        "own": 14,
+        "system": 5
       }
     },
     "components/display/indicator": {

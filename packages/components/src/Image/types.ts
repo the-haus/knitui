@@ -121,7 +121,63 @@ export type ImageProps = Omit<ViewProps, "transition"> &
     objectPosition?: ImageObjectPosition;
     onLoad?: (event: ImageLoadEvent) => void;
     onError?: (event: ImageErrorEvent) => void;
-  };
+  } & ImageWebProps;
+
+/**
+ * Web-only `<img>` attributes, written on the real `<img>` (never its wrapper)
+ * and in the server HTML, so the browser's preload scanner sees them before
+ * hydration. Native drops them without a warning: expo-image picks from a
+ * `source` list by its own measured size.
+ *
+ * The intrinsic size is the SOURCE's: a source object's `width` / `height`
+ * (`src={{ uri, width: 1600, height: 900 }}`, or numeric `width` / `height`
+ * props, which the unified API turns into one) become the `<img>`'s `width` /
+ * `height` attributes, so the browser knows the picture's aspect ratio before
+ * a byte arrives.
+ */
+export type ImageWebProps = {
+  /** The `<img srcset>` candidates (`"a.avif 256w, b.avif 512w"`), web only. */
+  srcSet?: string;
+  /** The `<img sizes>` the browser picks a `srcSet` candidate by, web only. */
+  sizes?: string;
+  /** The `<img decoding>` hint: `"async"` off the main thread, `"sync"` for the one hero. Web only. */
+  decoding?: "async" | "sync" | "auto";
+  /**
+   * The `<img fetchpriority>`, web only. Wins over `priority` there (which maps
+   * `"high"` / `"low"` to it too).
+   */
+  fetchPriority?: "high" | "low" | "auto";
+  /**
+   * The `<img loading>`, web only. Default `"lazy"` (the browser fetches an
+   * image as it nears the viewport); `"eager"` for the one above-the-fold
+   * (LCP) image, with `fetchPriority="high"`.
+   */
+  loading?: "lazy" | "eager";
+  /**
+   * Format alternatives, web only: given (non-empty), the `<img>` is wrapped
+   * in a `<picture>` with one `<source>` per entry, in order, before it. The
+   * browser takes the first source whose `type` it decodes (and whose `media`
+   * matches); none does → the `<img>`'s own `src` / `srcSet`. So
+   * `sources={[{ type: "image/avif", srcSet: avif, sizes }]}` with a WebP
+   * `src` / `srcSet` downloads only the AVIF where it is supported and only
+   * the WebP elsewhere. The `<picture>` is `display: contents` (no box of its
+   * own), and the `<img>` stays the element that loads, errors and fills the
+   * box. Native ignores them: expo-image picks its own format.
+   */
+  sources?: readonly ImageWebSource[];
+};
+
+/** One `<picture><source>` of {@link ImageWebProps.sources}, web only. */
+export type ImageWebSource = {
+  /** The `<source srcset>` candidates (`"a.avif 256w, b.avif 512w"`, or one URL). */
+  srcSet: string;
+  /** The MIME type (`"image/avif"`): a browser that can't decode it skips the source. */
+  type: string;
+  /** The `<source sizes>`; omitted, the browser assumes `100vw`. */
+  sizes?: string;
+  /** The `<source media>` query the source applies under. */
+  media?: string;
+};
 
 export type { ImageErrorEventData };
 

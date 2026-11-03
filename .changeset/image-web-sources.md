@@ -1,0 +1,5 @@
+---
+"@knitui/components": minor
+---
+
+Image (web): `sources` (`{ srcSet, type, sizes?, media? }[]`) gives the `<img>` format alternatives — the standard `<picture>` fallback. Given, the `<img>` is wrapped in a `<picture>` (`display: contents`, so the box layout is unchanged) with one `<source>` per entry before it, in the server HTML too; the browser downloads the first source whose `type` it decodes, else the `<img>`'s own `src` / `srcSet`. So `sources={[{ type: "image/avif", srcSet: avif, sizes }]}` with a WebP `src` / `srcSet` fetches only the AVIF where it is supported and only the WebP elsewhere. The `<img>` keeps every attribute, the load / error events and the placeholder behaviour. After an error, `fallbackSrc` now renders alone: the failed `srcSet`, `sizes` and `sources` go with the primary, so the browser can't keep picking them. `loading` (`"lazy"` default, `"eager"` for the one LCP image) is now a typed web prop too. Native ignores `sources` and `loading` (expo-image picks its own format and loads eagerly).
