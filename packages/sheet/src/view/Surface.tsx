@@ -67,20 +67,36 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
     testID,
   } = props;
 
+  const panel = (
+    <AnimatedFrameHost offset={offset}>
+      <SheetFrame {...rootProps}>
+        {handle}
+        {header}
+        {children}
+        {footer}
+      </SheetFrame>
+    </AnimatedFrameHost>
+  );
+
   return (
     <SheetLayer ref={ref} testID={testID} onLayout={onLayout} zIndex={zIndex}>
       {/*
-       * One gesture spans the WHOLE layer — scrim and panel — so the sheet can be
-       * dragged from the backdrop, not just the panel. The capture container is
-       * `box-none`: when the scrim is present it fills the layer (pointer-events
-       * auto) and the whole area is draggable; without a scrim only the panel is
-       * solid, so empty regions fall through to the page behind. A stationary tap
-       * never crosses the pan's activation threshold, so the scrim's own
-       * `onPress` (tap-to-dismiss) still fires.
+       * With a scrim the gesture spans the WHOLE layer, so the sheet can be
+       * dragged from the backdrop as well. A stationary tap never crosses the
+       * pan's activation threshold, so the scrim's `onPress` (tap-to-dismiss)
+       * still fires.
+       *
+       * Without one the gesture goes on the PANEL alone. `box-none` on the
+       * capture container does NOT keep the empty regions free on Android: RNGH
+       * records a detector's handlers even when no child took the touch, bounded
+       * by its single child, so a detector around the full-cover fill took every
+       * touch on the page behind, and a persistent sheet ate the pans and
+       * pinches of a map under it. Around the translated panel those bounds
+       * follow the panel.
        */}
-      <GestureDetector gesture={gesture}>
-        <SheetFill pointerEvents="box-none">
-          {withOverlay ? (
+      {withOverlay ? (
+        <GestureDetector gesture={gesture}>
+          <SheetFill pointerEvents="box-none">
             <AnimatedOverlay
               offset={offset}
               fadeStart={fadeStart}
@@ -89,18 +105,14 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
               onPress={onOverlayPress}
               overlayProps={overlayProps}
             />
-          ) : null}
-
-          <AnimatedFrameHost offset={offset}>
-            <SheetFrame {...rootProps}>
-              {handle}
-              {header}
-              {children}
-              {footer}
-            </SheetFrame>
-          </AnimatedFrameHost>
+            {panel}
+          </SheetFill>
+        </GestureDetector>
+      ) : (
+        <SheetFill pointerEvents="box-none">
+          <GestureDetector gesture={gesture}>{panel}</GestureDetector>
         </SheetFill>
-      </GestureDetector>
+      )}
     </SheetLayer>
   );
 });
