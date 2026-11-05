@@ -7,6 +7,7 @@
  */
 import type { AudioPlayer, AudioStatus } from "expo-audio";
 
+import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import { ExpoAudioController } from "./expo-controller";
 
 type StatusListener = (status: AudioStatus) => void;
@@ -25,9 +26,32 @@ class FakeAudioPlayer {
   isLoaded = false;
   isLive = false;
   crossOrigin: string | undefined = undefined;
+  /** Every transport call, in order, so a test can assert their sequence. */
+  calls: string[] = [];
+  /** Settles the seek in flight; a test holds it open to observe the ordering. */
+  finishSeek: () => void = () => {};
   private listeners: StatusListener[] = [];
 
   constructor(public id: string) {}
+
+  play(): void {
+    this.calls.push("play");
+  }
+
+  pause(): void {
+    this.calls.push("pause");
+  }
+
+  replace(): void {
+    this.calls.push("replace");
+  }
+
+  seekTo(seconds: number): Promise<void> {
+    this.calls.push(`seek:${seconds}`);
+    return new Promise((resolve) => {
+      this.finishSeek = resolve;
+    });
+  }
 
   addListener(_event: "playbackStatusUpdate", cb: StatusListener): { remove(): void } {
     this.listeners.push(cb);
@@ -117,5 +141,215 @@ describe("ExpoAudioController event identity", () => {
     player.id = "player-A#2";
     player.emit(makeStatus("player-A#2", { playing: true, currentTime: 8 }));
     expect(controller.state.currentTime).toBe(8);
+  });
+});
+
+describe("ExpoAudioController transport", () => {
+  const flush = (): Promise<void> => Promise.resolve().then(() => undefined);
+
+  it("keeps an error once later statuses stop mentioning it", () => {
+    const { player, controller } = make();
+    player.emit(makeStatus("player-A", { isLoaded: false, error: "404" } as Partial<AudioStatus>));
+    player.emit(makeStatus("player-A", { isLoaded: false, isBuffering: true }));
+
+    expect(controller.state.status).toBe("error");
+    expect(controller.state.error).toEqual({ message: "404" });
+    expect(controller.state.isBuffering).toBe(false);
+  });
+
+  it("clears an error when the source loads", () => {
+    const { player, controller } = make();
+    player.emit(makeStatus("player-A", { isLoaded: false, error: "404" } as Partial<AudioStatus>));
+    player.emit(makeStatus("player-A", { isLoaded: true }));
+
+    expect(controller.state.status).toBe("readyToPlay");
+    expect(controller.state.error).toBeNull();
+  });
+
+  it("stays playing through a rebuffer, so the toggle can still pause", () => {
+    const { player, controller } = make();
+    controller.play();
+    player.emit(makeStatus("player-A", { playing: true }));
+    player.emit(makeStatus("player-A", { playing: false, isBuffering: true }));
+
+    expect(controller.state.playing).toBe(true);
+    expect(controller.state.isBuffering).toBe(true);
+  });
+
+  it("stops reporting playing when the backend pauses on its own", () => {
+    const { player, controller } = make();
+    controller.play();
+    player.emit(makeStatus("player-A", { playing: true }));
+    player.emit(makeStatus("player-A", { playing: false }));
+    player.emit(makeStatus("player-A", { playing: false, isBuffering: true }));
+
+    expect(controller.state.playing).toBe(false);
+  });
+
+  it("restarts from the top when played after the end", async () => {
+    const { player, controller } = make();
+    player.currentTime = 30;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 }));
+    expect(controller.state.ended).toBe(true);
+    player.currentTime = 0;
+
+    controller.play();
+    expect(player.calls).toEqual(["seek:0"]);
+    expect(controller.state.ended).toBe(false);
+
+    player.finishSeek();
+    await flush();
+    expect(player.calls).toEqual(["seek:0", "play"]);
+  });
+
+  it("drops a replay that was paused before its seek landed", async () => {
+    const { player, controller } = make();
+    controller.replay();
+    controller.pause();
+    player.finishSeek();
+    await flush();
+
+    expect(player.calls).toEqual(["seek:0", "pause"]);
+  });
+
+  it("retries a failed source when played", () => {
+    const { player, controller } = make();
+    player.emit(makeStatus("player-A", { isLoaded: false, error: "gone" } as Partial<AudioStatus>));
+
+    controller.play();
+
+    expect(player.calls).toEqual(["replace", "play"]);
+    expect(controller.state.status).toBe("loading");
+    expect(controller.state.error).toBeNull();
+  });
+
+  it("resumes a retry at the position it failed", () => {
+    const { player, controller } = make();
+    player.emit(makeStatus("player-A", { currentTime: 40, duration: 100 }));
+    player.emit(
+      makeStatus("player-A", {
+        isLoaded: false,
+        currentTime: 40,
+        error: "x",
+      } as Partial<AudioStatus>),
+    );
+
+    controller.retry();
+    expect(controller.state.currentTime).toBe(40);
+
+    player.emit(makeStatus("player-A", { isLoaded: true, duration: 100 }));
+    expect(player.calls).toEqual(["replace", "seek:40"]);
+  });
+
+  it("holds a seek made before the source has loaded", () => {
+    const { player, controller } = make();
+    controller.replace("https://a.test/x.mp3");
+    void controller.seekTo(12);
+    expect(player.calls).toEqual(["replace"]);
+
+    player.emit(makeStatus("player-A", { isLoaded: true, duration: 100 }));
+    expect(player.calls).toEqual(["replace", "seek:12"]);
+  });
+
+  it("keeps playing across a source change", () => {
+    const { player, controller } = make();
+    controller.play();
+    player.calls = [];
+
+    controller.replace("https://a.test/next.mp3");
+
+    expect(player.calls).toEqual(["replace", "play"]);
+  });
+});
+
+describe("ExpoAudioController stream failures", () => {
+  it("reports a stream that gave out as an error, not as the end", () => {
+    const { player, controller } = make();
+    player.currentTime = 16;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 372, duration: 372 }));
+    player.emit(makeStatus("player-A", { currentTime: 16, duration: 372 }));
+
+    expect(controller.state.ended).toBe(false);
+    expect(controller.state.status).toBe("error");
+    expect(controller.state.currentTime).toBe(16);
+  });
+
+  it("treats finishing near an inexact duration as the end", () => {
+    const { player, controller } = make();
+    player.currentTime = 366;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 370, duration: 370 }));
+
+    expect(controller.state.ended).toBe(true);
+    expect(controller.state.status).toBe("readyToPlay");
+  });
+
+  it("clears the failure on retry", () => {
+    const { player, controller } = make();
+    player.currentTime = 16;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 372, duration: 372 }));
+
+    controller.retry();
+    player.emit(makeStatus("player-A", { currentTime: 0, duration: 372 }));
+
+    expect(controller.state.error).toBeNull();
+  });
+});
+
+describe("ExpoAudioController stall watchdog (web)", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  function withElement(): {
+    player: FakeAudioPlayer;
+    controller: ExpoAudioController;
+    media: HTMLAudioElement;
+  } {
+    const player = new FakeAudioPlayer("player-A");
+    const media = document.createElement("audio");
+    (player as unknown as { media: HTMLAudioElement }).media = media;
+    const controller = new ExpoAudioController(player as unknown as AudioPlayer);
+    return { player, controller, media };
+  }
+
+  it("fails a stream that never recovers, and retry keeps the intent to play", () => {
+    const { player, controller, media } = withElement();
+    controller.play();
+    player.emit(makeStatus("player-A", { playing: true, duration: 100 }));
+    media.dispatchEvent(new Event("waiting"));
+    expect(controller.state.isBuffering).toBe(true);
+
+    jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS);
+
+    expect(controller.state.status).toBe("error");
+    expect(controller.state.error?.message).toBe(STREAM_STALL_MESSAGE);
+    expect(controller.state.playing).toBe(false);
+    expect(controller.state.isBuffering).toBe(false);
+
+    player.emit(makeStatus("player-A", { playing: false, duration: 100 }));
+    expect(controller.state.status).toBe("error");
+
+    player.calls = [];
+    controller.retry();
+    expect(player.calls).toEqual(["replace", "play"]);
+  });
+
+  it("stands down when playback resumes", () => {
+    const { player, controller, media } = withElement();
+    controller.play();
+    player.emit(makeStatus("player-A", { playing: true, duration: 100 }));
+    media.dispatchEvent(new Event("waiting"));
+    jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS - 1);
+    media.dispatchEvent(new Event("playing"));
+    jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS);
+
+    expect(controller.state.status).toBe("readyToPlay");
+  });
+
+  it("ignores a stall while paused", () => {
+    const { controller, media } = withElement();
+    media.dispatchEvent(new Event("waiting"));
+    jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS);
+
+    expect(controller.state.status).not.toBe("error");
   });
 });

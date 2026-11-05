@@ -1,3 +1,9 @@
+import type {
+  AudioTrack as ExpoAudioTrack,
+  SubtitleTrack as ExpoSubtitleTrack,
+  VideoPlayer,
+} from "expo-video";
+
 /**
  * `expo-video` player event wiring for {@link ExpoVideoController}. Extracted
  * from the controller so the class stays focused on the imperative API + state
@@ -10,11 +16,7 @@
  * of these events (no `sourceLoad`, no track-change events), so duration is read
  * live from the player rather than from `sourceLoad`.
  */
-import type {
-  AudioTrack as ExpoAudioTrack,
-  SubtitleTrack as ExpoSubtitleTrack,
-  VideoPlayer,
-} from "expo-video";
+import { isWeb } from "@knitui/core";
 
 import type {
   VideoControllerState,
@@ -28,6 +30,9 @@ interface ExpoSubscription {
   remove(): void;
 }
 
+/** `HTMLMediaElement.HAVE_FUTURE_DATA`: enough is buffered to keep playing. */
+const HAVE_FUTURE_DATA = 3;
+
 /** Bound state/event plumbing + private hooks the wiring drives. */
 export interface ExpoEventHost {
   setState(patch: Partial<VideoControllerState>): void;
@@ -38,6 +43,10 @@ export interface ExpoEventHost {
     subtitles: ExpoSubtitleTrack[],
     video: VideoTrack[] | unknown[],
   ): void;
+  /** Whether playback has been asked for, independent of whether it's underway. */
+  readonly wantsPlay: boolean;
+  /** Playback ran to the end, so the intent is spent. */
+  clearPlayIntent(): void;
   readonly state: VideoControllerState;
 }
 
@@ -60,8 +69,12 @@ export function bindExpoEvents(
     p.addListener("statusChange", ({ status, error }) => {
       // The web backend never emits `sourceLoad`; pick up the now-known duration
       // (and liveness) from the player when it becomes ready.
+      const mapped = mapStatus(status);
       host.setState({
-        status: mapStatus(status),
+        status: mapped,
+        // Backends drop `playing` while they buffer; the player is still playing as
+        // far as anyone using it is concerned, and the toggle has to offer "Pause".
+        playing: mapped === "error" ? false : host.state.playing || isWaitingToPlay(host, mapped),
         error: error ? toVideoError(error) : null,
         duration: liveDuration(p, host.state.duration),
         isLive: p.isLive,
@@ -70,14 +83,19 @@ export function bindExpoEvents(
   );
   sub(
     p.addListener("playingChange", ({ isPlaying }) => {
-      host.setState({ playing: isPlaying, ended: isPlaying ? false : host.state.ended });
+      host.setState({
+        playing: isPlaying || isWaitingToPlay(host, host.state.status),
+        ended: isPlaying ? false : host.state.ended,
+      });
     }),
   );
   sub(
     p.addListener("timeUpdate", ({ currentTime, bufferedPosition }) => {
+      const resumed = host.state.status === "loading" && hasResumedOnWeb(p);
       // Keep duration fresh from the player (the web backend has no `sourceLoad`,
       // and a stream's duration can grow as it loads).
       host.setState({
+        ...(resumed ? { status: "readyToPlay" as const } : null),
         currentTime,
         bufferedPosition,
         duration: liveDuration(p, host.state.duration),
@@ -112,6 +130,7 @@ export function bindExpoEvents(
   );
   sub(
     p.addListener("playToEnd", () => {
+      host.clearPlayIntent();
       host.setState({ ended: true, playing: false });
     }),
   );
@@ -128,6 +147,23 @@ export function bindExpoEvents(
 }
 
 /* helpers ------------------------------------------------------------------- */
+
+/**
+ * WEB: whether a stall is over though `canplay` never came. That backend clears
+ * `loading` only on that event, which a resuming element doesn't always fire, so ask
+ * the element. Time moving isn't enough: a tick can land just as a stall begins.
+ * Native status is accurate and needs none of this.
+ */
+function hasResumedOnWeb(p: VideoPlayer): boolean {
+  if (!isWeb || !p.playing) return false;
+  const elements = (p as { _mountedVideos?: Set<HTMLVideoElement> })._mountedVideos;
+  return !!elements && [...elements].every((el) => el.readyState >= HAVE_FUTURE_DATA);
+}
+
+/** Whether playback was asked for and is only held up by loading. */
+function isWaitingToPlay(host: ExpoEventHost, status: VideoStatus): boolean {
+  return host.wantsPlay && status === "loading";
+}
 
 /** The player's current duration if it's a usable finite number, else the fallback. */
 function liveDuration(p: VideoPlayer, fallback: number): number {

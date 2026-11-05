@@ -21,6 +21,7 @@ import type {
  */
 import { isWeb } from "@knitui/core";
 
+import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import {
   mixChannels,
   type MixedLevels,
@@ -72,6 +73,22 @@ function initialPitchCorrection(config: AudioPlayerConfig, player: AudioPlayer):
   return isWeb ? WEB_DEFAULT_PITCH_CORRECTION : (player.shouldCorrectPitch ?? true);
 }
 
+/** The element events that mean a stall is over. */
+const RESUMED_EVENTS = ["playing", "canplay", "pause", "ended"] as const;
+
+const STREAM_FAILURE_MESSAGE = "The connection was lost before the track finished.";
+
+/**
+ * Whether a "finished" report really means the stream gave out. AVFoundation treats
+ * a connection that dies for good as the end of the file. The margin is wide because
+ * a length read from an MP3 header can be off, and a track that simply finished must
+ * never read as a failure.
+ */
+function endedEarly(stoppedAt: number, status: AudioStatus): boolean {
+  if (status.isLive || !(status.duration > 0)) return false;
+  return status.duration - stoppedAt > Math.max(5, status.duration * 0.1);
+}
+
 export class ExpoAudioController extends BaseAudioController {
   // On web, refine with the live browser probes (iOS volume lock, MediaSession,
   // Web Audio availability); native exposes the full feature set.
@@ -94,6 +111,25 @@ export class ExpoAudioController extends BaseAudioController {
   private lastSource: AudioSource;
   /** The id this player's own status updates carry — adopted from its first event. */
   private ownStatusId: string | null = null;
+  /**
+   * The standing PLAY INTENT: whether playback has been asked for, independent of
+   * whether sound is coming out right now. Backends report `playing: false` for as
+   * long as they're rebuffering, which on its own would flip the toggle to "Play"
+   * (so pressing it could never pause) and drop the mid-playback spinner.
+   */
+  private wantsPlay = false;
+  /** `playing` as last reported by the backend, to spot a pause it made on its own. */
+  private backendPlaying = false;
+  /** Bumped to abandon a replay whose seek is still in flight. */
+  private replayToken = 0;
+  /** A seek made before the source has loaded, applied once it has. */
+  private pendingSeek: number | null = null;
+  /** Set when a stream gave out mid-track; stands even though the item stays loaded. */
+  private streamFailure: AudioError | null = null;
+  /** WEB: expo's backend never sets `isBuffering`, so the element's events do. */
+  private elementBuffering = false;
+  private detachElement: (() => void) | null = null;
+  private stallTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     player: AudioPlayer,
@@ -118,8 +154,9 @@ export class ExpoAudioController extends BaseAudioController {
     }
     if (config.shouldCorrectPitch != null) player.shouldCorrectPitch = config.shouldCorrectPitch;
     this.bindEvents();
+    this.bindElementBuffering();
     this.syncFromPlayer();
-    if (config.autoPlay) player.play();
+    if (config.autoPlay) this.play();
   }
 
   /* event binding ----------------------------------------------------------- */
@@ -137,6 +174,55 @@ export class ExpoAudioController extends BaseAudioController {
     this.subscriptions.push(
       p.addListener("playbackStatusUpdate", (status: AudioStatus) => this.applyStatus(status)),
     );
+  }
+
+  /**
+   * WEB: report stalls from the `<audio>` element. expo's web backend hardcodes
+   * `isBuffering` to false and goes quiet when time stops advancing, so without this
+   * a stalled stream looks like it's playing. `replace` builds a new element, hence
+   * the re-bind from {@link load}.
+   */
+  private bindElementBuffering(): void {
+    this.clearStallTimer();
+    this.detachElement?.();
+    this.detachElement = null;
+    this.elementBuffering = false;
+    const media = (this.player as { media?: HTMLMediaElement }).media;
+    if (!isWeb || !media?.addEventListener) return;
+    const update = (buffering: boolean): void => {
+      this.elementBuffering = buffering;
+      this.clearStallTimer();
+      if (buffering && this.wantsPlay) {
+        this.stallTimer = setTimeout(() => this.failStalledStream(), STREAM_STALL_TIMEOUT_MS);
+      }
+      this.setState({ isBuffering: buffering });
+    };
+    const onWaiting = (): void => update(true);
+    const onResumed = (): void => update(false);
+    media.addEventListener("waiting", onWaiting);
+    for (const type of RESUMED_EVENTS) media.addEventListener(type, onResumed);
+    this.detachElement = () => {
+      media.removeEventListener("waiting", onWaiting);
+      for (const type of RESUMED_EVENTS) media.removeEventListener(type, onResumed);
+    };
+  }
+
+  private clearStallTimer(): void {
+    if (this.stallTimer !== null) clearTimeout(this.stallTimer);
+    this.stallTimer = null;
+  }
+
+  private failStalledStream(): void {
+    this.stallTimer = null;
+    this.elementBuffering = false;
+    this.streamFailure = { message: STREAM_STALL_MESSAGE };
+    this.player.pause();
+    this.setState({
+      status: "error",
+      error: this.streamFailure,
+      playing: false,
+      isBuffering: false,
+    });
   }
 
   /**
@@ -163,26 +249,46 @@ export class ExpoAudioController extends BaseAudioController {
   }
 
   private ingestStatus(status: AudioStatus): void {
-    const error: AudioError | null = status.error ? { message: status.error } : null;
+    // A backend reports an error once, and follows it with statuses that simply
+    // don't mention it. It stands until the source loads (a `replace`/`retry` clears
+    // it explicitly), otherwise a dead URL reads as "loading" forever.
+    const failure = status.error ? { message: status.error } : this._state.error;
+    const stoppedAt = this.player.currentTime;
+    if (status.didJustFinish && endedEarly(stoppedAt, status)) {
+      this.streamFailure = { message: STREAM_FAILURE_MESSAGE };
+    }
+    const cutShort = this.streamFailure !== null;
+    const error: AudioError | null =
+      this.streamFailure ?? (status.isLoaded && !status.error ? null : failure);
+    const buffering = !error && (status.isBuffering || this.elementBuffering);
+    const stoppedByBackend =
+      this.backendPlaying && !status.playing && !status.isBuffering && status.isLoaded;
+    if (status.didJustFinish || (stoppedByBackend && !error)) this.wantsPlay = false;
+    this.backendPlaying = status.playing;
     // Translate the backend status into the snapshot; the granular events
     // (statusChange / playingChange / volumeChange / playbackRateChange /
     // durationChange / timeUpdate / playToEnd / error) all fan out from the diff
     // in BaseMediaController.deriveEvents — this adapter never hand-emits them.
     this.setState({
       status: mapStatus(status, error),
-      playing: status.playing,
-      currentTime: status.currentTime,
+      playing: !error && (status.playing || (this.wantsPlay && (buffering || !status.isLoaded))),
+      currentTime: cutShort ? stoppedAt : status.currentTime,
       duration: status.duration,
       muted: status.mute,
       loop: status.loop,
       playbackRate: status.playbackRate,
       shouldCorrectPitch: status.shouldCorrectPitch,
-      isBuffering: status.isBuffering,
+      isBuffering: buffering,
       isLoaded: status.isLoaded,
       isLive: status.isLive,
-      ended: status.didJustFinish ? true : this._state.ended && !status.playing,
+      ended: !cutShort && (status.didJustFinish || (this._state.ended && !status.playing)),
       error,
     });
+    if (status.isLoaded && this.pendingSeek !== null) {
+      const target = this.pendingSeek;
+      this.pendingSeek = null;
+      void this.seekTo(target);
+    }
   }
 
   private syncFromPlayer(): void {
@@ -205,19 +311,43 @@ export class ExpoAudioController extends BaseAudioController {
   /* imperative API ---------------------------------------------------------- */
 
   play(): void {
+    if (this._state.ended) {
+      this.replay();
+      return;
+    }
+    this.wantsPlay = true;
+    if (this._state.status === "error") {
+      this.retry();
+      return;
+    }
     this.player.play();
   }
 
   pause(): void {
+    this.wantsPlay = false;
+    this.replayToken++;
     this.player.pause();
   }
 
   replay(): void {
-    void this.player.seekTo(0);
-    this.player.play();
+    this.wantsPlay = true;
+    this.setState({ currentTime: 0, ended: false });
+    // The seek has to land first: `play()` is synchronous and `seekTo` isn't, and at
+    // the end of a track iOS would otherwise start playing, finish on the spot and
+    // only then rewind, leaving the player stopped at 0:00.
+    const token = ++this.replayToken;
+    const start = (): void => {
+      if (token === this.replayToken) this.player.play();
+    };
+    void this.player.seekTo(0).then(start, start);
   }
 
   async seekTo(seconds: number): Promise<void> {
+    if (!this._state.isLoaded && this._state.duration <= 0) {
+      this.pendingSeek = Math.max(0, seconds);
+      this.setState({ currentTime: this.pendingSeek });
+      return;
+    }
     const duration = this.player.duration;
     const target =
       Number.isFinite(duration) && duration > 0
@@ -266,6 +396,20 @@ export class ExpoAudioController extends BaseAudioController {
   replace(source: AudioSource): void {
     this.lastSource = source;
     this.applyCrossOrigin(source);
+    this.load(source);
+  }
+
+  retry(): void {
+    // Pick up where it failed, and keep playing if that's what it was doing.
+    const resumeAt = this._state.currentTime;
+    this.load(this.lastSource);
+    if (resumeAt > 0) void this.seekTo(resumeAt);
+  }
+
+  private load(source: AudioSource): void {
+    this.replayToken++;
+    this.pendingSeek = null;
+    this.streamFailure = null;
     this.setState({
       status: "loading",
       currentTime: 0,
@@ -275,11 +419,8 @@ export class ExpoAudioController extends BaseAudioController {
       error: null,
     });
     this.player.replace(source as ExpoAudioSource);
-  }
-
-  retry(): void {
-    this.setState({ status: "loading", error: null, ended: false });
-    this.player.replace(this.lastSource as ExpoAudioSource);
+    this.bindElementBuffering();
+    if (this.wantsPlay) this.player.play();
   }
 
   /* lock screen ------------------------------------------------------------- */
@@ -355,6 +496,9 @@ export class ExpoAudioController extends BaseAudioController {
   }
 
   override dispose(): void {
+    this.clearStallTimer();
+    this.detachElement?.();
+    this.detachElement = null;
     for (const subscription of this.subscriptions) subscription.remove();
     this.subscriptions = [];
     this.sampleSub?.remove();

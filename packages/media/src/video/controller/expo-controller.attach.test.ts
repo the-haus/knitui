@@ -17,6 +17,7 @@
  */
 import type { VideoPlayer } from "expo-video";
 
+import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import { ExpoVideoController, type ExpoVideoViewHandle } from "./expo-controller";
 
 /**
@@ -216,5 +217,114 @@ describe("ExpoVideoController play intent across a surface swap", () => {
     attachSurface(player, controller);
     expect(player.playCalls).toBe(before);
     expect(player.playing).toBe(false);
+  });
+});
+
+describe("ExpoVideoController transport", () => {
+  function setup(): { player: FakeVideoPlayer; controller: ExpoVideoController } {
+    const player = new FakeVideoPlayer();
+    player.mountedViews = 1;
+    const controller = new ExpoVideoController(player as unknown as VideoPlayer);
+    return { player, controller };
+  }
+
+  const emit = (player: FakeVideoPlayer, event: string, payload: unknown): void =>
+    (player as unknown as { emit(e: string, p: unknown): void }).emit(event, payload);
+
+  it("stays playing while it buffers, so the toggle can still pause", () => {
+    const { player, controller } = setup();
+    controller.play();
+    emit(player, "statusChange", { status: "loading" });
+    emit(player, "playingChange", { isPlaying: false });
+
+    expect(controller.state.playing).toBe(true);
+    expect(controller.state.status).toBe("loading");
+  });
+
+  describe("stall watchdog (web)", () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it("fails a stream that never recovers, and lets retry pick it back up", () => {
+      const { player, controller } = setup();
+      controller.play();
+      emit(player, "statusChange", { status: "loading" });
+
+      jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS);
+
+      expect(controller.state.status).toBe("error");
+      expect(controller.state.error?.message).toBe(STREAM_STALL_MESSAGE);
+      expect(controller.state.playing).toBe(false);
+    });
+
+    it("stands down when playback resumes or is paused", () => {
+      const { player, controller } = setup();
+      controller.play();
+      emit(player, "statusChange", { status: "loading" });
+      jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS - 1);
+      emit(player, "statusChange", { status: "readyToPlay" });
+      jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS);
+      expect(controller.state.status).toBe("readyToPlay");
+
+      emit(player, "statusChange", { status: "loading" });
+      controller.pause();
+      jest.advanceTimersByTime(STREAM_STALL_TIMEOUT_MS);
+      expect(controller.state.status).toBe("loading");
+    });
+  });
+
+  it("does not report playing while loading a player nobody asked to start", () => {
+    const { player, controller } = setup();
+    emit(player, "statusChange", { status: "loading" });
+
+    expect(controller.state.playing).toBe(false);
+  });
+
+  it("clears a stuck loading status once the element can play again (web)", () => {
+    const { player, controller } = setup();
+    const element = { readyState: 2, play: jest.fn() };
+    (player as unknown as { _mountedVideos: Set<unknown> })._mountedVideos = new Set([element]);
+    controller.play();
+    player.playing = true;
+    emit(player, "statusChange", { status: "loading" });
+
+    // A tick landing as the stall begins: the element has nothing to play yet.
+    emit(player, "timeUpdate", { currentTime: 2, bufferedPosition: 2 });
+    expect(controller.state.status).toBe("loading");
+
+    element.readyState = 4;
+    emit(player, "timeUpdate", { currentTime: 3, bufferedPosition: 9 });
+    expect(controller.state.status).toBe("readyToPlay");
+  });
+
+  it("restarts when played after the end", () => {
+    const { player, controller } = setup();
+    controller.play();
+    emit(player, "playToEnd", {});
+    expect(controller.state.ended).toBe(true);
+    const plays = player.playCalls + player.replayCalls;
+
+    controller.play();
+
+    expect(player.playCalls + player.replayCalls).toBeGreaterThan(plays);
+    expect(player.currentTime).toBe(0);
+    expect(controller.state.ended).toBe(false);
+  });
+
+  it("ignores a play() cut short, but gives up on a blocked one (web)", async () => {
+    const { player, controller } = setup();
+    const element = { play: jest.fn() };
+    (player as unknown as { _mountedVideos: Set<unknown> })._mountedVideos = new Set([element]);
+
+    element.play.mockRejectedValueOnce(Object.assign(new Error("x"), { name: "AbortError" }));
+    controller.play();
+    await new Promise((resolve) => setTimeout(resolve));
+    emit(player, "statusChange", { status: "loading" });
+    expect(controller.state.playing).toBe(true);
+
+    element.play.mockRejectedValueOnce(Object.assign(new Error("x"), { name: "NotAllowedError" }));
+    controller.play();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(controller.state.playing).toBe(false);
   });
 });

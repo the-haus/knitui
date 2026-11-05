@@ -21,6 +21,8 @@ export {
   mergeState,
   numberOr,
   progressOf,
+  STREAM_STALL_MESSAGE,
+  STREAM_STALL_TIMEOUT_MS,
 } from "./media-state";
 export type {
   BaseMediaCapabilities,

@@ -134,7 +134,11 @@ export class SessionAudioPlaylistController
     // here: when the slot is already active and merely paused, replacing the same
     // source reloads it and resets `currentTime` to 0 — so resume-after-pause
     // would restart the track. Track switches go through `loadTrack`, which cues
-    // the new source explicitly.
+    // the new source explicitly. A queue that has run out starts over.
+    if (this._state.ended) {
+      this.loadTrack(0, { play: true });
+      return;
+    }
     this.player.play();
   }
 

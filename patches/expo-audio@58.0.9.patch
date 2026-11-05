@@ -1,5 +1,58 @@
+diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
+index 6c81fce3dd518d3b82e3280940a001c7be84dd0a..3e057864227d20e4391e288c7a9c0efcc0548ccb 100644
+--- a/android/src/main/java/expo/modules/audio/AudioModule.kt
++++ b/android/src/main/java/expo/modules/audio/AudioModule.kt
+@@ -553,6 +553,7 @@ class AudioModule : Module() {
+             bufferDurationMs
+           )
+           player.keepAudioSessionActive = keepAudioSessionActive
++          player.hlsFallback = hlsFallback(source)
+ 
+           val playerId = player.id
+           player.onRelease = {
+@@ -696,6 +697,7 @@ class AudioModule : Module() {
+             }
+             val mediaSource = createMediaItem(source)
+             val wasPlaying = player.ref.isPlaying
++            player.hlsFallback = hlsFallback(source)
+             mediaSource?.let {
+               player.setMediaSource(it)
+               if (wasPlaying) {
+@@ -1121,7 +1123,18 @@ class AudioModule : Module() {
+     }
+   }
+ 
+-  private fun createMediaItem(source: AudioSource?): MediaSource? = source?.uri?.let { uriString ->
++  private fun hlsFallback(source: AudioSource?): (() -> MediaSource?)? {
++    val uri = source?.uri?.toUri() ?: return null
++    if (uri.scheme != "http" && uri.scheme != "https") {
++      return null
++    }
++    if (retrieveStreamType(uri) != CONTENT_TYPE_OTHER) {
++      return null
++    }
++    return { createMediaItem(source, asHls = true) }
++  }
++
++  private fun createMediaItem(source: AudioSource?, asHls: Boolean = false): MediaSource? = source?.uri?.let { uriString ->
+     val uri = uriString.toUri()
+     val mediaItem = when {
+       isRawResource(uri) -> {
+@@ -1140,7 +1153,11 @@ class AudioModule : Module() {
+         else -> DefaultDataSource.Factory(context)
+       }
+     }
+-    return buildMediaSourceFactory(factory, mediaItem)
++    return if (asHls) {
++      HlsMediaSource.Factory(factory).createMediaSource(mediaItem)
++    } else {
++      buildMediaSourceFactory(factory, mediaItem)
++    }
+   }
+ 
+   private fun httpDataSourceFactory(headers: Map<String, String>?): DataSource.Factory {
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index fb2d0b5..306e179 100644
+index fb2d0b57fb8718df04e5c073b70837b2658f2c16..29b46f37826b0a06d7b7d245a0fee2d15b285e76 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -1,25 +1,28 @@
@@ -53,7 +106,15 @@ index fb2d0b5..306e179 100644
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
      .setHandleAudioBecomingNoisy(true)
-@@ -82,8 +90,6 @@ class AudioPlayer(
+@@ -61,6 +69,7 @@ class AudioPlayer(
+   LockScreenPlayable {
+   var preservesPitch = true
+   var keepAudioSessionActive = false
++  var hlsFallback: (() -> MediaSource?)? = null
+ 
+   // Lock screen controls
+   override var isActiveForLockScreen = false
+@@ -82,8 +91,6 @@ class AudioPlayer(
        }
      }
  
@@ -62,7 +123,7 @@ index fb2d0b5..306e179 100644
    private val context by lazy {
      appContext.reactContext
        ?: throw Exceptions.ReactContextLost()
-@@ -91,6 +97,12 @@ class AudioPlayer(
+@@ -91,6 +98,12 @@ class AudioPlayer(
  
    init {
      installPlayerListeners()
@@ -75,7 +136,24 @@ index fb2d0b5..306e179 100644
      source?.let {
        setMediaSource(source)
      }
-@@ -129,20 +141,10 @@ class AudioPlayer(
+@@ -121,6 +134,16 @@ class AudioPlayer(
+   }
+ 
+   override fun onPlayerError(error: PlaybackException) {
++    // Stream type is inferred from the URL, so HLS without an `.m3u8` path reaches the
++    // progressive extractor, which can't read a playlist. Give it one try as HLS.
++    val fallback = hlsFallback
++    if (fallback != null && error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
++      hlsFallback = null
++      fallback()?.let {
++        setMediaSource(it)
++        return
++      }
++    }
+     sendStatusUpdate(
+       mapOf(
+         "error" to error.message
+@@ -129,20 +152,10 @@ class AudioPlayer(
    }
  
    fun setSamplingEnabled(enabled: Boolean) {
@@ -100,7 +178,7 @@ index fb2d0b5..306e179 100644
    }
  
    override fun setPlaybackRate(rate: Float) {
-@@ -155,11 +157,6 @@ class AudioPlayer(
+@@ -155,11 +168,6 @@ class AudioPlayer(
      ref.playbackParameters = PlaybackParameters(playbackRate, pitch)
    }
  
@@ -112,7 +190,7 @@ index fb2d0b5..306e179 100644
    override fun currentStatus(): Map<String, Any?> {
      val isMuted = ref.volume == 0f
      val isLooping = ref.repeatMode == Player.REPEAT_MODE_ONE
-@@ -205,12 +202,10 @@ class AudioPlayer(
+@@ -205,12 +213,10 @@ class AudioPlayer(
      mediaSession = buildBasicMediaSession(context, ref) { requestPlay() }
    }
  
@@ -128,7 +206,7 @@ index fb2d0b5..306e179 100644
      )
      emit(AUDIO_SAMPLE_UPDATE, body)
    }
-@@ -225,33 +220,6 @@ class AudioPlayer(
+@@ -225,33 +231,6 @@ class AudioPlayer(
      }
    }
  
@@ -162,7 +240,7 @@ index fb2d0b5..306e179 100644
    override fun sharedObjectDidRelease() {
      serviceConnection.release()
      super.sharedObjectDidRelease()
-@@ -263,7 +231,8 @@ class AudioPlayer(
+@@ -263,7 +242,8 @@ class AudioPlayer(
        serviceConnection.playbackServiceBinder?.service?.unregisterPlayable()
      }
      serviceConnection.unbind()
@@ -172,7 +250,7 @@ index fb2d0b5..306e179 100644
      super.releasePlayer()
    }
  
-@@ -271,3 +240,104 @@ class AudioPlayer(
+@@ -271,3 +251,104 @@ class AudioPlayer(
      val TAG = AudioPlayer::class.simpleName
    }
  }
@@ -278,7 +356,7 @@ index fb2d0b5..306e179 100644
 +  }
 +}
 diff --git a/build/AudioPlayer.web.js b/build/AudioPlayer.web.js
-index bcf4575..58f1fc8 100644
+index bcf4575b7c10bed92faff6b3829bbaa1d007cf73..58f1fc895a18176c75b2ea8fcecae4a69b049d8d 100644
 --- a/build/AudioPlayer.web.js
 +++ b/build/AudioPlayer.web.js
 @@ -148,7 +148,10 @@ export class AudioPlayerWeb extends globalThis.expo.SharedObject {
@@ -294,7 +372,7 @@ index bcf4575..58f1fc8 100644
              if (this.isPlaying) {
                  this.startSampling();
 diff --git a/build/AudioRecorder.web.js b/build/AudioRecorder.web.js
-index ed2f072..30fc4c4 100644
+index ed2f07242b0067a56090451e3d8e6670b4d77f1f..30fc4c4df808930081bef5ebd331796071ab91ae 100644
 --- a/build/AudioRecorder.web.js
 +++ b/build/AudioRecorder.web.js
 @@ -180,7 +180,10 @@ export class AudioRecorderWeb extends globalThis.expo.SharedObject {
@@ -310,10 +388,18 @@ index ed2f072..30fc4c4 100644
          }
          const defaults = RecordingPresets.HIGH_QUALITY.web;
 diff --git a/ios/AudioPlayer.swift b/ios/AudioPlayer.swift
-index 0f68a52..39dba20 100644
+index 0f68a52003416eb0e7be03d44dba1be76cd38116..ffdbcb7c399e416165d195a61e984df3de5d0506 100644
 --- a/ios/AudioPlayer.swift
 +++ b/ios/AudioPlayer.swift
-@@ -64,9 +64,28 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -56,6 +56,7 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+   // MARK: Observers
+   private var timeToken: Any?
+   private var cancellables = Set<AnyCancellable>()
++  private var directPlaybackObserver: NSObjectProtocol?
+   private var endObserver: NSObjectProtocol?
+ 
+   private var audioProcessor: AudioTapProcessor?
+@@ -64,9 +65,28 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
    weak var owningRegistry: AudioComponentRegistry?
    var onPlaybackComplete: (() -> Void)?
  
@@ -343,7 +429,7 @@ index 0f68a52..39dba20 100644
    }
  
    var currentTime: Double {
-@@ -75,7 +94,48 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -75,7 +95,48 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
    }
  
    var isLive: Bool {
@@ -393,7 +479,15 @@ index 0f68a52..39dba20 100644
    }
  
    var lockScreenPlayer: AVPlayer {
-@@ -233,6 +293,8 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -98,6 +159,7 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+     super.init(ref)
+ 
+     setupPublisher()
++    observeDirectPlaybackRequests()
+   }
+ 
+   var isLoaded: Bool {
+@@ -233,6 +295,8 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
            self.updateStatus(with: [
              "isLoaded": true
            ])
@@ -402,7 +496,23 @@ index 0f68a52..39dba20 100644
            if self.isLooping {
              self.enqueueNextLoopItem()
            }
-@@ -265,6 +327,24 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -249,6 +313,15 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+       }
+       .store(in: &cancellables)
+ 
++    // Status otherwise comes from the periodic time observer, which is silent the
++    // moment time stops advancing, so a stall would never reach JS.
++    ref.publisher(for: \.timeControlStatus)
++      .removeDuplicates()
++      .sink { [weak self] _ in
++        self?.updateStatus(with: [:])
++      }
++      .store(in: &cancellables)
++
+     ref.publisher(for: \.currentItem)
+       .sink { [weak self] _ in
+         guard let self else {
+@@ -265,6 +338,24 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
          }
        }
        .store(in: &cancellables)
@@ -427,7 +537,7 @@ index 0f68a52..39dba20 100644
    }
  
    func replaceWithPreloadedItem(_ item: AVPlayerItem?) {
-@@ -289,6 +369,9 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -289,6 +380,9 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
  
    func replaceCurrentSource(source: AudioSource?) {
      self.source = source
@@ -437,7 +547,7 @@ index 0f68a52..39dba20 100644
      let wasPlaying = ref.timeControlStatus == .playing
      let wasSamplingEnabled = samplingEnabled
      removeQueuedLoopItems()
-@@ -336,6 +419,9 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -336,6 +430,9 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
  
    private func replacePlayer(with source: AudioSource, restoreSampling: Bool) {
      teardownPlayer()
@@ -447,7 +557,32 @@ index 0f68a52..39dba20 100644
  
      ref = AudioUtils.createAVPlayer(from: source)
      setupPublisher()
-@@ -547,3 +633,155 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+@@ -531,7 +628,24 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
+     ref.play()
+   }
+ 
++  private func observeDirectPlaybackRequests() {
++    directPlaybackObserver = NotificationCenter.default.addObserver(
++      forName: AudioResourceLoaderDelegate.directPlaybackRequired,
++      object: nil,
++      queue: .main
++    ) { [weak self] notification in
++      guard let self, let asset = notification.object as? AVAsset, self.ref.currentItem?.asset === asset,
++        let item = AudioUtils.createDirectAVPlayerItem(from: self.source) else {
++        return
++      }
++      self.ref.replaceCurrentItem(with: item)
++    }
++  }
++
+   public override func sharedObjectWillRelease() {
++    if let directPlaybackObserver {
++      NotificationCenter.default.removeObserver(directPlaybackObserver)
++    }
+     onRelease?()
+     onRelease = nil
+     ref.currentItem?.cancelPendingSeeks()
+@@ -547,3 +661,155 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
      audioProcessor = nil
    }
  }
@@ -603,12 +738,72 @@ index 0f68a52..39dba20 100644
 +    }
 +  }
 +}
+diff --git a/ios/AudioPlaylist.swift b/ios/AudioPlaylist.swift
+index 38e158fb0dc78dec36779a4b36686d696052e372..3e5f46b1d9beb8c8cb29cfc3b9cc8a36b709d7f6 100644
+--- a/ios/AudioPlaylist.swift
++++ b/ios/AudioPlaylist.swift
+@@ -37,6 +37,7 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+ 
+   private var timeToken: Any?
+   private var cancellables = Set<AnyCancellable>()
++  private var directPlaybackObserver: NSObjectProtocol?
+   private var endObserver: NSObjectProtocol?
+ 
+   weak var owningRegistry: AudioComponentRegistry?
+@@ -92,6 +93,7 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+     ref.actionAtItemEnd = loopMode == .single ? .pause : .advance
+     setupPublisher()
+     addPlaybackEndNotification()
++    observeDirectPlaybackRequests()
+   }
+ 
+   func play(at rate: Float) {
+@@ -323,6 +325,29 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+     }
+   }
+ 
++  private func observeDirectPlaybackRequests() {
++    directPlaybackObserver = NotificationCenter.default.addObserver(
++      forName: AudioResourceLoaderDelegate.directPlaybackRequired,
++      object: nil,
++      queue: .main
++    ) { [weak self] notification in
++      guard let self, let asset = notification.object as? AVAsset,
++        let index = self.playerItems.firstIndex(where: { $0?.asset === asset }),
++        let old = self.playerItems[index],
++        index < self.sources.count,
++        let item = AudioUtils.createDirectAVPlayerItem(from: self.sources[index]) else {
++        return
++      }
++      self.playerItems[index] = item
++      if self.ref.currentItem === old {
++        self.ref.replaceCurrentItem(with: item)
++      } else if self.ref.items().contains(old) {
++        self.ref.insert(item, after: old)
++        self.ref.remove(old)
++      }
++    }
++  }
++
+   private func setupPublisher() {
+     ref.publisher(for: \.currentItem?.status)
+       .sink { [weak self] status in
+@@ -413,6 +438,9 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+   }
+ 
+   public override func sharedObjectWillRelease() {
++    if let directPlaybackObserver {
++      NotificationCenter.default.removeObserver(directPlaybackObserver)
++    }
+     ref.currentItem?.cancelPendingSeeks()
+     owningRegistry?.remove(self)
+     cancellables.removeAll()
 diff --git a/ios/AudioResourceLoaderDelegate.swift b/ios/AudioResourceLoaderDelegate.swift
 new file mode 100644
-index 0000000..6eefc69
+index 0000000000000000000000000000000000000000..188f5a71caa0e0864a19784c38dc4395e5ede7b4
 --- /dev/null
 +++ b/ios/AudioResourceLoaderDelegate.swift
-@@ -0,0 +1,284 @@
+@@ -0,0 +1,439 @@
 +import AVFoundation
 +import Foundation
 +import ObjectiveC
@@ -625,69 +820,89 @@ index 0000000..6eefc69
 +/// asset as `.indefinite` — no duration at rest, no scrubbing — even though the
 +/// bytes are a finite MP3/AAC file (Android resolves it fine). The fix is to let
 +/// this delegate answer the asset's *content-information* request with the real
-+/// `Content-Length` and `isByteRangeAccessSupported = true`. AVFoundation then
-+/// computes the true duration (and enables seeking), and satisfies the byte
-+/// ranges it subsequently asks for through this delegate.
++/// length and `isByteRangeAccessSupported = true`. AVFoundation then computes the
++/// true duration (and enables seeking), and satisfies the byte ranges it
++/// subsequently asks for through this delegate.
 +///
-+/// We don't pre-download the file. Each AVFoundation range request is proxied to
-+/// the origin with a `Range` header:
-+///  - If the origin honors it (`206`) we stream those bytes straight through —
-+///    range-capable servers behave just like the native path, no full download.
-+///  - If the origin ignores it (`200`, the broken case) it streams from byte 0;
-+///    we discard the prefix up to the requested offset and forward the rest.
-+///    A mid-file seek then refetches from 0, which is the unavoidable cost of a
-+///    server with no range support — but playback and duration are correct.
-+///
-+/// This supersedes the MP3-header duration estimator: it works for every
-+/// container AVFoundation understands and restores seeking, not just the number.
++/// Each origin falls into one of three modes, decided by its first response:
++///  - **`206` (ranges honored)** — every AVFoundation request is proxied with a
++///    `Range` header and streamed straight through. Behaves like the native path.
++///  - **`200` with a known length (ranges ignored)** — one sequential download into
++///    a temporary file, with every request answered from it as bytes land. Restarting
++///    from byte 0 per request would make each read cost the whole prefix, so a slow
++///    origin would never get past the opening seconds.
++///  - **Anything byte ranges can't describe** — a live or chunked stream has no
++///    length to report, and a playlist behind an extension-less URL isn't a byte
++///    stream. Those are handed back to a plain `AVURLAsset` through
++///    `directPlaybackRequired`.
 +final class AudioResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDataDelegate {
++  /// Posted on the main queue with the asset as `object` when it can't be served by
++  /// this delegate and its item must be rebuilt without one.
++  static let directPlaybackRequired = Notification.Name("expo.audio.directPlaybackRequired")
++
 +  /// Scheme prefix we swap in for `http`/`https` so `AVURLAsset` hands loading to
 +  /// us instead of fetching the URL itself. The real scheme is appended so it can
 +  /// be restored, e.g. `https://h/a.mp3` -> `knitui-audio-loader.https://h/a.mp3`.
 +  private static let schemePrefix = "knitui-audio-loader"
 +
++  private static let playlistMimeTypes: Set<String> = [
++    "application/vnd.apple.mpegurl",
++    "application/x-mpegurl",
++    "audio/mpegurl",
++    "audio/x-mpegurl"
++  ]
++
++  /// Largest slice handed to AVFoundation in one `respond(with:)`.
++  private static let serveChunkSize = 256 * 1024
++
 +  private let originURL: URL
 +  private let headers: [String: String]?
++  private weak var asset: AVURLAsset?
 +  private var session: URLSession!
 +
-+  /// Per-task state for one in-flight `AVAssetResourceLoadingRequest`.
++  /// Serial queue shared by the resource loader and the URLSession callbacks, so
++  /// everything below is only ever touched from one queue and needs no locking.
++  private let queue = DispatchQueue(label: "expo.audio.resourceLoader")
++
++  /// One in-flight proxied `AVAssetResourceLoadingRequest`.
 +  private final class Pending {
 +    let loadingRequest: AVAssetResourceLoadingRequest
-+    /// Absolute byte offset the data request starts at (0 for info-only).
-+    let requestedOffset: Int64
 +    /// Bytes still to deliver; `.max` means "to the end of the resource".
 +    var remaining: Int64
-+    /// Bytes the origin has sent from offset 0 so far — used to skip the prefix
-+    /// when the server ignored our `Range` header.
-+    var receivedFromZero: Int64 = 0
-+    /// True once the origin confirms a ranged response (`206`); then bytes arrive
-+    /// already offset and need no skipping.
-+    var rangeHonored = false
 +    /// True when the request only needs content info (no data to stream).
 +    let infoOnly: Bool
 +
-+    init(_ request: AVAssetResourceLoadingRequest, offset: Int64, length: Int64, infoOnly: Bool) {
++    init(_ request: AVAssetResourceLoadingRequest, length: Int64, infoOnly: Bool) {
 +      self.loadingRequest = request
-+      self.requestedOffset = offset
 +      self.remaining = length
 +      self.infoOnly = infoOnly
 +    }
 +  }
 +
-+  /// Guards `pending`, which is written from the resource-loader queue and
-+  /// read/cleared from the URLSession delegate queue.
-+  private let lock = NSLock()
 +  private var pending: [URLSessionTask: Pending] = [:]
++
++  /// The content information, once any response has provided it.
++  private var contentLength: Int64?
++  private var contentType: String?
++  private var directPlaybackRequested = false
++
++  /// Sequential mode (origin ignores `Range`).
++  private var downloadTask: URLSessionTask?
++  private var downloadFileURL: URL?
++  private var downloadWriter: FileHandle?
++  private var downloadReader: FileHandle?
++  private var downloadedBytes: Int64 = 0
++  private var downloadFinished = false
++  private var waiting: [AVAssetResourceLoadingRequest] = []
 +
 +  private init(originURL: URL, headers: [String: String]?) {
 +    self.originURL = originURL
 +    self.headers = headers
 +    super.init()
-+    let queue = OperationQueue()
-+    // Serial: callbacks for all tasks are non-overlapping, so a `Pending`'s
-+    // fields can be mutated inside a callback without an extra per-object lock.
-+    queue.maxConcurrentOperationCount = 1
-+    self.session = URLSession(configuration: .default, delegate: self, delegateQueue: queue)
++    let operations = OperationQueue()
++    operations.underlyingQueue = queue
++    operations.maxConcurrentOperationCount = 1
++    self.session = URLSession(configuration: .default, delegate: self, delegateQueue: operations)
 +  }
 +
 +  /// Tears down the session. Required because `URLSession` retains its delegate
@@ -696,6 +911,7 @@ index 0000000..6eefc69
 +  /// `LifetimeToken` below, which is released when the owning asset deallocates.
 +  private func invalidate() {
 +    session.invalidateAndCancel()
++    queue.async { [self] in closeDownload() }
 +  }
 +
 +  /// Ties the delegate's lifetime to the asset: the asset retains this token via
@@ -737,7 +953,8 @@ index 0000000..6eefc69
 +
 +    let delegate = AudioResourceLoaderDelegate(originURL: originURL, headers: headers)
 +    let asset = AVURLAsset(url: proxyURL, options: assetOptions)
-+    asset.resourceLoader.setDelegate(delegate, queue: DispatchQueue(label: "expo.audio.resourceLoader"))
++    delegate.asset = asset
++    asset.resourceLoader.setDelegate(delegate, queue: delegate.queue)
 +    objc_setAssociatedObject(asset, &lifetimeTokenKey, LifetimeToken(delegate), .OBJC_ASSOCIATION_RETAIN)
 +    return asset
 +  }
@@ -748,6 +965,12 @@ index 0000000..6eefc69
 +    _ resourceLoader: AVAssetResourceLoader,
 +    shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
 +  ) -> Bool {
++    if downloadTask != nil {
++      waiting.append(loadingRequest)
++      serveWaiting()
++      return true
++    }
++
 +    let dataRequest = loadingRequest.dataRequest
 +    let infoOnly = dataRequest == nil
 +
@@ -771,8 +994,7 @@ index 0000000..6eefc69
 +    }
 +
 +    let task = session.dataTask(with: request)
-+    let context = Pending(loadingRequest, offset: offset, length: length, infoOnly: infoOnly)
-+    lock.withLock { pending[task] = context }
++    pending[task] = Pending(loadingRequest, length: length, infoOnly: infoOnly)
 +    task.resume()
 +    return true
 +  }
@@ -781,11 +1003,12 @@ index 0000000..6eefc69
 +    _ resourceLoader: AVAssetResourceLoader,
 +    didCancel loadingRequest: AVAssetResourceLoadingRequest
 +  ) {
-+    lock.withLock {
-+      for (task, context) in pending where context.loadingRequest === loadingRequest {
-+        task.cancel()
-+        pending[task] = nil
-+      }
++    waiting.removeAll { $0 === loadingRequest }
++    // A cancelled proxied request stops its own task; the sequential download
++    // keeps going, since whatever comes next is read from the same file.
++    for (task, context) in pending where context.loadingRequest === loadingRequest {
++      task.cancel()
++      pending[task] = nil
 +    }
 +  }
 +
@@ -797,52 +1020,70 @@ index 0000000..6eefc69
 +    didReceive response: URLResponse,
 +    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
 +  ) {
-+    guard let context = lock.withLock({ pending[dataTask] }),
-+      let http = response as? HTTPURLResponse else {
++    guard let context = pending[dataTask], let http = response as? HTTPURLResponse else {
 +      completionHandler(.cancel)
 +      return
 +    }
 +
-+    context.rangeHonored = http.statusCode == 206
-+
-+    if let info = context.loadingRequest.contentInformationRequest {
-+      info.isByteRangeAccessSupported = true
-+      info.contentLength = Self.totalLength(from: http)
-+      if let mime = http.mimeType, let uti = UTType(mimeType: mime)?.identifier {
-+        info.contentType = uti
-+      }
++    if !(200..<300).contains(http.statusCode) {
++      context.loadingRequest.finishLoading(with: Self.httpError(http.statusCode))
++      pending[dataTask] = nil
++      completionHandler(.cancel)
++      return
 +    }
++
++    if let mime = http.mimeType?.lowercased(), Self.playlistMimeTypes.contains(mime) {
++      requestDirectPlayback(context, task: dataTask)
++      completionHandler(.cancel)
++      return
++    }
++
++    guard let total = Self.totalLength(from: http) else {
++      requestDirectPlayback(context, task: dataTask)
++      completionHandler(.cancel)
++      return
++    }
++
++    contentLength = total
++    if let mime = http.mimeType, let uti = UTType(mimeType: mime)?.identifier {
++      contentType = uti
++    }
++    fillContentInformation(context.loadingRequest)
 +
 +    // An info-only request has its answer now; nothing to stream.
 +    if context.infoOnly {
 +      context.loadingRequest.finishLoading()
-+      finish(dataTask)
++      pending[dataTask] = nil
 +      completionHandler(.cancel)
 +      return
++    }
++
++    if http.statusCode != 206 {
++      pending[dataTask] = nil
++      waiting.append(context.loadingRequest)
++      guard downloadTask == nil else {
++        // A request that raced the first `200` waits on that download instead.
++        completionHandler(.cancel)
++        return
++      }
++      startDownload(dataTask)
 +    }
 +    completionHandler(.allow)
 +  }
 +
 +  func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-+    guard let context = lock.withLock({ pending[dataTask] }) else {
++    if dataTask === downloadTask {
++      downloadWriter?.write(data)
++      downloadedBytes += Int64(data.count)
++      serveWaiting()
++      return
++    }
++
++    guard let context = pending[dataTask] else {
 +      return
 +    }
 +
 +    var payload = data
-+    if !context.rangeHonored {
-+      // Origin ignored our `Range` and is streaming from byte 0 — drop everything
-+      // before the requested offset.
-+      let alreadySeen = context.receivedFromZero
-+      context.receivedFromZero += Int64(data.count)
-+      let skip = context.requestedOffset - alreadySeen
-+      if skip >= Int64(data.count) {
-+        return  // whole chunk is still inside the prefix
-+      }
-+      if skip > 0 {
-+        payload = data.subdata(in: Int(skip)..<data.count)
-+      }
-+    }
-+
 +    if context.remaining != .max {
 +      if Int64(payload.count) > context.remaining {
 +        payload = payload.subdata(in: 0..<Int(context.remaining))
@@ -856,61 +1097,167 @@ index 0000000..6eefc69
 +
 +    if context.remaining == 0 {
 +      context.loadingRequest.finishLoading()
-+      finish(dataTask)
++      pending[dataTask] = nil
 +      dataTask.cancel()
 +    }
 +  }
 +
 +  func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-+    guard let context = lock.withLock({ pending[task] }) else {
++    if task === downloadTask {
++      if let error {
++        let requests = waiting
++        waiting = []
++        requests.forEach { $0.finishLoading(with: error) }
++        closeDownload()
++      } else {
++        downloadFinished = true
++        serveWaiting()
++      }
++      return
++    }
++
++    guard let context = pending[task] else {
 +      return  // already finished by a range/info completion above
 +    }
++    pending[task] = nil
 +    if let error, (error as? URLError)?.code != .cancelled {
 +      context.loadingRequest.finishLoading(with: error)
++    } else if context.remaining != .max && context.remaining > 0 {
++      // A clean close short of what was asked for is a truncated response.
++      context.loadingRequest.finishLoading(with: URLError(.networkConnectionLost))
 +    } else {
-+      // A `200` "to end" stream ends here; treat a clean close as success.
 +      context.loadingRequest.finishLoading()
 +    }
-+    finish(task)
++  }
++
++  // MARK: - Sequential download
++
++  private func startDownload(_ task: URLSessionTask) {
++    let url = FileManager.default.temporaryDirectory
++      .appendingPathComponent("knitui-audio-\(UUID().uuidString)")
++    FileManager.default.createFile(atPath: url.path, contents: nil)
++    downloadFileURL = url
++    downloadWriter = try? FileHandle(forWritingTo: url)
++    downloadReader = try? FileHandle(forReadingFrom: url)
++    downloadedBytes = 0
++    downloadFinished = false
++    downloadTask = task
++  }
++
++  private func closeDownload() {
++    downloadTask = nil
++    try? downloadWriter?.close()
++    try? downloadReader?.close()
++    downloadWriter = nil
++    downloadReader = nil
++    if let downloadFileURL {
++      try? FileManager.default.removeItem(at: downloadFileURL)
++    }
++    downloadFileURL = nil
++  }
++
++  /// Answers every waiting request as far as the download has got.
++  private func serveWaiting() {
++    waiting = waiting.filter { !serve($0) }
++  }
++
++  /// Returns true once `loadingRequest` has been finished.
++  private func serve(_ loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
++    fillContentInformation(loadingRequest)
++    guard let dataRequest = loadingRequest.dataRequest else {
++      loadingRequest.finishLoading()
++      return true
++    }
++    guard let reader = downloadReader else {
++      return false
++    }
++
++    let end = dataRequest.requestsAllDataToEndOfResource
++      ? (contentLength ?? .max)
++      : dataRequest.requestedOffset + Int64(dataRequest.requestedLength)
++
++    while dataRequest.currentOffset < min(end, downloadedBytes) {
++      let available = min(end, downloadedBytes) - dataRequest.currentOffset
++      let count = Int(min(available, Int64(Self.serveChunkSize)))
++      guard (try? reader.seek(toOffset: UInt64(dataRequest.currentOffset))) != nil,
++        let chunk = try? reader.read(upToCount: count), !chunk.isEmpty else {
++        return false
++      }
++      dataRequest.respond(with: chunk)
++    }
++
++    if dataRequest.currentOffset >= end || (downloadFinished && dataRequest.currentOffset >= downloadedBytes) {
++      loadingRequest.finishLoading()
++      return true
++    }
++    return false
 +  }
 +
 +  // MARK: - Helpers
 +
-+  private func finish(_ task: URLSessionTask) {
-+    lock.withLock { pending[task] = nil }
++  private func fillContentInformation(_ loadingRequest: AVAssetResourceLoadingRequest) {
++    guard let info = loadingRequest.contentInformationRequest, let contentLength else {
++      return
++    }
++    info.isByteRangeAccessSupported = true
++    info.contentLength = contentLength
++    if let contentType {
++      info.contentType = contentType
++    }
 +  }
 +
-+  /// Total resource length: prefer the total from a `Content-Range`
-+  /// (`bytes 0-1/12345`), falling back to `Content-Length` — which is the full
-+  /// length only on a `200` response, exactly the case where `Content-Range` is
-+  /// absent, so the fallback is correct.
-+  private static func totalLength(from response: HTTPURLResponse) -> Int64 {
-+    if let contentRange = response.value(forHTTPHeaderField: "Content-Range"),
-+      let totalPart = contentRange.split(separator: "/").last,
-+      let total = Int64(totalPart) {
++  private func requestDirectPlayback(_ context: Pending, task: URLSessionTask) {
++    pending[task] = nil
++    context.loadingRequest.finishLoading(with: URLError(.cannotDecodeContentData))
++    guard !directPlaybackRequested, let asset else {
++      return
++    }
++    directPlaybackRequested = true
++    DispatchQueue.main.async {
++      NotificationCenter.default.post(name: Self.directPlaybackRequired, object: asset)
++    }
++  }
++
++  private static func httpError(_ statusCode: Int) -> Error {
++    let message = HTTPURLResponse.localizedString(forStatusCode: statusCode)
++    return NSError(
++      domain: NSURLErrorDomain,
++      code: NSURLErrorBadServerResponse,
++      userInfo: [NSLocalizedDescriptionKey: "The server responded with \(statusCode) (\(message))."]
++    )
++  }
++
++  /// Total resource length, or `nil` when the response doesn't reveal one: prefer
++  /// the total from a `Content-Range` (`bytes 0-1/12345`, where `*` means unknown),
++  /// falling back to `Content-Length` — which is the full length only on a `200`.
++  private static func totalLength(from response: HTTPURLResponse) -> Int64? {
++    if let contentRange = response.value(forHTTPHeaderField: "Content-Range") {
++      guard let totalPart = contentRange.split(separator: "/").last, let total = Int64(totalPart), total > 0 else {
++        return nil
++      }
 +      return total
++    }
++    guard response.statusCode == 200, response.expectedContentLength > 0 else {
++      return nil
 +    }
 +    return response.expectedContentLength
 +  }
 +}
 diff --git a/ios/AudioUtils.swift b/ios/AudioUtils.swift
-index 41f63da..d322dac 100644
+index 41f63da33bd9acf0926944605fc9dfcc4721dd88..12879d4084bc9cf325eb25e0005f430e29f5ec4b 100644
 --- a/ios/AudioUtils.swift
 +++ b/ios/AudioUtils.swift
-@@ -86,9 +86,34 @@ struct AudioUtils {
+@@ -86,15 +86,51 @@ struct AudioUtils {
        url
      }
  
 -    var options: [String: Any]?
-+    // Force AVFoundation to determine the asset's PRECISE duration and timing.
-+    // Without this key it defaults to `false` for progressive/remote assets and
-+    // leaves `duration` as `.indefinite` for MP3s whose length it can't read
-+    // cheaply (VBR without a Xing/Info header, or a server that omits
-+    // `Content-Length`). That makes a finite remote MP3 look like a LIVE stream on
-+    // iOS (`isLive` is derived from `duration.isIndefinite`) and hides the track
-+    // length — even though Android resolves it fine. Setting it true makes iOS
-+    // scan as needed so a normal MP3 reports its real duration.
-+    var options: [String: Any] = [AVURLAssetPreferPreciseDurationAndTimingKey: true]
++    // Never set `AVURLAssetPreferPreciseDurationAndTimingKey` here: on a remote MP3
++    // it makes AVFoundation download the whole file before the item turns
++    // `readyToPlay`, so a track on a slow connection sits at "loading" for minutes.
++    // A length AVFoundation can't read cheaply comes from the MP3 header instead
++    // (see `AudioPlayer.estimateDurationFromHeader`).
++    var options: [String: Any] = [:]
      if let headers = source.headers {
 -      options = ["AVURLAssetHTTPHeaderFieldsKey": headers]
 +      options["AVURLAssetHTTPHeaderFieldsKey"] = headers
@@ -934,3 +1281,23 @@ index 41f63da..d322dac 100644
      }
  
      let asset = AVURLAsset(url: finalUrl, options: options)
+     return AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: [.tracks, .duration])
+   }
+ 
++  /// An item for a source the resource loader can't serve (see
++  /// `AudioResourceLoaderDelegate.directPlaybackRequired`).
++  static func createDirectAVPlayerItem(from source: AudioSource?) -> AVPlayerItem? {
++    guard let source, let url = source.uri else {
++      return nil
++    }
++    var options: [String: Any] = [:]
++    if let headers = source.headers {
++      options["AVURLAssetHTTPHeaderFieldsKey"] = headers
++    }
++    let asset = AVURLAsset(url: url, options: options)
++    return AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: [.tracks, .duration])
++  }
++
+   static func createRecordingOptions(_ options: RecordingOptions) -> [String: Any] {
+     let strategy = options.bitRateStrategy?.toAVBitRateStrategy()
+ 
