@@ -139,6 +139,15 @@
       "slug": "components",
       "releases": [
         {
+          "version": "1.2.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Make media playback hold up on real networks. - Fix an Android crash whenever a pressable control with an SVG icon left its `disabled` or `loading` state. Media hit it every time buffering ended. - `playing` now means playback was asked for, so Pause stays available and pressable through a stall. Audio and video chrome stay enabled while buffering, and video always shows its buffering overlay. - `play()` after the end restarts, `play()` after an error retries, and `retry()` picks up where it stopped. `replay()` no longer leaves iOS stopped at 0:00. - Errors no longer vanish on Android, so a dead URL shows an error instead of loading forever. A stream that dies mid-track is an error rather than a finished track, and on web a stream that stops responding fails after 30 seconds. - Web audio reports buffering, web video no longer sticks at `loading` or leaves unhandled `play()` rejections, and a finished playlist starts over. - The audio control row fits narrow screens. The repo's `expo-audio` patch also gains native fixes. On iOS, remote audio no longer downloads the whole file before it starts, stalls reach JS, servers without range support play from one sequential download, and live, chunked and extension-less HLS sources play. On Android, extension-less HLS plays. These apply only to apps that carry the patch. - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.2.0",
           "changes": [
             {
@@ -570,6 +579,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "1.2.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.2.0",
           "changes": [
             {
@@ -927,6 +945,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "1.2.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.2.0",
           "changes": [
             {
@@ -1249,6 +1276,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "1.1.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
         {
           "version": "1.1.1",
           "changes": [
@@ -1738,6 +1774,19 @@
       "slug": "media",
       "releases": [
         {
+          "version": "1.1.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Make media playback hold up on real networks. - Fix an Android crash whenever a pressable control with an SVG icon left its `disabled` or `loading` state. Media hit it every time buffering ended. - `playing` now means playback was asked for, so Pause stays available and pressable through a stall. Audio and video chrome stay enabled while buffering, and video always shows its buffering overlay. - `play()` after the end restarts, `play()` after an error retries, and `retry()` picks up where it stopped. `replay()` no longer leaves iOS stopped at 0:00. - Errors no longer vanish on Android, so a dead URL shows an error instead of loading forever. A stream that dies mid-track is an error rather than a finished track, and on web a stream that stops responding fails after 30 seconds. - Web audio reports buffering, web video no longer sticks at `loading` or leaves unhandled `play()` rejections, and a finished playlist starts over. - The audio control row fits narrow screens. The repo's `expo-audio` patch also gains native fixes. On iOS, remote audio no longer downloads the whole file before it starts, stalls reach JS, servers without range support play from one sequential download, and live, chunked and extension-less HLS sources play. On Android, extension-less HLS plays. These apply only to apps that carry the patch."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.1.1",
           "changes": [
             {
@@ -2101,6 +2150,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "1.2.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.2.0",
           "changes": [
             {
@@ -2419,6 +2477,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "1.1.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
         {
           "version": "1.1.1",
           "changes": [
@@ -2793,6 +2860,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "1.2.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.2.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.2.0",
           "changes": [
             {
@@ -3075,6 +3155,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "1.0.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.2.1"
+            }
+          ]
+        },
+        {
           "version": "1.0.2",
           "changes": [
             {
@@ -3342,6 +3431,60 @@
   ],
   "timeline": [
     {
+      "version": "1.2.1",
+      "entries": [
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Make media playback hold up on real networks. - Fix an Android crash whenever a pressable control with an SVG icon left its `disabled` or `loading` state. Media hit it every time buffering ended. - `playing` now means playback was asked for, so Pause stays available and pressable through a stall. Audio and video chrome stay enabled while buffering, and video always shows its buffering overlay. - `play()` after the end restarts, `play()` after an error retries, and `retry()` picks up where it stopped. `replay()` no longer leaves iOS stopped at 0:00. - Errors no longer vanish on Android, so a dead URL shows an error instead of loading forever. A stream that dies mid-track is an error rather than a finished track, and on web a stream that stops responding fails after 30 seconds. - Web audio reports buffering, web video no longer sticks at `loading` or leaves unhandled `play()` rejections, and a finished playlist starts over. - The audio control row fits narrow screens. The repo's `expo-audio` patch also gains native fixes. On iOS, remote audio no longer downloads the whole file before it starts, stalls reach JS, servers without range support play from one sequential download, and live, chunked and extension-less HLS sources play. On Android, extension-less HLS plays. These apply only to apps that carry the patch. - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.2.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@1.2.1"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.2.0",
       "entries": [
         {
@@ -3414,6 +3557,42 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@1.2.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.1.2",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Make media playback hold up on real networks. - Fix an Android crash whenever a pressable control with an SVG icon left its `disabled` or `loading` state. Media hit it every time buffering ended. - `playing` now means playback was asked for, so Pause stays available and pressable through a stall. Audio and video chrome stay enabled while buffering, and video always shows its buffering overlay. - `play()` after the end restarts, `play()` after an error retries, and `retry()` picks up where it stopped. `replay()` no longer leaves iOS stopped at 0:00. - Errors no longer vanish on Android, so a dead URL shows an error instead of loading forever. A stream that dies mid-track is an error rather than a finished track, and on web a stream that stops responding fails after 30 seconds. - Web audio reports buffering, web video no longer sticks at `loading` or leaves unhandled `play()` rejections, and a finished playlist starts over. - The audio control row fits narrow screens. The repo's `expo-audio` patch also gains native fixes. On iOS, remote audio no longer downloads the whole file before it starts, stalls reach JS, servers without range support play from one sequential download, and live, chunked and extension-less HLS sources play. On Android, extension-less HLS plays. These apply only to apps that carry the patch."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
             }
           ]
         }
@@ -3666,6 +3845,20 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[475f89d] - @knitui/core@1.1.0 - @knitui/hooks@1.1.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.0.3",
+      "entries": [
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.2.1"
             }
           ]
         }
