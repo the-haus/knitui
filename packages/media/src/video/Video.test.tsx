@@ -77,6 +77,23 @@ describe("<Video> (web)", () => {
     expect(screen.getByLabelText("Buffering")).toBeInTheDocument();
   });
 
+  it("shows the buffering loader on a stall mid-playback, with Pause still pressable", () => {
+    render(<Video source={SRC} />);
+    const el = getVideoEl();
+    markReady(el, 95);
+    act(() => {
+      el.dispatchEvent(new Event("play"));
+    });
+    act(() => {
+      el.dispatchEvent(new Event("waiting"));
+    });
+
+    expect(screen.getByLabelText("Buffering")).toBeInTheDocument();
+    for (const pause of screen.getAllByLabelText("Pause")) {
+      expect(pause).not.toHaveAttribute("aria-disabled");
+    }
+  });
+
   it("surfaces errors via onError and the error status", () => {
     const onError = jest.fn();
     render(<Video source={SRC} onError={onError} />);

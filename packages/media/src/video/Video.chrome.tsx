@@ -62,32 +62,21 @@ export {
 /* Play / pause                                                               */
 /* -------------------------------------------------------------------------- */
 
-/** The play button's buffering spinner, painted white-on-scrim (hoisted). */
-const ON_SCRIM_LOADER = {
-  borderTopColor: "mediaOnScrim",
-  borderRightColor: "mediaOnScrim",
-} as const;
-
 export const PlayPauseButton = React.memo(function PlayPauseButton(): React.ReactElement {
   const { controller, size, keepAlive } = useVideo("PlayPause");
-  const { playing, status } = useVideoState(
-    (s) => ({ playing: s.playing, status: s.status }),
-    shallowEqual,
-  );
+  const playing = useVideoState((s) => s.playing);
   return (
     <ActionIcon
       size={clampMediaSize(size)}
       variant="transparent"
-      // Only spin (and disable) while buffering DURING playback — a paused or
-      // not-yet-loaded player must stay pressable so the user can start it.
-      loading={playing && status === "loading"}
-      loaderProps={ON_SCRIM_LOADER}
       aria-label={playing ? "Pause" : "Play"}
       onPress={() => {
         keepAlive();
         controller.togglePlay();
       }}
     >
+      {/* Buffering shows in the centered overlay, which outlives the auto-hiding bar.
+          The button stays a plain Pause: a stall can last, and pausing has to work. */}
       <OnScrimIcons size={size}>
         {playing ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
       </OnScrimIcons>

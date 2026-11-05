@@ -77,6 +77,25 @@ describe("<Audio> (web)", () => {
     expect(screen.getByLabelText("Pause")).toBeInTheDocument();
   });
 
+  it("keeps Pause pressable through a stall, with a spinner in it", () => {
+    const getEl = renderAudio(<Audio source={SRC} />);
+    const el = getEl();
+    loadMetadata(el, 120);
+    fireEvent.click(screen.getByLabelText("Play"));
+    act(() => {
+      el.dispatchEvent(new Event("play"));
+      el.dispatchEvent(new Event("waiting"));
+    });
+
+    expect(screen.getByLabelText("Pause")).not.toHaveAttribute("aria-disabled");
+    expect(screen.getAllByLabelText("Buffering")).toHaveLength(1);
+
+    act(() => {
+      el.dispatchEvent(new Event("playing"));
+    });
+    expect(screen.queryByLabelText("Buffering")).not.toBeInTheDocument();
+  });
+
   it("drives the element via the play button", () => {
     const playSpy = jest.spyOn(window.HTMLMediaElement.prototype, "play");
     render(<Audio source={SRC} />);

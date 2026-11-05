@@ -789,8 +789,16 @@ export const PRESS_SCALE = 0.97;
  * variant's `bg: "… press:color8"` (different properties) — on press the control
  * both darkens (variant) and dips (this). Pair the frame with `usePressScale()` at
  * render so the dip EASES (and collapses under reduced motion).
+ *
+ * The explicit `opacity: 1` is what keeps these frames alive on Android. They all
+ * carry a `disabled: { opacity }` variant and, because `usePressScale()` gives them a
+ * `transition`, run on Tamagui's reanimated driver. If the base doesn't own `opacity`,
+ * clearing `disabled` (or `loading`) drops the key, and the driver then writes
+ * `opacity: null` — which reanimated's Android serializer reads as a double, killing
+ * the app the next time an SVG child draws. Owning the key here means it only ever
+ * animates between numbers.
  */
-export const pressScaleStyle = { scale: `press:${PRESS_SCALE}` } as const;
+export const pressScaleStyle = { scale: `press:${PRESS_SCALE}`, opacity: 1 } as const;
 
 /** Hover handlers as spread by {@link hoverProps}: web keys OR native keys. */
 export interface HoverHandlerProps<E = unknown> {

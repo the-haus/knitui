@@ -79,16 +79,11 @@ export const BigPlayButton = React.memo(function BigPlayButton(): React.ReactEle
 
 export const BufferingOverlay = React.memo(function BufferingOverlay(): React.ReactElement | null {
   const { styles } = useVideo("Buffering");
-  const { status, playing } = useVideoState(
-    (s) => ({ status: s.status, playing: s.playing }),
-    shallowEqual,
-  );
+  const status = useVideoState((s) => s.status);
   const motion = useMotionPreset("fade");
-  // Show whenever the player is loading but not actively playing (initial load
-  // or a stalled paused seek). Once it IS playing, the play/pause button's own
-  // spinner is the buffering indicator, so the centered overlay steps aside to
-  // avoid a redundant second one.
-  if (status !== "loading" || playing) return null;
+  // The one buffering indicator: it has to show on a stall mid-playback too, when
+  // the control bar may well have auto-hidden.
+  if (status !== "loading") return null;
   return (
     <VideoLayer centered pointerEvents="none" {...motion} {...styles?.get("buffering")}>
       <Loader size="md" aria-label="Buffering" />

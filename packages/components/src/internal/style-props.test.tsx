@@ -228,3 +228,12 @@ describe("hoverProps (v3 web wires mouse events, not onHoverIn/onHoverOut alone)
     jest.dontMock("@knitui/core");
   });
 });
+
+describe("pressScaleStyle", () => {
+  // Pressable frames toggle `opacity` through a `disabled` variant while running on
+  // the reanimated driver. A key the base doesn't own is dropped when `disabled`
+  // clears, the driver writes `opacity: null`, and Android aborts the app.
+  it("owns `opacity`, so a disabled variant can never drop the key", () => {
+    expect(pressScaleStyle.opacity).toBe(1);
+  });
+});

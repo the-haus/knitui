@@ -31,7 +31,7 @@ import { IconRepeatOff } from "@knitui/icons/IconRepeatOff";
 import { IconRewindBackward10 } from "@knitui/icons/IconRewindBackward10";
 import { IconRewindForward10 } from "@knitui/icons/IconRewindForward10";
 
-import { clampMediaSize } from "../control-size";
+import { clampMediaSize, mediaIconSize } from "../control-size";
 import {
   formatScrubLabel,
   formatVolumeLabel,
@@ -59,18 +59,24 @@ export const PlayPauseButton = React.memo(function PlayPauseButton(): React.Reac
     (s) => ({ playing: s.playing, status: s.status, isBuffering: s.isBuffering }),
     shallowEqual,
   );
+  // Spin while buffering DURING playback. Not via `loading`, which would disable the
+  // button: a stalled stream can last, and pausing it has to stay possible.
+  const buffering = playing && (status === "loading" || isBuffering);
   return (
     <ActionIcon
       size={clampMediaSize(size)}
       variant="filled"
       radius="xl"
-      // Only spin (and disable) while buffering DURING playback — a paused or
-      // not-yet-loaded player must stay pressable so the user can start it.
-      loading={playing && (status === "loading" || isBuffering)}
       aria-label={playing ? "Pause" : "Play"}
       onPress={() => controller.togglePlay()}
     >
-      {playing ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
+      {buffering ? (
+        <Loader size={mediaIconSize(size)} type="oval" theme="gray" aria-label="Buffering" />
+      ) : playing ? (
+        <IconPlayerPauseFilled />
+      ) : (
+        <IconPlayerPlayFilled />
+      )}
     </ActionIcon>
   );
 });
@@ -267,7 +273,13 @@ export const VolumeSlider = React.memo(function VolumeSlider({
       onChange={onChange}
     />
   );
-  return vertical ? slider : <Box width={VOLUME_LENGTH}>{slider}</Box>;
+  return vertical ? (
+    slider
+  ) : (
+    <Box width={VOLUME_LENGTH} flexShrink={1} minWidth={0}>
+      {slider}
+    </Box>
+  );
 });
 
 /** The web hover-reveal clip around the inline volume slider. */
@@ -302,7 +314,7 @@ export const VolumeControl = React.memo(function VolumeControl(): React.ReactEle
 
   if (!isWeb) {
     return (
-      <Group gap="xxs" align="center" wrap="nowrap">
+      <Group gap="xxs" align="center" wrap="nowrap" flexShrink={1} minWidth={0}>
         <MuteButton />
         <VolumeSlider />
       </Group>
@@ -387,11 +399,12 @@ export const LoopButton = React.memo(function LoopButton(): React.ReactElement {
 export const BufferingIndicator = React.memo(
   function BufferingIndicator(): React.ReactElement | null {
     const { size } = useAudio("Buffering");
-    const { status, isBuffering } = useAudioState(
-      (s) => ({ status: s.status, isBuffering: s.isBuffering }),
+    const { status, isBuffering, playing } = useAudioState(
+      (s) => ({ status: s.status, isBuffering: s.isBuffering, playing: s.playing }),
       shallowEqual,
     );
-    if (status !== "loading" && !isBuffering) return null;
+    // While playing, the play/pause button's own spinner is the indicator.
+    if (playing || (status !== "loading" && !isBuffering)) return null;
     return <Loader size={clampMediaSize(size)} aria-label="Buffering" />;
   },
 );
@@ -439,7 +452,8 @@ export function ControlBar(): React.ReactElement {
           <SeekButton seconds={-10} />
           <SeekButton seconds={10} />
         </Group>
-        <Group gap="xxs" align="center" wrap="nowrap">
+        {/* The volume slider is what gives way on a narrow screen. */}
+        <Group gap="xxs" align="center" wrap="nowrap" flexShrink={1} minWidth={0}>
           <VolumeControl />
           <PlaybackRateMenu />
           <LoopButton />

@@ -106,3 +106,13 @@ export function bufferedEndForTime(
   }
   return best;
 }
+
+/**
+ * WEB: how long playback may sit waiting for data before it counts as failed. A
+ * browser retries a dead stream indefinitely and never reports an error, so without a
+ * limit the player would spin forever. Generous, because a slow network still recovers.
+ */
+export const STREAM_STALL_TIMEOUT_MS = 30_000;
+
+/** The error for a stream that hit {@link STREAM_STALL_TIMEOUT_MS}. */
+export const STREAM_STALL_MESSAGE = "The stream stopped responding.";

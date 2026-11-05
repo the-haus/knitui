@@ -20,6 +20,7 @@ import type {
 
 import { isWeb } from "@knitui/core";
 
+import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import { type Cue, NATIVE_CAPABILITIES, resolveWebRuntimeCapabilities } from "../engine";
 import type {
   AudioTrack,
@@ -105,6 +106,8 @@ export class ExpoVideoController extends BaseVideoController {
    * intent, which is what makes those two cases work at all.
    */
   private wantsPlay = false;
+  private stallTimer: ReturnType<typeof setTimeout> | null = null;
+  private offStallWatch: (() => void) | null = null;
 
   constructor(
     player: VideoPlayer,
@@ -163,7 +166,7 @@ export class ExpoVideoController extends BaseVideoController {
       this.setState({ playing: false });
       return;
     }
-    if (this.wantsPlay) this.player.play();
+    if (this.wantsPlay) this.startPlayback();
   }
 
   /* custom captions --------------------------------------------------------- */
@@ -272,11 +275,18 @@ export class ExpoVideoController extends BaseVideoController {
       emitEvent: (type, payload) => this.emitEvent(type as VideoEventType, payload as never),
       updateActiveCue: () => this.updateActiveCue(),
       ingestTracks: (audio, subtitles, video) => this.ingestTracks(audio, subtitles, video),
+      get wantsPlay(): boolean {
+        return ctrl.wantsPlay;
+      },
+      clearPlayIntent: () => {
+        this.wantsPlay = false;
+      },
       get state(): VideoControllerState {
         return ctrl._state;
       },
     };
     bindExpoEvents(host, this.player, sub);
+    if (isWeb) this.offStallWatch = this.subscribe(() => this.syncStallWatch());
   }
 
   private ingestTracks(
@@ -347,17 +357,76 @@ export class ExpoVideoController extends BaseVideoController {
   // call the backend drops (no element mounted yet) is re-applied the moment a
   // view attaches. See {@link wantsPlay} / {@link attachView}.
   play(): void {
+    if (this._state.ended) {
+      this.replay();
+      return;
+    }
     this.wantsPlay = true;
-    this.player.play();
+    if (this._state.status === "error") {
+      void this.retry();
+      return;
+    }
+    // No event follows a `play()` that lands while it's still loading.
+    if (this._state.status === "loading") this.setState({ playing: true });
+    this.syncStallWatch();
+    this.startPlayback();
+  }
+
+  /** WEB: bound how long playback can wait on a stream that may never answer. */
+  private syncStallWatch(): void {
+    if (!isWeb) return;
+    if (!this.wantsPlay || this._state.status !== "loading") {
+      this.clearStallTimer();
+      return;
+    }
+    this.stallTimer ??= setTimeout(() => {
+      this.stallTimer = null;
+      if (this._state.status !== "loading") return;
+      this.setState({ status: "error", error: { message: STREAM_STALL_MESSAGE }, playing: false });
+    }, STREAM_STALL_TIMEOUT_MS);
+  }
+
+  private clearStallTimer(): void {
+    if (this.stallTimer !== null) clearTimeout(this.stallTimer);
+    this.stallTimer = null;
+  }
+
+  /**
+   * Start the player, without leaving an unhandled rejection behind on web. expo's
+   * backend discards the promise from `video.play()`, and that promise rejects
+   * routinely: whenever a pause or a source change cuts it short, and whenever the
+   * browser blocks autoplay. Going to the elements directly is the only way to catch
+   * it, and a block is also the one case where the play intent has to be dropped.
+   */
+  private startPlayback(): void {
+    const elements = (this.player as { _mountedVideos?: Set<HTMLVideoElement> })._mountedVideos;
+    if (!isWeb || !elements) {
+      this.player.play();
+      return;
+    }
+    for (const element of elements) {
+      Promise.resolve(element.play()).catch((error: unknown) => {
+        if ((error as { name?: string } | null)?.name !== "NotAllowedError") return;
+        this.wantsPlay = false;
+        this.setState({ playing: false });
+      });
+    }
   }
 
   pause(): void {
     this.wantsPlay = false;
+    this.clearStallTimer();
     this.player.pause();
   }
 
   replay(): void {
     this.wantsPlay = true;
+    if (isWeb) {
+      this.player.currentTime = 0;
+      this.setState({ currentTime: 0, ended: false });
+      this.startPlayback();
+      return;
+    }
     this.player.replay();
   }
 
@@ -458,8 +527,13 @@ export class ExpoVideoController extends BaseVideoController {
   }
 
   async retry(): Promise<void> {
+    // Pick up where it failed, and keep playing if that's what it was doing.
+    const resumeAt = this._state.currentTime;
     this.setState({ status: "loading", error: null, ended: false });
     await this.loadAsync(this.lastSource);
+    if (this._state.status === "error") return;
+    if (resumeAt > 0) this.player.currentTime = resumeAt;
+    if (this.wantsPlay) this.startPlayback();
   }
 
   /**
@@ -478,6 +552,9 @@ export class ExpoVideoController extends BaseVideoController {
   }
 
   override dispose(): void {
+    this.clearStallTimer();
+    this.offStallWatch?.();
+    this.offStallWatch = null;
     for (const subscription of this.subscriptions) subscription.remove();
     this.subscriptions = [];
     this.view = null;
