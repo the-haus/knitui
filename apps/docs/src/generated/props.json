@@ -65630,6 +65630,14 @@
       "sourcePath": "packages/sheet/src/Sheet.tsx",
       "slots": [
         {
+          "name": "body",
+          "description": "The content region between header and footer."
+        },
+        {
+          "name": "closeButton",
+          "description": "The close button."
+        },
+        {
           "name": "footer",
           "description": "The fixed footer region (`Sheet.Footer`)."
         },
@@ -65648,6 +65656,10 @@
         {
           "name": "root",
           "description": "The panel surface (`Sheet.Frame`)."
+        },
+        {
+          "name": "title",
+          "description": "The `title`."
         }
       ],
       "props": [
@@ -65664,7 +65676,7 @@
           "bucket": "own",
           "type": "string | undefined",
           "required": false,
-          "description": "Accessible name of the panel. On web it is set on the element that carries the role (the dialog, or the region of a non-modal sheet); on native it becomes the panel's `accessibilityLabel`.",
+          "description": "Accessible name of the panel. On web it is set on the element that carries the role (the dialog, or the region of a non-modal sheet); on native it becomes the panel's `accessibilityLabel`. Takes precedence over `title`.",
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
@@ -65676,6 +65688,14 @@
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
+          "name": "bottomInset",
+          "bucket": "own",
+          "type": "number | undefined",
+          "required": false,
+          "description": "Space kept clear under the content or footer. Defaults to the bottom safe area on native (from `react-native-safe-area-context`) and to `env(safe-area-inset-bottom)` on web. Pass `0` to opt out.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
           "name": "children",
           "bucket": "own",
           "type": "ReactNode",
@@ -65684,11 +65704,29 @@
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
+          "name": "closeButtonProps",
+          "bucket": "own",
+          "type": "{ \"aria-label\"?: string; } | undefined",
+          "required": false,
+          "description": "Close button props. Set `aria-label` to name it.",
+          "default": "{ \"aria-label\": \"Close\" }",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
+          "name": "closeOnBackPress",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Android hardware back closes a modal sheet, topmost first.",
+          "default": "true",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
           "name": "closeOnEscape",
           "bucket": "own",
           "type": "boolean | undefined",
           "required": false,
-          "description": "Escape closes the sheet (web).",
+          "description": "Escape closes the sheet (web), topmost modal sheet first.",
           "default": "true",
           "declaredIn": "packages/sheet/src/types.ts"
         },
@@ -65724,7 +65762,7 @@
           "bucket": "own",
           "type": "boolean | undefined",
           "required": false,
-          "description": "Opt out of locking body scroll while open (web).",
+          "description": "Opt out of locking body scroll while a modal sheet is open (web).",
           "default": "false",
           "declaredIn": "packages/sheet/src/types.ts"
         },
@@ -65754,6 +65792,22 @@
           "declaredIn": "node_modules/@types/react/index.d.ts"
         },
         {
+          "name": "maxHeight",
+          "bucket": "own",
+          "type": "number | `${number}%` | undefined",
+          "required": false,
+          "description": "The tallest a `snapPoints=\"fit\"` panel may grow: px, or a `\"NN%\"` share of the screen. Defaults to the screen below the top safe area.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
+          "name": "maxWidth",
+          "bucket": "own",
+          "type": "number | undefined",
+          "required": false,
+          "description": "Cap the panel's width and centre it, for tablets and wide windows.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
           "name": "modal",
           "bucket": "own",
           "type": "boolean | undefined",
@@ -65767,8 +65821,8 @@
           "bucket": "own",
           "type": "boolean | undefined",
           "required": false,
-          "description": "Lift the panel above the soft keyboard (native).",
-          "default": "false",
+          "description": "Ride the whole panel, footer included, above the soft keyboard, tracking it while the scrollable content shrinks to fit. Native tracks it frame by frame; mobile web follows the browser's visual viewport.",
+          "default": "the value of `modal`",
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
@@ -65801,6 +65855,15 @@
           "type": "OverlayProps | undefined",
           "required": false,
           "description": "Props forwarded to the underlying `Overlay` scrim.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
+          "name": "padded",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Pad the content region with the kit's standard gutter.",
+          "default": "false",
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
@@ -65840,9 +65903,9 @@
         {
           "name": "snapPoints",
           "bucket": "own",
-          "type": "number[] | undefined",
+          "type": "number[] | \"fit\" | undefined",
           "required": false,
-          "description": "Snap points as % of the screen the sheet occupies, ordered most-visible → least-visible.",
+          "description": "Snap points as % of the screen the sheet occupies, ordered most-visible → least-visible, or `\"fit\"` for one snap that hugs the panel's content. A fit panel measures the handle, header, content and footer, follows content that changes height while open, and stops at {@link SheetProps.maxHeight}, where a `Sheet.ScrollView` starts to scroll.",
           "default": "[80, 10]",
           "declaredIn": "packages/sheet/src/types.ts"
         },
@@ -65859,7 +65922,7 @@
           "bucket": "system",
           "type": "SlotStyles<SheetStyles> | undefined",
           "required": false,
-          "description": "Per-slot style overrides (`root` / `overlay` / `handle`).",
+          "description": "Per-slot style overrides. See {@link SheetStyles}.",
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
@@ -65870,12 +65933,29 @@
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
+          "name": "title",
+          "bucket": "own",
+          "type": "ReactNode",
+          "required": false,
+          "description": "Title shown in the header. Also names the panel for assistive tech.",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
           "name": "trapFocus",
           "bucket": "own",
           "type": "boolean | undefined",
           "required": false,
           "description": "Trap keyboard focus within the panel while open (web).",
           "default": "true",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
+          "name": "withCloseButton",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Show a close button in the header.",
+          "default": "`true` when `title` is set",
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
@@ -65908,7 +65988,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 26,
+        "own": 34,
         "react": 2,
         "system": 2
       }

@@ -7,6 +7,7 @@
  */
 
 export * from "./handoff";
+export * from "./keyboard";
 export * from "./overlay";
 export * from "./settle";
 export * from "./snap";

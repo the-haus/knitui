@@ -25368,16 +25368,70 @@
           "storybookId": "sheet--sizes"
         },
         {
-          "name": "Styles",
-          "description": "Per-slot `styles` overrides (root / overlay / handle).",
-          "hasRender": true,
-          "storybookId": "sheet--styles"
-        },
-        {
           "name": "ControlledOnly",
           "description": "Non-dismissible (no overlay press / snap-to-bottom); close via a button.",
           "hasRender": true,
           "storybookId": "sheet--controlled-only"
+        },
+        {
+          "name": "FitContent",
+          "description": "`snapPoints=\"fit\"` hugs the content, and follows it when it changes height.",
+          "hasRender": true,
+          "storybookId": "sheet--fit-content"
+        },
+        {
+          "name": "FitWithMaxHeight",
+          "description": "A long list stops at `maxHeight` and scrolls above the pinned footer.",
+          "hasRender": true,
+          "storybookId": "sheet--fit-with-max-height"
+        },
+        {
+          "name": "PinnedFooter",
+          "description": "The footer sits on the panel's visible bottom edge at every snap.",
+          "hasRender": true,
+          "storybookId": "sheet--pinned-footer"
+        },
+        {
+          "name": "ChangingSnapPoints",
+          "description": "New snap points move an open panel without a `snapTo` call.",
+          "hasRender": true,
+          "storybookId": "sheet--changing-snap-points"
+        },
+        {
+          "name": "WithKeyboard",
+          "description": "The whole panel rides above the keyboard (native), and the list shrinks to fit.",
+          "hasRender": true,
+          "storybookId": "sheet--with-keyboard"
+        },
+        {
+          "name": "Persistent",
+          "description": "A persistent sheet leaves the page behind it free to take touches.",
+          "hasRender": true,
+          "storybookId": "sheet--persistent"
+        },
+        {
+          "name": "VirtualizedList",
+          "description": "`Sheet.FlatList` gives a virtualized list the same scroll handoff.",
+          "hasRender": true,
+          "storybookId": "sheet--virtualized-list"
+        },
+        {
+          "name": "CentredOnWideScreens",
+          "description": "`maxWidth` centres the panel on tablets and wide windows.",
+          "hasRender": true,
+          "storybookId": "sheet--centred-on-wide-screens"
+        },
+        {
+          "name": "Stacked",
+          "description": "Two modal sheets: Escape and Android back close the topmost first.",
+          "hasRender": true,
+          "storybookId": "sheet--stacked"
+        },
+        {
+          "name": "Styles",
+          "description": "Per-slot `styles` overrides (root / overlay / handle).",
+          "hasRender": true,
+          "storybookId": "sheet--styles"
         }
       ]
     }

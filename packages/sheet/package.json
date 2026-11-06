@@ -73,6 +73,7 @@
     "react-native": "*",
     "react-native-gesture-handler": "*",
     "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
     "react-native-worklets": "*"
   },
   "peerDependenciesMeta": {
@@ -83,6 +84,9 @@
       "optional": true
     },
     "react-native-reanimated": {
+      "optional": true
+    },
+    "react-native-safe-area-context": {
       "optional": true
     },
     "react-native-worklets": {

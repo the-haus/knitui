@@ -124,3 +124,31 @@ export function shouldPinToTop(
   "worklet";
   return handoffEnabled && sheetOffset > expandedOffset + EXPAND_EPSILON && scrollOffsetY !== 0;
 }
+
+/** UIKit's rubber-band constant, for {@link overscrollPull}. */
+const RUBBER_BAND = 0.55;
+
+/**
+ * px of overscroll at the top of a list before it counts as a pull on the panel. The
+ * Pan normally claims the drag well before this, so only a drag the Pan never saw
+ * gets this far.
+ */
+export const OVERSCROLL_SLOP = 6;
+
+/**
+ * How far the panel moves for `overscroll` px of rubber-band at the top of a list.
+ *
+ * This is the fallback for a Pan that never activated. When the list's recognizer
+ * wins, the finger's travel is only visible through the overscroll, which UIKit damps
+ * as `y = (1 - 1 / (x * c / d + 1)) * d`. Inverting that recovers the travel `x`, and
+ * subtracting `y` leaves the list's content under the finger, since the panel carries
+ * content the list has already moved.
+ */
+export function overscrollPull(overscroll: number, viewportHeight: number): number {
+  "worklet";
+  const y = overscroll - OVERSCROLL_SLOP;
+  if (y <= 0 || viewportHeight <= 0) return 0;
+  const safe = Math.min(y, viewportHeight * 0.95);
+  const travel = ((viewportHeight / RUBBER_BAND) * safe) / (viewportHeight - safe);
+  return Math.max(0, travel - safe);
+}

@@ -6,13 +6,15 @@ import {
   type WithSpringConfig,
 } from "react-native-reanimated";
 
-import { closedOffset, snapOffsets } from "../engine";
+import { clampSnapIndex, closedOffset, snapOffsets } from "../engine";
 import type { SettleResult } from "../engine";
 import { animateOffset } from "./animate";
 
 export interface SheetMotionParams {
   /** Snap points (0–100 % visible, most-visible → least-visible). */
   snapPoints: number[];
+  /** Ready-made snap offsets, used instead of `snapPoints` (a fit panel's one snap). */
+  fixedOffsets?: number[];
   /** Measured available height (px). 0 until the layer has laid out. */
   maxHeight: number;
   /** Per-instance spring override. */
@@ -55,11 +57,6 @@ export interface SheetMotion {
 /** Far-off-screen sentinel offset used before the layer has measured. */
 const OFFSCREEN = 10000;
 
-/** Clamp an index into the snap range. */
-function clampIndex(index: number, length: number): number {
-  return Math.min(Math.max(index, 0), Math.max(0, length - 1));
-}
-
 /**
  * Owns the panel `offset` SharedValue and derives the snap geometry from the
  * measured height. Returns a controller the gesture, handle, buttons, imperative
@@ -69,6 +66,7 @@ function clampIndex(index: number, length: number): number {
 export function useSheetMotion(params: SheetMotionParams): SheetMotion {
   const {
     snapPoints,
+    fixedOffsets,
     maxHeight,
     animationConfig,
     dismissOnSnapToBottom,
@@ -85,7 +83,10 @@ export function useSheetMotion(params: SheetMotionParams): SheetMotion {
   // never leaves a reanimated loop running on a detached shared value.
   React.useEffect(() => () => cancelAnimation(offset), [offset]);
 
-  const offsets = React.useMemo(() => snapOffsets(snapPoints, maxHeight), [snapPoints, maxHeight]);
+  const offsets = React.useMemo(
+    () => fixedOffsets ?? snapOffsets(snapPoints, maxHeight),
+    [fixedOffsets, snapPoints, maxHeight],
+  );
   const closed = closedOffset(maxHeight);
   const fadeStart = offsets.length > 0 ? offsets[offsets.length - 1] : closed;
   const dismissible = dismissOnSnapToBottom;
@@ -94,7 +95,7 @@ export function useSheetMotion(params: SheetMotionParams): SheetMotion {
   const glideTo = React.useCallback(
     (index: number) => {
       if (offsets.length === 0) return;
-      animateOffset(offset, offsets[clampIndex(index, offsets.length)], spring);
+      animateOffset(offset, offsets[clampSnapIndex(index, offsets.length)], spring);
     },
     [offset, offsets, spring],
   );
@@ -103,7 +104,7 @@ export function useSheetMotion(params: SheetMotionParams): SheetMotion {
     (index: number) => {
       if (offsets.length === 0) return;
       offset.value = closed;
-      animateOffset(offset, offsets[clampIndex(index, offsets.length)], spring);
+      animateOffset(offset, offsets[clampSnapIndex(index, offsets.length)], spring);
     },
     [offset, offsets, closed, spring],
   );
@@ -118,7 +119,7 @@ export function useSheetMotion(params: SheetMotionParams): SheetMotion {
   const snapTo = React.useCallback(
     (index: number) => {
       if (offsets.length === 0) return;
-      const i = clampIndex(index, offsets.length);
+      const i = clampSnapIndex(index, offsets.length);
       animateOffset(offset, offsets[i], spring);
       setPosition(i);
     },

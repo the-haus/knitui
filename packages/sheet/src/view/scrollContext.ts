@@ -1,32 +1,45 @@
 import * as React from "react";
-import type { NativeGesture } from "react-native-gesture-handler";
-import type { SharedValue } from "react-native-reanimated";
+import type { PanGesture } from "react-native-gesture-handler";
+import type { SharedValue, WithSpringConfig } from "react-native-reanimated";
+
+import type { SettleResult } from "../engine";
 
 /**
- * Coordination channel between the `Sheet` and a `Sheet.ScrollView` nested inside
- * it (native only). The sheet owns the pan gesture and the panel `offset`; the
- * scroll view owns the list. The two must cooperate so a vertical drag either
- * moves the sheet or scrolls the list — never both, and never fighting — which is
- * the scroll↔drag handoff (`docs/sheet-package-plan.md` milestone 7).
+ * Coordination channel between the `Sheet` and the scrollers nested inside it. The
+ * sheet owns the Pan and the panel `offset`; a scroller owns its list. They cooperate
+ * so a vertical drag moves the sheet or scrolls the list, never both.
  *
- * The sheet publishes its Pan-simultaneous {@link scrollGesture}, the live panel
- * {@link sheetOffset}, and the {@link expandedOffset} (most-open snap); the scroll
- * view publishes its content {@link scrollOffsetY} back. Both the pan worklet and
- * the scroll worklet read these shared values to decide who owns the drag.
+ * A panel may hold several scrollers. Each brings its own native gesture, since RNGH
+ * allows one detector per gesture, and declares it simultaneous with {@link panGesture}.
+ * The one under the finger publishes its offset into {@link scrollOffsetY}.
  */
 export interface SheetScrollContextValue {
-  /** The RNGH `Native` gesture the sheet's Pan runs simultaneously with. The
-   *  `Sheet.ScrollView` attaches it to its scroller so the two recognise together. */
-  scrollGesture: NativeGesture;
-  /** Inner content vertical scroll offset (px, ≥0), written by the scroll view. */
+  /** The sheet's Pan, which every scroller's native gesture runs alongside. */
+  panGesture: PanGesture;
+  /** Mounted scrollers. The Pan runs the handoff only while this is above 0. */
+  scrollers: SharedValue<number>;
+  /** Content offset (px) of the scroller under the finger. */
   scrollOffsetY: SharedValue<number>;
   /** The panel translateY SharedValue (0 = fully open). */
   sheetOffset: SharedValue<number>;
+  /** True while the Pan is active. */
+  panActive: SharedValue<boolean>;
+  /** Snap offsets, ascending. */
+  offsets: number[];
   /** Offset of the most-open snap; the sheet is "expanded" at/above this. */
   expandedOffset: number;
-  /** Whether the handoff is active (drag enabled + measured + open). When off the
-   *  list scrolls freely and the sheet never steals the drag. */
+  /** Fully-closed offset. */
+  closed: number;
+  /** Whether a release past the lowest snap may dismiss. */
+  dismissible: boolean;
+  /** Spring for the settle animation. */
+  spring?: WithSpringConfig;
+  /** Whether the handoff is active. When off the list scrolls freely. */
   handoffEnabled: boolean;
+  /** Commits a settle driven from the list rather than the Pan. */
+  onSettle: (result: SettleResult) => void;
+  /** Whether the panel hugs its content, so a scroller must too. */
+  fit: boolean;
 }
 
 /** Null when a `Sheet.ScrollView` is rendered outside a `Sheet` (it then just scrolls). */

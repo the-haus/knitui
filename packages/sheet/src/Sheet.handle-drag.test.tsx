@@ -81,3 +81,57 @@ describe("Sheet handle after a drag (KIT-05)", () => {
     expect(onPositionChange).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("a controlled position the parent refuses", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it("glides the panel back to the position the parent kept", () => {
+    const animate = jest.spyOn(jest.requireActual("./motion/animate"), "animateOffset");
+    render(
+      <Sheet opened onClose={() => {}} snapPoints={[80, 50, 20]} position={0}>
+        <Text>panel body</Text>
+      </Sheet>,
+    );
+    const params = dragParams!;
+    animate.mockClear();
+    act(() => {
+      params.onStart();
+      params.onSettle({ index: 2, offset: params.offsets[2]!, dismiss: false });
+      jest.runOnlyPendingTimers();
+    });
+    expect(animate.mock.calls.map((c) => c[1])).toContain(params.offsets[0]);
+    animate.mockRestore();
+  });
+
+  it("leaves a snap the parent accepted alone", () => {
+    function Accepting() {
+      const [position, setPosition] = React.useState(0);
+      return (
+        <Sheet
+          opened
+          onClose={() => {}}
+          snapPoints={[80, 50, 20]}
+          position={position}
+          onPositionChange={setPosition}
+        >
+          <Text>panel body</Text>
+        </Sheet>
+      );
+    }
+    const animate = jest.spyOn(jest.requireActual("./motion/animate"), "animateOffset");
+    render(<Accepting />);
+    const params = dragParams!;
+    animate.mockClear();
+    act(() => {
+      params.onStart();
+      params.onSettle({ index: 2, offset: params.offsets[2]!, dismiss: false });
+    });
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    const targets = animate.mock.calls.map((c) => c[1]);
+    expect(targets).not.toContain(params.offsets[0]);
+    animate.mockRestore();
+  });
+});

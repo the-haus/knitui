@@ -3,6 +3,8 @@ import {
   handoffStart,
   handoffUpdate,
   type HandoffUpdateInput,
+  OVERSCROLL_SLOP,
+  overscrollPull,
   shouldPinToTop,
   shouldSettleOnEnd,
 } from "../handoff";
@@ -190,5 +192,33 @@ describe("handoffUpdate — full expanded-sheet drag cycle", () => {
       }),
     );
     expect(state.offset).toBe(MIN + 120);
+  });
+});
+
+describe("overscrollPull", () => {
+  it("ignores overscroll inside the slop", () => {
+    expect(overscrollPull(OVERSCROLL_SLOP, 700)).toBe(0);
+    expect(overscrollPull(0, 700)).toBe(0);
+  });
+
+  it("recovers the finger's travel from UIKit's damped overscroll", () => {
+    // The offset UIKit shows for a 300px pull in a 700px list.
+    const d = 700;
+    const y = (1 - 1 / ((300 * 0.55) / d + 1)) * d;
+    expect(overscrollPull(y + OVERSCROLL_SLOP, d) + y).toBeCloseTo(300, 0);
+  });
+
+  it("grows with the overscroll and never goes negative", () => {
+    let last = 0;
+    for (let o = 7; o < 200; o += 20) {
+      const pull = overscrollPull(o, 700);
+      expect(pull).toBeGreaterThan(last);
+      last = pull;
+    }
+  });
+
+  it("stays finite past the viewport and with no measured viewport", () => {
+    expect(Number.isFinite(overscrollPull(5000, 700))).toBe(true);
+    expect(overscrollPull(50, 0)).toBe(0);
   });
 });

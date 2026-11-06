@@ -4,13 +4,23 @@ import type { SharedValue } from "react-native-reanimated";
 
 import type { GetProps, LayoutChangeEvent, TamaguiElement } from "@knitui/core";
 
-import { SheetFill, SheetFrame, SheetLayer } from "../chrome";
-import { AnimatedFrameHost, AnimatedOverlay } from "./animated";
+import { SheetFill, SheetFrame, SheetLayer, SheetRest } from "../chrome";
+import { AnimatedFooterHost, AnimatedFrameHost, AnimatedOverlay } from "./animated";
 import type { AnimatedOverlayProps } from "./animated.types";
 
 export interface SurfaceProps {
   /** Panel translateY (px). */
   offset: SharedValue<number>;
+  /** Live keyboard height (px). */
+  keyboard: SharedValue<number>;
+  /** Viewport height (px). */
+  viewportHeight: number;
+  /** How far the layer ends above the bottom of the window (px). */
+  bottomGap: number;
+  /** Gap kept between the panel and the top of the viewport (px). */
+  topGap: number;
+  /** Cap the panel's width and centre it. */
+  maxWidth?: number;
   /** Scrim fade geometry. */
   fadeStart: number;
   closed: number;
@@ -33,6 +43,12 @@ export interface SurfaceProps {
   header?: React.ReactNode;
   /** The fixed footer node, pinned below the content (or null). */
   footer?: React.ReactNode;
+  /** Measured footer height (px). */
+  footerHeight: number;
+  /** How far the footer may slide down behind a keyboard (px). */
+  footerKeyboardSlide: number;
+  /** Props on the box that ends at the resting snap. */
+  restProps?: GetProps<typeof SheetRest>;
   /** Panel content. */
   children?: React.ReactNode;
   /** Measures the full-cover layer. */
@@ -50,6 +66,11 @@ export interface SurfaceProps {
 export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function Surface(props, ref) {
   const {
     offset,
+    keyboard,
+    viewportHeight,
+    bottomGap,
+    topGap,
+    maxWidth,
     fadeStart,
     closed,
     overlayMaxOpacity,
@@ -62,18 +83,32 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
     handle,
     header,
     footer,
+    footerHeight,
+    footerKeyboardSlide,
+    restProps,
     children,
     onLayout,
     testID,
   } = props;
 
+  const geometry = { offset, keyboard, viewportHeight, bottomGap, topGap };
   const panel = (
-    <AnimatedFrameHost offset={offset}>
+    <AnimatedFrameHost {...geometry} maxWidth={maxWidth}>
       <SheetFrame {...rootProps}>
-        {handle}
-        {header}
-        {children}
-        {footer}
+        <SheetRest {...restProps}>
+          {handle}
+          {header}
+          {children}
+        </SheetRest>
+        {footer ? (
+          <AnimatedFooterHost
+            {...geometry}
+            footerHeight={footerHeight}
+            keyboardSlide={footerKeyboardSlide}
+          >
+            {footer}
+          </AnimatedFooterHost>
+        ) : null}
       </SheetFrame>
     </AnimatedFrameHost>
   );

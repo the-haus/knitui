@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Box, type OverlayProps } from "@knitui/components";
+import { Box, type CloseButtonProps, type OverlayProps, Text } from "@knitui/components";
 import {
   createSlot,
   defineSlots,
@@ -63,9 +63,9 @@ export const SheetFill = styled(Box, {
 });
 
 /**
- * The visible panel surface. Fills its animated host (`flex: 1`) so the
- * background extends to the bottom of the screen — no gap shows through if a
- * spring overshoots past the most-open snap. `position: "relative"` is REQUIRED:
+ * The visible panel surface, sized by the root to its tallest snap plus a skirt, so
+ * no gap shows through if a spring overshoots past the most-open snap. No `flex`: on
+ * web a zero basis beats `height`. `position: "relative"` is REQUIRED:
  * a Tamagui `Box` defaults to `static` on web, which would let absolutely-
  * positioned children (a close button, decorative layers) anchor to the wrong
  * ancestor; RN/RNW Views are relative by default.
@@ -73,7 +73,6 @@ export const SheetFill = styled(Box, {
 export const SheetFrame = styled(Box, {
   displayName: "Sheet",
   position: "relative",
-  flex: 1,
   backgroundColor: "background",
   borderTopLeftRadius: "lg",
   borderTopRightRadius: "lg",
@@ -134,14 +133,66 @@ export const SheetHeader = styled(Box, {
  * A fixed (non-scrolling) footer region at the bottom of the panel. Sits below
  * the panel content, so a nested `Sheet.ScrollView` (`flex: 1`) scrolls in the
  * space above it while the footer stays pinned (e.g. an action bar). `flexShrink:
- * 0` keeps it from being squeezed when the content is tall. Override anything via
- * the `footer` style slot or props spread on `Sheet.Footer`.
+ * 0` keeps it from being squeezed when the content is tall. Its background hides the
+ * content passing behind it while the panel moves. Override anything via the `footer`
+ * style slot or props spread on `Sheet.Footer`.
  */
 export const SheetFooter = styled(Box, {
   displayName: "SheetFooter",
   flexShrink: 0,
   paddingHorizontal: "md",
   paddingTop: "sm",
+  backgroundColor: "background",
+});
+
+/**
+ * The part of the panel that ends at the resting snap. The frame behind it is taller,
+ * so a drag or a spring overshoot never shows the page under the panel. In percent
+ * mode the root gives it the resting height; in fit mode only a cap, so it hugs its
+ * content and its measured height becomes the snap. `flexShrink: 0` keeps that
+ * measurement independent of the frame around it.
+ */
+export const SheetRest = styled(Box, {
+  displayName: "SheetRest",
+  flexDirection: "column",
+  flexShrink: 0,
+  width: "100%",
+});
+
+/**
+ * The content region between the fixed header and footer. In fit mode it may shrink
+ * but never grows, so a nested scroller hugs short content and scrolls long content.
+ */
+export const SheetBody = styled(Box, {
+  displayName: "SheetBody",
+  minHeight: 0,
+  variants: {
+    fit: {
+      true: { flexGrow: 0, flexShrink: 1 },
+      false: { flex: 1 },
+    },
+    padded: {
+      true: { paddingHorizontal: "md", paddingBottom: "md" },
+    },
+  } as const,
+  defaultVariants: { fit: false },
+});
+
+/** The row holding the `title` and the close button, above any `Sheet.Header` content. */
+export const SheetTitleRow = styled(Box, {
+  displayName: "SheetTitleRow",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "sm",
+});
+
+/** The `title`. */
+export const SheetTitle = styled(Text, {
+  displayName: "SheetTitle",
+  flexShrink: 1,
+  fontSize: "lg",
+  fontWeight: "600",
 });
 
 /* ── Marker slots ───────────────────────────────────────────────────────── */
@@ -199,6 +250,12 @@ export interface SheetStyles {
   header?: GetProps<typeof SheetHeader>;
   /** The fixed footer region (`Sheet.Footer`). */
   footer?: GetProps<typeof SheetFooter>;
+  /** The content region between header and footer. */
+  body?: GetProps<typeof SheetBody>;
+  /** The `title`. */
+  title?: GetProps<typeof SheetTitle>;
+  /** The close button. */
+  closeButton?: Partial<CloseButtonProps>;
 }
 
 export const SHEET_SLOT_KEYS = [
@@ -207,6 +264,9 @@ export const SHEET_SLOT_KEYS = [
   "handle",
   "header",
   "footer",
+  "body",
+  "title",
+  "closeButton",
 ] as const satisfies readonly (keyof SheetStyles)[];
 
 /** Distributes the `styles` map down to parts rendered by nested children. */

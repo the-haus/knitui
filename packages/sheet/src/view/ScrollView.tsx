@@ -2,24 +2,24 @@ import * as React from "react";
 
 import { ScrollArea, type ScrollAreaHandle } from "@knitui/components";
 
+import { useSheetScrollContext } from "./scrollContext";
 import type { SheetScrollViewProps } from "./ScrollView.shared";
 
 export type { SheetScrollViewProps } from "./ScrollView.shared";
 
-/**
- * Scrollable content region for use inside a `Sheet.Frame` (web / default build).
- * A thin wrapper over the kit's `ScrollArea`, defaulted to `flex: 1` so it fills
- * the panel.
- *
- * The scroll↔drag handoff (drag the sheet when the list is at the top, scroll the
- * list otherwise) is implemented on native in `ScrollView.native.tsx`; on web the
- * browser handles nested scrolling natively, so this stays a plain wrapper.
- */
-/** Fills the space between the fixed header / footer (hoisted style object). */
-const FLEX_FILL = { flex: 1 } as const;
+/** Fills the space between the fixed header / footer (hoisted style objects). */
+const FILL = { flex: 1 } as const;
+/** In a fit panel: hug short content, and shrink to scroll long content. */
+const HUG = { flexGrow: 0, flexShrink: 1, minHeight: 0 } as const;
 
+/**
+ * Scrollable content region of a `Sheet` (web / default build). A thin wrapper over
+ * the kit's `ScrollArea`. The scroll↔drag handoff lives in `ScrollView.native.tsx`;
+ * on web the browser handles nested scrolling, so this stays a plain wrapper.
+ */
 export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollViewProps>(
   function SheetScrollView(props, ref) {
-    return <ScrollArea ref={ref} style={FLEX_FILL} {...props} />;
+    const ctx = useSheetScrollContext();
+    return <ScrollArea ref={ref} style={ctx?.fit ? HUG : FILL} {...(props as object)} />;
   },
 );

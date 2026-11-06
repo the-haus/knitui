@@ -10,15 +10,20 @@
 
 export {
   SHEET_SLOT_KEYS,
+  SheetBody,
   SheetFooter,
   SheetFrame,
   SheetHandleBar,
   SheetHandleRow,
   SheetHeader,
+  SheetRest,
   type SheetStyles,
+  SheetTitle,
+  SheetTitleRow,
 } from "./chrome";
 export * as engine from "./engine";
 export { DEFAULT_SPRING } from "./motion/animate";
 export { Sheet } from "./Sheet";
 export type { SheetProps, SheetRef, SheetSize } from "./types";
+export { renderSheetScrollComponent, SheetFlatList } from "./view/FlatList";
 export { SheetScrollView, type SheetScrollViewProps } from "./view/ScrollView";

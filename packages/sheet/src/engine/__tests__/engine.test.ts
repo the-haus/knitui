@@ -3,9 +3,13 @@ import { settle } from "../settle";
 import {
   clamp,
   clampOffset,
+  clampSnapIndex,
   closedOffset,
+  fitOffset,
   nearestSnapIndex,
   noNegZero,
+  resolveMaxPanelHeight,
+  restHeightInFlight,
   snapOffset,
   snapOffsets,
 } from "../snap";
@@ -229,5 +233,45 @@ describe("overlayOpacity", () => {
   it("degenerate zero span → full unless fully closed", () => {
     expect(overlayOpacity(900, 900, 900)).toBe(1);
     expect(overlayOpacity(900, 900, 900, 0.6)).toBe(0.6);
+  });
+});
+
+describe("fit geometry", () => {
+  it("hugs short content", () => {
+    expect(fitOffset(300, 800, 800)).toBe(500);
+  });
+
+  it("stops long content at the cap", () => {
+    expect(fitOffset(2000, 800, 600)).toBe(200);
+  });
+
+  it("rounds to whole px and never yields -0", () => {
+    expect(fitOffset(299.6, 800, 800)).toBe(500);
+    expect(Object.is(fitOffset(800, 800, 800), 0)).toBe(true);
+  });
+
+  it.each([
+    [undefined, 800],
+    [600, 600],
+    [2000, 800],
+    ["50%", 400],
+    ["150%", 800],
+  ] as const)("resolves a cap of %s to %d", (cap, want) => {
+    expect(resolveMaxPanelHeight(cap, 800)).toBe(want);
+  });
+});
+
+describe("clampSnapIndex", () => {
+  it("keeps an index inside a list that shrank", () => {
+    expect(clampSnapIndex(3, 2)).toBe(1);
+    expect(clampSnapIndex(-1, 2)).toBe(0);
+    expect(clampSnapIndex(2, 0)).toBe(0);
+  });
+});
+
+describe("restHeightInFlight", () => {
+  it("grows at once and holds while shrinking", () => {
+    expect(restHeightInFlight(300, 500)).toBe(500);
+    expect(restHeightInFlight(500, 300)).toBe(500);
   });
 });

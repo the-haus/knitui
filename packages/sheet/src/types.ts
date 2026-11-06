@@ -40,16 +40,28 @@ export interface SheetProps {
 
   /**
    * Snap points as % of the screen the sheet occupies, ordered most-visible →
-   * least-visible. @default [80, 10]
+   * least-visible, or `"fit"` for one snap that hugs the panel's content. A fit
+   * panel measures the handle, header, content and footer, follows content that
+   * changes height while open, and stops at {@link SheetProps.maxHeight}, where a
+   * `Sheet.ScrollView` starts to scroll. @default [80, 10]
    */
-  snapPoints?: number[];
+  snapPoints?: number[] | "fit";
+  /**
+   * The tallest a `snapPoints="fit"` panel may grow: px, or a `"NN%"` share of the
+   * screen. Defaults to the screen below the top safe area.
+   */
+  maxHeight?: number | `${number}%`;
+  /** Cap the panel's width and centre it, for tablets and wide windows. */
+  maxWidth?: number;
 
   /** Tapping the scrim closes the sheet. @default true */
   dismissOnOverlayPress?: boolean;
   /** Dragging past the lowest snap closes the sheet. @default false */
   dismissOnSnapToBottom?: boolean;
-  /** Escape closes the sheet (web). @default true */
+  /** Escape closes the sheet (web), topmost modal sheet first. @default true */
   closeOnEscape?: boolean;
+  /** Android hardware back closes a modal sheet, topmost first. @default true */
+  closeOnBackPress?: boolean;
 
   /** Disable all drag handling. @default false */
   disableDrag?: boolean;
@@ -69,9 +81,14 @@ export interface SheetProps {
 
   /** Per-instance spring override (passed to reanimated `withSpring`). */
   animationConfig?: WithSpringConfig;
-  /** Lift the panel above the soft keyboard (native). @default false */
+  /**
+   * Ride the whole panel, footer included, above the soft keyboard, tracking it while
+   * the scrollable content shrinks to fit. Native tracks it frame by frame; mobile web
+   * follows the browser's visual viewport.
+   * @default the value of `modal`
+   */
   moveOnKeyboardChange?: boolean;
-  /** Opt out of locking body scroll while open (web). @default false */
+  /** Opt out of locking body scroll while a modal sheet is open (web). @default false */
   disableRemoveScroll?: boolean;
   /** Trap keyboard focus within the panel while open (web). @default true */
   trapFocus?: boolean;
@@ -85,13 +102,28 @@ export interface SheetProps {
 
   /** Props forwarded to the underlying `Overlay` scrim. */
   overlayProps?: OverlayProps;
-  /** Per-slot style overrides (`root` / `overlay` / `handle`). */
+  /** Per-slot style overrides. See {@link SheetStyles}. */
   styles?: SlotStyles<SheetStyles>;
+
+  /** Title shown in the header. Also names the panel for assistive tech. */
+  title?: React.ReactNode;
+  /** Show a close button in the header. @default `true` when `title` is set */
+  withCloseButton?: boolean;
+  /** Close button props. Set `aria-label` to name it. @default { "aria-label": "Close" } */
+  closeButtonProps?: { "aria-label"?: string };
+  /** Pad the content region with the kit's standard gutter. @default false */
+  padded?: boolean;
+  /**
+   * Space kept clear under the content or footer. Defaults to the bottom safe area
+   * on native (from `react-native-safe-area-context`) and to
+   * `env(safe-area-inset-bottom)` on web. Pass `0` to opt out.
+   */
+  bottomInset?: number;
 
   /**
    * Accessible name of the panel. On web it is set on the element that carries
    * the role (the dialog, or the region of a non-modal sheet); on native it
-   * becomes the panel's `accessibilityLabel`.
+   * becomes the panel's `accessibilityLabel`. Takes precedence over `title`.
    */
   "aria-label"?: string;
   /**

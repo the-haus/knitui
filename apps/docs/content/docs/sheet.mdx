@@ -6,7 +6,27 @@ export const meta = {
 
 <ComponentHeader id="sheet" />
 
-{/* scaffolded: replace this comment with real prose */}
+`Sheet` is the kit's bottom surface. It handles dialogs that hug their content, long lists with a pinned footer, forms that ride above the keyboard, and persistent panels over a map.
+
+## Snap points or content fit
+
+Pass `snapPoints` as percentages of the screen, or `snapPoints="fit"` to hug the content up to `maxHeight`. An open panel re-settles on its own when the snap points or its content change. The content region ends at the resting snap, so `Sheet.Footer` stays on screen at every one.
+
+## Scrolling
+
+Put anything that scrolls in `Sheet.ScrollView` or `Sheet.FlatList`, or pass `renderSheetScrollComponent` as another virtualized list's `renderScrollComponent`. These hand one finger between the list and the panel. A plain React Native `ScrollView` knows nothing about the sheet, and on Android the panel's drag stops it from scrolling.
+
+## Keyboard
+
+`moveOnKeyboardChange` rides the whole panel above the soft keyboard, footer included, tracking it frame by frame while the scroller shrinks to fit. It defaults to the value of `modal`, so a persistent sheet stays where it is.
+
+## Persistent sheets
+
+With `modal={false}` and `withOverlay={false}`, the sheet is a panel beside the page, and the page behind it keeps every touch. Controlled `position` and several snap points work as they do in a modal sheet.
+
+## Accessibility
+
+`title` names the panel and adds a close button, which `closeButtonProps` can rename. With one snap point the handle is a drawn grabber, not a control. Escape and Android back close the topmost modal sheet first, and the spring honours reduced motion on every platform.
 
 ## Playground
 
