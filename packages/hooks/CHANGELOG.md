@@ -1,5 +1,12 @@
 # @knitui/hooks
 
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [b3248ba]
+  - @knitui/core@1.2.2
+
 ## 1.2.1
 
 ### Patch Changes
