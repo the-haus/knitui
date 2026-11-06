@@ -10,6 +10,17 @@ index f1e1e19..9874711 100644
      "./build/polyfill/*.js",
      "./src/ensureNativeModulesAreInstalled.ts",
      "./build/ensureNativeModulesAreInstalled.js"
+diff --git a/build/ts-declarations/global.js b/build/ts-declarations/global.js
+--- a/build/ts-declarations/global.js
++++ b/build/ts-declarations/global.js
+@@ -1,6 +1,2 @@
+-import { EventEmitter } from './EventEmitter';
+-import { NativeModule } from './NativeModule';
+-import { SharedObject } from './SharedObject';
+-import { SharedRef } from './SharedRef';
+-
++export {};
+ //# sourceMappingURL=global.js.map
 diff --git a/src/ts-declarations/global.ts b/src/ts-declarations/global.ts
 index 7e38329..fa6bbbd 100644
 --- a/src/ts-declarations/global.ts
