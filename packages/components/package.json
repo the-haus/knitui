@@ -58,7 +58,10 @@
     "!**/__tests__/**",
     "!**/__mocks__/**"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/internal/register-icon-color.ts",
+    "./lib/*/internal/register-icon-color.js"
+  ],
   "scripts": {
     "build": "bob build",
     "typecheck": "tsc --noEmit -p tsconfig.json",

@@ -79,3 +79,19 @@ describe("UnstyledButton", () => {
     expect(el).toHaveAttribute("aria-disabled", "true");
   });
 });
+
+describe("UnstyledButton browser reset", () => {
+  const rules = (el: Element) => cssRulesOf(el).join("\n");
+
+  it("removes the browser's button padding and margin", () => {
+    render(<UnstyledButton>Press me</UnstyledButton>);
+    const css = rules(screen.getByRole("button"));
+    expect(css).toContain("padding: 0px");
+    expect(css).toContain("margin: 0px");
+  });
+
+  it("honours a padding prop", () => {
+    render(<UnstyledButton padding={8}>Press me</UnstyledButton>);
+    expect(rules(screen.getByRole("button"))).toContain("padding: 8px");
+  });
+});

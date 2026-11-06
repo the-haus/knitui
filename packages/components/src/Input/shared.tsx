@@ -215,6 +215,24 @@ const textareaHostSizeVariant = tableVariant(
 const toInputLoaderSize = (size: InputSize | undefined) =>
   controlIconSize(toInputTokenSizeKey(size));
 
+/** The root's flags, which a caller can't override into an inconsistent state. */
+const CONTROLLED_ROOT_PROPS = new Set([
+  "ref",
+  "size",
+  "radius",
+  "variant",
+  "pointer",
+  "multiline",
+  "focused",
+  "error",
+  "disabled",
+]);
+
+const omitControlledRootProps = <T extends object>(props: T): Partial<T> =>
+  Object.fromEntries(
+    Object.entries(props).filter(([key]) => !CONTROLLED_ROOT_PROPS.has(key)),
+  ) as Partial<T>;
+
 export const InputRootFrame = styled(Box, {
   displayName: "InputRoot",
   flexDirection: "row",
@@ -507,6 +525,9 @@ export function InputChrome(props: InputChromeProps) {
   const mergedLeftSectionProps = s.merge("leftSection", leftSectionProps);
   const mergedRightSectionProps = s.merge("rightSection", rightSectionProps);
   const { onPress: wrapperOnPress, ...rootProps } = s.merge("root", wrapperProps);
+  // Everything but the controlled flags, re-applied after them: v3 resolves styles in
+  // call-site order, so a caller's `borderColor` has to land after `focused`/`error`.
+  const callerStyles = omitControlledRootProps(rootProps);
 
   const leftContent = getSectionContent({
     loading,
@@ -549,7 +570,8 @@ export function InputChrome(props: InputChromeProps) {
     <InputRootFrame
       // Consumer wrapperProps are spread FIRST so the component's own controlled
       // state (size/variant/error/disabled/focused/…, ref, and the press handler)
-      // always wins and can never be overridden into an inconsistent state.
+      // always wins and can never be overridden into an inconsistent state. Their
+      // styles are spread again after those flags, so they still apply.
       {...rootProps}
       ref={rootRef}
       size={size}
@@ -563,6 +585,7 @@ export function InputChrome(props: InputChromeProps) {
       focused={focused}
       error={!!error}
       disabled={disabled}
+      {...callerStyles}
       onPress={disabled ? undefined : handleRootPress}
     >
       {leftContent ? (

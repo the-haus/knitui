@@ -6146,8 +6146,12 @@ export { IconZoomScan } from "./icons/IconZoomScan";
 export { IconZoomScanFilled } from "./icons/IconZoomScanFilled";
 export { IconZzz } from "./icons/IconZzz";
 export { IconZzzOff } from "./icons/IconZzzOff";
-export { IconProvider, useIconContext } from "./internal/icon-context";
-export type { IconContextValue, IconProviderProps } from "./internal/icon-context";
+export { IconProvider, registerIconColorResolver, useIconContext } from "./internal/icon-context";
+export type {
+  IconColorResolver,
+  IconContextValue,
+  IconProviderProps,
+} from "./internal/icon-context";
 export type { IconName } from "./registry";
 export { iconRegistry } from "./registry";
 export type { IconComponent, IconNode, IconProps, IconType } from "./types";

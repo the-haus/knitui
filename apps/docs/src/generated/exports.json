@@ -70,7 +70,7 @@
         "./control-system",
         "./package.json"
       ],
-      "exportCount": 575,
+      "exportCount": 576,
       "hasStories": true
     },
     {
@@ -121,7 +121,7 @@
         "./registry",
         "./package.json"
       ],
-      "exportCount": 6157,
+      "exportCount": 6159,
       "hasStories": true
     },
     {
@@ -2936,6 +2936,12 @@
       "kind": "function",
       "package": "@knitui/hooks",
       "packageSlug": "hooks"
+    },
+    {
+      "name": "getAvatarSize",
+      "kind": "function",
+      "package": "@knitui/components",
+      "packageSlug": "components"
     },
     {
       "name": "getChildrenNodesValues",

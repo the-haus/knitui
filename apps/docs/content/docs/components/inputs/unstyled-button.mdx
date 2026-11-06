@@ -13,4 +13,10 @@ export const meta = {
 
 <Examples id="components/inputs/unstyled-button" />
 
+## Press styles inside a pressable
+
+On Android, a `press:` style on a view inside a pressable makes that view take the touch, so the outer `onPress` never fires. Web keeps working, so this is easy to miss.
+
+Put the `press:` style on the pressable itself. If an inner view has to change on press, drive it from state in the pressable's `onPressIn` and `onPressOut`.
+
 <PropsTable id="components/inputs/unstyled-button" />

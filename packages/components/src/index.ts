@@ -1,3 +1,5 @@
+import "./internal/register-icon-color";
+
 export {
   Accordion,
   type AccordionChevronPosition,
@@ -35,6 +37,7 @@ export { Autocomplete, type AutocompleteProps, type AutocompleteRef } from "./Au
 export {
   Avatar,
   type AvatarGroupProps,
+  getAvatarSize,
   type AvatarProps,
   type AvatarSize,
   type AvatarVariant,

@@ -311,13 +311,13 @@ const SQUARE_CONTROL_RADIUS = "md";
 
 /** Square control sizes WITH the matching corner, per size key. */
 export const SQUARE_ROUNDED_SIZES = {
-  xxs: { ...squareSizeVariant.xxs, borderRadius: M.xxs.borderRadius },
-  xs: { ...squareSizeVariant.xs, borderRadius: M.xs.borderRadius },
-  sm: { ...squareSizeVariant.sm, borderRadius: SQUARE_CONTROL_RADIUS },
-  md: { ...squareSizeVariant.md, borderRadius: SQUARE_CONTROL_RADIUS },
-  lg: { ...squareSizeVariant.lg, borderRadius: SQUARE_CONTROL_RADIUS },
-  xl: { ...squareSizeVariant.xl, borderRadius: SQUARE_CONTROL_RADIUS },
-  xxl: { ...squareSizeVariant.xxl, borderRadius: M.xxl.borderRadius },
+  xxs: { ...squareSizeVariant.xxs, minHeight: M.xxs.height, borderRadius: M.xxs.borderRadius },
+  xs: { ...squareSizeVariant.xs, minHeight: M.xs.height, borderRadius: M.xs.borderRadius },
+  sm: { ...squareSizeVariant.sm, minHeight: M.sm.height, borderRadius: SQUARE_CONTROL_RADIUS },
+  md: { ...squareSizeVariant.md, minHeight: M.md.height, borderRadius: SQUARE_CONTROL_RADIUS },
+  lg: { ...squareSizeVariant.lg, minHeight: M.lg.height, borderRadius: SQUARE_CONTROL_RADIUS },
+  xl: { ...squareSizeVariant.xl, minHeight: M.xl.height, borderRadius: SQUARE_CONTROL_RADIUS },
+  xxl: { ...squareSizeVariant.xxl, minHeight: M.xxl.height, borderRadius: M.xxl.borderRadius },
 } as const;
 
 /**
@@ -334,15 +334,46 @@ export const squareSizeRoundedVariant = tableVariant(SQUARE_ROUNDED_SIZES, squar
  * `height`, space.md on `paddingHorizontal`. Static exact-key map.
  *
  * Used by `Button`, `Button.GroupSection`, `SegmentedControl.Control`.
+ *
+ * `minHeight` matches `height` because `flex: 1 1 0` inside a column makes the flex
+ * basis win over `height`, which would otherwise collapse the control to its border.
  */
 export const controlVariant = {
-  xxs: { height: M.xxs.height, paddingHorizontal: M.xxs.paddingHorizontal },
-  xs: { height: M.xs.height, paddingHorizontal: M.xs.paddingHorizontal },
-  sm: { height: M.sm.height, paddingHorizontal: M.sm.paddingHorizontal },
-  md: { height: M.md.height, paddingHorizontal: M.md.paddingHorizontal },
-  lg: { height: M.lg.height, paddingHorizontal: M.lg.paddingHorizontal },
-  xl: { height: M.xl.height, paddingHorizontal: M.xl.paddingHorizontal },
-  xxl: { height: M.xxl.height, paddingHorizontal: M.xxl.paddingHorizontal },
+  xxs: {
+    height: M.xxs.height,
+    minHeight: M.xxs.height,
+    paddingHorizontal: M.xxs.paddingHorizontal,
+  },
+  xs: {
+    height: M.xs.height,
+    minHeight: M.xs.height,
+    paddingHorizontal: M.xs.paddingHorizontal,
+  },
+  sm: {
+    height: M.sm.height,
+    minHeight: M.sm.height,
+    paddingHorizontal: M.sm.paddingHorizontal,
+  },
+  md: {
+    height: M.md.height,
+    minHeight: M.md.height,
+    paddingHorizontal: M.md.paddingHorizontal,
+  },
+  lg: {
+    height: M.lg.height,
+    minHeight: M.lg.height,
+    paddingHorizontal: M.lg.paddingHorizontal,
+  },
+  xl: {
+    height: M.xl.height,
+    minHeight: M.xl.height,
+    paddingHorizontal: M.xl.paddingHorizontal,
+  },
+  xxl: {
+    height: M.xxl.height,
+    minHeight: M.xxl.height,
+    paddingHorizontal: M.xxl.paddingHorizontal,
+  },
 } as const;
 
 /**
