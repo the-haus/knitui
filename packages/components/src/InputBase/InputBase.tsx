@@ -13,6 +13,40 @@ export interface InputBaseProps extends InputBaseInputProps, InputBaseWrapperPro
   wrapperProps?: InputBaseWrapperProps & InputProps["wrapperProps"];
 }
 
+/**
+ * Props that place the field among its siblings. They belong on the outer wrapper:
+ * on the inner input, `flex={1}` in a row would size the input inside a wrapper that
+ * stays at its content width.
+ */
+const LAYOUT_PROPS = new Set([
+  "flex",
+  "flexGrow",
+  "flexShrink",
+  "flexBasis",
+  "alignSelf",
+  "width",
+  "minWidth",
+  "maxWidth",
+  "margin",
+  "marginHorizontal",
+  "marginVertical",
+  "marginTop",
+  "marginBottom",
+  "marginLeft",
+  "marginRight",
+]);
+
+const splitLayoutProps = (
+  props: InputBaseInputProps,
+): { layout: Record<string, unknown>; inputProps: InputBaseInputProps } => {
+  const layout: Record<string, unknown> = {};
+  const inputProps: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(props)) {
+    (LAYOUT_PROPS.has(key) ? layout : inputProps)[key] = value;
+  }
+  return { layout, inputProps: inputProps as InputBaseInputProps };
+};
+
 export const InputBase = styleable<InputBaseProps>(Input, function InputBase(props, ref) {
   const {
     label,
@@ -32,7 +66,7 @@ export const InputBase = styleable<InputBaseProps>(Input, function InputBase(pro
     size = "md",
     ...others
   } = props;
-  const inputProps: InputBaseInputProps = others;
+  const { layout, inputProps } = splitLayoutProps(others);
 
   return (
     <Input.Wrapper
@@ -50,6 +84,7 @@ export const InputBase = styleable<InputBaseProps>(Input, function InputBase(pro
       inputWrapperOrder={inputWrapperOrder}
       labelElement={labelElement}
       size={size}
+      {...layout}
       {...wrapperProps}
     >
       <Input

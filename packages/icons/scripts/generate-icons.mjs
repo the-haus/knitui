@@ -156,8 +156,8 @@ function indexSource(icons) {
   // \`IconGeometry\` icon component (Tabler ships a "geometry" glyph).
   return `export type { IconComponent, IconNode, IconProps, IconType } from "./types";
 export { Icon } from "./Icon";
-export { IconProvider, useIconContext } from "./internal/icon-context";
-export type { IconContextValue, IconProviderProps } from "./internal/icon-context";
+export { IconProvider, registerIconColorResolver, useIconContext } from "./internal/icon-context";
+export type { IconColorResolver, IconContextValue, IconProviderProps } from "./internal/icon-context";
 export type { IconName } from "./registry";
 export { iconRegistry } from "./registry";
 

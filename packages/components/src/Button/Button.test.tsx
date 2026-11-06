@@ -465,3 +465,12 @@ describe("Button", () => {
     });
   });
 });
+
+describe("Button in a column", () => {
+  it("keeps its height when `flex: 1 1 0` overrides it", () => {
+    render(<Button size="md">Save</Button>);
+    expect(baseValue(screen.getByRole("button"), "min-height")).toBe(
+      baseValue(screen.getByRole("button"), "height"),
+    );
+  });
+});

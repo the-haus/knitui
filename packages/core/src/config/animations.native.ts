@@ -1,5 +1,7 @@
 import { createAnimations } from "@tamagui/animations-reanimated";
+import { useRef } from "react";
 
+import { keepNumericStyleKeys } from "./keep-numeric-style-keys";
 import { MOTION_PRESETS } from "./motion";
 
 /**
@@ -11,4 +13,13 @@ import { MOTION_PRESETS } from "./motion";
  * (`"ease-out"`, `"cubic-bezier(…)"`), which the v3 reanimated driver parses
  * itself (v2 needed `Easing.bezier(...)` objects here).
  */
-export const animations = createAnimations(MOTION_PRESETS);
+const driver = createAnimations(MOTION_PRESETS);
+
+export const animations: typeof driver = {
+  ...driver,
+  useAnimations(props) {
+    const seen = useRef(new Set<string>());
+    const style = keepNumericStyleKeys(props.style, seen.current);
+    return driver.useAnimations(style === props.style ? props : { ...props, style });
+  },
+};

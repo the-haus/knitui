@@ -24,6 +24,10 @@ export const UnstyledButtonFrame = styled(Box, {
   ...webCursor("pointer"),
   backgroundColor: "transparent",
   borderWidth: 0,
+  // A real `<button>` carries the browser's padding and margin. Stating them here
+  // means the reset applies by default, and `padding` / `margin` props still win.
+  padding: 0,
+  margin: 0,
   userSelect: "none",
   ...focusRingStyle,
   // Tactile press-dip — the same base affordance `Button`/`ActionIcon`/`Chip`

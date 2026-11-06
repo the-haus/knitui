@@ -54,6 +54,46 @@ export function IconProvider({ value, children }: IconProviderProps) {
   return React.createElement(IconContext.Provider, { value: merged }, children);
 }
 
+/** A hook resolving a theme colour name to something the platform can paint. */
+export type IconColorResolver = (color: string) => string;
+
+let iconColorResolver: IconColorResolver | null = null;
+
+/**
+ * Teach icons to read theme colour names. This package knows nothing about the theme,
+ * so `@knitui/components` registers its resolver. Without one, `color` paints as given.
+ */
+export function registerIconColorResolver(resolver: IconColorResolver): void {
+  iconColorResolver = resolver;
+}
+
+const LITERAL_COLOR = /^(#|rgba?\(|hsla?\(|hwb\(|lab\(|lch\(|oklab\(|oklch\(|color\(|var\()/i;
+const KEYWORD_COLOR = /^(currentcolor|transparent|inherit|none)$/i;
+
+/** Whether `color` may be a theme name rather than something paintable already. */
+export function needsIconColorResolution(color: IconProps["color"]): color is string {
+  return (
+    iconColorResolver !== null &&
+    typeof color === "string" &&
+    !LITERAL_COLOR.test(color) &&
+    !KEYWORD_COLOR.test(color)
+  );
+}
+
+interface ResolvedIconColorProps {
+  color: string;
+  children?: React.ReactNode;
+}
+
+/**
+ * Paints the icons inside it with `color`, resolved. A separate component so that only
+ * icons given a theme name pay for the theme subscription a native lookup needs.
+ */
+export function ResolvedIconColor({ color, children }: ResolvedIconColorProps) {
+  const resolved = (iconColorResolver as IconColorResolver)(color);
+  return React.createElement(IconProvider, { value: { color: resolved } }, children);
+}
+
 /** Read the ambient icon defaults. Returns an empty object when unprovided. */
 export function useIconContext(): IconContextValue {
   return React.useContext(IconContext) ?? EMPTY;

@@ -4,7 +4,7 @@ import type { GetRef } from "@knitui/core";
 
 import { baseValue } from "../__tests__/css-rules.test.helper";
 import { render, screen } from "../test-utils";
-import { Avatar } from "./Avatar";
+import { Avatar, getAvatarSize } from "./Avatar";
 
 describe("Avatar", () => {
   it("exposes the img role", () => {
@@ -157,5 +157,19 @@ describe("Avatar", () => {
       expect(baseValue(avatar, "border-color")).toBe("var(--background)");
       expect(baseValue(screen.getByRole("group"), "padding-left")).toBe("12px");
     });
+  });
+});
+
+describe("getAvatarSize", () => {
+  it("returns the rendered diameter of each size", () => {
+    expect(getAvatarSize("sm")).toBe(32);
+    expect(getAvatarSize("md")).toBe(40);
+    expect(getAvatarSize()).toBe(40);
+    expect(getAvatarSize(52)).toBe(52);
+  });
+
+  it("keeps a border inside that diameter", () => {
+    render(<Avatar name="Jane Doe" size="md" />);
+    expect(baseValue(screen.getByRole("img"), "box-sizing")).toBe("border-box");
   });
 });

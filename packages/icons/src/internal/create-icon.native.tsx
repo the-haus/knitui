@@ -3,7 +3,7 @@ import type { StyleProp, ViewStyle } from "react-native";
 import { Path, Svg } from "react-native-svg";
 
 import type { IconComponent, IconGeometry, IconProps, IconType, PathSpec } from "../types";
-import { useIconContext } from "./icon-context";
+import { needsIconColorResolution, ResolvedIconColor, useIconContext } from "./icon-context";
 
 /**
  * Native renderer. Draws the compiled geometry with `react-native-svg` — no
@@ -30,8 +30,8 @@ export function createIcon(
   const specs: ReadonlyArray<PathSpec> =
     typeof geometry === "string" ? [{ d: geometry }] : geometry;
 
-  const Icon = React.memo(
-    ({
+  const Icon = React.memo((props: IconProps): React.ReactElement => {
+    const {
       size: sizeProp,
       color: colorProp,
       stroke: strokeProp,
@@ -47,39 +47,45 @@ export function createIcon(
       "aria-label": _ariaLabel,
       "aria-hidden": _ariaHidden,
       ...rest
-    }: IconProps) => {
-      // Explicit prop → ambient IconProvider → hard default.
-      const ctx = useIconContext();
-      const size = sizeProp ?? ctx.size ?? 24;
-      const color = colorProp ?? ctx.color ?? "currentColor";
-      const stroke = strokeProp ?? ctx.stroke ?? 2;
-      const paint = filled
-        ? { fill: color, stroke: "none" }
-        : {
-            fill: "none",
-            stroke: color,
-            strokeWidth: strokeWidth ?? stroke,
-            strokeLinecap: "round" as const,
-            strokeLinejoin: "round" as const,
-          };
-
+    } = props;
+    // Explicit prop → ambient IconProvider → hard default.
+    const ctx = useIconContext();
+    if (needsIconColorResolution(colorProp)) {
       return React.createElement(
-        Svg,
-        {
-          width: size,
-          height: size,
-          viewBox: "0 0 24 24",
-          accessibilityLabel: accessibilityLabel ?? title,
-          testID,
-          style: style as StyleProp<ViewStyle>,
-          ...rest,
-        },
-        // `paint` first, then the spec so any per-path override (fill/stroke/opacity) wins.
-        ...specs.map((spec, index) => React.createElement(Path, { key: index, ...paint, ...spec })),
-        children,
+        ResolvedIconColor,
+        { color: colorProp },
+        React.createElement(Icon, { ...props, color: undefined }),
       );
-    },
-  );
+    }
+    const size = sizeProp ?? ctx.size ?? 24;
+    const color = colorProp ?? ctx.color ?? "currentColor";
+    const stroke = strokeProp ?? ctx.stroke ?? 2;
+    const paint = filled
+      ? { fill: color, stroke: "none" }
+      : {
+          fill: "none",
+          stroke: color,
+          strokeWidth: strokeWidth ?? stroke,
+          strokeLinecap: "round" as const,
+          strokeLinejoin: "round" as const,
+        };
+
+    return React.createElement(
+      Svg,
+      {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        accessibilityLabel: accessibilityLabel ?? title,
+        testID,
+        style: style as StyleProp<ViewStyle>,
+        ...rest,
+      },
+      // `paint` first, then the spec so any per-path override (fill/stroke/opacity) wins.
+      ...specs.map((spec, index) => React.createElement(Path, { key: index, ...paint, ...spec })),
+      children,
+    );
+  });
 
   Icon.displayName = displayName;
   return Icon;

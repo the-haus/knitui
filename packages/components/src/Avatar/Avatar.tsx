@@ -23,10 +23,18 @@ import {
   surfaceColorVariant,
   tableVariant,
 } from "../internal/style-props";
+import { resolveSizePx } from "../internal/control-metrics";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Text } from "../Text";
 
 export type AvatarSize = SizeKey;
+
+/**
+ * The rendered diameter of an avatar, in pixels. Use it for anything that has to line
+ * up with one, such as a spacer in the place of a hidden avatar. Web and native match,
+ * and a border or a group ring sits inside this size rather than adding to it.
+ */
+export const getAvatarSize = (size: AvatarSize | number = "md"): number => resolveSizePx(size);
 export type AvatarVariant =
   "filled" | "light" | "outline" | "transparent" | "default" | "white" | "gradient";
 
@@ -83,6 +91,8 @@ const AvatarFrame = styled(Box, {
   justifyContent: "center",
   overflow: "hidden",
   borderRadius: 999,
+  // The size token is the outer diameter, border included, whatever the page CSS does.
+  boxSizing: "border-box",
   borderWidth: 0,
   borderColor: "transparent",
 

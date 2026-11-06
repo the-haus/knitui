@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import type { IconComponent, IconGeometry, IconProps, IconType, PathSpec } from "../types";
-import { useIconContext } from "./icon-context";
+import { needsIconColorResolution, ResolvedIconColor, useIconContext } from "./icon-context";
 
 /**
  * Web renderer. Builds a self-contained `<svg>` from the compiled geometry — no
@@ -26,8 +26,8 @@ export function createIcon(
   const specs: ReadonlyArray<PathSpec> =
     typeof geometry === "string" ? [{ d: geometry }] : geometry;
 
-  const Icon = React.memo(
-    ({
+  const Icon = React.memo((props: IconProps): React.ReactElement => {
+    const {
       size: sizeProp,
       color: colorProp,
       stroke: strokeProp,
@@ -40,47 +40,49 @@ export function createIcon(
       // Destructured purely so they never leak onto the DOM element.
       fallback: _fallback,
       ...rest
-    }: IconProps) => {
-      // Explicit prop → ambient IconProvider → hard default.
-      const ctx = useIconContext();
-      const size = sizeProp ?? ctx.size ?? 24;
-      const color = colorProp ?? ctx.color ?? "currentColor";
-      const stroke = strokeProp ?? ctx.stroke ?? 2;
-      const paint = filled
-        ? { fill: color, stroke: "none" }
-        : {
-            fill: "none",
-            stroke: color,
-            strokeWidth: strokeWidth ?? stroke,
-            strokeLinecap: "round" as const,
-            strokeLinejoin: "round" as const,
-          };
-
+    } = props;
+    // Explicit prop → ambient IconProvider → hard default.
+    const ctx = useIconContext();
+    if (needsIconColorResolution(colorProp)) {
       return React.createElement(
-        "svg",
-        {
-          xmlns: "http://www.w3.org/2000/svg",
-          width: size,
-          height: size,
-          viewBox: "0 0 24 24",
-          ...paint,
-          className: ["tabler-icon", `tabler-icon-${iconName}`, className]
-            .filter(Boolean)
-            .join(" "),
-          "aria-label": rest["aria-label"] ?? accessibilityLabel,
-          "aria-hidden": (rest["aria-label"] ?? accessibilityLabel ?? title) ? undefined : true,
-          "data-testid": testID,
-          ...rest,
-        },
-        title ? React.createElement("title", { key: "svg-title" }, title) : null,
-        // `paint` first, then the spec so any per-path override (fill/stroke/opacity) wins.
-        ...specs.map((spec, index) =>
-          React.createElement("path", { key: index, ...paint, ...spec }),
-        ),
-        children,
+        ResolvedIconColor,
+        { color: colorProp },
+        React.createElement(Icon, { ...props, color: undefined }),
       );
-    },
-  );
+    }
+    const size = sizeProp ?? ctx.size ?? 24;
+    const color = colorProp ?? ctx.color ?? "currentColor";
+    const stroke = strokeProp ?? ctx.stroke ?? 2;
+    const paint = filled
+      ? { fill: color, stroke: "none" }
+      : {
+          fill: "none",
+          stroke: color,
+          strokeWidth: strokeWidth ?? stroke,
+          strokeLinecap: "round" as const,
+          strokeLinejoin: "round" as const,
+        };
+
+    return React.createElement(
+      "svg",
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        ...paint,
+        className: ["tabler-icon", `tabler-icon-${iconName}`, className].filter(Boolean).join(" "),
+        "aria-label": rest["aria-label"] ?? accessibilityLabel,
+        "aria-hidden": (rest["aria-label"] ?? accessibilityLabel ?? title) ? undefined : true,
+        "data-testid": testID,
+        ...rest,
+      },
+      title ? React.createElement("title", { key: "svg-title" }, title) : null,
+      // `paint` first, then the spec so any per-path override (fill/stroke/opacity) wins.
+      ...specs.map((spec, index) => React.createElement("path", { key: index, ...paint, ...spec })),
+      children,
+    );
+  });
 
   Icon.displayName = displayName;
   return Icon;

@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
+import { cssRulesOf } from "../__tests__/css-rules.test.helper";
 import { fireEvent, render, screen } from "../test-utils";
 import { InputBase } from "./InputBase";
 
@@ -44,5 +45,18 @@ describe("InputBase", () => {
     const ref = React.createRef<GetRef<typeof InputBase>>();
     render(<InputBase ref={ref} />);
     expect(ref.current).not.toBeNull();
+  });
+});
+
+describe("InputBase layout props", () => {
+  it("places the wrapper, not the input, in its parent", () => {
+    render(
+      <div data-testid="row">
+        <InputBase aria-label="Name" flex={1} />
+      </div>,
+    );
+    const wrapper = screen.getByTestId("row").firstElementChild as Element;
+
+    expect(cssRulesOf(wrapper).join("\n")).toMatch(/flex: 1/);
   });
 });

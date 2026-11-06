@@ -2,7 +2,12 @@ import * as React from "react";
 
 import type { GetRef } from "@knitui/core";
 
-import { effectiveBaseValue, paddingX, pseudoStyle } from "../__tests__/css-rules.test.helper";
+import {
+  cssRulesOf,
+  effectiveBaseValue,
+  paddingX,
+  pseudoStyle,
+} from "../__tests__/css-rules.test.helper";
 import { controlMetrics as M } from "../internal/control-metrics";
 import { act, fireEvent, render, screen } from "../test-utils";
 import { Input } from "./Input";
@@ -446,5 +451,22 @@ describe("Input", () => {
       seen.add(read().onChange);
       expect(seen.size).toBe(1);
     });
+  });
+});
+
+describe("Input caller styles", () => {
+  it("lets a caller's root style beat the error state", () => {
+    const { container } = render(
+      <Input aria-label="Name" error styles={{ root: { borderColor: "color9" } }} />,
+    );
+    const root = container.querySelector("input")?.parentElement as Element;
+
+    expect(cssRulesOf(root).join("\n")).toContain("--color9");
+    expect(cssRulesOf(root).join("\n")).not.toContain("--red9");
+  });
+
+  it("keeps the controlled flags out of a caller's reach", () => {
+    render(<Input aria-label="Name" disabled wrapperProps={{ disabled: false }} />);
+    expect(screen.getByLabelText("Name")).toBeDisabled();
   });
 });
