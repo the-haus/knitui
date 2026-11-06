@@ -88,3 +88,43 @@ export function clampOffset(
   if (offset > maxOffset) return maxOffset + (offset - maxOffset) * 0.5;
   return offset;
 }
+
+/** Clamp a snap index into a list of `length` snaps (0 when the list is empty). */
+export function clampSnapIndex(index: number, length: number): number {
+  "worklet";
+  return clamp(index, 0, Math.max(0, length - 1));
+}
+
+/**
+ * The tallest a content-fit panel may grow, in px. A number caps it directly, a
+ * `"NN%"` string is a share of the viewport, and `undefined` leaves the whole
+ * viewport. The cap never exceeds the viewport.
+ */
+export function resolveMaxPanelHeight(
+  maxHeight: number | `${number}%` | undefined,
+  viewportHeight: number,
+): number {
+  if (maxHeight === undefined) return viewportHeight;
+  const cap =
+    typeof maxHeight === "number" ? maxHeight : (viewportHeight * parseFloat(maxHeight)) / 100;
+  return clamp(cap, 0, viewportHeight);
+}
+
+/**
+ * The single snap offset of a content-fit panel: it hugs `contentHeight`, up to
+ * `maxPanelHeight`, so short content rests low and long content rests at the cap.
+ */
+export function fitOffset(
+  contentHeight: number,
+  viewportHeight: number,
+  maxPanelHeight: number,
+): number {
+  "worklet";
+  return noNegZero(Math.round(viewportHeight - Math.min(contentHeight, maxPanelHeight)));
+}
+
+/** Rest-box height while a snap change is in flight: grow now, shrink only on arrival. */
+export function restHeightInFlight(current: number, target: number): number {
+  "worklet";
+  return Math.max(current, target);
+}

@@ -1418,6 +1418,9 @@ importers:
       '@knitui/icons':
         specifier: workspace:*
         version: link:../icons
+      react-native-safe-area-context:
+        specifier: '*'
+        version: 5.10.1(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-worklets:
         specifier: 0.13.0
         version: 0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)

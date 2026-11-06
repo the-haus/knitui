@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  type NativeGesture,
   type PanGesture,
   type PanGestureConfig,
   usePanGesture,
@@ -44,16 +43,20 @@ export interface SheetDragParams {
   enabled: boolean;
   /** Spring config for the settle animation. */
   spring?: WithSpringConfig;
-  /** Allow a child ScrollView to take over (handoff) — RNGH ref to compose with. */
-  scrollGesture?: NativeGesture;
   /**
-   * Live vertical scroll offset (px, ≥0) of a nested `Sheet.ScrollView`. When
-   * present the gesture becomes scroll-aware (the handoff): while the sheet is
-   * fully expanded the list owns the drag, and the panel only starts moving once
-   * the list is at the top and the finger pulls down. Omit for a sheet with no
-   * scrollable content — the panel then tracks the finger directly.
+   * How many `Sheet.ScrollView`s are mounted in the panel. The handoff applies only
+   * while there is at least one: a sheet of plain content has no list offset to
+   * read, and acting as if it had one drags the panel from a scrolled list.
+   */
+  scrollers?: SharedValue<number>;
+  /**
+   * Live vertical scroll offset (px, ≥0) of the `Sheet.ScrollView` under the finger.
+   * While the sheet is fully expanded the list owns the drag, and the panel only
+   * starts moving once the list is at the top and the finger pulls down.
    */
   scrollOffsetY?: SharedValue<number>;
+  /** True while this Pan is active, so a scroller knows the drag is already claimed. */
+  panActive?: SharedValue<boolean>;
   /** Fired (JS) when a drag begins — pauses any external sync. */
   onStart: () => void;
   /** Fired (JS) when a drag settles — commits the resting snap / dismiss. */
@@ -80,8 +83,9 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
     dismissible,
     enabled,
     spring,
-    scrollGesture,
+    scrollers,
     scrollOffsetY,
+    panActive,
     onStart,
     onSettle,
     onScrollRelease,
@@ -101,8 +105,6 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
   const sheetOwns = useSharedValue(false);
   const handoff = useSharedValue(0);
   const config = spring;
-  // Scroll-aware only when a nested ScrollView wired both the gesture + its offset.
-  const coordinated = scrollGesture != null && scrollOffsetY != null;
 
   // RNGH 3: the gesture is a hook taking ONE config object. Its identity is keyed
   // on that object (the hook clones + remaps it in a `useMemo([config])` and pushes
@@ -110,6 +112,10 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
   // same dependencies the former builder memo had — a stable config
   // keeps the handler's config untouched across unrelated re-renders.
   const panConfig = React.useMemo<PanGestureConfig>(() => {
+    const isCoordinated = () => {
+      "worklet";
+      return scrollers !== undefined && scrollers.value > 0;
+    };
     const minOffset = offsets.length > 0 ? offsets[0] : 0;
     const maxOffset = dismissible
       ? closed
@@ -122,12 +128,6 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
       // Only claim the touch once it has travelled vertically — taps, presses,
       // and horizontal swipes inside the panel are left to their own handlers.
       activeOffsetY: [-ACTIVATION_THRESHOLD, ACTIVATION_THRESHOLD],
-      // Coordinate with a child ScrollView so scroll-at-top hands off to the sheet
-      // and the two never fight (the handoff path). RNGH 3 registers this relation
-      // symmetrically on both handlers (v2's `simultaneousWithExternalGesture` was
-      // declared on the Pan side only; the native orchestrator already treated
-      // either side's declaration as mutual).
-      simultaneousWith: scrollGesture,
       onBegin: () => {
         "worklet";
         // Touch-down (may still be a tap). Reset the cycle flags but leave any
@@ -144,9 +144,10 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         panStart.value = offset.value;
         cancelAnimation(offset);
         active.value = true;
+        if (panActive) panActive.value = true;
         // Handoff: decide who owns this drag (the panel, or a nested list). The
         // pure engine holds the rule; the shared values just carry it per frame.
-        const start = handoffStart(coordinated, offset.value, minOffset);
+        const start = handoffStart(isCoordinated(), offset.value, minOffset);
         sheetOwns.value = start.sheetOwns;
         handoff.value = start.handoff;
         scheduleOnRN(onStart);
@@ -154,7 +155,7 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
       onUpdate: (e) => {
         "worklet";
         const r = handoffUpdate({
-          coordinated,
+          coordinated: isCoordinated(),
           translationY: e.translationY,
           scrollOffsetY: scrollOffsetY ? scrollOffsetY.value : 0,
           panStart: panStart.value,
@@ -172,7 +173,7 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
         // The list was scrolling, not the panel: don't settle the sheet (a
         // downward fling on the list must not collapse it) — let native momentum
         // run and just lift the external-sync pause on the JS side.
-        if (!shouldSettleOnEnd(coordinated, sheetOwns.value)) {
+        if (!shouldSettleOnEnd(isCoordinated(), sheetOwns.value)) {
           settled.value = true;
           scheduleOnRN(onScrollRelease ?? onStart);
           return;
@@ -194,6 +195,7 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
       },
       onFinalize: () => {
         "worklet";
+        if (panActive) panActive.value = false;
         // Safety net for an *activated* drag that was interrupted/cancelled before
         // a clean `onDeactivate` (e.g. the OS stole the gesture) — it would otherwise
         // leave the panel parked wherever the finger left it. Re-settle to the
@@ -213,14 +215,14 @@ export function useSheetDrag(params: SheetDragParams): PanGesture {
     settled,
     sheetOwns,
     handoff,
-    coordinated,
+    scrollers,
     scrollOffsetY,
+    panActive,
     offsets,
     closed,
     dismissible,
     enabled,
     config,
-    scrollGesture,
     onStart,
     onSettle,
     onScrollRelease,

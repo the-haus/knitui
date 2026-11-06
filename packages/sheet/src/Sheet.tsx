@@ -1,49 +1,13 @@
 import * as React from "react";
-import { useNativeGesture } from "react-native-gesture-handler";
-import { useSharedValue } from "react-native-reanimated";
 
-import {
-  KeyboardAvoidingView,
-  OverlayPortal,
-  UnstyledButton,
-  useOverlayHost,
-} from "@knitui/components";
-import {
-  type GetProps,
-  isWeb,
-  type LayoutChangeEvent,
-  Theme,
-  useThemeName,
-  withStaticProperties,
-} from "@knitui/core";
-import { useFocusTrap, useUncontrolled } from "@knitui/hooks";
+import { withStaticProperties } from "@knitui/core";
+import { useUncontrolled } from "@knitui/hooks";
 
-import {
-  SheetFooter,
-  type SheetFrame,
-  SheetHandleBar,
-  SheetHandleRow,
-  SheetHeader,
-  SheetSlots,
-  SheetStylesProvider,
-  useSheetSlots,
-} from "./chrome";
-import type { SettleResult } from "./engine";
-import { useSharedValueListener } from "./hooks/useSharedValueListener";
-import { useStableRecord } from "./hooks/useStableRecord";
-import { useSheetDrag } from "./input/useSheetDrag";
-import { useSheetMotion } from "./motion/useSheetMotion";
+import { SheetSlots } from "./chrome";
+import { SheetPanel, type SheetPanelHandle } from "./SheetPanel";
 import type { SheetProps, SheetRef } from "./types";
-import { SheetScrollContext, type SheetScrollContextValue } from "./view/scrollContext";
+import { SheetFlatList } from "./view/FlatList";
 import { SheetScrollView } from "./view/ScrollView";
-import { Surface } from "./view/Surface";
-
-const DEFAULT_SNAP_POINTS = [80, 10];
-
-/** The handle's accessible name, per platform (hoisted: one object). */
-const HANDLE_A11Y = isWeb
-  ? { "aria-label": "Sheet drag handle" }
-  : { accessibilityLabel: "Sheet drag handle" };
 
 function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
   const {
@@ -53,31 +17,10 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     position: positionProp,
     defaultPosition,
     onPositionChange,
-    snapPoints = DEFAULT_SNAP_POINTS,
-    dismissOnOverlayPress = true,
-    dismissOnSnapToBottom = false,
-    closeOnEscape = true,
-    disableDrag = false,
-    modal = true,
-    withOverlay = true,
-    withHandle = true,
-    animationConfig,
-    moveOnKeyboardChange = false,
-    disableRemoveScroll = false,
-    trapFocus = true,
     returnFocus = true,
-    zIndex = 200,
-    size,
-    overlayProps,
-    styles,
-    style,
-    testID,
     children,
-    "aria-label": ariaLabel,
-    "aria-labelledby": ariaLabelledBy,
+    title,
   } = props;
-
-  /* ── Controlled / uncontrolled state ──────────────────────────────────── */
 
   const [isOpen, setOpen] = useUncontrolled<boolean>({
     value: opened,
@@ -94,288 +37,35 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     onChange: onPositionChange,
   });
 
-  // The state setters get a fresh identity each render; read them through refs so
-  // the motion controller, gesture, and effects stay stable.
+  // The setters get a fresh identity each render; refs keep every consumer stable.
   const setOpenRef = React.useRef(setOpen);
   setOpenRef.current = setOpen;
   const setPositionRef = React.useRef(setPosition);
   setPositionRef.current = setPosition;
-  const positionRef = React.useRef(position);
-  positionRef.current = position;
-  // The snap index a fresh open should land on, and whether `position` is
-  // controlled (then the parent owns it — we never reset it ourselves).
-  const defaultIndexRef = React.useRef(defaultPosition ?? 0);
-  defaultIndexRef.current = defaultPosition ?? 0;
-  const positionControlledRef = React.useRef(positionControlled);
-  positionControlledRef.current = positionControlled;
 
   const requestClose = React.useCallback(() => setOpenRef.current(false), []);
   const commitPosition = React.useCallback((i: number) => setPositionRef.current(i), []);
 
-  /* ── Mount / close lifecycle state ────────────────────────────────────── */
-
-  // Mount on open; the close animation plays out before the unmount.
+  // The panel mounts on open and stays through the close animation. Everything costly
+  // lives in it, so a closed sheet is these few hooks, and a list can hold one per row.
   const [mounted, setMounted] = React.useState(isOpen);
-  const didOpenRef = React.useRef(false);
-  const wasOpenRef = React.useRef(isOpen);
-  // True between a close request and the panel reaching the closed position.
-  // Gates `finishClose` so a stray offset write (re-open, a drag, an interrupted
-  // spring) can never tear down a sheet that is meant to stay up.
-  const closingRef = React.useRef(false);
-  // UI-thread twin of `closingRef`. The offset watcher below has to run on the UI
-  // thread (see `useSharedValueListener`), and a worklet cannot read a JS ref — so
-  // the flag is mirrored into a shared value and the watcher's gate is evaluated
-  // where the offset lives, instead of waking the JS thread every frame.
-  const closingSV = useSharedValue(false);
-  const setClosing = React.useCallback(
-    (value: boolean) => {
-      closingRef.current = value;
-      closingSV.value = value;
-    },
-    [closingSV],
-  );
-  const isOpenRef = React.useRef(isOpen);
-  isOpenRef.current = isOpen;
+  if (isOpen && !mounted) setMounted(true);
+  const onClosed = React.useCallback(() => setMounted(false), []);
 
-  // Tear the panel down once it has finished closing. Idempotent and guarded by
-  // `closingRef`, so it can be driven from BOTH the close spring's settle
-  // callback and the offset listener below — whichever fires first wins, and a
-  // dropped spring callback (interrupted animation) can no longer strand the
-  // panel on screen.
-  const finishClose = React.useCallback(() => {
-    if (!closingRef.current) return;
-    setClosing(false);
-    setMounted(false);
-  }, [setClosing]);
+  // Held through the close, as `Drawer` does: a body built from data the close just
+  // cleared would otherwise go blank on its way down.
+  const heldRef = React.useRef({ children, title });
+  if (isOpen) heldRef.current = { children, title };
+  const held = heldRef.current;
 
-  // Stabilise the snap-points array by content so geometry isn't recomputed on
-  // every render when the prop is an inline literal.
-  const snapKey = snapPoints.join(",");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const stableSnapPoints = React.useMemo(() => snapPoints, [snapKey]);
-
-  // Same treatment for the spring config, for a sharper reason: `animationConfig`
-  // is a flat record of primitives that every call site writes inline, and it is a
-  // dependency of `useSheetDrag`'s pan-config `useMemo`. A fresh identity there
-  // rebuilds the `usePanGesture` config on every render, which re-clones it and
-  // re-pushes it to the native handler (and, under RNGH 2, tore the handler down
-  // and re-attached it — mid-drag, a dropped gesture).
-  // Collapsing it to a stable reference while its values are unchanged fixes both
-  // that and the redundant `useSheetMotion` recomputation below.
-  const stableAnimationConfig = useStableRecord(animationConfig);
-
-  /* ── Measurement ──────────────────────────────────────────────────────── */
-
-  const [maxHeight, setMaxHeight] = React.useState(0);
-  const onLayout = React.useCallback((e: LayoutChangeEvent) => {
-    const h = Math.round(e.nativeEvent.layout.height);
-    if (h > 0) setMaxHeight((prev) => (prev === h ? prev : h));
-  }, []);
-
-  // Web measurement fallback: Tamagui's `onLayout` on a `position:fixed` portal
-  // layer reports 0 on web (it fires before the fixed box resolves and doesn't
-  // re-fire), so the full-cover layer's height is the viewport height. Native
-  // `onLayout` above is reliable and stays the source of truth there.
-  React.useEffect(() => {
-    if (!isWeb || typeof window === "undefined") return undefined;
-    const update = () => {
-      const h = Math.round(window.innerHeight);
-      if (h > 0) setMaxHeight((prev) => (prev === h ? prev : h));
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  /* ── Motion + gesture ─────────────────────────────────────────────────── */
-
-  const motion = useSheetMotion({
-    snapPoints: stableSnapPoints,
-    maxHeight,
-    animationConfig: stableAnimationConfig,
-    dismissOnSnapToBottom,
-    setPosition: commitPosition,
-    requestClose,
-  });
-  const motionRef = React.useRef(motion);
-  motionRef.current = motion;
-
-  // Scroll↔drag handoff plumbing (native): a nested `Sheet.ScrollView` attaches
-  // this `Native` gesture to its scroller (so it recognises simultaneously with
-  // the Pan) and reports its live content offset back through `scrollOffsetY`.
-  // Both are stable; on web the browser handles nested scroll, so the Pan is left
-  // unaware of them (no coordination, current behaviour preserved).
-  const scrollOffsetY = useSharedValue(0);
-
-  // RNGH 3 hook: called unconditionally (stable handler tag for the component's
-  // life); on web it is simply never attached to a scroller.
-  const scrollGesture = useNativeGesture();
-  const dragEnabled = !disableDrag && maxHeight > 0 && isOpen;
-
-  const draggingRef = React.useRef(false);
-  // Handle-press guard. On the web a mouse drag that starts on the handle ends
-  // with a `click` on it, which would cycle the detent once more after the drag
-  // settled. Raised when a drag activates; lowered one task after it ends, so
-  // the trailing `click` of that same pointer cycle (dispatched right after the
-  // pointerup, before any timer) is still swallowed, while a later tap or a
-  // keyboard / assistive-tech activation of the handle cycles as usual.
-  const suppressHandlePressRef = React.useRef(false);
-  const releaseTimerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const releaseHandlePress = React.useCallback(() => {
-    clearTimeout(releaseTimerRef.current);
-    releaseTimerRef.current = setTimeout(() => {
-      suppressHandlePressRef.current = false;
-    }, 0);
-  }, []);
-  React.useEffect(() => () => clearTimeout(releaseTimerRef.current), []);
-  const onDragStart = React.useCallback(() => {
-    draggingRef.current = true;
-    clearTimeout(releaseTimerRef.current);
-    suppressHandlePressRef.current = true;
-  }, []);
-  // A scroll-owned drag released without settling the panel — just clear the pause.
-  const onScrollRelease = React.useCallback(() => {
-    draggingRef.current = false;
-    releaseHandlePress();
-  }, [releaseHandlePress]);
-  const onDragSettle = React.useCallback(
-    (result: SettleResult) => {
-      draggingRef.current = false;
-      releaseHandlePress();
-      // Closed out from under the drag (closed externally mid-drag, or the OS
-      // cancelled the gesture so `onFinalize` re-settled to a visible snap):
-      // never re-park on screen — drive the panel home to the closed position.
-      if (!isOpenRef.current) {
-        setClosing(true);
-        motionRef.current.animateClose(finishClose);
-        return;
-      }
-      motionRef.current.handleSettle(result);
-    },
-    [finishClose, setClosing, releaseHandlePress],
-  );
-
-  const gesture = useSheetDrag({
-    offset: motion.offset,
-    offsets: motion.offsets,
-    closed: motion.closed,
-    dismissible: motion.dismissible,
-    // Drop the gesture the moment the sheet is no longer open, so a stray touch
-    // during the close animation can't `cancelAnimation` the close spring and
-    // re-park the panel at a visible snap (the panel would then never unmount).
-    enabled: dragEnabled,
-    spring: stableAnimationConfig,
-    // Coordinate with a nested `Sheet.ScrollView` on native only; on web the
-    // browser owns nested scrolling, so leave the Pan unaware (unchanged path).
-    scrollGesture: isWeb ? undefined : scrollGesture,
-    scrollOffsetY: isWeb ? undefined : scrollOffsetY,
-    onStart: onDragStart,
-    onSettle: onDragSettle,
-    onScrollRelease,
-  });
-
-  // The channel a nested `Sheet.ScrollView` reads to cooperate with the Pan.
-  const scrollContext = React.useMemo<SheetScrollContextValue>(
-    () => ({
-      scrollGesture,
-      scrollOffsetY,
-      sheetOffset: motion.offset,
-      expandedOffset: motion.offsets.length > 0 ? motion.offsets[0] : 0,
-      handoffEnabled: dragEnabled,
-    }),
-    [scrollGesture, scrollOffsetY, motion.offset, motion.offsets, dragEnabled],
-  );
-
-  /* ── Open / close lifecycle ───────────────────────────────────────────── */
-
-  // Mount on open; play the slide-out then unmount on close.
-  React.useEffect(() => {
-    const was = wasOpenRef.current;
-    if (was === isOpen) return;
-    wasOpenRef.current = isOpen;
-    if (isOpen) {
-      setClosing(false);
-      setMounted(true);
-    } else {
-      setClosing(true);
-      didOpenRef.current = false;
-      motionRef.current.animateClose(finishClose);
-      // Uncontrolled: forget the snap the user dragged/cycled to so the NEXT open
-      // starts at the initial snap, not wherever it was left (e.g. the lowest).
-      // Done on the close *request* (not on animation completion) so it is
-      // deterministic. Controlled position is the parent's to manage.
-      if (!positionControlledRef.current && positionRef.current !== defaultIndexRef.current) {
-        setPositionRef.current(defaultIndexRef.current);
-      }
-    }
-  }, [isOpen, finishClose, setClosing]);
-
-  // Robust unmount: the close spring's `finished` callback is silently dropped
-  // when the animation is interrupted, which would otherwise strand the panel
-  // on-screen. So also tear down the instant the panel reaches the closed
-  // (off-screen) position — gated by `closingRef`, since opening seeds the
-  // offset at `closed` too.
-  //
-  // The gate is passed as a FILTER, evaluated where the offset lives (the UI thread
-  // on native): the panel writes its offset every frame while dragging or springing,
-  // and delivering all of those to JS woke the JS thread 60–120×/s for a condition
-  // that is false except at the very end of a close. Only the interesting value
-  // crosses the bridge now.
-  const closedTarget = motion.closed - 1;
-  const isFullyClosed = React.useCallback(
-    (v: number) => {
-      "worklet";
-      return closingSV.value && v >= closedTarget;
-    },
-    [closingSV, closedTarget],
-  );
-  useSharedValueListener(motion.offset, finishClose, isFullyClosed);
-
-  // Run the open animation once mounted AND measured; re-settle to the current
-  // snap when the geometry changes (rotation / resize) while already open.
-  React.useEffect(() => {
-    if (!mounted || !isOpen || maxHeight <= 0) return;
-    if (!didOpenRef.current) {
-      didOpenRef.current = true;
-      motionRef.current.openFromClosed(positionRef.current);
-    } else if (!draggingRef.current) {
-      motionRef.current.glideTo(positionRef.current);
-    }
-  }, [mounted, isOpen, maxHeight]);
-
-  // External `position` change while open → glide to it (no state write-back).
-  React.useEffect(() => {
-    if (didOpenRef.current && !draggingRef.current) {
-      motionRef.current.glideTo(position);
-    }
-  }, [position]);
-
-  /* ── Web side effects: Escape + body scroll-lock ──────────────────────── */
-
-  React.useEffect(() => {
-    if (!mounted || typeof document === "undefined") return undefined;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (closeOnEscape && e.key === "Escape" && !e.defaultPrevented) setOpenRef.current(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    const prevOverflow = document.body.style.overflow;
-    if (!disableRemoveScroll) document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      if (!disableRemoveScroll) document.body.style.overflow = prevOverflow;
-    };
-  }, [mounted, closeOnEscape, disableRemoveScroll]);
-
-  /* ── Web return-focus ─────────────────────────────────────────────────── */
-
-  // Capture the focused element on the opening edge DURING render — the focus
-  // trap (an effect) moves focus into the panel before our effects run.
-  const wasOpenForFocusRef = React.useRef(false);
+  // Captured on the opening edge DURING render: the focus trap, an effect, moves focus
+  // into the panel before any effect here could read it.
+  const wasOpenRef = React.useRef(false);
   const prevFocusRef = React.useRef<HTMLElement | null>(null);
-  if (isOpen && !wasOpenForFocusRef.current && typeof document !== "undefined") {
+  if (isOpen && !wasOpenRef.current && typeof document !== "undefined") {
     prevFocusRef.current = returnFocus ? (document.activeElement as HTMLElement | null) : null;
   }
-  wasOpenForFocusRef.current = isOpen;
+  wasOpenRef.current = isOpen;
   React.useEffect(() => {
     if (!isOpen) return undefined;
     return () => {
@@ -383,142 +73,37 @@ function SheetInner(props: SheetProps, ref: React.Ref<SheetRef>) {
     };
   }, [isOpen, returnFocus]);
 
-  const trapRef = useFocusTrap(mounted && trapFocus);
-  const themeName = useThemeName();
-  // The nearest scoped `OverlayHost` (a native modal screen), else "root".
-  const overlayHost = useOverlayHost();
-
-  /* ── Imperative handle ────────────────────────────────────────────────── */
-
+  const panelRef = React.useRef<SheetPanelHandle>(null);
   React.useImperativeHandle(
     ref,
     () => ({
       open: () => setOpenRef.current(true),
       close: () => setOpenRef.current(false),
-      snapTo: (i: number) => motionRef.current.snapTo(i),
+      snapTo: (i: number) => {
+        if (panelRef.current) panelRef.current.snapTo(i);
+        else setPositionRef.current(i);
+      },
     }),
     [],
   );
 
-  /* ── Slots + chrome ───────────────────────────────────────────────────── */
-
-  const s = useSheetSlots(styles);
-  const slots = SheetSlots.collect(children, { displayName: "Sheet" });
-
-  const frameContent = slots.Frame ? slots.Frame.children : slots.default;
-  const keyboardAware = moveOnKeyboardChange ? (
-    <KeyboardAvoidingView>{frameContent}</KeyboardAvoidingView>
-  ) : (
-    frameContent
-  );
-  // Publish the scroll-coordination channel so a nested `Sheet.ScrollView` can
-  // hand its drag off to (and back from) the sheet Pan.
-  const content = (
-    <SheetScrollContext.Provider value={scrollContext}>{keyboardAware}</SheetScrollContext.Provider>
-  );
-
-  // Web a11y rides on `role`/`aria-*`; native on `accessibilityViewIsModal` /
-  // `accessibilityLabel`. A modal sheet is a dialog; a non-modal one is a
-  // persistent panel beside the page (WAI-ARIA: a named `region` landmark, never
-  // a dialog), and an unnamed region is not a landmark, so it then has no role.
-  // None of this is in `SheetFrame`'s style-prop types, so cast the bag once.
-  const named = ariaLabel !== undefined || ariaLabelledBy !== undefined;
-  const a11y = (
-    isWeb
-      ? {
-          ...(modal ? { role: "dialog", "aria-modal": true } : named ? { role: "region" } : null),
-          ...(ariaLabel !== undefined ? { "aria-label": ariaLabel } : null),
-          ...(ariaLabelledBy !== undefined ? { "aria-labelledby": ariaLabelledBy } : null),
-        }
-      : {
-          accessibilityViewIsModal: modal,
-          ...(ariaLabel !== undefined ? { accessibilityLabel: ariaLabel } : null),
-        }
-  ) as GetProps<typeof SheetFrame>;
-  const rootProps: GetProps<typeof SheetFrame> = {
-    size,
-    // `shadow` is Box's inherited elevation variant (cross-platform boxShadow,
-    // theme-aware — repo memory `box-shadow-polyfill`); lifts the panel off the
-    // page. A default here so `styles.root` / inline can still override it.
-    shadow: "lg",
-    ...a11y,
-    ...s.get("root"),
-    ...slots.Frame?.props,
-    style,
-  };
-
-  const onHandlePress = React.useCallback(() => {
-    // The click that ends a drag begun on the handle is not a press.
-    if (suppressHandlePressRef.current) return;
-    motionRef.current.cycle(positionRef.current);
-  }, []);
-  const showHandle = slots.Handle !== undefined || withHandle;
-  const handleNode = showHandle ? (
-    <UnstyledButton onPress={onHandlePress} {...HANDLE_A11Y}>
-      <SheetHandleRow>
-        <SheetHandleBar {...s.get("handle")} {...slots.Handle?.props} />
-      </SheetHandleRow>
-    </UnstyledButton>
-  ) : null;
-
-  // A fixed header, rendered inside the panel below the handle and above the
-  // (scrollable) content — a `Sheet.ScrollView` with `flex: 1` fills the space
-  // beneath it. Rendered only when a `Sheet.Header` marker is present.
-  const headerNode =
-    slots.Header !== undefined ? (
-      <SheetHeader {...s.get("header")} {...slots.Header.props}>
-        {slots.Header.children}
-      </SheetHeader>
-    ) : null;
-
-  // A fixed footer, pinned below the (scrollable) content — a good home for an
-  // action bar. Rendered only when a `Sheet.Footer` marker is present.
-  const footerNode =
-    slots.Footer !== undefined ? (
-      <SheetFooter {...s.get("footer")} {...slots.Footer.props}>
-        {slots.Footer.children}
-      </SheetFooter>
-    ) : null;
-
-  const onOverlayPress = dismissOnOverlayPress ? requestClose : undefined;
-  const overlaySlot = s.get("overlay");
-  const resolvedOverlayProps = React.useMemo(
-    () => ({ ...overlaySlot, ...overlayProps }),
-    [overlaySlot, overlayProps],
-  );
-
-  /* ── Render ───────────────────────────────────────────────────────────── */
-
   if (!mounted) return null;
 
-  const layer = (
-    <Theme name={themeName}>
-      <SheetStylesProvider value={styles}>
-        <Surface
-          ref={trapRef}
-          testID={testID}
-          offset={motion.offset}
-          fadeStart={motion.fadeStart}
-          closed={motion.closed}
-          overlayMaxOpacity={1}
-          gesture={gesture}
-          zIndex={zIndex}
-          withOverlay={withOverlay}
-          overlayProps={resolvedOverlayProps}
-          onOverlayPress={onOverlayPress}
-          rootProps={rootProps}
-          handle={handleNode}
-          header={headerNode}
-          footer={footerNode}
-          onLayout={onLayout}
-        >
-          {content}
-        </Surface>
-      </SheetStylesProvider>
-    </Theme>
+  return (
+    <SheetPanel
+      {...props}
+      ref={panelRef}
+      title={held.title}
+      isOpen={isOpen}
+      position={position}
+      positionControlled={positionControlled}
+      commitPosition={commitPosition}
+      requestClose={requestClose}
+      onClosed={onClosed}
+    >
+      {held.children}
+    </SheetPanel>
   );
-
-  return modal ? <OverlayPortal hostName={overlayHost}>{layer}</OverlayPortal> : layer;
 }
 
 const SheetComponent = React.forwardRef(SheetInner);
@@ -527,11 +112,12 @@ SheetComponent.displayName = "Sheet";
 /**
  * Cross-platform bottom sheet. Marker slots (`Sheet.Overlay` / `.Handle` /
  * `.Header` / `.Footer` / `.Frame`) are the composition API; `Sheet.ScrollView`
- * is the scrollable content region. `Sheet.Header` / `Sheet.Footer` are fixed
- * regions pinned above / below the content, so a `Sheet.ScrollView` scrolls
- * between them. The styled parts are the targets of the `styles` map.
+ * and `Sheet.FlatList` are the scrollable content regions. `Sheet.Header` and
+ * `Sheet.Footer` are fixed regions pinned above and below the content. The styled
+ * parts are the targets of the `styles` map.
  */
 export const Sheet = withStaticProperties(SheetComponent, {
   ...SheetSlots.markers, // Overlay, Handle, Header, Footer, Frame (marker slots)
   ScrollView: SheetScrollView,
+  FlatList: SheetFlatList,
 });

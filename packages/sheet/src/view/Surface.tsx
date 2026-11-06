@@ -4,13 +4,23 @@ import type { SharedValue } from "react-native-reanimated";
 
 import type { GetProps, LayoutChangeEvent, TamaguiElement } from "@knitui/core";
 
-import { SheetFill, SheetFrame, SheetLayer } from "../chrome";
-import { AnimatedFrameHost, AnimatedOverlay } from "./animated";
+import { SheetFill, SheetFrame, SheetLayer, SheetRest } from "../chrome";
+import { AnimatedFooterHost, AnimatedFrameHost, AnimatedOverlay } from "./animated";
 import type { AnimatedOverlayProps } from "./animated.types";
 
 export interface SurfaceProps {
   /** Panel translateY (px). */
   offset: SharedValue<number>;
+  /** Live keyboard height (px). */
+  keyboard: SharedValue<number>;
+  /** Viewport height (px). */
+  viewportHeight: number;
+  /** How far the layer ends above the bottom of the window (px). */
+  bottomGap: number;
+  /** Gap kept between the panel and the top of the viewport (px). */
+  topGap: number;
+  /** Cap the panel's width and centre it. */
+  maxWidth?: number;
   /** Scrim fade geometry. */
   fadeStart: number;
   closed: number;
@@ -33,6 +43,12 @@ export interface SurfaceProps {
   header?: React.ReactNode;
   /** The fixed footer node, pinned below the content (or null). */
   footer?: React.ReactNode;
+  /** Measured footer height (px). */
+  footerHeight: number;
+  /** How far the footer may slide down behind a keyboard (px). */
+  footerKeyboardSlide: number;
+  /** Props on the box that ends at the resting snap. */
+  restProps?: GetProps<typeof SheetRest>;
   /** Panel content. */
   children?: React.ReactNode;
   /** Measures the full-cover layer. */
@@ -50,6 +66,11 @@ export interface SurfaceProps {
 export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function Surface(props, ref) {
   const {
     offset,
+    keyboard,
+    viewportHeight,
+    bottomGap,
+    topGap,
+    maxWidth,
     fadeStart,
     closed,
     overlayMaxOpacity,
@@ -62,25 +83,55 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
     handle,
     header,
     footer,
+    footerHeight,
+    footerKeyboardSlide,
+    restProps,
     children,
     onLayout,
     testID,
   } = props;
 
+  const geometry = { offset, keyboard, viewportHeight, bottomGap, topGap };
+  const panel = (
+    <AnimatedFrameHost {...geometry} maxWidth={maxWidth}>
+      <SheetFrame {...rootProps}>
+        <SheetRest {...restProps}>
+          {handle}
+          {header}
+          {children}
+        </SheetRest>
+        {footer ? (
+          <AnimatedFooterHost
+            {...geometry}
+            footerHeight={footerHeight}
+            keyboardSlide={footerKeyboardSlide}
+          >
+            {footer}
+          </AnimatedFooterHost>
+        ) : null}
+      </SheetFrame>
+    </AnimatedFrameHost>
+  );
+
   return (
     <SheetLayer ref={ref} testID={testID} onLayout={onLayout} zIndex={zIndex}>
       {/*
-       * One gesture spans the WHOLE layer — scrim and panel — so the sheet can be
-       * dragged from the backdrop, not just the panel. The capture container is
-       * `box-none`: when the scrim is present it fills the layer (pointer-events
-       * auto) and the whole area is draggable; without a scrim only the panel is
-       * solid, so empty regions fall through to the page behind. A stationary tap
-       * never crosses the pan's activation threshold, so the scrim's own
-       * `onPress` (tap-to-dismiss) still fires.
+       * With a scrim the gesture spans the WHOLE layer, so the sheet can be
+       * dragged from the backdrop as well. A stationary tap never crosses the
+       * pan's activation threshold, so the scrim's `onPress` (tap-to-dismiss)
+       * still fires.
+       *
+       * Without one the gesture goes on the PANEL alone. `box-none` on the
+       * capture container does NOT keep the empty regions free on Android: RNGH
+       * records a detector's handlers even when no child took the touch, bounded
+       * by its single child, so a detector around the full-cover fill took every
+       * touch on the page behind, and a persistent sheet ate the pans and
+       * pinches of a map under it. Around the translated panel those bounds
+       * follow the panel.
        */}
-      <GestureDetector gesture={gesture}>
-        <SheetFill pointerEvents="box-none">
-          {withOverlay ? (
+      {withOverlay ? (
+        <GestureDetector gesture={gesture}>
+          <SheetFill pointerEvents="box-none">
             <AnimatedOverlay
               offset={offset}
               fadeStart={fadeStart}
@@ -89,18 +140,14 @@ export const Surface = React.forwardRef<TamaguiElement, SurfaceProps>(function S
               onPress={onOverlayPress}
               overlayProps={overlayProps}
             />
-          ) : null}
-
-          <AnimatedFrameHost offset={offset}>
-            <SheetFrame {...rootProps}>
-              {handle}
-              {header}
-              {children}
-              {footer}
-            </SheetFrame>
-          </AnimatedFrameHost>
+            {panel}
+          </SheetFill>
+        </GestureDetector>
+      ) : (
+        <SheetFill pointerEvents="box-none">
+          <GestureDetector gesture={gesture}>{panel}</GestureDetector>
         </SheetFill>
-      </GestureDetector>
+      )}
     </SheetLayer>
   );
 });

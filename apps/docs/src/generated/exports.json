@@ -321,19 +321,21 @@
         "react-native",
         "react-native-gesture-handler",
         "react-native-reanimated",
+        "react-native-safe-area-context",
         "react-native-worklets"
       ],
       "optionalPeers": [
         "react-native",
         "react-native-gesture-handler",
         "react-native-reanimated",
+        "react-native-safe-area-context",
         "react-native-worklets"
       ],
       "exportPaths": [
         ".",
         "./package.json"
       ],
-      "exportCount": 14,
+      "exportCount": 20,
       "hasStories": true
     },
     {
@@ -5586,6 +5588,12 @@
       "packageSlug": "carousel"
     },
     {
+      "name": "renderSheetScrollComponent",
+      "kind": "function",
+      "package": "@knitui/sheet",
+      "packageSlug": "sheet"
+    },
+    {
       "name": "RenderTreeNodePayload",
       "kind": "type",
       "package": "@knitui/components",
@@ -6001,6 +6009,18 @@
       "packageSlug": "sheet"
     },
     {
+      "name": "SheetBody",
+      "kind": "component",
+      "package": "@knitui/sheet",
+      "packageSlug": "sheet"
+    },
+    {
+      "name": "SheetFlatList",
+      "kind": "component",
+      "package": "@knitui/sheet",
+      "packageSlug": "sheet"
+    },
+    {
       "name": "SheetFooter",
       "kind": "component",
       "package": "@knitui/sheet",
@@ -6043,6 +6063,12 @@
       "packageSlug": "sheet"
     },
     {
+      "name": "SheetRest",
+      "kind": "component",
+      "package": "@knitui/sheet",
+      "packageSlug": "sheet"
+    },
+    {
       "name": "SheetScrollView",
       "kind": "component",
       "package": "@knitui/sheet",
@@ -6063,6 +6089,18 @@
     {
       "name": "SheetStyles",
       "kind": "type",
+      "package": "@knitui/sheet",
+      "packageSlug": "sheet"
+    },
+    {
+      "name": "SheetTitle",
+      "kind": "component",
+      "package": "@knitui/sheet",
+      "packageSlug": "sheet"
+    },
+    {
+      "name": "SheetTitleRow",
+      "kind": "component",
       "package": "@knitui/sheet",
       "packageSlug": "sheet"
     },
