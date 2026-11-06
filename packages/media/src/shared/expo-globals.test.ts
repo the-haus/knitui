@@ -74,4 +74,12 @@ describe("expo-globals side effect survives bundling", () => {
     }
     expect(offenders).toEqual([]);
   });
+
+  it("loads without throwing where the polyfill is missing", () => {
+    jest.isolateModules(() => {
+      jest.doMock("expo-modules-core", () => ({}));
+      expect(() => require("./expo-globals")).not.toThrow();
+    });
+    jest.dontMock("expo-modules-core");
+  });
 });
