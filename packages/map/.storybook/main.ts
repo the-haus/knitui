@@ -1,11 +1,14 @@
 import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { StorybookConfig } from "@storybook/react-vite";
 
 // maplibre-gl v6 needs its worker served as a static file (see src/worker.ts);
 // `preview.tsx` points the map at /maplibre. Served straight out of the
 // installed package, so it always matches the maplibre version in use.
+const svgSoundModuleStub = fileURLToPath(new URL("./stubs/svg-sound-module.js", import.meta.url));
+
 const MAPLIBRE_DIST = path.join(
   path.dirname(createRequire(import.meta.url).resolve("maplibre-gl/package.json")),
   "dist",
@@ -22,7 +25,8 @@ const MAPLIBRE_DIST = path.join(
  * web Storybook wires up the same bits the components Storybook does:
  *   1. tell Tamagui it's targeting web (`TAMAGUI_TARGET`),
  *   2. resolve React Native platform extensions, preferring `.web.*`, and
- *   3. alias `react-native` → `react-native-web`.
+ *   3. alias `react-native` → `react-native-web`, and
+ *   4. stub react-native-svg's native sound module (see ./stubs/svg-sound-module.js).
  * None of this touches the map package's runtime code — it's dev-only.
  */
 const RN_WEB_EXTENSIONS = [
@@ -61,7 +65,9 @@ const config: StorybookConfig = {
       },
       resolve: {
         extensions: RN_WEB_EXTENSIONS,
+        // Key order matters: the specific stub precedes the broad prefix alias.
         alias: {
+          "../fabric/NativeSvgSoundModule": svgSoundModuleStub,
           "react-native": "react-native-web",
         },
       },

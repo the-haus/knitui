@@ -40,7 +40,7 @@ patchedDependencies:
     hash: 66a8e436552e17185dfdc7d1be34491b2c38e1e0def131456e0c258e64d5540e
     path: patches/expo-audio@58.0.9.patch
   expo-modules-core@58.0.22:
-    hash: 2cd94ad653676a67c6d2f6bd09b54ac5e6fdc9e8ee5dd56873ac53677eeb58a6
+    hash: ae4eb24a895dbc074f54f4371fe6843b8e70e5bae120bf31ac401b8266925209
     path: patches/expo-modules-core@58.0.22.patch
   react-native-teleport@1.2.2:
     hash: cc749404487d1ad8ec129d24a3b7498bd5389cb13857f223925552410186a9bc
@@ -1206,7 +1206,7 @@ importers:
         version: 58.0.9(patch_hash=66a8e436552e17185dfdc7d1be34491b2c38e1e0def131456e0c258e64d5540e)(expo-asset@58.0.16(expo@58.0.14)(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@7.0.2))(expo@58.0.14)(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       expo-modules-core:
         specifier: '*'
-        version: 58.0.22(patch_hash=2cd94ad653676a67c6d2f6bd09b54ac5e6fdc9e8ee5dd56873ac53677eeb58a6)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 58.0.22(patch_hash=ae4eb24a895dbc074f54f4371fe6843b8e70e5bae120bf31ac401b8266925209)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       expo-video:
         specifier: ~58.0.11
         version: 58.0.11(expo@58.0.14)(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -17342,7 +17342,7 @@ snapshots:
       - supports-color
       - typescript
 
-  expo-modules-core@58.0.22(patch_hash=2cd94ad653676a67c6d2f6bd09b54ac5e6fdc9e8ee5dd56873ac53677eeb58a6)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  expo-modules-core@58.0.22(patch_hash=ae4eb24a895dbc074f54f4371fe6843b8e70e5bae120bf31ac401b8266925209)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       expo-modules-jsi: 58.0.15(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
       expo-modules-macros: 0.20.0
@@ -17443,7 +17443,7 @@ snapshots:
       expo-font: 58.0.8(expo@58.0.14)(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       expo-keep-awake: 58.0.3(expo@58.0.14)(react@19.3.0)
       expo-modules-autolinking: 58.0.13(typescript@6.0.3)
-      expo-modules-core: 58.0.22(patch_hash=2cd94ad653676a67c6d2f6bd09b54ac5e6fdc9e8ee5dd56873ac53677eeb58a6)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      expo-modules-core: 58.0.22(patch_hash=ae4eb24a895dbc074f54f4371fe6843b8e70e5bae120bf31ac401b8266925209)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       pretty-format: 29.7.0
       react: 19.3.0
       react-native: 0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
@@ -17486,7 +17486,7 @@ snapshots:
       expo-font: 58.0.8(expo@58.0.14)(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       expo-keep-awake: 58.0.3(expo@58.0.14)(react@19.3.0)
       expo-modules-autolinking: 58.0.13(typescript@7.0.2)
-      expo-modules-core: 58.0.22(patch_hash=2cd94ad653676a67c6d2f6bd09b54ac5e6fdc9e8ee5dd56873ac53677eeb58a6)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      expo-modules-core: 58.0.22(patch_hash=ae4eb24a895dbc074f54f4371fe6843b8e70e5bae120bf31ac401b8266925209)(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       pretty-format: 29.7.0
       react: 19.3.0
       react-native: 0.88.0(patch_hash=102d0c5fb72d105a2bb8ccb7e8728da9eb8999cbd2fbac26472f40a0638a11f0)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)

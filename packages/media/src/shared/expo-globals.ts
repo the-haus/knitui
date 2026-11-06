@@ -15,7 +15,12 @@
  * which loads the web polyfill that installs the global. Both of those are on
  * expo-modules-core's `sideEffects` list. Native gets the JSI global from the runtime
  * instead (see `expo-globals.native.ts`).
+ *
+ * The check below is what keeps that import: rolldown (Vite) treats `void SharedObject`
+ * as pure and drops it, so the value has to reach a branch with a visible effect.
  */
 import { SharedObject } from "expo-modules-core";
 
-void SharedObject;
+if (!SharedObject) {
+  throw new Error("expo-modules-core did not install globalThis.expo");
+}
