@@ -1,5 +1,11 @@
 # @knitui/media
 
+## 1.1.4
+
+### Patch Changes
+
+- 97234c2: Fix a web crash in Vite-based apps, `Cannot read properties of undefined (reading 'SharedObject')`, where the bundler removed the import that installs `globalThis.expo`.
+
 ## 1.1.3
 
 ### Patch Changes
