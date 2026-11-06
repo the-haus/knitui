@@ -1832,6 +1832,15 @@
       "slug": "media",
       "releases": [
         {
+          "version": "1.1.4",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix a web crash in Vite-based apps, `Cannot read properties of undefined (reading 'SharedObject')`, where the bundler removed the import that installs `globalThis.expo`."
+            }
+          ]
+        },
+        {
           "version": "1.1.3",
           "changes": [
             {
@@ -3732,6 +3741,20 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@1.2.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.1.4",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix a web crash in Vite-based apps, `Cannot read properties of undefined (reading 'SharedObject')`, where the bundler removed the import that installs `globalThis.expo`."
             }
           ]
         }
