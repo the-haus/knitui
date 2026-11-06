@@ -6,6 +6,15 @@
       "slug": "core",
       "releases": [
         {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix sizing, layout and styling issues across controls and fields. - `Avatar` keeps a border inside its size, and the new `getAvatarSize()` returns the rendered diameter of each step, so spacers can match it. - `UnstyledButton` removes the browser's button padding and margin, and honours padding and margin props. - `Button`, `ActionIcon` and other controls keep their height under `flex: 1 1 0` in a column. Setting a `height` below the size step now needs a matching `minHeight`. - `TextInput` and other `InputBase` fields apply `flex`, `alignSelf`, `width` and margin props to the outer field, so they size as expected in a row. - `Input` lets caller styles beat its focused and error states. Set a `focus:` clause to keep a focus colour alongside your own `borderColor`. - Icons resolve theme colour names, such as `color=\"blue9\"`, as other components do. - Fix an Android crash when a numeric style key left a component using the reanimated driver, for every frame on the kit's `animations` config."
+            }
+          ]
+        },
+        {
           "version": "1.1.0",
           "changes": [
             {
@@ -138,6 +147,19 @@
       "name": "@knitui/components",
       "slug": "components",
       "releases": [
+        {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix sizing, layout and styling issues across controls and fields. - `Avatar` keeps a border inside its size, and the new `getAvatarSize()` returns the rendered diameter of each step, so spacers can match it. - `UnstyledButton` removes the browser's button padding and margin, and honours padding and margin props. - `Button`, `ActionIcon` and other controls keep their height under `flex: 1 1 0` in a column. Setting a `height` below the size step now needs a matching `minHeight`. - `TextInput` and other `InputBase` fields apply `flex`, `alignSelf`, `width` and margin props to the outer field, so they size as expected in a row. - `Input` lets caller styles beat its focused and error states. Set a `focus:` clause to keep a focus colour alongside your own `borderColor`. - Icons resolve theme colour names, such as `color=\"blue9\"`, as other components do. - Fix an Android crash when a numeric style key left a component using the reanimated driver, for every frame on the kit's `animations` config."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
         {
           "version": "1.2.1",
           "changes": [
@@ -579,6 +601,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2"
+            }
+          ]
+        },
+        {
           "version": "1.2.1",
           "changes": [
             {
@@ -839,6 +870,15 @@
       "slug": "icons",
       "releases": [
         {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix sizing, layout and styling issues across controls and fields. - `Avatar` keeps a border inside its size, and the new `getAvatarSize()` returns the rendered diameter of each step, so spacers can match it. - `UnstyledButton` removes the browser's button padding and margin, and honours padding and margin props. - `Button`, `ActionIcon` and other controls keep their height under `flex: 1 1 0` in a column. Setting a `height` below the size step now needs a matching `minHeight`. - `TextInput` and other `InputBase` fields apply `flex`, `alignSelf`, `width` and margin props to the outer field, so they size as expected in a row. - `Input` lets caller styles beat its focused and error states. Set a `focus:` clause to keep a focus colour alongside your own `borderColor`. - Icons resolve theme colour names, such as `color=\"blue9\"`, as other components do. - Fix an Android crash when a numeric style key left a component using the reanimated driver, for every frame on the kit's `animations` config."
+            }
+          ]
+        },
+        {
           "version": "1.1.0",
           "changes": [
             {
@@ -944,6 +984,15 @@
       "name": "@knitui/dates",
       "slug": "dates",
       "releases": [
+        {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
         {
           "version": "1.2.1",
           "changes": [
@@ -1276,6 +1325,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "1.1.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
         {
           "version": "1.1.2",
           "changes": [
@@ -1774,6 +1832,15 @@
       "slug": "media",
       "releases": [
         {
+          "version": "1.1.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
+        {
           "version": "1.1.2",
           "changes": [
             {
@@ -2150,6 +2217,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2"
+            }
+          ]
+        },
+        {
           "version": "1.2.1",
           "changes": [
             {
@@ -2477,6 +2553,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "1.1.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
         {
           "version": "1.1.2",
           "changes": [
@@ -2860,6 +2945,15 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "1.2.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
+        {
           "version": "1.2.1",
           "changes": [
             {
@@ -3155,6 +3249,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "1.0.4",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2"
+            }
+          ]
+        },
+        {
           "version": "1.0.3",
           "changes": [
             {
@@ -3431,6 +3534,78 @@
   ],
   "timeline": [
     {
+      "version": "1.2.2",
+      "entries": [
+        {
+          "package": "@knitui/core",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix sizing, layout and styling issues across controls and fields. - `Avatar` keeps a border inside its size, and the new `getAvatarSize()` returns the rendered diameter of each step, so spacers can match it. - `UnstyledButton` removes the browser's button padding and margin, and honours padding and margin props. - `Button`, `ActionIcon` and other controls keep their height under `flex: 1 1 0` in a column. Setting a `height` below the size step now needs a matching `minHeight`. - `TextInput` and other `InputBase` fields apply `flex`, `alignSelf`, `width` and margin props to the outer field, so they size as expected in a row. - `Input` lets caller styles beat its focused and error states. Set a `focus:` clause to keep a focus colour alongside your own `borderColor`. - Icons resolve theme colour names, such as `color=\"blue9\"`, as other components do. - Fix an Android crash when a numeric style key left a component using the reanimated driver, for every frame on the kit's `animations` config."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix sizing, layout and styling issues across controls and fields. - `Avatar` keeps a border inside its size, and the new `getAvatarSize()` returns the rendered diameter of each step, so spacers can match it. - `UnstyledButton` removes the browser's button padding and margin, and honours padding and margin props. - `Button`, `ActionIcon` and other controls keep their height under `flex: 1 1 0` in a column. Setting a `height` below the size step now needs a matching `minHeight`. - `TextInput` and other `InputBase` fields apply `flex`, `alignSelf`, `width` and margin props to the outer field, so they size as expected in a row. - `Input` lets caller styles beat its focused and error states. Set a `focus:` clause to keep a focus colour alongside your own `borderColor`. - Icons resolve theme colour names, such as `color=\"blue9\"`, as other components do. - Fix an Android crash when a numeric style key left a component using the reanimated driver, for every frame on the kit's `animations` config."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/icons",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Fix sizing, layout and styling issues across controls and fields. - `Avatar` keeps a border inside its size, and the new `getAvatarSize()` returns the rendered diameter of each step, so spacers can match it. - `UnstyledButton` removes the browser's button padding and margin, and honours padding and margin props. - `Button`, `ActionIcon` and other controls keep their height under `flex: 1 1 0` in a column. Setting a `height` below the size step now needs a matching `minHeight`. - `TextInput` and other `InputBase` fields apply `flex`, `alignSelf`, `width` and margin props to the outer field, so they size as expected in a row. - `Input` lets caller styles beat its focused and error states. Set a `focus:` clause to keep a focus colour alongside your own `borderColor`. - Icons resolve theme colour names, such as `color=\"blue9\"`, as other components do. - Fix an Android crash when a numeric style key left a component using the reanimated driver, for every frame on the kit's `animations` config."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.2.1",
       "entries": [
         {
@@ -3557,6 +3732,38 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@1.2.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.1.3",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/components@1.2.2 - @knitui/core@1.2.2 - @knitui/icons@1.2.2 - @knitui/hooks@1.2.2"
             }
           ]
         }
@@ -3845,6 +4052,20 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[475f89d] - @knitui/core@1.1.0 - @knitui/hooks@1.1.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.0.4",
+      "entries": [
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[b3248ba] - @knitui/core@1.2.2"
             }
           ]
         }

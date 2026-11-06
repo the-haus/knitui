@@ -1,5 +1,12 @@
 # @knitui/plugins
 
+## 1.0.4
+
+### Patch Changes
+
+- Updated dependencies [b3248ba]
+  - @knitui/core@1.2.2
+
 ## 1.0.3
 
 ### Patch Changes
