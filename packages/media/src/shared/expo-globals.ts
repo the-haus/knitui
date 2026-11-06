@@ -16,11 +16,11 @@
  * expo-modules-core's `sideEffects` list. Native gets the JSI global from the runtime
  * instead (see `expo-globals.native.ts`).
  *
- * The check below is what keeps that import: rolldown (Vite) treats `void SharedObject`
- * as pure and drops it, so the value has to reach a branch with a visible effect.
+ * The assignment below is what keeps that import: rolldown (Vite) treats `void SharedObject`
+ * as pure and drops it, so the value has to reach a visible side effect. It must not
+ * throw when the value is missing, because this module also runs where the polyfill
+ * doesn't: Tamagui's static evaluation in Node, and tests that mock expo-modules-core.
  */
 import { SharedObject } from "expo-modules-core";
 
-if (!SharedObject) {
-  throw new Error("expo-modules-core did not install globalThis.expo");
-}
+(globalThis as { __knituiExpoSharedObject?: unknown }).__knituiExpoSharedObject = SharedObject;
