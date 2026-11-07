@@ -307,7 +307,7 @@
     {
       "name": "@knitui/sheet",
       "slug": "sheet",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "description": "Cross-platform bottom sheet for Knit UI.",
       "private": false,
       "dependencies": [
