@@ -169,7 +169,12 @@ export const SheetPanel = React.forwardRef<SheetPanelHandle, SheetPanelProps>(
     /* ── Measurement ──────────────────────────────────────────────────────── */
 
     const [viewportHeight, setViewportHeight] = React.useState(0);
-    const [bottomGap, measureBottomGap] = useLayerBottomGap();
+    const [measuredGap, measureBottomGap] = useLayerBottomGap();
+    // A modal sheet is teleported to the root host, so its layer ends at the window's
+    // bottom. `measureInWindow` walks the sheet's React position instead, which reads
+    // the scroll offset of a list it was opened from as a gap: the panel stopped short
+    // of the keyboard by that much and its composer sat behind it.
+    const bottomGap = modal ? 0 : measuredGap;
     const onLayout = React.useCallback(
       (e: LayoutChangeEvent) => {
         const h = Math.round(e.nativeEvent.layout.height);
