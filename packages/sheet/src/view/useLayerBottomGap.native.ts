@@ -10,10 +10,11 @@ interface Measurable {
 }
 
 /**
- * How far the sheet's layer ends above the bottom of the window. A modal sheet in the
- * root host reads 0; an inline sheet above a tab bar or inside a `KeyboardAvoidingView`
- * reads what already separates it from the keyboard. Measured on layout, since each of
- * those moves the layer's edge by resizing it.
+ * How far an inline sheet's layer ends above the bottom of the window: above a tab bar
+ * or inside a `KeyboardAvoidingView` this is what already separates it from the
+ * keyboard. Measured on layout, since each of those moves the layer's edge by resizing
+ * it. A modal sheet ignores this, because a teleported layer measures where React
+ * placed it rather than where it is drawn.
  */
 export function useLayerBottomGap(): [number, (event: LayoutChangeEvent) => void] {
   const [gap, setGap] = React.useState(0);
