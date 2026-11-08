@@ -17,6 +17,10 @@ export interface WebPainterParams {
   count: number;
   loop: boolean;
   animationStyle: AnimationStyle;
+  /** Two-axis deck: the layout painted while `motionAxis` is 1. */
+  crossStyle?: AnimationStyle;
+  /** Two-axis deck: which layout to paint (0 main, 1 cross). */
+  motionAxis?: SharedValue<number>;
   /**
    * Called (web only) with the new rounded scroll center whenever it changes.
    * On web, `useAnimatedReaction` does not re-run on shared-value changes (the

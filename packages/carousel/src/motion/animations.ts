@@ -56,11 +56,15 @@ export function applySettle(
   withAnimation: WithAnimation | undefined,
   duration: number,
   onSettled?: () => void,
+  /** Worklet run on the UI thread when the motion completes, before `onSettled`. */
+  onSettledUI?: () => void,
 ): void {
   "worklet";
   const cb = (finished?: boolean) => {
     "worklet";
-    if (finished && onSettled) scheduleOnRN(onSettled);
+    if (!finished) return;
+    if (onSettledUI) onSettledUI();
+    if (onSettled) scheduleOnRN(onSettled);
   };
   if (result.kind === "decay") {
     offset.value = withDecay({ velocity: result.velocity, deceleration: DECAY_DECELERATION }, cb);

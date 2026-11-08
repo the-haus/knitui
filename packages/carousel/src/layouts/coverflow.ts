@@ -4,6 +4,7 @@ import type { ViewStyle } from "@knitui/core";
 
 import type { AnimationStyle, CoverflowConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
+import { distanceZ } from "./zOrder";
 
 /**
  * Cover-flow: neighbours overlap the centred item (offset by a fraction of a
@@ -35,7 +36,7 @@ export function coverflowLayout(
     const angle = -clamped * rotateYDeg;
     const dist = Math.abs(progress);
     const scale = interpolate(dist, [0, 1], [1, inactiveScale], Extrapolation.CLAMP);
-    const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
+    const zIndex = distanceZ(progress);
 
     // The transform array is built in ONE shot per branch rather than as
     // `[...persp, …]`, which allocated a throwaway `persp` array and then copied

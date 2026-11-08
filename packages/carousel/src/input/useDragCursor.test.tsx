@@ -97,6 +97,15 @@ describe("useDragCursor (web)", () => {
     expect(el.style.cursor).toBe("");
   });
 
+  it("cancels native drag-and-drop inside the frame (an image press must still drag the track)", () => {
+    const host = mount();
+    const inner = screen.getByText("slide-0");
+    const e = new Event("dragstart", { bubbles: true, cancelable: true });
+    inner.dispatchEvent(e);
+    expect(e.defaultPrevented).toBe(true);
+    expect(host).toBeTruthy();
+  });
+
   it("adds no affordance when dragging is disabled", () => {
     const el = mount({ enabled: false });
     el.dispatchEvent(pointer("pointerdown"));

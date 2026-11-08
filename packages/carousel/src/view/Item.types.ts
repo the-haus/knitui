@@ -21,4 +21,19 @@ export interface ItemProps<T> {
   renderPlaceholder?: (index: number) => ReactElement | null;
   /** Web imperative painter registration (no-op on native). */
   register: RegisterFn;
+  /**
+   * Two-axis deck: the layout rendered while `motionAxis` is 1 (a cross-axis
+   * motion). Undefined without `crossAxis`.
+   */
+  crossStyle?: AnimationStyle;
+  /** Two-axis deck: which layout renders (0 = `animationStyle`, 1 = `crossStyle`). */
+  motionAxis?: SharedValue<number>;
+  /**
+   * The layout's `zIndex` at the SETTLED centre (see `paintOrder`), set as a
+   * React-level prop on native so Android orders the slide views on commit.
+   * Undefined for layouts without a `zIndex`.
+   */
+  paintZ?: number;
+  /** Position in paint order (0 = bottom); Android `elevation`. */
+  paintRank?: number;
 }

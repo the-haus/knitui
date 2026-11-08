@@ -8,6 +8,7 @@ import { prefetchWindow, rawIndex, visibleWindow } from "../engine";
 import type { AnimationStyle, RenderItem } from "../types";
 import { Item } from "./Item";
 import { useWebPainter } from "./painter";
+import { paintOrder } from "./paintOrder";
 
 export interface TrackProps<T> {
   getItem: (index: number) => T | undefined;
@@ -25,6 +26,10 @@ export interface TrackProps<T> {
   offset: SharedValue<number>;
   size: SharedValue<number>;
   animationStyle: AnimationStyle;
+  /** Two-axis deck: the layout rendered during a cross-axis motion. */
+  crossStyle?: AnimationStyle;
+  /** Two-axis deck: which layout renders (0 main, 1 cross). */
+  motionAxis?: SharedValue<number>;
 }
 
 /**
@@ -51,6 +56,8 @@ function TrackInner<T>(props: TrackProps<T>) {
     offset,
     size,
     animationStyle,
+    crossStyle,
+    motionAxis,
   } = props;
 
   // The centered (rounded) scroll index drives both the mounted window and the
@@ -80,7 +87,16 @@ function TrackInner<T>(props: TrackProps<T>) {
   }, []);
 
   // Web imperative painter (no-op on native — native items use useAnimatedStyle).
-  const register = useWebPainter({ offset, size, count, loop, animationStyle, onCenter });
+  const register = useWebPainter({
+    offset,
+    size,
+    count,
+    loop,
+    animationStyle,
+    crossStyle,
+    motionAxis,
+    onCenter,
+  });
 
   // Reset to the default position when the data shape changes.
   React.useEffect(() => {
@@ -95,6 +111,18 @@ function TrackInner<T>(props: TrackProps<T>) {
     () => visibleWindow(center, count, windowSize, loop),
     [center, count, windowSize, loop],
   );
+
+  // Settled paint order (see `paintOrder`). Native renders the window in this
+  // order so the view order IS the stacking order (Android draws siblings in
+  // view order and ignores animated zIndex updates), and each host gets the
+  // settled zIndex as a real prop. Web keeps mount order — the painter's zIndex
+  // is honoured there, and moving DOM nodes would drop focus inside a slide.
+  const slots = React.useMemo(() => {
+    const order = paintOrder(mounted, center, count, loop, animationStyle);
+    if (!isWeb) return order;
+    const byIndex = new Map(order.map((slot) => [slot.index, slot]));
+    return mounted.map((index) => byIndex.get(index)!);
+  }, [mounted, center, count, loop, animationStyle]);
 
   // Load the window plus a lead in the travel direction. For eager data `ensure`
   // is a no-op; for an async source this fetches upcoming pages early so slides
@@ -127,7 +155,7 @@ function TrackInner<T>(props: TrackProps<T>) {
 
   return (
     <>
-      {mounted.map((index) => {
+      {slots.map(({ index, z, rank }) => {
         const item = getItem(index);
         const key = item !== undefined && keyExtractor ? keyExtractor(item, index) : String(index);
         return (
@@ -145,6 +173,12 @@ function TrackInner<T>(props: TrackProps<T>) {
             renderItem={renderItem}
             renderPlaceholder={renderPlaceholder}
             register={register}
+            crossStyle={crossStyle}
+            motionAxis={motionAxis}
+            // Web needs no React-level order (and a rank change would re-render
+            // every slide on each step); native gets the settled order.
+            paintZ={isWeb ? undefined : z}
+            paintRank={isWeb ? undefined : rank}
           />
         );
       })}

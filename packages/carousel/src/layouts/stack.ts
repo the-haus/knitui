@@ -40,13 +40,53 @@ export function stackLayout(
   const opacityInterval = config.opacityInterval ?? 0.1;
   const rotateZDeg = config.rotateZDeg ?? 30;
   const snapDirection = config.snapDirection ?? "left";
+  const toBack = config.exit === "back";
 
   const valid = Math.max(1, showLength - 1);
   const dir = snapDirection === "right" ? -1 : 1;
 
+  // `exit: "back"`: how far out the leaving card swings before it tucks under.
+  const tuckOut = -moveSize * 0.6 * dir;
+  const backSlot = valid * stackInterval;
+  const backScale = 1 - valid * scaleInterval;
+  const backOpacity = 1 - valid * opacityInterval;
+
   return (rawProgress: number): ViewStyle => {
     "worklet";
     const value = easedProgress(rawProgress);
+
+    // `exit: "back"` — the leaving card (progress < 0) swings out along the axis,
+    // and at the half-way point drops UNDER the incoming card and slides back
+    // into the last deck slot, fading out as it lands (so at rest the deck still
+    // shows exactly `showLength` cards). Paging back reverses it: the previous
+    // card rises from behind the deck, swings out, and lands on top.
+    // The paint-order swap sits at the half-way point because that is where the
+    // card is furthest out (least overlap) and where the settled centre — and
+    // with it the native view order (see `paintOrder`) — changes.
+    if (toBack && value < 0) {
+      const t =
+        dir * interpolate(value, [-1, -0.5, 0], [backSlot, tuckOut, 0], Extrapolation.CLAMP);
+      const sc = interpolate(value, [-1, -0.5, 0], [backScale, 1, 1], Extrapolation.CLAMP);
+      const op = interpolate(value, [-1, -0.8, -0.5], [0, backOpacity, 1], Extrapolation.CLAMP);
+      const rot = interpolate(
+        value,
+        [-1, -0.5, 0],
+        [0, (-rotateZDeg * dir) / 2, 0],
+        Extrapolation.CLAMP,
+      );
+      // Above the deck while it is still the front card; under everything
+      // visible (deck cards sit at >= 100) once it tucks.
+      const z = value > -0.5 ? (valid + 2) * 100 : 50;
+      return {
+        transform: [
+          vertical ? { translateY: t } : { translateX: t },
+          { scale: sc },
+          { rotateZ: `${rot}deg` },
+        ],
+        opacity: op,
+        zIndex: z,
+      };
+    }
 
     // Along the scroll axis: leaving card flies to ∓moveSize; stacked cards step.
     const translate =
@@ -63,10 +103,16 @@ export function stackLayout(
       [1, 1, 1 - valid * scaleInterval],
       Extrapolation.CLAMP,
     );
+    // Cards past the deck fade OUT between the last step (`valid`) and one step
+    // beyond it, instead of clamping at the last step's opacity. Clamping left
+    // every slide from `showLength` on piled up, visible, on the last step — so a
+    // window of 11 showed 8 extra cards (and skeletons for unloaded ones) behind
+    // the front card. Translate/scale stay clamped: a hidden card waits at the
+    // back position and fades in there as the deck advances.
     const opacity = interpolate(
       value,
-      [-1, 0, valid],
-      [0, 1, 1 - valid * opacityInterval],
+      [-1, 0, valid, valid + 1],
+      [0, 1, 1 - valid * opacityInterval, 0],
       Extrapolation.CLAMP,
     );
     const rotate = interpolate(value, [-1, 0, 1], [-rotateZDeg * dir, 0, 0], Extrapolation.CLAMP);
@@ -76,8 +122,17 @@ export function stackLayout(
     // off. A negative zIndex is unsafe against the `position: relative` Viewport
     // — on native it can drop the deck behind the frame, hiding the cards that
     // should peek out behind the active one.
+    //
+    // The ramp runs one step past the deck so the card fading in at the back
+    // (`valid < value < valid + 1`) stays BELOW the last visible card instead of
+    // tying with it at 0 and painting over it by mount order.
     const zIndex = Math.round(
-      interpolate(value, [-1, 0, valid], [(valid + 1) * 100, valid * 100, 0], Extrapolation.CLAMP),
+      interpolate(
+        value,
+        [-1, 0, valid, valid + 1],
+        [(valid + 2) * 100, (valid + 1) * 100, 100, 0],
+        Extrapolation.CLAMP,
+      ),
     );
 
     return {

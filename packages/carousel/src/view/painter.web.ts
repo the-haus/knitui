@@ -102,24 +102,36 @@ export function useWebPainter({
   count,
   loop,
   animationStyle,
+  crossStyle,
+  motionAxis,
   onCenter,
 }: WebPainterParams): RegisterFn {
   const entries = React.useRef(new Map<number, LiveEntry>());
 
   // Keep params fresh for the stable listener callbacks without resubscribing.
-  const latest = React.useRef({ count, loop, animationStyle, onCenter });
-  latest.current = { count, loop, animationStyle, onCenter };
+  const latest = React.useRef({ count, loop, animationStyle, crossStyle, motionAxis, onCenter });
+  latest.current = { count, loop, animationStyle, crossStyle, motionAxis, onCenter };
+
+  /** The layout to paint right now (the cross layout during a cross motion). */
+  const activeStyle = React.useCallback(() => {
+    const { animationStyle: main, crossStyle: cross, motionAxis: axis } = latest.current;
+    return cross && axis && axis.value === 1 ? cross : main;
+  }, []);
 
   const lastCenter = React.useRef(Number.NaN);
 
   // Paint a single entry from an explicit offset/size (used on registration so a
   // freshly-mounted slide is positioned immediately, not one offset-write later).
-  const paintEntry = React.useCallback((index: number, entry: LiveEntry, o: number, s: number) => {
-    const { count: c, loop: l, animationStyle: style } = latest.current;
-    const p = itemProgress(rawIndex(o, s), index, c, l);
-    entry.progress.value = p;
-    applyStyle(entry, style(p, index) as Record<string, unknown>);
-  }, []);
+  const paintEntry = React.useCallback(
+    (index: number, entry: LiveEntry, o: number, s: number) => {
+      const { count: c, loop: l } = latest.current;
+      const style = activeStyle();
+      const p = itemProgress(rawIndex(o, s), index, c, l);
+      entry.progress.value = p;
+      applyStyle(entry, style(p, index) as Record<string, unknown>);
+    },
+    [activeStyle],
+  );
 
   // Repaint every registered entry and advance the virtualization window when
   // the centered item changes. (On web `onCenter` is the only signal that moves
@@ -128,7 +140,8 @@ export function useWebPainter({
     const s = size.value;
     if (!(s > 0)) return;
     const scroll = rawIndex(offset.value, s);
-    const { count: c, loop: l, animationStyle: style, onCenter: reportCenter } = latest.current;
+    const { count: c, loop: l, onCenter: reportCenter } = latest.current;
+    const style = activeStyle();
     entries.current.forEach((entry, index) => {
       const p = itemProgress(scroll, index, c, l);
       entry.progress.value = p;
@@ -139,7 +152,7 @@ export function useWebPainter({
       lastCenter.current = center;
       reportCenter?.(center);
     }
-  }, [offset, size]);
+  }, [offset, size, activeStyle]);
 
   const register = React.useCallback<RegisterFn>(
     (index, entry) => {
@@ -173,12 +186,15 @@ export function useWebPainter({
   // painted without waiting for motion.
   useSharedValueListener(offset, paintAll);
   useSharedValueListener(size, paintAll);
+  // Two-axis deck: a cross motion swaps the layout without moving the offset
+  // (at its start and when it lands), so repaint on the axis flip too.
+  useSharedValueListener(motionAxis ?? offset, paintAll, motionAxis !== undefined);
 
   // `count`/`loop`/`animationStyle` can change without an offset write (e.g. a
   // new transition preset or data shape); repaint once when they do.
   React.useEffect(() => {
     paintAll();
-  }, [count, loop, animationStyle, paintAll]);
+  }, [count, loop, animationStyle, crossStyle, paintAll]);
 
   return register;
 }

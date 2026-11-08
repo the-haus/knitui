@@ -19,6 +19,11 @@ const DRAG_THRESHOLD = 5;
  * The move / release listeners sit on the DOCUMENT, not the host — a drag
  * routinely travels and ends outside the carousel, and a `pointerup` we never
  * heard would leave the cursor stuck on `grabbing`.
+ *
+ * It also cancels the browser's native drag-and-drop (`dragstart`) inside the
+ * frame. An `<img>` (or link) in a slide is draggable by default, so a mouse
+ * press on a card's image started a native image drag that swallowed the
+ * pointer moves, and the pan never saw the drag.
  */
 export function useDragCursor({ hostRef, enabled }: DragCursorParams): void {
   React.useEffect(() => {
@@ -58,12 +63,16 @@ export function useDragCursor({ hostRef, enabled }: DragCursorParams): void {
       document.addEventListener("pointermove", onPointerMove);
     };
 
+    const onDragStart = (e: DragEvent) => e.preventDefault();
+
     el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("dragstart", onDragStart);
     document.addEventListener("pointerup", endDrag);
     document.addEventListener("pointercancel", endDrag);
 
     return () => {
       el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("dragstart", onDragStart);
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", endDrag);
       document.removeEventListener("pointercancel", endDrag);

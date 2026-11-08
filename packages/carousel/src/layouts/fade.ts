@@ -4,6 +4,7 @@ import type { ViewStyle } from "@knitui/core";
 
 import type { AnimationStyle, FadeConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
+import { distanceZ } from "./zOrder";
 
 /**
  * Crossfade: every slide stays pinned at the centre (no translation — slides are
@@ -18,7 +19,7 @@ export function fadeLayout(_base: BaseLayoutConfig, config: FadeConfig = {}): An
     const dist = Math.abs(progress);
     const opacity = interpolate(dist, [0, 1], [1, 0], Extrapolation.CLAMP);
     const scale = interpolate(dist, [0, 1], [1, minScale], Extrapolation.CLAMP);
-    const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
+    const zIndex = distanceZ(progress);
     return { transform: [{ scale }], opacity, zIndex };
   };
 }

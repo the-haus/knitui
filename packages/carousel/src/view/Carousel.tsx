@@ -15,6 +15,7 @@ import { useDragGesture } from "../input/useDragGesture";
 import { useKeyboard } from "../input/useKeyboard";
 import { useWheel } from "../input/useWheel";
 import { useLayout } from "../layouts";
+import { crossMotion, keepsDeck, mainMotion } from "../layouts/crossMotion";
 import { resolveConfig, type SeekFn, useCarouselCore } from "../motion/useCarouselCore";
 import { Pagination } from "../pagination/Pagination";
 import { useResolvedSource } from "../source";
@@ -39,6 +40,8 @@ import { Track } from "./Track";
 /** Web transform mode: the browser keeps the cross-axis pan (hoisted). */
 const TOUCH_PAN_X: HostStyle = { touchAction: "pan-x" };
 const TOUCH_PAN_Y: HostStyle = { touchAction: "pan-y" };
+/** Two-axis deck: the kit owns both pan directions. */
+const TOUCH_NONE: HostStyle = { touchAction: "none" };
 
 function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) {
   const config = resolveConfig(props);
@@ -97,13 +100,53 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
 
   React.useImperativeHandle(ref, () => core.controller, [core.controller]);
 
-  const animationStyle = useLayout({
+  const mainLayout = useLayout({
     mode: props.mode,
     modeConfig: props.modeConfig,
     customAnimation: props.customAnimation,
     size: core.pageSize,
     vertical,
   });
+
+  /* ---- two-axis deck -------------------------------------------------------
+   * `crossAxis` adds a second drag axis on the same offset: a cross drag moves
+   * `core.offset` (scaled to main px), and `core.motionAxis` switches the slides
+   * to the cross layout while it runs. Without `crossAxis` none of this exists
+   * and the track renders `mainLayout` exactly as before.
+   */
+  const { cross } = config;
+  const crossLayout = useLayout({
+    mode: cross?.mode ?? "normal",
+    modeConfig: cross?.modeConfig,
+    customAnimation: undefined,
+    size: core.crossPageSize,
+    vertical: !vertical,
+  });
+  const deck = keepsDeck(props.customAnimation ? undefined : props.mode);
+  const twoAxis = cross !== null;
+  const animationStyle = React.useMemo(
+    () => (twoAxis ? mainMotion(mainLayout) : mainLayout),
+    [twoAxis, mainLayout],
+  );
+  const crossStyle = React.useMemo(
+    () => (twoAxis ? crossMotion(mainLayout, crossLayout, deck) : undefined),
+    [twoAxis, mainLayout, crossLayout, deck],
+  );
+  const dragCross = React.useMemo(
+    () => (twoAxis ? { size: core.crossSize, axis: core.motionAxis } : null),
+    [twoAxis, core.crossSize, core.motionAxis],
+  );
+  // Cross-axis steps for wheel / keyboard (side buttons use `ref.next({ axis })`).
+  const crossController = React.useMemo(
+    () =>
+      twoAxis
+        ? {
+            next: () => core.controller.next({ axis: "cross" }),
+            prev: () => core.controller.prev({ axis: "cross" }),
+          }
+        : null,
+    [twoAxis, core.controller],
+  );
 
   /* ---- slide memoization -------------------------------------------------
    * `props.renderItem` / `renderPlaceholder` / `keyExtractor` are handed to the
@@ -127,6 +170,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
     maxScrollDistancePerSwipe: props.maxScrollDistancePerSwipe,
     minScrollDistancePerSwipe: props.minScrollDistancePerSwipe,
     gestureConfig: props.gestureConfig,
+    cross: dragCross,
     onStart: core.onInteractionStart,
     onSettle: core.onInteractionEnd,
   });
@@ -140,6 +184,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
     vertical,
     count,
     controller: core.controller,
+    crossController,
   });
   useKeyboard({
     hostRef,
@@ -147,6 +192,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
     vertical,
     count,
     controller: core.controller,
+    crossController,
   });
   // grab / grabbing on web. Native mode's own scroll surface gets it from
   // `useDragScroll` instead (it drags `scrollLeft`, not the pan gesture).
@@ -156,12 +202,15 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
   const onLayout = React.useCallback(
     (e: LayoutChangeEvent) => {
       props.onLayout?.(e);
-      if (config.itemSize > 0) return;
       const { width, height } = e.nativeEvent.layout;
+      if (cross && !(cross.itemSize > 0)) {
+        core.setCrossSize(Math.round(vertical ? width : height));
+      }
+      if (config.itemSize > 0) return;
       core.setSize(Math.round(vertical ? height : width));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config.itemSize, vertical, core.setSize],
+    [config.itemSize, cross?.itemSize, twoAxis, vertical, core.setSize, core.setCrossSize],
   );
 
   // Web-only ARIA / focusability so keyboard nav and SRs work. RNW passes these
@@ -179,7 +228,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
   // axis. Native mode leaves `touch-action` alone so the real scroll container
   // handles touch itself.
   const touchActionStyle: HostStyle | null =
-    isWeb && !native ? (vertical ? TOUCH_PAN_X : TOUCH_PAN_Y) : null;
+    isWeb && !native ? (twoAxis ? TOUCH_NONE : vertical ? TOUCH_PAN_X : TOUCH_PAN_Y) : null;
 
   // Per-slot style sugar + marker-slot chrome (Controls / Indicators / Overlay).
   const s = useCarouselSlots(props.styles);
@@ -312,6 +361,8 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
                   offset={core.offset}
                   size={core.size}
                   animationStyle={animationStyle}
+                  crossStyle={crossStyle}
+                  motionAxis={twoAxis ? core.motionAxis : undefined}
                 />
               ) : null}
             </CarouselViewport>

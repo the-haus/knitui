@@ -39,6 +39,14 @@ export interface StackConfig {
   rotateZDeg?: number;
   /** Which side the deck is anchored / cards exit toward (default "left"). */
   snapDirection?: "left" | "right";
+  /**
+   * Where a card goes when you step past it.
+   * - `"fly"` (default): it flies off over the deck, rotating and fading.
+   * - `"back"`: it swings out, tucks UNDER the incoming card half-way, and
+   *   slides back into the last deck slot (fading as it lands) — the card goes
+   *   to the back of the deck while the next one comes up on top.
+   */
+  exit?: "fly" | "back";
 }
 
 /** Tuning for `mode="fade"` — pinned slides that crossfade in place. */
@@ -128,6 +136,42 @@ export type RenderItem<T> = (info: RenderItemInfo<T>) => ReactElement | null;
 export type OnProgressChange =
   ((offsetProgress: number, absoluteProgress: number) => void) | SharedValue<number>;
 
+/** Every `modeConfig` shape (one per built-in `mode`). */
+export type CarouselModeConfig =
+  | ParallaxConfig
+  | StackConfig
+  | FadeConfig
+  | ScaleConfig
+  | RotateConfig
+  | CoverflowConfig
+  | FlipConfig
+  | CubeConfig
+  | DepthConfig;
+
+/**
+ * The second drag axis of a two-axis deck (see {@link CarouselProps.crossAxis}).
+ * The cross axis is the one `vertical` does NOT pick: horizontal for a vertical
+ * carousel, vertical for a horizontal one.
+ */
+export interface CarouselCrossAxis {
+  /** Turn the cross axis on (default true when an object is passed). */
+  enabled?: boolean;
+  /**
+   * Motion of a cross-axis step (default `"normal"`: the front slide slides out
+   * sideways and its neighbour slides in). With a stack `mode` the deck stays
+   * put behind the front card: only the leaving / returning card takes the cross
+   * motion, and the next card comes forward from behind, as in a stack step.
+   */
+  mode?: CarouselMode;
+  /** Tuning for the cross-axis `mode`. */
+  modeConfig?: CarouselModeConfig;
+  /** Page size px along the cross axis (default: the measured frame). */
+  itemSize?: number;
+}
+
+/** Which axis a programmatic step animates along. */
+export type CarouselAxis = "main" | "cross";
+
 /** Options for the imperative navigation methods. */
 export interface ScrollToOptions {
   /** Absolute target index. Takes precedence over `count`. */
@@ -138,6 +182,12 @@ export interface ScrollToOptions {
   animated?: boolean;
   /** Called when the transition settles. */
   onFinished?: () => void;
+  /**
+   * Two-axis decks only: animate this step with the cross-axis motion (e.g.
+   * side buttons paging a vertical stack sideways). Default `"main"`; ignored
+   * when `crossAxis` is off.
+   */
+  axis?: CarouselAxis;
 }
 
 export type StepOptions = Omit<ScrollToOptions, "index">;
@@ -226,16 +276,18 @@ export interface CarouselProps<T> {
   /* Loop / mode ---------------------------------------------------------- */
   loop?: boolean;
   mode?: CarouselMode;
-  modeConfig?:
-    | ParallaxConfig
-    | StackConfig
-    | FadeConfig
-    | ScaleConfig
-    | RotateConfig
-    | CoverflowConfig
-    | FlipConfig
-    | CubeConfig
-    | DepthConfig;
+  modeConfig?: CarouselModeConfig;
+  /**
+   * Two-axis deck: a second drag axis on the SAME slides, `index` and
+   * callbacks. A drag along `vertical`'s axis runs `mode` (e.g. a vertical
+   * stack); a drag across it pages with `crossAxis.mode` (default `"normal"`).
+   * Each drag locks to its dominant axis over its first 10px and never moves
+   * the other. Wheel and arrow keys follow the same split. `true` is shorthand
+   * for `{ enabled: true }`. Transform track only (ignored by
+   * `scrollMode="native"`). On web the frame takes `touch-action: none`, since
+   * the deck owns both pan directions.
+   */
+  crossAxis?: boolean | CarouselCrossAxis;
   /** A worklet `(progress, index) => ViewStyle` that overrides `mode`. */
   customAnimation?: AnimationStyle;
   /**
