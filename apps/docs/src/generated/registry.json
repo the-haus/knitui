@@ -157,6 +157,36 @@
           "storybookId": "carousel--vertical-stack"
         },
         {
+          "name": "StackVerticalOnly",
+          "description": "Vertical drag only; a horizontal drag is left to the page around it.",
+          "hasRender": true,
+          "storybookId": "carousel--stack-vertical-only"
+        },
+        {
+          "name": "StackTwoAxes",
+          "description": "One deck, one index: vertical drag = stack, horizontal drag = carousel paging.",
+          "hasRender": true,
+          "storybookId": "carousel--stack-two-axes"
+        },
+        {
+          "name": "StackInsideHorizontalCarousel",
+          "description": "Horizontal drags page the outer carousel; vertical drags move the inner stack.",
+          "hasRender": true,
+          "storybookId": "carousel--stack-inside-horizontal-carousel"
+        },
+        {
+          "name": "StackOverMap",
+          "description": "Desktop: a fixed 320px two-axis deck over a map. Vertical wheel steps the stack, sideways wheel (trackpad / shift + wheel) pages it, and none of it reaches the map's zoom; the side buttons page with the sideways motion.",
+          "hasRender": true,
+          "storybookId": "carousel--stack-over-map"
+        },
+        {
+          "name": "StackHotspots",
+          "description": "A horizontal rail of map hotspots, each a vertical stack of its own length (1, 3, 7, 20, 2, 12 events). Swipe sideways to move between hotspots (the whole stack slides along); swipe up/down to go through that hotspot's events. Each stack remembers its card when you come back to it, and a card you swipe past goes under the next one, to the back of the deck (`exit: \"back\"`).",
+          "hasRender": true,
+          "storybookId": "carousel--stack-hotspots"
+        },
+        {
           "name": "CustomAnimation",
           "hasRender": true,
           "storybookId": "carousel--custom-animation"

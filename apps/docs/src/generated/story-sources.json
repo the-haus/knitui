@@ -5820,6 +5820,26 @@
       "snippet": "<Carousel\n  data={DATA}\n  mode=\"vertical-stack\"\n  modeConfig={{ showLength: 3 }}\n  renderItem={renderItem}\n  style={frame}\n  testID=\"carousel\"\n/>",
       "full": "export const VerticalStack: Story = {\n  name: \"Transitions / Vertical stack\",\n  render: () => (\n    <Carousel\n      data={DATA}\n      mode=\"vertical-stack\"\n      modeConfig={{ showLength: 3 }}\n      renderItem={renderItem}\n      style={frame}\n      testID=\"carousel\"\n    />\n  ),\n};"
     },
+    "StackVerticalOnly": {
+      "snippet": "<StackVerticalOnlyDemo />",
+      "full": "export const StackVerticalOnly: Story = {\n  name: \"Stack · vertical only\",\n  render: () => <StackVerticalOnlyDemo />,\n};"
+    },
+    "StackTwoAxes": {
+      "snippet": "<StackTwoAxesDemo />",
+      "full": "export const StackTwoAxes: Story = {\n  name: \"Stack · two axes\",\n  render: () => <StackTwoAxesDemo />,\n};"
+    },
+    "StackInsideHorizontalCarousel": {
+      "snippet": "<StackInHorizontalCarouselDemo />",
+      "full": "export const StackInsideHorizontalCarousel: Story = {\n  name: \"Stack inside horizontal carousel\",\n  render: () => <StackInHorizontalCarouselDemo />,\n};"
+    },
+    "StackOverMap": {
+      "snippet": "<StackOverMapDemo />",
+      "full": "export const StackOverMap: Story = {\n  name: \"Stack · desktop card over a map\",\n  render: () => <StackOverMapDemo />,\n};"
+    },
+    "StackHotspots": {
+      "snippet": "<StackHotspotsDemo />",
+      "full": "export const StackHotspots: Story = {\n  name: \"Stack · hotspots (varied counts)\",\n  render: () => <StackHotspotsDemo />,\n};"
+    },
     "CustomAnimation": {
       "snippet": "<Carousel\n  data={DATA}\n  // A hand-rolled coverflow-style worklet via `customAnimation` (overrides `mode`).\n  // The worklet must translate the slide itself (progress × page size).\n  customAnimation={(progress) => {\n    \"worklet\";\n    const dist = Math.min(Math.abs(progress), 1);\n    return {\n      transform: [\n        { translateX: progress * frame.width },\n        { perspective: 800 },\n        { rotateY: `${progress * -20}deg` },\n        { scale: 1 - dist * 0.25 },\n      ],\n      opacity: 1 - dist * 0.4,\n    };\n  }}\n  renderItem={renderItem}\n  style={frame}\n  testID=\"carousel\"\n/>",
       "full": "export const CustomAnimation: Story = {\n  name: \"Transitions / Custom animation\",\n  render: () => (\n    <Carousel\n      data={DATA}\n      // A hand-rolled coverflow-style worklet via `customAnimation` (overrides `mode`).\n      // The worklet must translate the slide itself (progress × page size).\n      customAnimation={(progress) => {\n        \"worklet\";\n        const dist = Math.min(Math.abs(progress), 1);\n        return {\n          transform: [\n            { translateX: progress * frame.width },\n            { perspective: 800 },\n            { rotateY: `${progress * -20}deg` },\n            { scale: 1 - dist * 0.25 },\n          ],\n          opacity: 1 - dist * 0.4,\n        };\n      }}\n      renderItem={renderItem}\n      style={frame}\n      testID=\"carousel\"\n    />\n  ),\n};"
