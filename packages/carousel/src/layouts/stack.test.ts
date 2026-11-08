@@ -42,3 +42,59 @@ describe("stackLayout", () => {
     expect(seg(at(vertical, 1), "translateY")).toBeGreaterThan(0);
   });
 });
+
+describe("stackLayout — the deck past showLength", () => {
+  const cfg = { showLength: 3, stackInterval: 16, scaleInterval: 0.04, opacityInterval: 0.1 };
+  const layout = stackLayout(base, cfg);
+  const valid = cfg.showLength - 1;
+
+  it("shows exactly showLength cards: front + showLength-1 behind, the rest at opacity 0", () => {
+    expect(at(layout, 0).opacity).toBe(1);
+    expect(at(layout, 1).opacity).toBeCloseTo(0.9);
+    expect(at(layout, valid).opacity).toBeCloseTo(0.8);
+    for (const p of [valid + 1, valid + 2, 5, 10, 19]) expect(at(layout, p).opacity).toBe(0);
+  });
+
+  it("fades the next card in between valid+1 and valid (no pop)", () => {
+    const mid = at(layout, valid + 0.5).opacity as number;
+    expect(mid).toBeGreaterThan(0);
+    expect(mid).toBeLessThan(0.8);
+  });
+
+  it("keeps a card fading in BELOW the last visible card", () => {
+    expect(at(layout, valid).zIndex!).toBeGreaterThan(at(layout, valid + 0.5).zIndex!);
+    expect(at(layout, valid + 0.5).zIndex!).toBeGreaterThanOrEqual(at(layout, valid + 1).zIndex!);
+  });
+
+  it("steps translate and scale once per card, clamped at the back", () => {
+    expect(seg(at(layout, 1), "translateX")).toBeCloseTo(16);
+    expect(seg(at(layout, 2), "translateX")).toBeCloseTo(32);
+    expect(seg(at(layout, 5), "translateX")).toBeCloseTo(32);
+    expect(seg(at(layout, 1), "scale")).toBeCloseTo(0.96);
+    expect(seg(at(layout, 2), "scale")).toBeCloseTo(0.92);
+  });
+
+  it("snapDirection right mirrors the deck steps", () => {
+    const right = stackLayout(base, { ...cfg, snapDirection: "right" });
+    expect(seg(at(right, 1), "translateX")).toBeCloseTo(-16);
+    expect(at(right, 3).opacity).toBe(0);
+  });
+
+  it("the leaving card flies along the active axis, invisible once gone", () => {
+    const h = at(layout, -1);
+    expect(seg(h, "translateX")).toBeCloseTo(-300);
+    expect(seg(h, "translateY")).toBeUndefined();
+    expect(h.opacity).toBe(0);
+    const v = at(stackLayout({ ...base, vertical: true }, cfg), -1);
+    expect(seg(v, "translateY")).toBeCloseTo(-300);
+    expect(seg(v, "translateX")).toBeUndefined();
+    expect(seg(at(stackLayout({ ...base, vertical: true }, cfg), -0.5), "translateY")).toBeLessThan(
+      0,
+    );
+  });
+
+  it("paints strictly front-to-back across the whole window", () => {
+    const zs = [-1, 0, 1, 2, 3].map((p) => at(layout, p).zIndex!);
+    for (let k = 1; k < zs.length; k++) expect(zs[k - 1]!).toBeGreaterThan(zs[k]!);
+  });
+});

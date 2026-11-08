@@ -53,8 +53,11 @@ export {
 export { type AsyncSlideSourceOptions, createAsyncSlideSource, type SlideSource } from "./source";
 export type {
   AnimationStyle,
+  CarouselAxis,
+  CarouselCrossAxis,
   CarouselGestureConfig,
   CarouselMode,
+  CarouselModeConfig,
   CarouselProps,
   CarouselRef,
   CoverflowConfig,

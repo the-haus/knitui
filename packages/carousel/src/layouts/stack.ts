@@ -63,10 +63,16 @@ export function stackLayout(
       [1, 1, 1 - valid * scaleInterval],
       Extrapolation.CLAMP,
     );
+    // Cards past the deck fade OUT between the last step (`valid`) and one step
+    // beyond it, instead of clamping at the last step's opacity. Clamping left
+    // every slide from `showLength` on piled up, visible, on the last step — so a
+    // window of 11 showed 8 extra cards (and skeletons for unloaded ones) behind
+    // the front card. Translate/scale stay clamped: a hidden card waits at the
+    // back position and fades in there as the deck advances.
     const opacity = interpolate(
       value,
-      [-1, 0, valid],
-      [0, 1, 1 - valid * opacityInterval],
+      [-1, 0, valid, valid + 1],
+      [0, 1, 1 - valid * opacityInterval, 0],
       Extrapolation.CLAMP,
     );
     const rotate = interpolate(value, [-1, 0, 1], [-rotateZDeg * dir, 0, 0], Extrapolation.CLAMP);
@@ -76,8 +82,17 @@ export function stackLayout(
     // off. A negative zIndex is unsafe against the `position: relative` Viewport
     // — on native it can drop the deck behind the frame, hiding the cards that
     // should peek out behind the active one.
+    //
+    // The ramp runs one step past the deck so the card fading in at the back
+    // (`valid < value < valid + 1`) stays BELOW the last visible card instead of
+    // tying with it at 0 and painting over it by mount order.
     const zIndex = Math.round(
-      interpolate(value, [-1, 0, valid], [(valid + 1) * 100, valid * 100, 0], Extrapolation.CLAMP),
+      interpolate(
+        value,
+        [-1, 0, valid, valid + 1],
+        [(valid + 2) * 100, (valid + 1) * 100, 100, 0],
+        Extrapolation.CLAMP,
+      ),
     );
 
     return {

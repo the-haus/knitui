@@ -10,4 +10,9 @@ export interface AuxInputParams {
   vertical: boolean;
   count: number;
   controller: CarouselRef;
+  /**
+   * Two-axis deck: steps along the cross axis (the axis `vertical` does not
+   * pick). Null/undefined for a single-axis carousel.
+   */
+  crossController?: { next: () => void; prev: () => void } | null;
 }

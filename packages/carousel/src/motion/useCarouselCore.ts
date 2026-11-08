@@ -6,8 +6,27 @@ import { isWeb } from "@knitui/core";
 
 import { activeIndex, clamp, mod, offsetFor, progressFor, rawIndex } from "../engine";
 import { useSharedValueListener } from "../hooks/useSharedValueListener";
-import type { CarouselProps, CarouselRef, ScrollToOptions, StepOptions } from "../types";
+import type {
+  CarouselMode,
+  CarouselModeConfig,
+  CarouselProps,
+  CarouselRef,
+  ScrollToOptions,
+  StepOptions,
+} from "../types";
 import { animateOffset } from "./animations";
+
+/** The resolved second drag axis of a two-axis deck. */
+export interface ResolvedCrossAxis {
+  mode: CarouselMode;
+  modeConfig: CarouselModeConfig | undefined;
+  /** Explicit cross-axis page size px; 0 = measure the frame. */
+  itemSize: number;
+}
+
+/** `motionAxis` values: which layout the slides currently render. */
+export const MOTION_MAIN = 0;
+export const MOTION_CROSS = 1;
 
 /** Defaults resolved once from the public props. */
 export interface ResolvedConfig {
@@ -33,6 +52,16 @@ export interface ResolvedConfig {
   fixedDirection?: "positive" | "negative";
   /** Scroll implementation: the transform engine, or a native scroll container. */
   scrollMode: "transform" | "native";
+  /** Two-axis deck (transform track only), or null when `crossAxis` is off. */
+  cross: ResolvedCrossAxis | null;
+}
+
+function resolveCross<T>(props: CarouselProps<T>, native: boolean): ResolvedCrossAxis | null {
+  const c = props.crossAxis;
+  if (native || !c) return null;
+  if (c === true) return { mode: "normal", modeConfig: undefined, itemSize: 0 };
+  if (c.enabled === false) return null;
+  return { mode: c.mode ?? "normal", modeConfig: c.modeConfig, itemSize: c.itemSize ?? 0 };
 }
 
 /**
@@ -122,6 +151,7 @@ export function resolveConfig<T>(props: CarouselProps<T>): ResolvedConfig {
     itemSize,
     fixedDirection: props.fixedDirection,
     scrollMode,
+    cross: resolveCross(props, native),
   };
 }
 
@@ -139,6 +169,19 @@ export interface CarouselCore {
   activeIndex: number;
   /** Apply a measured/explicit page size (reconciles the offset). */
   setSize: (next: number) => void;
+  /** Cross-axis page size px (two-axis decks; 0 until measured). */
+  crossSize: SharedValue<number>;
+  /** Cross-axis page size px as React state (for the cross layout). */
+  crossPageSize: number;
+  /** Apply a measured cross-axis page size. */
+  setCrossSize: (next: number) => void;
+  /**
+   * Which layout the slides render: {@link MOTION_MAIN} (`mode`) or
+   * {@link MOTION_CROSS} (`crossAxis.mode`). Every motion sets it when it starts
+   * and a cross motion resets it to main when it COMPLETES (an interrupted one
+   * leaves it to whatever interrupted it). Always main without `crossAxis`.
+   */
+  motionAxis: SharedValue<number>;
   controller: CarouselRef;
   /** Begin a scroll (fires onScrollStart, pauses autoplay). */
   onInteractionStart: () => void;
@@ -191,6 +234,10 @@ export function useCarouselCore<T>(
   const offset = props.scrollOffsetValue ?? props.defaultScrollOffsetValue ?? internalOffset;
   const size = useSharedValue(0);
   const [pageSize, setPageSize] = React.useState(0);
+  const crossSize = useSharedValue(0);
+  const [crossPageSize, setCrossPageSize] = React.useState(0);
+  const motionAxis = useSharedValue(MOTION_MAIN);
+  const hasCross = config.cross !== null;
   const progress = useSharedValue(0);
   const lastReportedIndex = useSharedValue(-1);
   /** Timestamp of the last `onProgressChange` callback hop (see the throttle). */
@@ -198,6 +245,14 @@ export function useCarouselCore<T>(
 
   const [active, setActive] = React.useState(defaultIndex);
   const activeRef = React.useRef(defaultIndex);
+  /**
+   * The index this carousel last reported through `onScrollEnd`. A controlled
+   * parent echoes it back as `index`, and the echo can commit late — after the
+   * next drag has already moved past it — so an `index` equal to it is the
+   * parent catching up, not a command. (`onIndexChange` echoes need no guard:
+   * they always equal `activeRef`.)
+   */
+  const lastEndRef = React.useRef(defaultIndex);
 
   const seededRef = React.useRef(false);
   const prevSizeRef = React.useRef(0);
@@ -224,6 +279,19 @@ export function useCarouselCore<T>(
     },
     [offset, size, defaultIndex],
   );
+
+  const setCrossSize = React.useCallback(
+    (next: number) => {
+      if (!(next > 0) || crossSize.value === next) return;
+      crossSize.value = next;
+      setCrossPageSize(next);
+    },
+    [crossSize],
+  );
+  const crossItemSize = config.cross?.itemSize ?? 0;
+  React.useEffect(() => {
+    if (crossItemSize > 0) setCrossSize(crossItemSize);
+  }, [crossItemSize, setCrossSize]);
 
   // Explicit page size (itemSize / itemWidth / itemHeight) wins and updates reactively.
   React.useEffect(() => {
@@ -327,7 +395,13 @@ export function useCarouselCore<T>(
     if (props.index === undefined || !seededRef.current || !(size.value > 0)) return;
     const target = clamp(props.index, 0, Math.max(0, count - 1));
     if (target === activeRef.current) return;
+    // A late echo of our own report (see `reportedRef`): snapping to it would
+    // yank the deck back mid-drag and cancel the drag's settle.
+    if (target === lastEndRef.current) return;
+    // The parent now knows this index; a later `index` of the old one is real.
+    lastEndRef.current = target;
     const to = offsetFor(target, size.value);
+    if (hasCross) motionAxis.value = MOTION_MAIN;
     offset.value = to;
     // In native mode the offset write alone doesn't move the scroll container;
     // seek it too (unanimated — a controlled prop is authoritative).
@@ -361,6 +435,7 @@ export function useCarouselCore<T>(
       size.value > 0 && count > 0
         ? toReal(activeIndex(offset.value, size.value, count, loop))
         : activeRef.current;
+    lastEndRef.current = idx;
     cbs.current.onScrollEnd?.(idx);
   }, [autoplayRef, offset, size, count, loop, toReal, flushProgress]);
 
@@ -369,8 +444,14 @@ export function useCarouselCore<T>(
       if (!(size.value > 0)) return;
       const target = offsetFor(page, size.value);
       const animated = opts?.animated ?? true;
+      // Two-axis deck: pick the layout this step renders with. A cross step
+      // hands the slides back to the main layout once it lands (an interrupted
+      // one never calls `done`; whatever interrupted it set its own axis).
+      const cross = hasCross && opts?.axis === "cross" && crossSize.value > 0;
+      if (hasCross) motionAxis.value = cross ? MOTION_CROSS : MOTION_MAIN;
       cbs.current.onScrollStart?.();
       const done = () => {
+        if (cross) motionAxis.value = MOTION_MAIN;
         opts?.onFinished?.();
         onInteractionEnd();
       };
@@ -396,7 +477,16 @@ export function useCarouselCore<T>(
         animateOffset(offset, target, cbs.current.withAnimation, scrollAnimationDuration, done);
       }
     },
-    [offset, size, scrollAnimationDuration, onInteractionEnd, seekRef],
+    [
+      offset,
+      size,
+      crossSize,
+      motionAxis,
+      hasCross,
+      scrollAnimationDuration,
+      onInteractionEnd,
+      seekRef,
+    ],
   );
 
   const currentPage = React.useCallback(
@@ -449,6 +539,10 @@ export function useCarouselCore<T>(
     config,
     activeIndex: active,
     setSize,
+    crossSize,
+    crossPageSize,
+    setCrossSize,
+    motionAxis,
     controller,
     onInteractionStart,
     onInteractionEnd,

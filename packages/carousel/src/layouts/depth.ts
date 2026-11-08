@@ -4,6 +4,7 @@ import type { ViewStyle } from "@knitui/core";
 
 import type { AnimationStyle, DepthConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
+import { distanceZ } from "./zOrder";
 
 /**
  * A depth / zoom transition (Material "zoom" style): slides stay pinned at the
@@ -23,7 +24,7 @@ export function depthLayout(_base: BaseLayoutConfig, config: DepthConfig = {}): 
       progress <= 0
         ? interpolate(progress, [-1, 0], [outgoingScale, 1], Extrapolation.CLAMP)
         : interpolate(progress, [0, 1], [1, inactiveScale], Extrapolation.CLAMP);
-    const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
+    const zIndex = distanceZ(progress);
     return { transform: [{ scale }], opacity, zIndex };
   };
 }

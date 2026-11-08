@@ -4,6 +4,7 @@ import type { ViewStyle } from "@knitui/core";
 
 import type { AnimationStyle, ParallaxConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
+import { distanceZ } from "./zOrder";
 
 /**
  * Parallax: neighbours are pulled toward center (so they peek in at the edges),
@@ -24,7 +25,7 @@ export function parallaxLayout(
       [-1, 0, 1],
       [-size + scrollingOffset, 0, size - scrollingOffset],
     );
-    const zIndex = Math.round(interpolate(progress, [-1, 0, 1], [0, size, 0], Extrapolation.CLAMP));
+    const zIndex = distanceZ(progress);
     const scale = interpolate(
       progress,
       [-1, 0, 1],

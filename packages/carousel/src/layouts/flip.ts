@@ -1,9 +1,8 @@
-import { Extrapolation, interpolate } from "react-native-reanimated";
-
 import type { ViewStyle } from "@knitui/core";
 
 import type { AnimationStyle, FlipConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
+import { distanceZ } from "./zOrder";
 
 /**
  * A flip deck: slides stay pinned at the centre and rotate 180° about the chosen
@@ -23,7 +22,7 @@ export function flipLayout(_base: BaseLayoutConfig, config: FlipConfig = {}): An
     "worklet";
     const angle = progress * 180;
     const dist = Math.abs(progress);
-    const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
+    const zIndex = distanceZ(progress);
 
     const rot = rotateOnX ? { rotateX: `${angle}deg` } : { rotateY: `${angle}deg` };
 
@@ -33,9 +32,15 @@ export function flipLayout(_base: BaseLayoutConfig, config: FlipConfig = {}): An
     // converted.
     // Once a card turns past 90° its back faces the viewer; hide it so only the
     // front-facing slide shows through the stack.
+    //
+    // A slide two pages away has turned a full 360° and faces front again, so
+    // `backfaceVisibility` alone left every even-distance slide showing behind
+    // the active one. From one page out a slide is past 90° (back face) anyway,
+    // so hiding it there is invisible during the flip.
     return {
       transform: hasPerspective ? [{ perspective }, rot] : [rot],
       backfaceVisibility: "hidden",
+      opacity: dist < 1 ? 1 : 0,
       zIndex,
     };
   };

@@ -27,6 +27,9 @@ the `withKnitui` wrapper from `@knitui/plugins/next-plugin`.
 - **Modes**: normal, parallax, horizontal/vertical stack, and `customAnimation`.
 - **Loop** (with seamless auto-fill for 1–2 item lists), `vertical`, paging/snap, overscroll.
 - **Gesture + keyboard + wheel** input; `autoPlay` (reduced-motion & tab-visibility aware).
+  The pan locks to the carousel's axis, so the other axis stays with a parent (page, map,
+  outer carousel).
+- **Two-axis decks** (`crossAxis`): one deck, one `index`, two drag axes. See below.
 - **Virtualized** — mounts only a window of slides; large lists auto-virtualize.
 - **Remote / lazy data** via an async `source` that fetches on scroll (see below).
 - **Imperative** `ref` (`next`/`prev`/`scrollTo`/`getCurrentIndex`) + **controlled** `index`.
@@ -58,6 +61,42 @@ const ref = useRef(null);
   onPress={(i) => ref.current?.scrollTo({ index: i })}
 />;
 ```
+
+### Two-axis decks
+
+`crossAxis` adds a second drag axis to the same slides, `index` and callbacks. On a
+`vertical` stack, a vertical drag runs the stack and a horizontal drag pages sideways:
+
+```tsx
+const [index, setIndex] = useState(0);
+const ref = useRef<CarouselRef>(null);
+
+<Carousel
+  ref={ref}
+  data={cards}
+  vertical
+  loop={false}
+  mode="vertical-stack"
+  modeConfig={{ showLength: 3, stackInterval: 16 }}
+  crossAxis // or { mode: "normal", modeConfig, itemSize }
+  index={index}
+  onScrollEnd={setIndex}
+  renderItem={({ item }) => <Card item={item} />}
+/>;
+
+ref.current?.next({ axis: "cross" }); // side buttons: page with the sideways motion
+```
+
+- Each drag locks to the dominant axis of its first 10px and keeps it; an exact 45°
+  diagonal goes to the main axis; a smaller movement is a tap.
+- With a stack `mode` the deck stays put during a cross step: the front card slides out
+  sideways and the next comes forward from behind (paging back, the previous card slides
+  in over the deck). Any other `mode` takes `crossAxis.mode` for every slide.
+- Wheel: vertical wheel → the vertical axis, sideways wheel (trackpad, shift + wheel) →
+  the horizontal axis, one step per decisive scroll, never passed on to a parent. Arrow
+  keys: ↑/↓ and ←/→.
+- Web: the frame takes `touch-action: none` (the deck owns both pans). Transform track
+  only; `scrollMode="native"` ignores it.
 
 ## Native ("normal") scroll
 

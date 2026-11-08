@@ -1,9 +1,8 @@
-import { Extrapolation, interpolate } from "react-native-reanimated";
-
 import type { ViewStyle } from "@knitui/core";
 
 import type { AnimationStyle, CubeConfig } from "../types";
 import type { BaseLayoutConfig } from "./normal";
+import { distanceZ } from "./zOrder";
 
 /**
  * A rotating-cube transition: each slide is offset one page and hinges on the
@@ -27,7 +26,7 @@ export function cubeLayout(
     const angle = clamped * 90;
     const translate = progress * size;
     const dist = Math.abs(progress);
-    const zIndex = Math.round(interpolate(dist, [0, 1], [100, 0], Extrapolation.CLAMP));
+    const zIndex = distanceZ(progress);
     const opacity = dist >= 1 ? 0 : 1;
 
     // A slide past centre (progress > 0) hinges on its leading edge; before it, the
