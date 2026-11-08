@@ -98,3 +98,37 @@ describe("stackLayout — the deck past showLength", () => {
     for (let k = 1; k < zs.length; k++) expect(zs[k - 1]!).toBeGreaterThan(zs[k]!);
   });
 });
+
+describe("stackLayout — exit: back (the stepped-past card goes under, to the back)", () => {
+  const cfg = { showLength: 3, stackInterval: 16, exit: "back" as const };
+  const layout = stackLayout({ size: 300, vertical: true }, cfg);
+  const fly = stackLayout({ size: 300, vertical: true }, { showLength: 3, stackInterval: 16 });
+
+  it("stays above the incoming card until half-way, then drops under it and the deck", () => {
+    // Early in the step: still the front card.
+    expect(at(layout, -0.25).zIndex!).toBeGreaterThan(at(layout, 0.75).zIndex!);
+    // Past half-way: under the incoming card and under every visible deck card.
+    expect(at(layout, -0.6).zIndex!).toBeLessThan(at(layout, 0.4).zIndex!);
+    expect(at(layout, -0.6).zIndex!).toBeLessThan(at(layout, 2).zIndex!);
+    expect(at(layout, -1).zIndex!).toBeGreaterThanOrEqual(0);
+  });
+
+  it("swings out along the axis, then lands in the last deck slot, hidden", () => {
+    expect(seg(at(layout, -0.5), "translateY")).toBeCloseTo(-180); // 0.6 × 300 out
+    expect(seg(at(layout, -1), "translateY")).toBeCloseTo(32); // back slot = 2 × 16
+    expect(seg(at(layout, -1), "scale")).toBeCloseTo(0.92);
+    expect(at(layout, -1).opacity).toBe(0);
+    // Visible while it tucks under.
+    expect(at(layout, -0.6).opacity as number).toBeGreaterThan(0.5);
+  });
+
+  it("leaves the deck itself (progress >= 0) exactly as the default exit", () => {
+    for (const p of [0, 0.5, 1, 2, 2.5, 3, 6]) expect(at(layout, p)).toEqual(at(fly, p));
+  });
+
+  it("mirrors with snapDirection right", () => {
+    const right = stackLayout({ size: 300, vertical: true }, { ...cfg, snapDirection: "right" });
+    expect(seg(at(right, -1), "translateY")).toBeCloseTo(-32);
+    expect(seg(at(right, -0.5), "translateY")).toBeCloseTo(-180);
+  });
+});

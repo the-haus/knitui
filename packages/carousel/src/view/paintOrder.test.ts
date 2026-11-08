@@ -54,3 +54,12 @@ describe("paintOrder (native view order + settled zIndex)", () => {
     expect(order(slots)).toEqual([0, 1]);
   });
 });
+
+describe("paintOrder — exit: back", () => {
+  it("ranks the stepped-past card under the deck (Android view order)", () => {
+    const back = stackLayout(base, { showLength: 3, exit: "back" });
+    const o = order(paintOrder([0, 1, 2, 3, 4], 1, 20, false, back));
+    expect(o.slice(-3)).toEqual([3, 2, 1]);
+    expect(o.indexOf(0)).toBeLessThan(o.indexOf(3));
+  });
+});

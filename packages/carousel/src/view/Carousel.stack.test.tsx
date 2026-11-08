@@ -630,3 +630,165 @@ describe("two-axis deck — programmatic and keyboard steps", () => {
     expect(parentWheel).not.toHaveBeenCalled();
   });
 });
+
+describe("hotspot rail: stacks of different lengths inside a horizontal carousel", () => {
+  const SPOTS = [
+    { id: "a", count: 1 },
+    { id: "b", count: 3 },
+    { id: "c", count: 7 },
+  ];
+  const RAIL = { testID: "rail-pan" } as const;
+  const stackGesture = (id: string) => getByGestureTestId(`stack-${id}`) as never;
+  const STACK_GESTURES = Object.fromEntries(SPOTS.map((s) => [s.id, { testID: `stack-${s.id}` }]));
+
+  /** Visible cards of hotspot `id`, front first. */
+  function spotStack(id: string, count: number): number[] {
+    const rows: Array<{ k: number; o: number; z: number }> = [];
+    for (let k = 0; k < count; k++) {
+      const label = screen.queryByText(`card-${id}-${k}`);
+      if (!label) continue;
+      let el: HTMLElement | null = label;
+      while (el && el.style.willChange !== "transform") el = el.parentElement;
+      const o = el!.style.opacity === "" ? 1 : Number(el!.style.opacity);
+      rows.push({ k, o, z: Number(el!.style.zIndex || 0) });
+    }
+    return rows
+      .filter((r) => r.o > 0)
+      .sort((a, b) => b.z - a.z)
+      .map((r) => r.k);
+  }
+
+  function Rail({ log }: { log: string[] }) {
+    const [spot, setSpot] = React.useState(0);
+    const [pos, setPos] = React.useState<Record<string, number>>({});
+    return (
+      <Carousel
+        data={SPOTS}
+        loop={false}
+        itemSize={PAGE}
+        // Only the current hotspot is mounted: positions must survive remounts.
+        windowSize={1}
+        scrollAnimationDuration={DURATION}
+        style={{ width: PAGE, height: PAGE }}
+        gestureConfig={RAIL}
+        index={spot}
+        onScrollEnd={(i) => {
+          log.push(`rail:${i}`);
+          setSpot(i);
+        }}
+        keyExtractor={(s) => s.id}
+        renderItem={({ item: s }) => (
+          <Carousel
+            data={Array.from({ length: s.count }, (_, k) => k)}
+            vertical
+            loop={false}
+            mode="vertical-stack"
+            modeConfig={{ showLength: 3 }}
+            itemSize={PAGE}
+            scrollAnimationDuration={DURATION}
+            style={{ width: PAGE, height: PAGE }}
+            gestureConfig={STACK_GESTURES[s.id]}
+            index={pos[s.id] ?? 0}
+            defaultIndex={pos[s.id] ?? 0}
+            onScrollEnd={(i) => {
+              log.push(`${s.id}:${i}`);
+              setPos((p) => ({ ...p, [s.id]: i }));
+            }}
+            renderItem={({ item }) => <Text>{`card-${s.id}-${item}`}</Text>}
+          />
+        )}
+      />
+    );
+  }
+
+  it("each stack steps within its own length, and keeps its card across hotspot changes", async () => {
+    const log: string[] = [];
+    render(<Rail log={log} />);
+    const settle = async (entry: string) => {
+      await waitFor(() => expect(log[log.length - 1]).toBe(entry));
+      await act(async () => {});
+    };
+
+    // Hotspot a: one event. A vertical drag can't go anywhere.
+    expect(spotStack("a", 1)).toEqual([0]);
+    drag(stackGesture("a"), line(0, -70));
+    await settle("a:0");
+    expect(spotStack("a", 1)).toEqual([0]);
+
+    // Sideways → hotspot b (3 events), even when the drag starts on the stack.
+    drag(stackGesture("a"), line(-70, 2));
+    drag(getByGestureTestId("rail-pan") as never, line(-70, 2));
+    await settle("rail:1");
+    expect(spotStack("b", 3)).toEqual([0, 1, 2]);
+
+    // Up through b's three events; a fourth drag stops at the last one.
+    drag(stackGesture("b"), line(0, -70));
+    await settle("b:1");
+    expect(spotStack("b", 3)).toEqual([1, 2]);
+    drag(stackGesture("b"), line(0, -70));
+    await settle("b:2");
+    expect(spotStack("b", 3)).toEqual([2]);
+    drag(stackGesture("b"), line(0, -70));
+    await settle("b:2");
+
+    // → hotspot c (7 events): starts at its own first card.
+    drag(getByGestureTestId("rail-pan") as never, line(-70, 2));
+    await settle("rail:2");
+    expect(spotStack("c", 7)).toEqual([0, 1, 2]);
+    drag(stackGesture("c"), line(0, -70));
+    await settle("c:1");
+    expect(spotStack("c", 7)).toEqual([1, 2, 3]);
+
+    // ← back to b (its page was unmounted): still on its last card.
+    drag(getByGestureTestId("rail-pan") as never, line(70, 2));
+    await settle("rail:1");
+    expect(screen.queryByText("card-c-0")).toBeNull();
+    expect(spotStack("b", 3)).toEqual([2]);
+
+    // → c again: still on card 1.
+    drag(getByGestureTestId("rail-pan") as never, line(-70, 2));
+    await settle("rail:2");
+    expect(spotStack("c", 7)).toEqual([1, 2, 3]);
+
+    // The rail never moved on a vertical drag, the stacks never on a sideways one.
+    expect(log.filter((e) => e.startsWith("rail:"))).toEqual([
+      "rail:1",
+      "rail:2",
+      "rail:1",
+      "rail:2",
+    ]);
+  });
+});
+
+describe("stack deck — exit: back", () => {
+  it("the dragged card goes under the incoming one past half-way; at rest the deck is unchanged", async () => {
+    const ends: number[] = [];
+    render(
+      <ControlledDeck
+        modeConfig={{ showLength: 3, stackInterval: 16, exit: "back" }}
+        onEnd={(i) => ends.push(i)}
+      />,
+    );
+    const c = createGestureController<Record<string, number>>("deck-pan");
+    act(() => {
+      c.begin({ translationX: 0, translationY: 0 });
+      c.activate({ translationX: 0, translationY: -12 });
+      c.update({ translationX: 0, translationY: -25 });
+    });
+    // A quarter of the way: card 0 is still on top.
+    expect(zOf(0)).toBeGreaterThan(zOf(1));
+    act(() => c.update({ translationX: 0, translationY: -70 }));
+    // Past half-way: card 1 has come up on top; card 0 is under it and the deck, still visible.
+    expect(zOf(1)).toBeGreaterThan(zOf(0));
+    expect(zOf(2)).toBeGreaterThan(zOf(0));
+    expect(opacityOf(0)).toBeGreaterThan(0);
+    act(() => c.end({ translationX: 0, translationY: -70, velocityX: 0, velocityY: 0 }));
+    await waitFor(() => expect(ends).toEqual([1]));
+    expect(visibleStack()).toEqual([1, 2, 3]);
+
+    // And back: card 0 rises from behind the deck and lands on top.
+    drag(pan(), line(0, 70));
+    await waitFor(() => expect(ends).toEqual([1, 0]));
+    expect(visibleStack()).toEqual([0, 1, 2]);
+  });
+});

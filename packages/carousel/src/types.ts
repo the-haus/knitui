@@ -39,6 +39,14 @@ export interface StackConfig {
   rotateZDeg?: number;
   /** Which side the deck is anchored / cards exit toward (default "left"). */
   snapDirection?: "left" | "right";
+  /**
+   * Where a card goes when you step past it.
+   * - `"fly"` (default): it flies off over the deck, rotating and fading.
+   * - `"back"`: it swings out, tucks UNDER the incoming card half-way, and
+   *   slides back into the last deck slot (fading as it lands) — the card goes
+   *   to the back of the deck while the next one comes up on top.
+   */
+  exit?: "fly" | "back";
 }
 
 /** Tuning for `mode="fade"` — pinned slides that crossfade in place. */

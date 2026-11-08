@@ -321,7 +321,7 @@ const DECK_PAGE = DECK_CARD + DECK_PEEK;
 const DECK_WIDTH = 320;
 
 /** A real event card — image, copy, badge, buttons — the stack decks page through. */
-function DeckCard({ index }: { index: number }) {
+function DeckCard({ index, badge, caption }: { index: number; badge?: string; caption?: string }) {
   return (
     <Box
       style={{
@@ -343,13 +343,14 @@ function DeckCard({ index }: { index: number }) {
       />
       <Box style={{ padding: 12, gap: 6 }}>
         <Group gap="xs">
-          <Badge size="sm">{`#${index + 1}`}</Badge>
+          <Badge size="sm">{badge ?? `#${index + 1}`}</Badge>
           <Text style={{ fontWeight: "700", fontSize: 15 }} numberOfLines={1}>
             {DECK_TITLES[index % DECK_TITLES.length]}
           </Text>
         </Group>
         <Text style={{ color: "#687076", fontSize: 13 }} numberOfLines={2}>
-          {`Card ${index + 1} of ${DECK_SIZE}. Swipe up/down for the stack, sideways to page.`}
+          {caption ??
+            `Card ${index + 1} of ${DECK_SIZE}. Swipe up/down for the stack, sideways to page.`}
         </Text>
         <Group gap="xs">
           <Button size="xs" variant="light">
@@ -539,6 +540,114 @@ function StackOverMapDemo() {
 export const StackOverMap: Story = {
   name: "Stack · desktop card over a map",
   render: () => <StackOverMapDemo />,
+};
+
+/** Map hotspots, each holding a different number of events. */
+const HOTSPOTS = [
+  { id: "harbour", name: "Harbour", count: 1 },
+  { id: "park", name: "City Park", count: 3 },
+  { id: "market", name: "Old Market", count: 7 },
+  { id: "beach", name: "Beach", count: 20 },
+  { id: "station", name: "Station", count: 2 },
+  { id: "campus", name: "Campus", count: 12 },
+].map((spot, k, all) => ({
+  ...spot,
+  // Distinct event ids across hotspots so every card gets its own image.
+  events: Array.from(
+    { length: spot.count },
+    (_, e) => all.slice(0, k).reduce((n, s) => n + s.count, 0) + e,
+  ),
+}));
+type Hotspot = (typeof HOTSPOTS)[number];
+const HOTSPOT_STACK = { ...DECK_STACK, exit: "back" } as const;
+
+function HotspotStack({
+  spot,
+  index,
+  onIndex,
+}: {
+  spot: Hotspot;
+  index: number;
+  onIndex: (id: string, i: number) => void;
+}) {
+  const n = spot.events.length;
+  return (
+    <Box style={{ gap: 4 }}>
+      <Text style={{ fontWeight: "700", paddingHorizontal: 8 }}>
+        {`${spot.name} · ${index + 1} / ${n}`}
+      </Text>
+      <Carousel
+        data={spot.events}
+        vertical
+        loop={false}
+        mode="vertical-stack"
+        // `exit: "back"`: a card you swipe past tucks under the next one and goes
+        // to the back of the deck instead of flying off over it.
+        modeConfig={HOTSPOT_STACK}
+        itemHeight={DECK_PAGE}
+        // No `crossAxis`: the stack leaves horizontal drags to the hotspot rail.
+        index={index}
+        defaultIndex={index}
+        onScrollEnd={(i) => onIndex(spot.id, i)}
+        style={{ width: DECK_WIDTH, height: DECK_PAGE }}
+        testID={`hotspot-${spot.id}`}
+        renderItem={({ item, index: k }) => (
+          <DeckCard
+            index={item}
+            badge={`${k + 1}/${n}`}
+            caption={`${spot.name}: event ${k + 1} of ${n}. Up/down for this hotspot, sideways for the next.`}
+          />
+        )}
+      />
+    </Box>
+  );
+}
+
+function StackHotspotsDemo() {
+  const [hotspot, setHotspot] = React.useState(0);
+  // Each hotspot's position lives HERE, keyed by id, so a stack keeps its place
+  // when the rail virtualizes its page away and back.
+  const [deckIndex, setDeckIndex] = React.useState<Record<string, number>>({});
+  const onIndex = React.useCallback(
+    (id: string, i: number) => setDeckIndex((s) => (s[id] === i ? s : { ...s, [id]: i })),
+    [],
+  );
+  const spot = HOTSPOTS[hotspot]!;
+  return (
+    <Box style={{ gap: 8 }}>
+      <Carousel
+        data={HOTSPOTS}
+        loop={false}
+        itemWidth={DECK_WIDTH}
+        windowSize={3}
+        index={hotspot}
+        onScrollEnd={setHotspot}
+        withIndicators
+        style={{ width: DECK_WIDTH, height: DECK_PAGE + 48 }}
+        testID="carousel"
+        keyExtractor={(s) => s.id}
+        renderItem={({ item }) => (
+          <HotspotStack spot={item} index={deckIndex[item.id] ?? 0} onIndex={onIndex} />
+        )}
+      />
+      <Text style={{ color: "#687076", fontSize: 13 }}>
+        {`hotspot ${hotspot + 1} / ${HOTSPOTS.length} (${spot.name}, ${spot.count} events) · ` +
+          `card ${(deckIndex[spot.id] ?? 0) + 1}`}
+      </Text>
+    </Box>
+  );
+}
+
+/**
+ * A horizontal rail of map hotspots, each a vertical stack of its own length
+ * (1, 3, 7, 20, 2, 12 events). Swipe sideways to move between hotspots (the
+ * whole stack slides along); swipe up/down to go through that hotspot's events.
+ * Each stack remembers its card when you come back to it, and a card you swipe
+ * past goes under the next one, to the back of the deck (`exit: "back"`).
+ */
+export const StackHotspots: Story = {
+  name: "Stack · hotspots (varied counts)",
+  render: () => <StackHotspotsDemo />,
 };
 
 export const CustomAnimation: Story = {
