@@ -163,6 +163,12 @@
           "storybookId": "carousel--stack-vertical-only"
         },
         {
+          "name": "StackInvertDrag",
+          "description": "`invertDrag`: pull the pile DOWN for the next card, push it up to go back.",
+          "hasRender": true,
+          "storybookId": "carousel--stack-invert-drag"
+        },
+        {
           "name": "StackTwoAxes",
           "description": "One deck, one index: vertical drag = stack, horizontal drag = carousel paging.",
           "hasRender": true,

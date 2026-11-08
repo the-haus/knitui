@@ -419,6 +419,22 @@ export const StackVerticalOnly: Story = {
   render: () => <StackVerticalOnlyDemo />,
 };
 
+function StackInvertDragDemo() {
+  const deck = useDeck();
+  return (
+    <Box style={{ gap: 8 }}>
+      <Carousel {...deck.props} invertDrag testID="carousel" />
+      <DeckStatus index={deck.index} />
+    </Box>
+  );
+}
+
+/** `invertDrag`: pull the pile DOWN for the next card, push it up to go back. */
+export const StackInvertDrag: Story = {
+  name: "Stack · inverted drag",
+  render: () => <StackInvertDragDemo />,
+};
+
 function StackTwoAxesDemo() {
   const deck = useDeck();
   const ref = React.useRef<CarouselRef>(null);

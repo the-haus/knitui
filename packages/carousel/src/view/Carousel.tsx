@@ -170,6 +170,7 @@ function CarouselInner<T>(props: CarouselProps<T>, ref: React.Ref<CarouselRef>) 
     maxScrollDistancePerSwipe: props.maxScrollDistancePerSwipe,
     minScrollDistancePerSwipe: props.minScrollDistancePerSwipe,
     gestureConfig: props.gestureConfig,
+    invertDrag: props.invertDrag,
     cross: dragCross,
     onStart: core.onInteractionStart,
     onSettle: core.onInteractionEnd,
