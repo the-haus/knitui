@@ -792,3 +792,117 @@ describe("stack deck — exit: back", () => {
     expect(visibleStack()).toEqual([0, 1, 2]);
   });
 });
+
+describe("invertDrag", () => {
+  it("vertical: a drag DOWN steps +1, a drag UP steps back; the card follows the finger's sign flipped", async () => {
+    const ends: number[] = [];
+    render(<ControlledDeck invertDrag onEnd={(i) => ends.push(i)} />);
+    const c = createGestureController<Record<string, number>>("deck-pan");
+    act(() => {
+      c.begin({ translationX: 0, translationY: 0 });
+      c.activate({ translationX: 0, translationY: 12 });
+      c.update({ translationX: 0, translationY: 40 });
+    });
+    // Same motion as an UNinverted drag of -40: the front card leaves upward.
+    expect(translate(0, "Y")).toBeLessThan(0);
+    act(() => c.update({ translationX: 0, translationY: 60 }));
+    act(() => c.end({ translationX: 0, translationY: 60, velocityX: 0, velocityY: 0 }));
+    await waitFor(() => expect(ends).toEqual([1]));
+    expect(visibleStack()).toEqual([1, 2, 3]);
+
+    drag(pan(), line(0, -60));
+    await waitFor(() => expect(ends).toEqual([1, 0]));
+    expect(visibleStack()).toEqual([0, 1, 2]);
+  });
+
+  it("vertical: the drag that steps an uninverted deck forward does nothing at index 0", async () => {
+    const ends: number[] = [];
+    render(<ControlledDeck invertDrag overscrollEnabled={false} onEnd={(i) => ends.push(i)} />);
+    drag(pan(), line(0, -80));
+    await waitFor(() => expect(ends).toEqual([0]));
+  });
+
+  it("horizontal: a drag RIGHT steps +1, a drag LEFT steps back", async () => {
+    const ends: number[] = [];
+    render(
+      <ControlledDeck
+        invertDrag
+        vertical={false}
+        mode="horizontal-stack"
+        onEnd={(i) => ends.push(i)}
+      />,
+    );
+    drag(pan(), line(60, 0));
+    await waitFor(() => expect(ends).toEqual([1]));
+    drag(pan(), line(-60, 0));
+    await waitFor(() => expect(ends).toEqual([1, 0]));
+  });
+
+  it("a plain (non-stack) carousel inverts too", async () => {
+    const ends: number[] = [];
+    render(
+      <Carousel
+        data={DATA}
+        loop={false}
+        invertDrag
+        itemSize={PAGE}
+        scrollAnimationDuration={DURATION}
+        style={{ width: PAGE, height: PAGE }}
+        gestureConfig={GESTURE}
+        renderItem={renderItem}
+        onScrollEnd={(i) => ends.push(i)}
+      />,
+    );
+    drag(pan(), line(60, 0));
+    await waitFor(() => expect(ends).toEqual([1]));
+  });
+
+  it.each([
+    ["inverted, fling down", true, 900, 1],
+    ["inverted, fling up", true, -900, 0],
+    ["plain, fling down", false, 900, 0],
+    ["plain, fling up", false, -900, 1],
+  ] as const)("%s: a short fast flick follows the drag sign", async (_n, invert, vy, expected) => {
+    const ends: number[] = [];
+    render(<ControlledDeck invertDrag={invert} onEnd={(i) => ends.push(i)} />);
+    drag(pan(), line(0, Math.sign(vy) * 20), [0, vy]);
+    await waitFor(() => expect(ends).toEqual([expected]));
+  });
+
+  it("a slow inverted drag under half a page snaps back", async () => {
+    const ends: number[] = [];
+    render(<ControlledDeck invertDrag onEnd={(i) => ends.push(i)} />);
+    drag(pan(), line(0, 40), [0, 60]);
+    await waitFor(() => expect(ends).toEqual([0]));
+    expect(translate(0, "Y")).toBe(0);
+  });
+
+  it("two-axis: only the main axis flips; the cross drag keeps its direction", async () => {
+    const ends: number[] = [];
+    render(
+      <ControlledDeck invertDrag crossAxis={{ itemSize: PAGE }} onEnd={(i) => ends.push(i)} />,
+    );
+    drag(pan(), line(0, 60)); // down → next (inverted main)
+    await waitFor(() => expect(ends).toEqual([1]));
+    drag(pan(), line(-60, 0)); // left → next (cross, unchanged)
+    await waitFor(() => expect(ends).toEqual([1, 2]));
+    drag(pan(), line(60, 0)); // right → back
+    await waitFor(() => expect(ends).toEqual([1, 2, 1]));
+  });
+
+  it("wheel and keys keep their directions", async () => {
+    const ends: number[] = [];
+    render(<ControlledDeck invertDrag testID="deck" onEnd={(i) => ends.push(i)} />);
+    const frame = document.querySelector('[data-testid="deck"]') as HTMLElement;
+    act(() => {
+      frame.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    });
+    await waitFor(() => expect(ends).toEqual([1]));
+    act(() => {
+      frame.dispatchEvent(
+        new WheelEvent("wheel", { deltaX: 0, deltaY: 40, bubbles: true, cancelable: true }),
+      );
+    });
+    await waitFor(() => expect(ends).toEqual([1, 2]));
+  });
+});

@@ -5824,6 +5824,10 @@
       "snippet": "<StackVerticalOnlyDemo />",
       "full": "export const StackVerticalOnly: Story = {\n  name: \"Stack · vertical only\",\n  render: () => <StackVerticalOnlyDemo />,\n};"
     },
+    "StackInvertDrag": {
+      "snippet": "<StackInvertDragDemo />",
+      "full": "export const StackInvertDrag: Story = {\n  name: \"Stack · inverted drag\",\n  render: () => <StackInvertDragDemo />,\n};"
+    },
     "StackTwoAxes": {
       "snippet": "<StackTwoAxesDemo />",
       "full": "export const StackTwoAxes: Story = {\n  name: \"Stack · two axes\",\n  render: () => <StackTwoAxesDemo />,\n};"

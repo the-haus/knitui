@@ -38,6 +38,8 @@ export interface DragGestureParams {
   minScrollDistancePerSwipe?: number;
   /** Extra pan config merged UNDER the kit's own (`enabled` may be overridden). */
   gestureConfig?: CarouselGestureConfig;
+  /** The main-axis drag runs the other way round (`CarouselProps.invertDrag`). */
+  invertDrag?: boolean;
   /** Two-axis deck; null/undefined for a single-axis carousel. */
   cross?: DragCrossAxis | null;
   onStart: () => void;
@@ -95,7 +97,10 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
     cross,
     onStart,
     onSettle,
+    invertDrag = false,
   } = params;
+  /** The main axis's drag sign: -1 runs the carousel the other way round. */
+  const dragSign = invertDrag ? -1 : 1;
 
   const {
     enabled,
@@ -222,7 +227,9 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
         const l = lockFor(e.translationX, e.translationY);
         if (l === LOCK_NONE || l === LOCK_REJECT) return;
         if (l === LOCK_MAIN) {
-          offset.value = process(panStart.value + (vertical ? e.translationY : e.translationX));
+          offset.value = process(
+            panStart.value + dragSign * (vertical ? e.translationY : e.translationX),
+          );
         } else {
           const t = vertical ? e.translationX : e.translationY;
           offset.value = process(panStart.value + t * crossRatio());
@@ -242,9 +249,7 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
         }
         const velocity =
           l === LOCK_MAIN
-            ? vertical
-              ? e.velocityY
-              : e.velocityX
+            ? dragSign * (vertical ? e.velocityY : e.velocityX)
             : (vertical ? e.velocityX : e.velocityY) * crossRatio();
         const result = settle({
           offset: offset.value,
@@ -297,6 +302,7 @@ export function useDragGesture(params: DragGestureParams): PanGesture {
     gestureConfig,
     onStart,
     onSettle,
+    dragSign,
   ]);
 
   return usePanGesture(panConfig);

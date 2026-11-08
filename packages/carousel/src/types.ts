@@ -356,6 +356,15 @@ export interface CarouselProps<T> {
    * @example gestureConfig={{ activeOffsetX: [-10, 10], failOffsetY: [-5, 5] }}
    */
   gestureConfig?: CarouselGestureConfig;
+  /**
+   * Run the carousel the other way round under a drag: toward the END on a
+   * drag DOWN (vertical) or RIGHT (horizontal), and a fling likewise. Only the
+   * main-axis drag flips; the `crossAxis` drag, the wheel, the keys and the ref
+   * keep their directions. For a deck whose next card sits behind / above (a
+   * pile pulled down). Ignored with `scrollMode="native"` (the platform owns the
+   * scroll). Default false.
+   */
+  invertDrag?: boolean;
   /** Enable mouse-wheel / trackpad scrolling (web, default true). */
   wheelEnabled?: boolean;
   /** Enable arrow / Home / End keyboard navigation (web, default true). */
