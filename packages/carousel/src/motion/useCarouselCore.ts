@@ -299,8 +299,12 @@ export function useCarouselCore<T>(
   }, [config.itemSize, setSize]);
 
   // On a data-length change, keep the displayed item stable (clamp if it shrank).
+  // A change that leaves the active item in range (items appended) moves
+  // nothing: without a loop an item's offset doesn't depend on the count, and
+  // re-seating then cancelled a drag or settle in flight, snapping it back.
   React.useEffect(() => {
     if (!seededRef.current || !(size.value > 0)) return;
+    if (!loop && activeRef.current < count) return;
     const idx = clamp(activeRef.current, 0, Math.max(0, count - 1));
     const to = offsetFor(idx, size.value);
     offset.value = to;
