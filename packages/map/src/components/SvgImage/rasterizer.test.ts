@@ -96,6 +96,22 @@ describe("createRasterStore", () => {
     expect(store.getRequests()).not.toBe(first); // changed → new reference
   });
 
+  // RasterizerHost memoises each surface on `req`: a pending surface must see
+  // the SAME object in every snapshot, or every store change re-renders every
+  // pending <SvgXml> again (quadratic on a map with hundreds of icons).
+  it("hands a pending surface the same request object across snapshots", () => {
+    const store = createRasterStore();
+    store.acquire(req("a"));
+    const a = store.getRequests()[0];
+    store.acquire(req("b"));
+    store.acquire(req("a")); // a second consumer passes a fresh, equal object
+    store.acquire(req("c"));
+    store.resolve("b", "data:image/png;base64,x", 24);
+    const snapshot = store.getRequests();
+    expect(snapshot.map((r) => r.key)).toEqual(["a", "c"]);
+    expect(snapshot[0]).toBe(a);
+  });
+
   it("stores and reports a resolved uri", () => {
     const store = createRasterStore();
     store.acquire(req("a"));

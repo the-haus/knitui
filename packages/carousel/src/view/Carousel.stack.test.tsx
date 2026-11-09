@@ -906,3 +906,73 @@ describe("invertDrag", () => {
     await waitFor(() => expect(ends).toEqual([1, 2]));
   });
 });
+
+describe("data appended mid-gesture", () => {
+  /** A deck whose parent can grow its data (e.g. the next page of a feed). */
+  function GrowingDeck({
+    growRef,
+    ...props
+  }: Props & { growRef: { current: (() => void) | null }; onEnd: (i: number) => void }) {
+    const [data, setData] = React.useState(DATA.slice(0, 5));
+    growRef.current = () => setData((d) => [...d, ...DATA.slice(d.length, d.length + 5)]);
+    return <ControlledDeck data={data} {...props} />;
+  }
+
+  it("items appended while the drag is held: the card stays under the finger and lands", async () => {
+    const ends: number[] = [];
+    const grow: { current: (() => void) | null } = { current: null };
+    render(<GrowingDeck growRef={grow} onEnd={(i) => ends.push(i)} />);
+    const c = createGestureController<Record<string, number>>("deck-pan");
+    act(() => {
+      c.begin({ translationX: 0, translationY: 0 });
+      c.activate({ translationX: 0, translationY: -12 });
+      c.update({ translationX: 0, translationY: -40 });
+    });
+    const before = translate(0, "Y");
+    expect(before).toBeLessThan(0);
+    act(() => grow.current!());
+    expect(translate(0, "Y")).toBeCloseTo(before);
+    act(() => c.update({ translationX: 0, translationY: -60 }));
+    act(() => c.end({ translationX: 0, translationY: -60, velocityX: 0, velocityY: 0 }));
+    await waitFor(() => expect(ends).toEqual([1]));
+    expect(visibleStack()).toEqual([1, 2, 3]);
+  });
+
+  it("items appended while the settle animates: it still lands on the next card", async () => {
+    const ends: number[] = [];
+    const grow: { current: (() => void) | null } = { current: null };
+    render(
+      <GrowingDeck growRef={grow} scrollAnimationDuration={300} onEnd={(i) => ends.push(i)} />,
+    );
+    drag(pan(), line(0, -60));
+    // Mid-settle: the deck is between card 0 and card 1.
+    act(() => grow.current!());
+    await waitFor(() => expect(ends).toEqual([1]));
+    expect(visibleStack()).toEqual([1, 2, 3]);
+  });
+
+  it("items appended at rest leave the deck where it is", async () => {
+    const ends: number[] = [];
+    const grow: { current: (() => void) | null } = { current: null };
+    render(<GrowingDeck growRef={grow} onEnd={(i) => ends.push(i)} />);
+    drag(pan(), line(0, -60));
+    await waitFor(() => expect(ends).toEqual([1]));
+    act(() => grow.current!());
+    expect(visibleStack()).toEqual([1, 2, 3]);
+    expect(translate(1, "Y")).toBe(0);
+  });
+
+  it("data shrunk under the active item still clamps to the last one", () => {
+    const ref = React.createRef<CarouselRef>();
+    const setData: { current: ((d: number[]) => void) | null } = { current: null };
+    function Shrinking() {
+      const [data, set] = React.useState(DATA.slice(0, 8));
+      setData.current = set;
+      return <ControlledDeck carouselRef={ref} data={data} />;
+    }
+    render(<Shrinking />);
+    act(() => ref.current!.scrollTo({ index: 6, animated: false }));
+    act(() => setData.current!(DATA.slice(0, 3)));
+    expect(ref.current!.getCurrentIndex()).toBe(2);
+  });
+});

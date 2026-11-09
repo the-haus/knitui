@@ -15,7 +15,11 @@ import {
  * react-native-svg has a real, painted surface to rasterize from.
  * `collapsable={false}` stops Android from pruning the view before capture.
  */
-function RasterSurface({
+// Memoised: the host re-renders on every store change (each icon acquired or
+// resolved), and ~200 icons each re-drawing every other pending surface's
+// `<SvgXml>` was quadratic: about 1.5 s of JS a second for the first 15 s of
+// a map (Android, 2026-11-09). `req` is the slot's own object, stable per key.
+const RasterSurface = memo(function RasterSurface({
   req,
   store,
 }: {
@@ -44,7 +48,7 @@ function RasterSurface({
       <SvgXml xml={req.svg} override={{ ref, width: req.width, height: req.height }} />
     </View>
   );
-}
+});
 
 /**
  * Renders the offscreen SVG surfaces the rasterizer store currently needs. Mounted
