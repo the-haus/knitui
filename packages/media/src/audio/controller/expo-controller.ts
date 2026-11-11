@@ -126,6 +126,13 @@ export class ExpoAudioController extends BaseAudioController {
   private pendingSeek: number | null = null;
   /** Set when a stream gave out mid-track; stands even though the item stays loaded. */
   private streamFailure: AudioError | null = null;
+  /**
+   * Set by a load, until the new source reports anything but a finish. A finish
+   * report can reach {@link applyStatus} twice (the listener, then the iOS status
+   * bridge), and the second one lands after the playlist has already loaded the
+   * next track: read against that track it looks like a stream that gave out.
+   */
+  private finishIsStale = false;
   /** WEB: expo's backend never sets `isBuffering`, so the element's events do. */
   private elementBuffering = false;
   private detachElement: (() => void) | null = null;
@@ -249,6 +256,11 @@ export class ExpoAudioController extends BaseAudioController {
   }
 
   private ingestStatus(status: AudioStatus): void {
+    if (this.finishIsStale) {
+      // The finish of the source this load replaced, not of the one loading.
+      if (status.didJustFinish) return;
+      this.finishIsStale = false;
+    }
     // A backend reports an error once, and follows it with statuses that simply
     // don't mention it. It stands until the source loads (a `replace`/`retry` clears
     // it explicitly), otherwise a dead URL reads as "loading" forever.
@@ -410,6 +422,7 @@ export class ExpoAudioController extends BaseAudioController {
     this.replayToken++;
     this.pendingSeek = null;
     this.streamFailure = null;
+    this.finishIsStale = true;
     this.setState({
       status: "loading",
       currentTime: 0,

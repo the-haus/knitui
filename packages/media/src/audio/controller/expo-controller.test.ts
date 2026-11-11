@@ -295,6 +295,43 @@ describe("ExpoAudioController stream failures", () => {
   });
 });
 
+describe("ExpoAudioController finish reports after a load", () => {
+  it("ignores the replaced source's finish when it is reported again", () => {
+    const { player, controller } = make();
+    const finished = makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 });
+    player.currentTime = 30;
+    player.emit(finished);
+    expect(controller.state.ended).toBe(true);
+
+    // The playlist moves on; the same report then arrives a second time (iOS:
+    // the listener, then the status bridge), with the new track at its start.
+    controller.replace("https://a.test/next.mp3");
+    player.currentTime = 0;
+    controller.applyStatus(finished);
+
+    expect(controller.state.error).toBeNull();
+    expect(controller.state.status).toBe("loading");
+    expect(controller.state.ended).toBe(false);
+
+    player.currentTime = 1;
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 1, duration: 30 }));
+    expect(controller.state.status).toBe("readyToPlay");
+    expect(controller.state.playing).toBe(true);
+    expect(controller.state.error).toBeNull();
+  });
+
+  it("still ends the new source when it finishes", () => {
+    const { player, controller } = make();
+    controller.replace("https://a.test/next.mp3");
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 1, duration: 30 }));
+    player.currentTime = 30;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 }));
+
+    expect(controller.state.ended).toBe(true);
+    expect(controller.state.error).toBeNull();
+  });
+});
+
 describe("ExpoAudioController stall watchdog (web)", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
