@@ -128,7 +128,10 @@ interface Slot {
  * a small, bounded set (a per-category marker sheet), so keeping the last N data
  * URIs keyed by the existing content key makes a remount free.
  */
-const RESOLVED_CACHE_LIMIT = 64;
+// Sized for a full marker sheet: a map can register ~200 icons (pins, badges,
+// glyphs), and at 64 a remount of the map (a theme switch, coming back to it)
+// rasterized most of them again.
+const RESOLVED_CACHE_LIMIT = 512;
 
 export function createRasterStore(): RasterStore {
   const slots = new Map<string, Slot>();
@@ -173,8 +176,18 @@ export function createRasterStore(): RasterStore {
     snapshot = next;
   };
 
+  // Coalesced: one wake per tick, however many changes it holds. A map mounts
+  // ~200 icons in one commit, and each acquire (and each capture landing) used to
+  // wake every subscriber, the host and all ~200 `useRasterizedSvg`s, once per
+  // icon. The snapshot is already current when the wake runs.
+  let emitting = false;
   const emit = (): void => {
-    for (const listener of listeners) listener();
+    if (emitting) return;
+    emitting = true;
+    queueMicrotask(() => {
+      emitting = false;
+      for (const listener of listeners) listener();
+    });
   };
 
   return {

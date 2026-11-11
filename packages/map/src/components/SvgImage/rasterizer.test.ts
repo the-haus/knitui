@@ -120,17 +120,40 @@ describe("createRasterStore", () => {
     expect(store.getUri("a")).toBe("data:image/png;base64,AAAA");
   });
 
-  it("notifies subscribers on acquire, release, and first resolve", () => {
+  it("notifies subscribers on acquire, release, and first resolve", async () => {
     const store = createRasterStore();
     const listener = vi.fn();
     store.subscribe(listener);
 
     store.acquire(req("a"));
-    store.resolve("a", "uri-1");
-    store.resolve("a", "uri-1"); // unchanged → no notification
-    store.release("a");
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(1);
 
+    store.resolve("a", "uri-1");
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    store.resolve("a", "uri-1"); // unchanged → no notification
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    store.release("a");
+    await Promise.resolve();
     expect(listener).toHaveBeenCalledTimes(3);
+  });
+
+  it("wakes subscribers once for the changes of one tick, with the snapshot current", async () => {
+    const store = createRasterStore();
+    const seen: number[] = [];
+    store.subscribe(() => seen.push(store.getRequests().length));
+
+    store.acquire(req("a"));
+    store.acquire(req("b"));
+    store.acquire(req("c"));
+    expect(seen).toEqual([]);
+
+    await Promise.resolve();
+    expect(seen).toEqual([3]);
   });
 
   it("ignores a late resolve for a released surface", () => {
