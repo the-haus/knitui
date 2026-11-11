@@ -127,12 +127,28 @@ export class ExpoAudioController extends BaseAudioController {
   /** Set when a stream gave out mid-track; stands even though the item stays loaded. */
   private streamFailure: AudioError | null = null;
   /**
-   * Set by a load, until the new source reports anything but a finish. A finish
-   * report can reach {@link applyStatus} twice (the listener, then the iOS status
-   * bridge), and the second one lands after the playlist has already loaded the
-   * next track: read against that track it looks like a stream that gave out.
+   * Set by a load, until the new source reports itself loaded. A finish reported
+   * before that is the replaced source's, arriving late: read against the new
+   * track's position it would look like a stream that gave out.
    */
   private finishIsStale = false;
+  /**
+   * The status objects already ingested. iOS hands the SAME object to the
+   * constructor's listener and, a render later, to the status bridge; the second
+   * delivery can land after a finish has already moved a playlist on, so it must be
+   * a true no-op, which the snapshot's own de-dupe cannot promise once the state has
+   * changed in between.
+   */
+  private ingested = new WeakSet<object>();
+  /**
+   * Whether the backend has reported playing since play was last asked for, and
+   * whether the request has been repeated. AVFoundation can drop a play made as a
+   * track ends (its own pause-at-end lands after it), leaving the next track loaded
+   * and silent: a request still standing when the source reports loaded, idle and
+   * not buffering is made once more.
+   */
+  private playHonoured = false;
+  private playRepeated = false;
   /** WEB: expo's backend never sets `isBuffering`, so the element's events do. */
   private elementBuffering = false;
   private detachElement: (() => void) | null = null;
@@ -176,8 +192,9 @@ export class ExpoAudioController extends BaseAudioController {
     // `useMemo`) never receives `playbackStatusUpdate` — playback runs but no
     // status ever reaches JS, freezing the whole snapshot. So on iOS the status is
     // ALSO driven from a commit-phase hook via {@link applyStatus} (see
-    // `<AudioStatusBridge>`); `setState` de-dupes, so the redundant feed on
-    // web/Android is a harmless no-op.
+    // `<AudioStatusBridge>`). Where both feeds deliver (seen on iOS with expo-audio
+    // 58: the same status object, the bridge a render behind), `applyStatus` takes
+    // each object once.
     this.subscriptions.push(
       p.addListener("playbackStatusUpdate", (status: AudioStatus) => this.applyStatus(status)),
     );
@@ -235,8 +252,8 @@ export class ExpoAudioController extends BaseAudioController {
   /**
    * Feed a backend `AudioStatus` into the snapshot. Public so a React status
    * bridge can drive it on iOS, where the constructor-attached `addListener`
-   * doesn't deliver events (see {@link bindEvents}). Idempotent via `setState`
-   * de-dupe, so the imperative listener and the bridge can both call it.
+   * may not deliver events (see {@link bindEvents}). Idempotent per status object,
+   * so the imperative listener and the bridge can both call it.
    *
    * Same-file isolation: ignore a SIBLING player's status leaking onto a shared
    * bus (the web backend, two players from the same source). We adopt the id from
@@ -252,6 +269,11 @@ export class ExpoAudioController extends BaseAudioController {
       if (id === this.player.id || this.ownStatusId == null) this.ownStatusId = id;
       else if (id !== this.ownStatusId) return;
     }
+    // One delivery per status object, however many feeds carry it.
+    if (status != null && typeof status === "object") {
+      if (this.ingested.has(status)) return;
+      this.ingested.add(status);
+    }
     this.ingestStatus(status);
   }
 
@@ -259,7 +281,7 @@ export class ExpoAudioController extends BaseAudioController {
     if (this.finishIsStale) {
       // The finish of the source this load replaced, not of the one loading.
       if (status.didJustFinish) return;
-      this.finishIsStale = false;
+      if (status.isLoaded) this.finishIsStale = false;
     }
     // A backend reports an error once, and follows it with statuses that simply
     // don't mention it. It stands until the source loads (a `replace`/`retry` clears
@@ -296,6 +318,20 @@ export class ExpoAudioController extends BaseAudioController {
       ended: !cutShort && (status.didJustFinish || (this._state.ended && !status.playing)),
       error,
     });
+    if (status.playing) {
+      this.playHonoured = true;
+    } else if (
+      this.wantsPlay &&
+      !this.playHonoured &&
+      !this.playRepeated &&
+      !error &&
+      status.isLoaded &&
+      !buffering &&
+      !status.didJustFinish
+    ) {
+      this.playRepeated = true;
+      this.player.play();
+    }
     if (status.isLoaded && this.pendingSeek !== null) {
       const target = this.pendingSeek;
       this.pendingSeek = null;
@@ -332,6 +368,13 @@ export class ExpoAudioController extends BaseAudioController {
       this.retry();
       return;
     }
+    this.requestPlay();
+  }
+
+  /** Ask the backend to play, and watch for it being honoured (see `playHonoured`). */
+  private requestPlay(): void {
+    this.playHonoured = false;
+    this.playRepeated = false;
     this.player.play();
   }
 
@@ -349,7 +392,7 @@ export class ExpoAudioController extends BaseAudioController {
     // only then rewind, leaving the player stopped at 0:00.
     const token = ++this.replayToken;
     const start = (): void => {
-      if (token === this.replayToken) this.player.play();
+      if (token === this.replayToken) this.requestPlay();
     };
     void this.player.seekTo(0).then(start, start);
   }
@@ -433,7 +476,7 @@ export class ExpoAudioController extends BaseAudioController {
     });
     this.player.replace(source as ExpoAudioSource);
     this.bindElementBuffering();
-    if (this.wantsPlay) this.player.play();
+    if (this.wantsPlay) this.requestPlay();
   }
 
   /* lock screen ------------------------------------------------------------- */

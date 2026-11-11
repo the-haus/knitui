@@ -12,9 +12,10 @@ import { useAudioPlayerStatus } from "expo-audio";
  * `useAudioPlayerStatus` subscribes the way expo-audio's own hooks do — in a
  * mounted effect on the retained player — which delivers reliably on iOS.
  *
- * It feeds every status into {@link ExpoAudioController.applyStatus}; `setState`
- * de-dupes, so on platforms where the imperative listener already fires this is a
- * harmless no-op rather than a double update.
+ * It feeds every status into {@link ExpoAudioController.applyStatus}, which takes
+ * each status object once: where the imperative listener fires too, this second
+ * delivery (a render later, so possibly after the controller has moved on) is a
+ * no-op rather than a double update.
  */
 import * as React from "react";
 
