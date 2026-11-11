@@ -1326,6 +1326,19 @@
       "slug": "carousel",
       "releases": [
         {
+          "version": "1.3.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "A change of the data's shape no longer remounts the slides around the active one. The track went back to its default position in an effect, a frame after the new data had rendered around the old centre; a slide whose index moved with the data (a controlled carousel whose list was re-sorted or cut) fell outside the window for that frame and was unmounted and mounted again, reloading its pictures and losing its state. The position now changes in the render that brings the new shape, and a moved `defaultIndex` counts as a new default position."
+            },
+            {
+              "kind": "patch",
+              "text": "One wheel step per gesture on web. A trackpad swipe keeps sending wheel events for a second or more of inertia, well past the cooldown, and each stretch of it over the threshold paged again: one swipe moved two or three pages. A gesture now ends on a pause, or when the deltas grow again after decaying (a second swipe made inside the first one's tail); a mouse wheel's notches still each step. A vertical carousel also leaves a mostly sideways scroll alone, so a horizontal carousel around it (a rail of vertical stacks) receives its swipes."
+            }
+          ]
+        },
+        {
           "version": "1.3.1",
           "changes": [
             {
@@ -1732,6 +1745,15 @@
       "slug": "map",
       "releases": [
         {
+          "version": "0.6.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "The SVG raster store wakes its subscribers once per tick, not once per change. A map that mounts ~200 icons in one commit woke the host and every `useRasterizedSvg` once per icon, for each acquire and again for each capture that landed. The cache of finished bitmaps also holds 512 entries (was 64), so a map with a full marker sheet no longer rasterizes most of it again on a remount."
+            }
+          ]
+        },
+        {
           "version": "0.6.1",
           "changes": [
             {
@@ -1867,6 +1889,15 @@
       "name": "@knitui/media",
       "slug": "media",
       "releases": [
+        {
+          "version": "1.1.5",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "A playlist no longer shows \"The connection was lost before the track finished.\" when it moves to the next track on iOS. A track's finish report could reach the controller twice (its own listener, then the iOS status bridge); the second one arrived after the next track had loaded, and read against that track's position it looked like a stream that gave out. The player then stayed in the error state while the next track played, and the queue stopped advancing. A finish report that follows a load is now ignored until the new source has reported itself loaded. Each status object is also taken once, however many feeds deliver it, so the bridge's later copy of any status can no longer overwrite newer state. A play request the backend dropped is repeated once. On iOS a play made as a track ends can lose to AVFoundation's own pause-at-end, which left the next track of a playlist loaded but silent; when a source reports loaded, idle and not buffering while play is still wanted and was never reported as started, the controller asks again."
+            }
+          ]
+        },
         {
           "version": "1.1.4",
           "changes": [
@@ -3601,6 +3632,24 @@
   ],
   "timeline": [
     {
+      "version": "1.3.2",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "A change of the data's shape no longer remounts the slides around the active one. The track went back to its default position in an effect, a frame after the new data had rendered around the old centre; a slide whose index moved with the data (a controlled carousel whose list was re-sorted or cut) fell outside the window for that frame and was unmounted and mounted again, reloading its pictures and losing its state. The position now changes in the render that brings the new shape, and a moved `defaultIndex` counts as a new default position."
+            },
+            {
+              "kind": "patch",
+              "text": "One wheel step per gesture on web. A trackpad swipe keeps sending wheel events for a second or more of inertia, well past the cooldown, and each stretch of it over the threshold paged again: one swipe moved two or three pages. A gesture now ends on a pause, or when the deltas grow again after decaying (a second swipe made inside the first one's tail); a mouse wheel's notches still each step. A vertical carousel also leaves a mostly sideways scroll alone, so a horizontal carousel around it (a rail of vertical stacks) receives its swipes."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.1",
       "entries": [
         {
@@ -3858,6 +3907,20 @@
             {
               "kind": "patch",
               "text": "@knitui/hooks@1.2.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.1.5",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "A playlist no longer shows \"The connection was lost before the track finished.\" when it moves to the next track on iOS. A track's finish report could reach the controller twice (its own listener, then the iOS status bridge); the second one arrived after the next track had loaded, and read against that track's position it looked like a stream that gave out. The player then stayed in the error state while the next track played, and the queue stopped advancing. A finish report that follows a load is now ignored until the new source has reported itself loaded. Each status object is also taken once, however many feeds deliver it, so the bridge's later copy of any status can no longer overwrite newer state. A play request the backend dropped is repeated once. On iOS a play made as a track ends can lose to AVFoundation's own pause-at-end, which left the next track of a playlist loaded but silent; when a source reports loaded, idle and not buffering while play is still wanted and was never reported as started, the controller asks again."
             }
           ]
         }
@@ -5278,6 +5341,20 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[59d065b] - @knitui/core@0.7.0 - @knitui/hooks@0.7.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.6.2",
+      "entries": [
+        {
+          "package": "@knitui/map",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "The SVG raster store wakes its subscribers once per tick, not once per change. A map that mounts ~200 icons in one commit woke the host and every `useRasterizedSvg` once per icon, for each acquire and again for each capture that landed. The cache of finished bitmaps also holds 512 entries (was 64), so a map with a full marker sheet no longer rasterizes most of it again on a remount."
             }
           ]
         }

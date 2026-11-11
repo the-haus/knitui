@@ -1,5 +1,12 @@
 # @knitui/carousel
 
+## 1.3.2
+
+### Patch Changes
+
+- 7306fd9: A change of the data's shape no longer remounts the slides around the active one. The track went back to its default position in an effect, a frame after the new data had rendered around the old centre; a slide whose index moved with the data (a controlled carousel whose list was re-sorted or cut) fell outside the window for that frame and was unmounted and mounted again, reloading its pictures and losing its state. The position now changes in the render that brings the new shape, and a moved `defaultIndex` counts as a new default position.
+- 7306fd9: One wheel step per gesture on web. A trackpad swipe keeps sending wheel events for a second or more of inertia, well past the cooldown, and each stretch of it over the threshold paged again: one swipe moved two or three pages. A gesture now ends on a pause, or when the deltas grow again after decaying (a second swipe made inside the first one's tail); a mouse wheel's notches still each step. A vertical carousel also leaves a mostly sideways scroll alone, so a horizontal carousel around it (a rail of vertical stacks) receives its swipes.
+
 ## 1.3.1
 
 ### Patch Changes
