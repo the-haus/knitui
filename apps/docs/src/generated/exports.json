@@ -181,7 +181,7 @@
     {
       "name": "@knitui/carousel",
       "slug": "carousel",
-      "version": "1.3.1",
+      "version": "1.3.2",
       "description": "Cross-platform carousel for Knit UI (Embla-style engine).",
       "private": false,
       "dependencies": [
@@ -213,7 +213,7 @@
     {
       "name": "@knitui/map",
       "slug": "map",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "description": "Cross-platform MapLibre map surface for Knit UI.",
       "private": false,
       "dependencies": [],
@@ -246,7 +246,7 @@
     {
       "name": "@knitui/media",
       "slug": "media",
-      "version": "1.1.4",
+      "version": "1.1.5",
       "description": "Audio and video players, playlists and visualizers for Knit UI.",
       "private": false,
       "dependencies": [
