@@ -98,13 +98,25 @@ function TrackInner<T>(props: TrackProps<T>) {
     onCenter,
   });
 
-  // Reset to the default position when the data shape changes.
-  React.useEffect(() => {
+  // Reset to the default position when the data shape changes — IN the render
+  // that brings the new shape (a state adjusted while rendering), not in an
+  // effect after it: the effect left one committed frame drawing the NEW data
+  // around the OLD center, so a slide whose index moved with the data (a
+  // controlled carousel whose list was re-sorted or cut) was outside the
+  // window for that frame and was unmounted and mounted again: its pictures
+  // reloaded and its state was lost. A moved `defaultIndex` is a new default
+  // position too (the caller keeps it on the slide it shows).
+  const shape = `${count}|${windowSize}|${loop}|${defaultIndex}`;
+  const [shapeWas, setShapeWas] = React.useState(shape);
+  if (shape !== shapeWas) {
+    setShapeWas(shape);
     setCenter(defaultIndex);
+  }
+  React.useEffect(() => {
     centerRef.current = defaultIndex;
     directionRef.current = 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [count, windowSize, loop]);
+  }, [shape]);
 
   // The mounted (drawn) set: a tight window centered on the active item.
   const mounted = React.useMemo(

@@ -295,6 +295,125 @@ describe("ExpoAudioController stream failures", () => {
   });
 });
 
+describe("ExpoAudioController finish reports after a load", () => {
+  it("ignores the replaced source's finish when it is reported again", () => {
+    const { player, controller } = make();
+    const finished = makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 });
+    player.currentTime = 30;
+    player.emit(finished);
+    expect(controller.state.ended).toBe(true);
+
+    // The playlist moves on; the same report then arrives a second time (iOS:
+    // the listener, then the status bridge), with the new track at its start.
+    controller.replace("https://a.test/next.mp3");
+    player.currentTime = 0;
+    controller.applyStatus(finished);
+
+    expect(controller.state.error).toBeNull();
+    expect(controller.state.status).toBe("loading");
+    expect(controller.state.ended).toBe(false);
+
+    player.currentTime = 1;
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 1, duration: 30 }));
+    expect(controller.state.status).toBe("readyToPlay");
+    expect(controller.state.playing).toBe(true);
+    expect(controller.state.error).toBeNull();
+  });
+
+  it("takes one status object once, whichever feed brings it again", () => {
+    const { player, controller } = make();
+    const playing = makeStatus("player-A", { playing: true, currentTime: 12, duration: 30 });
+    player.emit(playing);
+    controller.pause();
+    player.emit(makeStatus("player-A", { currentTime: 13, duration: 30 }));
+    expect(controller.state.playing).toBe(false);
+
+    // The bridge, a render behind, with the object the listener already delivered.
+    controller.applyStatus(playing);
+
+    expect(controller.state.playing).toBe(false);
+    expect(controller.state.currentTime).toBe(13);
+  });
+
+  it("ignores a copy of the old finish that arrives while the new source loads", () => {
+    const { player, controller } = make();
+    player.currentTime = 30;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 }));
+
+    controller.replace("https://a.test/next.mp3");
+    player.currentTime = 0;
+    player.emit(makeStatus("player-A", { isLoaded: false, isBuffering: true }));
+    // Not the same object this time: a backend that reports the finish again.
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 }));
+
+    expect(controller.state.error).toBeNull();
+    expect(controller.state.ended).toBe(false);
+
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 1, duration: 30 }));
+    expect(controller.state.status).toBe("readyToPlay");
+  });
+
+  it("still ends the new source when it finishes", () => {
+    const { player, controller } = make();
+    controller.replace("https://a.test/next.mp3");
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 1, duration: 30 }));
+    player.currentTime = 30;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 }));
+
+    expect(controller.state.ended).toBe(true);
+    expect(controller.state.error).toBeNull();
+  });
+});
+
+describe("ExpoAudioController play requests the backend dropped", () => {
+  it("asks once more when the next track loads and stays silent", () => {
+    const { player, controller } = make();
+    controller.play();
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 29, duration: 30 }));
+    player.currentTime = 30;
+    player.emit(makeStatus("player-A", { didJustFinish: true, currentTime: 30, duration: 30 }));
+
+    // What a playlist does on a finish.
+    controller.replace("https://a.test/next.mp3");
+    controller.play();
+    player.calls = [];
+    player.currentTime = 0;
+    player.emit(makeStatus("player-A", { isLoaded: false, isBuffering: true }));
+    expect(player.calls).toEqual([]);
+
+    player.emit(makeStatus("player-A", { duration: 30 }));
+    expect(player.calls).toEqual(["play"]);
+
+    // Once only: a backend that will not play is not asked on every status.
+    player.emit(makeStatus("player-A", { duration: 30 }));
+    expect(player.calls).toEqual(["play"]);
+  });
+
+  it("leaves a request alone once the backend has honoured it", () => {
+    const { player, controller } = make();
+    controller.play();
+    player.emit(makeStatus("player-A", { playing: true, currentTime: 1, duration: 30 }));
+    player.calls = [];
+
+    // The backend pausing on its own (an interruption) is not ours to undo.
+    player.emit(makeStatus("player-A", { currentTime: 2, duration: 30 }));
+
+    expect(player.calls).toEqual([]);
+    expect(controller.state.playing).toBe(false);
+  });
+
+  it("does not ask again after a pause", () => {
+    const { player, controller } = make();
+    controller.play();
+    controller.pause();
+    player.calls = [];
+
+    player.emit(makeStatus("player-A", { duration: 30 }));
+
+    expect(player.calls).toEqual([]);
+  });
+});
+
 describe("ExpoAudioController stall watchdog (web)", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
