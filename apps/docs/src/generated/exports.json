@@ -246,14 +246,15 @@
     {
       "name": "@knitui/media",
       "slug": "media",
-      "version": "1.1.5",
+      "version": "2.0.0",
       "description": "Audio and video players, playlists and visualizers for Knit UI.",
       "private": false,
       "dependencies": [
         "@knitui/components",
         "@knitui/core",
         "@knitui/hooks",
-        "@knitui/icons"
+        "@knitui/icons",
+        "hls.js"
       ],
       "peerDependencies": [
         "expo",
@@ -368,7 +369,7 @@
     {
       "name": "@knitui/plugins",
       "slug": "plugins",
-      "version": "1.0.4",
+      "version": "1.1.0",
       "description": "Pre-configured Tamagui build-tool plugins for the knitui UI kit (babel, metro, next, vite, webpack) plus the Next.js SSR provider.",
       "private": false,
       "dependencies": [
