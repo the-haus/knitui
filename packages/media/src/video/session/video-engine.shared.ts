@@ -13,7 +13,12 @@ import {
 } from "../../session/media-session.shared";
 import type { VideoController } from "../controller/video-controller-base";
 import { createInitialState } from "../engine";
-import type { VideoControllerState, VideoPlaybackOptions, VideoSource } from "../types";
+import type {
+  VideoAudioMixingMode,
+  VideoControllerState,
+  VideoPlaybackOptions,
+  VideoSource,
+} from "../types";
 
 type VideoMediaSession = MediaSession<VideoController, VideoControllerState, VideoSource>;
 
@@ -74,11 +79,17 @@ export class VideoControllerFacade
 export interface VideoEngine {
   readonly session: VideoMediaSession;
   getFacade(id: string): VideoController;
+  /**
+   * The mixing mode for every player that chose none of its own. The media hub
+   * sets it; a player's own `audioMixingMode` wins while that player is active.
+   */
+  setDefaultAudioMixingMode(mode: VideoAudioMixingMode): void;
   dispose(): void;
 }
 
 /** Build an engine around an already-constructed real controller. */
 export function buildVideoEngine(controller: VideoController): VideoEngine {
+  let defaultMixing: VideoAudioMixingMode | undefined;
   const session: VideoMediaSession = new MediaSession({
     controller,
     createIdleState: (d) => createInitialState(commonIdleFields(d)),
@@ -94,10 +105,14 @@ export function buildVideoEngine(controller: VideoController): VideoEngine {
         maxResolution: options.maxResolution ?? null,
         keepAwake: options.keepAwake ?? true,
         backgroundPlayback: options.backgroundPlayback ?? false,
-        ...(options.buffer && { buffer: options.buffer }),
-        // Left alone unless this player chose one: the hub owns the default.
-        ...(options.audioMixingMode && { audioMixingMode: options.audioMixingMode }),
+        // Back to the player's own buffering first, then this player's tuning.
+        buffer: null,
+        // This player's choice, else the default the hub set (if it set one).
+        ...((options.audioMixingMode ?? defaultMixing) && {
+          audioMixingMode: options.audioMixingMode ?? defaultMixing,
+        }),
       });
+      if (options.buffer) c.setPlaybackOptions({ buffer: options.buffer });
     },
     onDeactivate: (c) => {
       if (c.state.fullscreen) void c.exitFullscreen();
@@ -117,6 +132,12 @@ export function buildVideoEngine(controller: VideoController): VideoEngine {
         facades.set(id, facade);
       }
       return facade;
+    },
+    setDefaultAudioMixingMode(mode) {
+      defaultMixing = mode;
+      const active = session.activeId ? session.getConfig(session.activeId) : undefined;
+      const own = (active as VideoPlaybackOptions | undefined)?.audioMixingMode;
+      if (!own) controller.setPlaybackOptions({ audioMixingMode: mode });
     },
     dispose() {
       facades.clear();

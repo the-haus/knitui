@@ -397,6 +397,13 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
     player.isMuted = previous.isMuted
     player.allowsExternalPlayback = previous.allowsExternalPlayback
     ref = player
+    // The preload may already have found that this source has to be played
+    // directly (a live or chunked stream). Nobody held the asset when it said so,
+    // so the request went unheard and the preloaded item has failed.
+    let loader = (player.currentItem?.asset as? AVURLAsset)?.resourceLoader.delegate as? MediaResourceLoaderDelegate
+    if loader?.directPlaybackRequested == true, let item = AudioUtils.createDirectAVPlayerItem(from: source) {
+      player.replaceCurrentItem(with: item)
+    }
     setupPublisher()
 
     if wasSamplingEnabled {

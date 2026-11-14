@@ -182,8 +182,8 @@ export interface VideoPlaybackOptions {
    * `backgroundPlayback` in the config plugin. (`canPlayInBackground`)
    */
   backgroundPlayback?: boolean;
-  /** Buffer tuning. (`canTuneBuffer`) */
-  buffer?: VideoBufferOptions;
+  /** Buffer tuning; `null` goes back to the player's own buffering. (`canTuneBuffer`) */
+  buffer?: VideoBufferOptions | null;
   /**
    * How this video's sound sits with other audio, from this app or another:
    * `"auto"` (the platform default: take over), `"mixWithOthers"`, `"duckOthers"`

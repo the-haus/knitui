@@ -30,6 +30,16 @@ import type { VideoThumbnail } from "./VideoThumbnail";
 /** The one Web Audio source node each sampled `<video>` owns for its lifetime. */
 const samplerSources = new WeakMap<HTMLVideoElement, MediaElementAudioSourceNode>();
 
+/**
+ * Whether `video` can no longer play `uri` with sound. Once an element has been
+ * sampled its output runs through a Web Audio source node, which cannot be taken
+ * off again and which outputs silence for a cross-origin source loaded without
+ * CORS. Call it after the source's `crossOrigin` has been applied to the element.
+ */
+function needsFreshElement(video: HTMLVideoElement, uri: string): boolean {
+  return samplerSources.has(video) && !video.crossOrigin && isCrossOrigin(uri);
+}
+
 function isCrossOrigin(src: string): boolean {
   try {
     return new URL(src, window.location.href).origin !== window.location.origin;
@@ -143,6 +153,21 @@ export default class VideoPlayerWeb
   previousSrc: VideoSource = null;
   _mountedVideos: Set<HTMLVideoElement> = new Set();
   _audioNodes: Set<MediaElementAudioSourceNode> = new Set();
+  /** Views waiting to hear that their `<video>` has to be replaced by a new one. */
+  private _elementResetListeners = new Set<(video: HTMLVideoElement) => void>();
+  /** Set while a replaced element is on its way: the new one starts playing on mount. */
+  private _playOnMount = false;
+
+  /**
+   * Lets a view learn that its element can no longer play the player's source
+   * and has to be rendered anew (see {@link needsFreshElement}).
+   */
+  _onElementReset(listener: (video: HTMLVideoElement) => void): () => void {
+    this._elementResetListeners.add(listener);
+    return () => {
+      this._elementResetListeners.delete(listener);
+    };
+  }
   playing: boolean = false;
   _muted: boolean = false;
   _volume: number = 1;
@@ -328,6 +353,11 @@ export default class VideoPlayerWeb
     // The view leaves `src` off for a stream hls.js has to play (see VideoView).
     syncHlsSource(video, getSourceUri(this.src), hlsOptions(this.src));
     this._synchronizeWithFirstVideo(video);
+    if (this._playOnMount) {
+      // The element this one replaces was asked to play the current source.
+      this._playOnMount = false;
+      Promise.resolve(video.play()).catch(() => {});
+    }
     this._syncSampler();
   }
 
@@ -381,16 +411,29 @@ export default class VideoPlayerWeb
   }
 
   pause(): void {
+    this._playOnMount = false;
     this._mountedVideos.forEach((video) => {
       video.pause();
     });
   }
 
   replace(source: VideoSource): void {
+    const resets: HTMLVideoElement[] = [];
     this._mountedVideos.forEach((video) => {
       const uri = getSourceUri(source);
       video.pause();
       applyCrossOrigin(video, source);
+      if (uri && needsFreshElement(video, uri) && this._elementResetListeners.size > 0) {
+        // This element's sound goes through Web Audio for good, and Web Audio
+        // plays a cross-origin source without CORS as silence. The view renders
+        // a new element, which loads the source from its `src` and plays it.
+        detachHls(video);
+        video.removeAttribute("src");
+        video.load();
+        this._playOnMount = true;
+        resets.push(video);
+        return;
+      }
       if (uri) {
         // An HLS stream this browser can't play itself goes through hls.js, which
         // owns the element's `src` from here on.
@@ -416,6 +459,10 @@ export default class VideoPlayerWeb
     this.previousSrc = this.src;
     this.src = source;
     this.playing = true;
+    // After `src` is the new source: the view reads it for the new element.
+    for (const video of resets) {
+      this._elementResetListeners.forEach((listener) => listener(video));
+    }
     // The new source may be readable where the old one was not (or the reverse).
     this._syncSampler();
   }

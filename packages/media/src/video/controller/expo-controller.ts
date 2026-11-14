@@ -477,6 +477,8 @@ export class ExpoVideoController extends BaseVideoController {
     if (next.playing !== prev.playing) this.wakeLock?.setPlaying(next.playing);
   }
 
+  private defaultBufferOptions: VideoPlayer["bufferOptions"] | null = null;
+
   setPlaybackOptions(options: VideoPlaybackOptions): void {
     const player = this.player;
     if (options.maxResolution !== undefined) player.maxResolution = options.maxResolution;
@@ -489,7 +491,11 @@ export class ExpoVideoController extends BaseVideoController {
     }
     if (options.audioMixingMode !== undefined) player.audioMixingMode = options.audioMixingMode;
     const buffer = options.buffer;
-    if (buffer) {
+    // What the player buffered with before anyone tuned it, kept for `null`.
+    this.defaultBufferOptions ??= { ...player.bufferOptions };
+    if (buffer === null) {
+      player.bufferOptions = { ...this.defaultBufferOptions };
+    } else if (buffer) {
       // The player replaces the whole record, so start from what it has.
       player.bufferOptions = {
         ...player.bufferOptions,

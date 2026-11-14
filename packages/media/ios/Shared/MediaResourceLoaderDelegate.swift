@@ -78,7 +78,9 @@ final class MediaResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate
   /// The content information, once any response has provided it.
   private var contentLength: Int64?
   private var contentType: String?
-  private var directPlaybackRequested = false
+  /// Whether this source turned out to need the direct path. Readable so that a
+  /// player taking the asset over later can act on a request it was not there for.
+  private(set) var directPlaybackRequested = false
 
   /// Sequential mode (origin ignores `Range`).
   private var downloadTask: URLSessionTask?

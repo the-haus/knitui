@@ -66,13 +66,18 @@ export class MediaHub {
   private _focus: MediaKind | null = null;
   private readonly listeners = new Set<() => void>();
   private readonly unbind: (() => void)[];
+  /** Whether each domain can currently be heard (not muted, volume above zero). */
+  private readonly audible: Record<MediaKind, boolean>;
 
   constructor(private readonly engines: Engines) {
     const audio = engines.audio.session.controller;
     const video = engines.video.session.controller;
+    this.audible = { audio: isAudible(audio.state), video: isAudible(video.state) };
     this.unbind = [
       audio.on("playingChange", ({ playing }) => this.onPlaying("audio", playing)),
       video.on("playingChange", ({ playing }) => this.onPlaying("video", playing)),
+      audio.on("volumeChange", (level) => this.onLevel("audio", level)),
+      video.on("volumeChange", (level) => this.onLevel("video", level)),
     ];
   }
 
@@ -97,9 +102,7 @@ export class MediaHub {
     ) {
       this.pause(this._focus === "audio" ? "video" : "audio");
     }
-    video.session.controller.setPlaybackOptions({
-      audioMixingMode: exclusive ? "auto" : "mixWithOthers",
-    });
+    video.setDefaultAudioMixingMode(exclusive ? "auto" : "mixWithOthers");
   }
 
   /** The domain that started playing last, or `null` before anything has played. */
@@ -171,8 +174,24 @@ export class MediaHub {
     if (!this._exclusive) return;
     // A silent player takes nothing over: a muted background video must not stop
     // the music.
-    const { muted, volume } = this.engines[kind].session.controller.state;
-    if (muted || volume <= 0) return;
+    if (!isAudible(this.engines[kind].session.controller.state)) return;
     this.pause(kind === "audio" ? "video" : "audio");
   }
+
+  /**
+   * A player that was started silent took nothing over. The moment it can be
+   * heard (unmuted, or its volume raised from zero) while playing, it does.
+   */
+  private onLevel(kind: MediaKind, level: { muted: boolean; volume: number }): void {
+    const audible = isAudible(level);
+    const was = this.audible[kind];
+    this.audible[kind] = audible;
+    if (audible && !was && this.engines[kind].session.controller.state.playing) {
+      this.onPlaying(kind, true);
+    }
+  }
+}
+
+function isAudible(level: { muted: boolean; volume: number }): boolean {
+  return !level.muted && level.volume > 0;
 }
