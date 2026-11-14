@@ -6,12 +6,51 @@ export const meta = {
 
 # Media
 
-`@knitui/media` wraps `expo-audio` and `expo-video` in one controller model, with
-themed chrome that matches the rest of the kit.
+`@knitui/media` is one hybrid media kit: the same components, hooks and controller
+API on web and React Native, with themed chrome that matches the rest of the kit.
+It ships its own native module for iOS and Android, built on AVFoundation and
+Media3, so audio and video share one player architecture, one network layer and one
+audio sampler. On web it drives the browser's own `<audio>` and `<video>`.
+
+## Setup
 
 ```bash
-npx expo install @knitui/media expo-audio expo-video
+npx expo install @knitui/media expo-asset
 ```
+
+Add the config plugin to `app.json`, then rebuild the native app (`npx expo
+prebuild`, or a new development build):
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "@knitui/media",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
+          "backgroundPlayback": true,
+          "pictureInPicture": true
+        }
+      ]
+    ]
+  }
+}
+```
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `microphonePermission` | a generic message | iOS microphone prompt text. `false` leaves the key out. |
+| `recordAudioAndroid` | `true` | Adds the Android `RECORD_AUDIO` permission. |
+| `backgroundPlayback` | `true` | Keeps audio and video playing in the background. |
+| `backgroundRecording` | `false` | Keeps a recording running in the background. |
+| `pictureInPicture` | `false` | Allows video Picture in Picture. |
+
+<Callout kind="info">
+  Upgrading from 1.x? `expo-audio` and `expo-video` are no longer used. Remove
+  them from your dependencies, replace their two config plugins with the one
+  above, and rebuild. The JavaScript API is unchanged.
+</Callout>
 
 ```tsx
 import { MediaProvider, AudioPlayer } from "@knitui/media";
@@ -26,6 +65,69 @@ import { MediaProvider, AudioPlayer } from "@knitui/media";
   `<audio>` and `<video>` element (teleported into whichever player is active) and
   the shared state store. Without it, players render but never play.
 </Callout>
+
+## One control point
+
+`MediaProvider` is also where audio and video meet. `useMediaHub()` returns the hub
+that sits over both, and `useMediaState()` tells you what is playing.
+
+```tsx
+import { useMediaHub, useMediaState } from "@knitui/media";
+
+function MiniPlayer() {
+  const hub = useMediaHub();
+  const { focus, audio, video } = useMediaState();
+  const playing = focus === "video" ? video?.playing : audio?.playing;
+
+  return <Button onPress={() => hub.togglePlay()}>{playing ? "Pause" : "Play"}</Button>;
+}
+```
+
+| | |
+| --- | --- |
+| `hub.focus` | `"audio"`, `"video"` or `null`: whichever started playing last. |
+| `hub.active` | The controller of the player that has focus. |
+| `hub.togglePlay()` | Play or pause whatever has focus. |
+| `hub.pauseAll()` | Pause audio and video, for a route change or an incoming call. |
+| `hub.preload(source)` | Warm a source of either kind (see below). |
+
+Only one thing is heard at a time: when audible playback starts in audio, video
+pauses, and the other way round. A muted video never takes over, so a silent
+background clip does not stop the music. To mix the two yourself, turn it off:
+
+```tsx
+<MediaProvider exclusive={false}>
+```
+
+Outside a component, `getSharedMediaHub()` returns the same hub.
+
+## Preloading
+
+Fetch the start of a source before anyone presses play, so the first play starts
+without a wait:
+
+```tsx
+<Video source={trailer} preload />
+<Audio source={episode} preload />
+```
+
+or ahead of time, for a screen that is about to open:
+
+```ts
+import { preloadMedia } from "@knitui/media";
+
+await preloadMedia("https://cdn.example.com/trailer.mp4");
+await preloadMedia(episodeUrl, { kind: "audio", preferredForwardBufferDuration: 20 });
+```
+
+`kind` is read from the file extension when you leave it out. Preloading is off by
+default because it spends the visitor's data on media they may never play; turn it
+on for the one or two players that will be. Each domain also exports `preload`,
+`clearPreloadedSource`, `clearAllPreloadedSources` and `getPreloadedSources`.
+
+On iOS and Android a preloaded video is read back from an on-disk cache (HLS is
+skipped on iOS, whose cache does not cover it). On web it relies on the browser's
+HTTP cache, so the server has to send cacheable responses.
 
 ## What is in it
 

@@ -40,8 +40,8 @@ export const STATIC_EVALUATION_IGNORED_MODULES = [
   "expo",
   "expo-modules-core",
   "expo-image",
-  "expo-audio",
-  "expo-video",
+  "@knitui/media/native/audio",
+  "@knitui/media/native/video",
 ];
 
 /** @typedef {typeof import("@tamagui/cli/vite").tamaguiPlugin} TamaguiPluginFactory */

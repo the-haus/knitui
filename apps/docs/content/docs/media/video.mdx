@@ -1,6 +1,6 @@
 export const meta = {
   title: "Video",
-  description: "A hybrid, cross-platform video player. On web it drives the real browser `<video>` element; on React Native it drives `expo-video`. Both share one controller contract and the same kit-built control chrome.",
+  description: "A hybrid, cross-platform video player. On web it drives the real browser `<video>` element; on React Native it drives the kit's own native player (AVFoundation / Media3). Both share one controller contract and the same kit-built control chrome.",
 };
 
 <ComponentHeader id="media/video" />
@@ -11,6 +11,39 @@ export const meta = {
   `@knitui/media` owns a single shared player element per medium, teleported into
   whichever surface is active — so examples on this page play one at a time.
 </Callout>
+
+## Playback options
+
+Quality, screen wake, background playback and buffering are props on `<Video>`, and
+can be changed later with `controller.setPlaybackOptions()`. Each one is gated by a
+capability and does nothing where the platform has no such control.
+
+```tsx
+<Video
+  source={stream}
+  maxResolution={{ width: 1280, height: 720 }}
+  keepAwake
+  backgroundPlayback
+  buffer={{ forwardDuration: 30 }}
+/>
+```
+
+| Option | Default | Capability |
+| --- | --- | --- |
+| `maxResolution` | `null` (no cap) | `canLimitResolution`: the largest picture an adaptive stream may pick. |
+| `keepAwake` | `true` | `canKeepAwake`: keep the screen on while playing. On web this is the Screen Wake Lock. |
+| `backgroundPlayback` | `false` | `canPlayInBackground`: needs `backgroundPlayback` in the config plugin. |
+| `buffer` | platform defaults | `canTuneBuffer`: `forwardDuration`, `minForPlayback`, `maxBytes`, `prioritizeTime`, `waitToMinimizeStalling`. |
+| `audioMixingMode` | `"auto"` | How the sound sits with other audio. Native only. |
+
+Players that share the one engine keep their own options: a cap set on one player
+does not carry over to the next.
+
+## Visualizing a video's audio
+
+A video controller can be sampled like an audio one, so `useAudioSpectrum` (also
+exported from `@knitui/media/video`) works with either. An HLS stream on iOS and a
+cross-origin source without CORS on web cannot be read, and stay silent.
 
 ## Playground
 

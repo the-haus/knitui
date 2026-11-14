@@ -313,6 +313,12 @@ export interface VideoProps extends VideoPlayerConfig {
   /** Accessible label for the player region. Default `"Video player"`. */
   label?: string;
   /** Receives the controller once ready. */
+  /**
+   * Fetch the start of the source as soon as the player mounts, so the first play
+   * starts without a wait. Off by default: it spends the visitor's data on media
+   * they may never play, so turn it on for the one or two players that will be.
+   */
+  preload?: boolean;
   getController?: (controller: VideoController) => void;
   /** Fired once the player first becomes ready to play. */
   onReady?: () => void;

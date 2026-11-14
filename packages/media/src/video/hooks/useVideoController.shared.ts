@@ -41,6 +41,8 @@ export interface VideoSurfaceConfig {
   nativeControls?: boolean;
   allowsPictureInPicture?: boolean;
   textTracks?: VideoTextTrack[];
+  /** WEB: the `<video>` element's `crossOrigin`, taken from the source object. */
+  crossOrigin?: "anonymous" | "use-credentials";
 }
 
 export interface UseVideoControllerResult {

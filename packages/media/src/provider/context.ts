@@ -12,11 +12,14 @@ import * as React from "react";
 
 import type { AudioEngine } from "../audio/session/audio-engine.shared";
 import type { VideoEngine } from "../video/session/video-engine.shared";
+import type { MediaHub } from "./media-hub";
 
 /** The pair of shared engines a {@link MediaProvider} owns. */
 export interface MediaEngines {
   audio: AudioEngine;
   video: VideoEngine;
+  /** The control point over both engines (focus, exclusive playback, pause-all). */
+  hub: MediaHub;
 }
 
 export const MediaContext = React.createContext<MediaEngines | null>(null);

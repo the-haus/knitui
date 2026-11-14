@@ -13,7 +13,7 @@ import {
 } from "../../session/media-session.shared";
 import type { VideoController } from "../controller/video-controller-base";
 import { createInitialState } from "../engine";
-import type { VideoControllerState, VideoSource } from "../types";
+import type { VideoControllerState, VideoPlaybackOptions, VideoSource } from "../types";
 
 type VideoMediaSession = MediaSession<VideoController, VideoControllerState, VideoSource>;
 
@@ -27,6 +27,13 @@ export class VideoControllerFacade
     // remembers the intent so the session can re-apply it on activation.
     if (this.active) this.rc.setNowPlayingEnabled(enabled);
     else this.session.update(this.id, { config: { nowPlaying: enabled } });
+  }
+
+  setPlaybackOptions(options: VideoPlaybackOptions): void {
+    // Remembered per player (flat on the descriptor, so fields merge), and applied
+    // to the shared player only while this one owns it.
+    this.session.update(this.id, { config: { ...options } });
+    if (this.active) this.rc.setPlaybackOptions(options);
   }
 
   selectAudioTrack(trackId: string | null): void {
@@ -80,11 +87,23 @@ export function buildVideoEngine(controller: VideoController): VideoEngine {
       const sub = d.config.subtitleTrackId;
       if (typeof sub === "string" || sub === null) c.selectSubtitleTrack(sub);
       if (d.config.nowPlaying === true) c.setNowPlayingEnabled(true);
+      // Every field, with its default where this player set none: the shared
+      // player must not keep the previous player's quality cap or background flag.
+      const options = d.config as VideoPlaybackOptions;
+      c.setPlaybackOptions({
+        maxResolution: options.maxResolution ?? null,
+        keepAwake: options.keepAwake ?? true,
+        backgroundPlayback: options.backgroundPlayback ?? false,
+        ...(options.buffer && { buffer: options.buffer }),
+        // Left alone unless this player chose one: the hub owns the default.
+        ...(options.audioMixingMode && { audioMixingMode: options.audioMixingMode }),
+      });
     },
     onDeactivate: (c) => {
       if (c.state.fullscreen) void c.exitFullscreen();
       if (c.state.pictureInPicture) void c.stopPictureInPicture();
       c.setNowPlayingEnabled(false);
+      c.setSamplingEnabled(false);
     },
   });
 

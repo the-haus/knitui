@@ -1,4 +1,4 @@
-import type { AudioRecorder, RecordingStatus } from "expo-audio";
+import type { AudioRecorder, RecordingStatus } from "@knitui/media/native/audio";
 
 /**
  * Controller-level tests for {@link ExpoAudioRecorderController}, driven by a

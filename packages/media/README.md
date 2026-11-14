@@ -1,22 +1,52 @@
 # @knitui/media
 
-Hybrid, cross-platform **audio + video** for Knit UI. Each domain drives a real
-browser backend on the web (`HTMLAudioElement` / `<video>` + Web Audio /
-MediaSession / Fullscreen / PiP) and `expo-audio` / `expo-video` on native, both
-behind one isolated controller contract per surface.
+Hybrid, cross-platform **audio + video** for Knit UI: one set of components, hooks
+and controllers with the same API on web and React Native.
+
+- **Web** drives the browser's own backends (`HTMLAudioElement` / `<video>` + Web
+  Audio / MediaSession / Fullscreen / PiP).
+- **iOS and Android** run the kit's own native module (AVFoundation / Media3). Audio
+  and video live in one module and share one network layer and one audio sampler.
 
 ## Install
 
 ```sh
-# Expo
-npx expo install @knitui/media react-native-reanimated
-
-# bare React Native / web
-npm install @knitui/media react-native-reanimated
+npx expo install @knitui/media expo-asset react-native-reanimated
 ```
 
 `@knitui/media` builds on `@knitui/core` + `@knitui/components`; install those
 alongside the kit as usual. `react-native-reanimated` is a required peer.
+
+The package contains native code, so add its config plugin to `app.json` and
+rebuild the app (`npx expo prebuild`, or a new development build):
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "@knitui/media",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
+          "backgroundPlayback": true,
+          "pictureInPicture": true
+        }
+      ]
+    ]
+  }
+}
+```
+
+| Option                 | Default           | What it does                                            |
+| ---------------------- | ----------------- | ------------------------------------------------------- |
+| `microphonePermission` | a generic message | iOS microphone prompt text. `false` leaves the key out. |
+| `recordAudioAndroid`   | `true`            | Adds the Android `RECORD_AUDIO` permission.             |
+| `backgroundPlayback`   | `true`            | Keeps audio and video playing in the background.        |
+| `backgroundRecording`  | `false`           | Keeps a recording running in the background.            |
+| `pictureInPicture`     | `false`           | Allows video Picture in Picture.                        |
+
+`expo-audio` and `expo-video` are not needed and should not be installed for this
+package: their players are part of the native module here (see `NOTICE.md`).
 
 ## Mount the provider once
 

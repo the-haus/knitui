@@ -59,11 +59,6 @@ export class AudioControllerFacade
     else this.session.update(this.id, { config: { lockScreen: undefined } });
   }
 
-  setSamplingEnabled(enabled: boolean): void {
-    if (this.active) this.rc.setSamplingEnabled(enabled);
-    else this.session.update(this.id, { config: { sampling: enabled } });
-  }
-
   // Narrow the base's `pitchCorrection?: unknown` to the audio contract.
   override setPlaybackRate(rate: number, pitchCorrection?: PitchCorrectionQuality): void {
     super.setPlaybackRate(rate, pitchCorrection);
@@ -81,10 +76,7 @@ export function buildAudioEngine(controller: AudioController): AudioEngine {
   const session: AudioMediaSession = new MediaSession({
     controller,
     createIdleState: (d) => createInitialState(commonIdleFields(d)),
-    applyConfig: (c, d) => {
-      applyCommonConfig(c, d);
-      if (typeof d.config.sampling === "boolean") c.setSamplingEnabled(d.config.sampling);
-    },
+    applyConfig: (c, d) => applyCommonConfig(c, d),
     onActivate: (c, d) => {
       const ls = d.config.lockScreen as LockScreenConfig | undefined;
       if (ls?.active) c.setActiveForLockScreen(true, ls.metadata, ls.options);

@@ -13,7 +13,7 @@ import {
   clearAllPreloadedSources as expoClearAll,
   getPreloadedSources as expoGet,
   preload as expoPreload,
-} from "expo-audio";
+} from "@knitui/media/native/audio";
 
 import type { AudioSource } from "../types";
 import type { PreloadOptions } from "./preload.shared";

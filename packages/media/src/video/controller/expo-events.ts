@@ -1,9 +1,3 @@
-import type {
-  AudioTrack as ExpoAudioTrack,
-  SubtitleTrack as ExpoSubtitleTrack,
-  VideoPlayer,
-} from "expo-video";
-
 /**
  * `expo-video` player event wiring for {@link ExpoVideoController}. Extracted
  * from the controller so the class stays focused on the imperative API + state
@@ -17,6 +11,11 @@ import type {
  * live from the player rather than from `sourceLoad`.
  */
 import { isWeb } from "@knitui/core";
+import type {
+  AudioTrack as ExpoAudioTrack,
+  SubtitleTrack as ExpoSubtitleTrack,
+  VideoPlayer,
+} from "@knitui/media/native/video";
 
 import type {
   VideoControllerState,

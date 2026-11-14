@@ -54,17 +54,37 @@
       "types": "./lib/typescript/dsp/index.d.ts",
       "default": "./src/dsp/index.ts"
     },
+    "./native/audio": {
+      "source": "./src/native/audio/index.ts",
+      "react-native": "./src/native/audio/index.ts",
+      "types": "./lib/typescript/native/audio/index.d.ts",
+      "default": "./src/native/audio/index.ts"
+    },
+    "./native/video": {
+      "source": "./src/native/video/index.ts",
+      "react-native": "./src/native/video/index.ts",
+      "types": "./lib/typescript/native/video/index.d.ts",
+      "default": "./src/native/video/index.ts"
+    },
     "./src/*.stories": {
       "source": "./src/*.stories.tsx",
       "react-native": "./src/*.stories.tsx",
       "types": "./src/*.stories.tsx",
       "default": "./src/*.stories.tsx"
     },
+    "./app.plugin.js": "./app.plugin.js",
     "./package.json": "./package.json"
   },
   "files": [
     "src",
     "lib",
+    "ios",
+    "android",
+    "plugin",
+    "app.plugin.js",
+    "expo-module.config.json",
+    "NOTICE.md",
+    "!android/build",
     "!**/*.test.*",
     "!**/*.stories.*",
     "!**/__tests__/**",
@@ -89,10 +109,11 @@
     "@knitui/core": "workspace:*",
     "@knitui/hooks": "workspace:*",
     "@knitui/icons": "workspace:*",
-    "expo-audio": "~58.0.9",
-    "expo-video": "~58.0.11"
+    "hls.js": "^1.7.4"
   },
   "peerDependencies": {
+    "expo": "*",
+    "expo-asset": "*",
     "expo-modules-core": "*",
     "react": "*",
     "react-native": "*",
@@ -108,6 +129,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
+    "@babel/plugin-transform-dynamic-import": "^7.29.7",
     "@knitui/graphics": "workspace:*",
     "@shopify/react-native-skia": "2.14.0",
     "@storybook/addon-docs": "^10.6.0",
@@ -122,6 +144,9 @@
     "@vitejs/plugin-react": "^6.1.1",
     "babel-preset-expo": "^58.0.17",
     "canvaskit-wasm": "^0.41.1",
+    "expo": "~58.0.14",
+    "expo-asset": "~58.0.14",
+    "expo-modules-core": "~58.0.22",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "react": "19.3.0",

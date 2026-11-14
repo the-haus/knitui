@@ -36,7 +36,7 @@ function fakeEngine() {
       activeId: null, // no active player → no surface teleport → no Provider needed
       snapshotFor: () => ({}),
       getConfig: () => undefined,
-      controller: {},
+      controller: { on: () => () => {}, state: { playing: false } },
     },
     getFacade: () => ({}),
     dispose: jest.fn(),

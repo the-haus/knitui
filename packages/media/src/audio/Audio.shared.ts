@@ -211,6 +211,12 @@ export interface AudioProps extends AudioPlayerConfig {
   keyboard?: boolean;
   /** Accessible label for the player region. Default `"Audio player"`. */
   label?: string;
+  /**
+   * Fetch the start of the source as soon as the player mounts, so the first play
+   * starts without a wait. Off by default: it spends the visitor's data on media
+   * they may never play, so turn it on for the one or two players that will be.
+   */
+  preload?: boolean;
   /** Receives the controller once ready. */
   getController?: (controller: AudioController) => void;
   /** Fired once the player first becomes ready to play. */

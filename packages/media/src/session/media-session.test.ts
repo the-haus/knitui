@@ -54,6 +54,7 @@ class FakeController implements FacadeController<FakeState> {
     this.seekCalls.push(seconds);
     this.patch({ currentTime: seconds });
   }
+  setSamplingEnabled(): void {}
   setVolume(volume: number): void {
     this.patch({ volume });
   }

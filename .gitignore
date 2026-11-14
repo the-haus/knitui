@@ -106,3 +106,6 @@ zip-project.sh
 
 # maplibre-gl worker, copied in by next.config / metro.config (scripts/maplibre-worker.cjs)
 **/public/maplibre/
+
+# media lab: downloaded sample clip
+scripts/media-lab/.cache/

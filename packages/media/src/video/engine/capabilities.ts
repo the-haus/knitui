@@ -3,7 +3,11 @@
  * (`expo-video`) expose different feature sets; the chrome reads these flags to
  * hide controls it cannot wire up. Pure data + a resolver — no platform imports.
  */
-import { detectVolumeControllable, refineCapabilities } from "../../core/capabilities";
+import {
+  detectVolumeControllable,
+  detectWebAudio,
+  refineCapabilities,
+} from "../../core/capabilities";
 import type { VideoCapabilities } from "../types";
 
 /**
@@ -16,12 +20,19 @@ export const WEB_CAPABILITIES: VideoCapabilities = {
   canPictureInPicture: true,
   canSetVolume: true,
   canSetPlaybackRate: true,
+  canSample: true,
   // The browser surfaces text tracks via <track>, but not the rich audio/video
   // track selection expo-video offers, so we keep these off for the web chrome.
   canSelectAudioTracks: false,
   canSelectSubtitleTracks: true,
   canAirPlay: false,
   canGenerateThumbnails: false,
+  // The browser picks the rendition and the buffer itself, and keeps playing in a
+  // background tab without being asked.
+  canLimitResolution: false,
+  canKeepAwake: false,
+  canPlayInBackground: true,
+  canTuneBuffer: false,
 };
 
 /** Baseline capabilities of the expo-video native backend. */
@@ -30,10 +41,15 @@ export const NATIVE_CAPABILITIES: VideoCapabilities = {
   canPictureInPicture: true,
   canSetVolume: true,
   canSetPlaybackRate: true,
+  canSample: true,
   canSelectAudioTracks: true,
   canSelectSubtitleTracks: true,
   canAirPlay: true,
   canGenerateThumbnails: true,
+  canLimitResolution: true,
+  canKeepAwake: true,
+  canPlayInBackground: true,
+  canTuneBuffer: true,
 };
 
 /** Runtime feature probes the web resolver consumes (injected, never read here). */
@@ -48,6 +64,10 @@ export interface WebRuntimeProbes {
    * hidden there.
    */
   volumeControllable?: boolean;
+  /** Whether the Web Audio API (`AudioContext`) is available for sampling. */
+  webAudioAvailable?: boolean;
+  /** `'wakeLock' in navigator` (the Screen Wake Lock API). */
+  wakeLockAvailable?: boolean;
 }
 
 /** Refines {@link WEB_CAPABILITIES} with the actual runtime probes. */
@@ -56,6 +76,8 @@ export function resolveWebCapabilities(probes: WebRuntimeProbes = {}): VideoCapa
     canPictureInPicture: probes.pictureInPictureEnabled,
     canFullscreen: probes.fullscreenEnabled,
     canSetVolume: probes.volumeControllable,
+    canSample: probes.webAudioAvailable,
+    canKeepAwake: probes.wakeLockAvailable,
   });
 }
 
@@ -70,5 +92,7 @@ export function resolveWebRuntimeCapabilities(): VideoCapabilities {
       typeof document !== "undefined" && Boolean(document.pictureInPictureEnabled),
     fullscreenEnabled: typeof document !== "undefined" && Boolean(document.fullscreenEnabled),
     volumeControllable: detectVolumeControllable(),
+    webAudioAvailable: detectWebAudio(),
+    wakeLockAvailable: typeof navigator !== "undefined" && "wakeLock" in navigator,
   });
 }

@@ -15,7 +15,7 @@
  */
 import "../../shared/expo-globals";
 
-import * as ExpoAudio from "expo-audio";
+import * as ExpoAudio from "@knitui/media/native/audio";
 
 import type {
   AudioModeConfig,

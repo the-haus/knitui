@@ -4,7 +4,11 @@
  * flags to hide controls it cannot wire up. Pure data + a resolver — no platform
  * imports.
  */
-import { detectVolumeControllable, refineCapabilities } from "../../core/capabilities";
+import {
+  detectVolumeControllable,
+  detectWebAudio,
+  refineCapabilities,
+} from "../../core/capabilities";
 import type { AudioCapabilities } from "../types";
 
 /**
@@ -61,8 +65,6 @@ export function resolveWebRuntimeCapabilities(): AudioCapabilities {
   return resolveWebCapabilities({
     volumeControllable: detectVolumeControllable(),
     mediaSessionAvailable: typeof navigator !== "undefined" && "mediaSession" in navigator,
-    webAudioAvailable:
-      typeof globalThis !== "undefined" &&
-      typeof (globalThis as { AudioContext?: unknown }).AudioContext !== "undefined",
+    webAudioAvailable: detectWebAudio(),
   });
 }

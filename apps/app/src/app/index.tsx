@@ -1,4 +1,4 @@
-import { Stack as RouterStack, useRouter } from "expo-router";
+import { Redirect, Stack as RouterStack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, SectionList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,7 +39,14 @@ function useGroupedSections(query: string) {
  * the only place the (lazy) section component is mounted. Sections are grouped
  * by their Storybook group, mirroring the web demo's sidebar.
  */
-export default function SectionsScreen() {
+export default function Home() {
+  // `EXPO_PUBLIC_MEDIA_LAB=1 expo start` lands on the media lab, so a device run
+  // needs no tap and no deep link (see docs/media-lab.md).
+  if (process.env.EXPO_PUBLIC_MEDIA_LAB) return <Redirect href="/media-lab" />;
+  return <SectionsScreen />;
+}
+
+function SectionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colorScheme, toggleColorScheme } = useColorScheme();

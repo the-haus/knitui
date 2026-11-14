@@ -6,4 +6,7 @@
  */
 module.exports = {
   presets: [["babel-preset-expo", { jsxRuntime: "automatic" }]],
+  // Jest runs CommonJS, where a real `import()` is refused. Turn the lazy imports
+  // (the on-demand HLS library) into deferred `require`s for the tests.
+  plugins: ["@babel/plugin-transform-dynamic-import"],
 };

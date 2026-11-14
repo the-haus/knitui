@@ -12,8 +12,9 @@
  */
 import "../../shared/expo-globals";
 
-import { VideoView, type VideoViewProps } from "expo-video";
 import * as React from "react";
+
+import { VideoView, type VideoViewProps } from "@knitui/media/native/video";
 
 import { type ExpoVideoController } from "../controller/expo-controller";
 import { VideoSurfaceFrame } from "../Video.shared";
@@ -37,6 +38,7 @@ export function VideoSurface(props: VideoSurfaceProps): React.ReactElement {
     nativeControls = false,
     allowsPictureInPicture = true,
     textTracks,
+    crossOrigin,
     frameProps,
   } = props;
   const expo = controller as ExpoVideoController;
@@ -62,6 +64,7 @@ export function VideoSurface(props: VideoSurfaceProps): React.ReactElement {
         player={expo.player}
         style={SURFACE_FILL}
         contentFit={contentFit}
+        crossOrigin={crossOrigin}
         nativeControls={nativeControls}
         allowsPictureInPicture={allowsPictureInPicture}
         fullscreenOptions={fullscreenOptions}

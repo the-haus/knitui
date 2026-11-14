@@ -119,6 +119,13 @@ export abstract class MediaFacadeBase<
     else this.session.update(this.id, { config: { loop } });
   }
 
+  setSamplingEnabled(enabled: boolean): void {
+    // Always remembered: the engine turns sampling off when this player loses the
+    // shared controller, and has to turn it back on when the player returns.
+    this.session.update(this.id, { config: { sampling: enabled } });
+    if (this.active) this.rc.setSamplingEnabled(enabled);
+  }
+
   replace(source: Src): void | Promise<void> {
     this.session.update(this.id, { source });
     if (this.active) return this.rc.replace(source);

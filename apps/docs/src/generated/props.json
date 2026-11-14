@@ -64805,6 +64805,14 @@
           "declaredIn": "packages/media/src/shared/media-types.ts"
         },
         {
+          "name": "preload",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Fetch the start of the source as soon as the player mounts, so the first play starts without a wait. Off by default: it spends the visitor's data on media they may never play, so turn it on for the one or two players that will be.",
+          "declaredIn": "packages/media/src/audio/Audio.shared.ts"
+        },
+        {
           "name": "shouldCorrectPitch",
           "bucket": "own",
           "type": "boolean | undefined",
@@ -64888,7 +64896,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 28,
+        "own": 29,
         "system": 2
       }
     },
@@ -65342,6 +65350,14 @@
           "declaredIn": "packages/media/src/video/Video.shared.ts"
         },
         {
+          "name": "audioMixingMode",
+          "bucket": "own",
+          "type": "VideoAudioMixingMode | undefined",
+          "required": false,
+          "description": "How this video's sound sits with other audio, from this app or another: `\"auto\"` (the platform default: take over), `\"mixWithOthers\"`, `\"duckOthers\"` or `\"doNotMix\"`. `<MediaProvider exclusive={false}>` sets `\"mixWithOthers\"` for you. Native only.",
+          "declaredIn": "packages/media/src/video/types.ts"
+        },
+        {
           "name": "autoHide",
           "bucket": "own",
           "type": "number | boolean | undefined",
@@ -65357,6 +65373,22 @@
           "required": false,
           "description": "Begin playback as soon as the source is ready.",
           "declaredIn": "packages/media/src/shared/media-types.ts"
+        },
+        {
+          "name": "backgroundPlayback",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Keep playing when the app goes to the background. Default `false`. Needs `backgroundPlayback` in the config plugin. (`canPlayInBackground`)",
+          "declaredIn": "packages/media/src/video/types.ts"
+        },
+        {
+          "name": "buffer",
+          "bucket": "own",
+          "type": "VideoBufferOptions | undefined",
+          "required": false,
+          "description": "Buffer tuning. (`canTuneBuffer`)",
+          "declaredIn": "packages/media/src/video/types.ts"
         },
         {
           "name": "contentFit",
@@ -65402,7 +65434,6 @@
           "bucket": "own",
           "type": "((controller: VideoController) => void) | undefined",
           "required": false,
-          "description": "Receives the controller once ready.",
           "declaredIn": "packages/media/src/video/Video.shared.ts"
         },
         {
@@ -65419,6 +65450,14 @@
           "required": false,
           "description": "Stable identity for the shared-engine registry. Defaults to a generated id (each `<Video>` is its own player); pass an explicit `id` to make two mounts address the SAME shared-engine slot.",
           "declaredIn": "packages/media/src/video/Video.shared.ts"
+        },
+        {
+          "name": "keepAwake",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Keep the screen on while this video plays. Default `true`. (`canKeepAwake`)",
+          "declaredIn": "packages/media/src/video/types.ts"
         },
         {
           "name": "keyboard",
@@ -65444,6 +65483,14 @@
           "description": "Replay automatically on end.",
           "default": "false",
           "declaredIn": "packages/media/src/shared/media-types.ts"
+        },
+        {
+          "name": "maxResolution",
+          "bucket": "own",
+          "type": "VideoTrackSize | null | undefined",
+          "required": false,
+          "description": "The largest picture an adaptive stream may select, e.g. `{ width: 1280, height: 720 }` to save data. `null` removes the cap. (`capabilities.canLimitResolution`)",
+          "declaredIn": "packages/media/src/video/types.ts"
         },
         {
           "name": "muted",
@@ -65527,6 +65574,14 @@
           "type": "string | undefined",
           "required": false,
           "description": "Poster image shown before playback (placeholder while the player is idle).",
+          "declaredIn": "packages/media/src/video/Video.shared.ts"
+        },
+        {
+          "name": "preload",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Fetch the start of the source as soon as the player mounts, so the first play starts without a wait. Off by default: it spends the visitor's data on media they may never play, so turn it on for the one or two players that will be.",
           "declaredIn": "packages/media/src/video/Video.shared.ts"
         },
         {
@@ -65621,7 +65676,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 36,
+        "own": 42,
         "system": 2
       }
     },

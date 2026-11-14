@@ -15,7 +15,7 @@
  * when a view is mounted — so these tests fail against a controller that fires
  * and forgets.
  */
-import type { VideoPlayer } from "expo-video";
+import type { VideoPlayer } from "@knitui/media/native/video";
 
 import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import { ExpoVideoController, type ExpoVideoViewHandle } from "./expo-controller";

@@ -26,5 +26,13 @@ export {
   useMediaEngines,
   videoHostName,
 } from "./provider/context";
+export {
+  MediaHub,
+  type MediaKind,
+  type MediaPreloadOptions,
+  preloadMedia,
+} from "./provider/media-hub";
 export { MediaProvider, type MediaProviderProps } from "./provider/MediaProvider";
+export { getSharedMediaHub } from "./provider/shared-engines";
+export { useMediaHub } from "./provider/useMediaHub";
 export { type MediaState, useMediaState } from "./provider/useMediaState";

@@ -149,6 +149,52 @@ export interface VideoTrack {
  * controls it cannot wire up (e.g. a volume slider on mobile Safari, which
  * ignores programmatic volume).
  */
+/** Buffer tuning. Every field is optional; an omitted one keeps its current value. */
+export interface VideoBufferOptions {
+  /** How much media to buffer ahead of the playhead, in seconds. `0` lets iOS decide. */
+  forwardDuration?: number;
+  /** Seconds that must be buffered before playback resumes after a stall. Android only. */
+  minForPlayback?: number;
+  /** Upper bound on buffered bytes; `0` or `null` lets the player decide. Android only. */
+  maxBytes?: number | null;
+  /** Reach `forwardDuration` even when that passes `maxBytes`. Android only. */
+  prioritizeTime?: boolean;
+  /** Delay the start of playback to avoid stalling later. Default `true`. iOS only. */
+  waitToMinimizeStalling?: boolean;
+}
+
+/**
+ * Playback behaviour beyond the transport controls. Set declaratively on `<Video>`
+ * / `useVideoController`, or at any time with `controller.setPlaybackOptions`. Only
+ * the fields you pass change. Each is gated by a capability, and is a no-op where
+ * the platform has no such control.
+ */
+export interface VideoPlaybackOptions {
+  /**
+   * The largest picture an adaptive stream may select, e.g. `{ width: 1280, height:
+   * 720 }` to save data. `null` removes the cap. (`capabilities.canLimitResolution`)
+   */
+  maxResolution?: VideoTrackSize | null;
+  /** Keep the screen on while this video plays. Default `true`. (`canKeepAwake`) */
+  keepAwake?: boolean;
+  /**
+   * Keep playing when the app goes to the background. Default `false`. Needs
+   * `backgroundPlayback` in the config plugin. (`canPlayInBackground`)
+   */
+  backgroundPlayback?: boolean;
+  /** Buffer tuning. (`canTuneBuffer`) */
+  buffer?: VideoBufferOptions;
+  /**
+   * How this video's sound sits with other audio, from this app or another:
+   * `"auto"` (the platform default: take over), `"mixWithOthers"`, `"duckOthers"`
+   * or `"doNotMix"`. `<MediaProvider exclusive={false}>` sets `"mixWithOthers"`
+   * for you. Native only.
+   */
+  audioMixingMode?: VideoAudioMixingMode;
+}
+
+export type VideoAudioMixingMode = "auto" | "mixWithOthers" | "duckOthers" | "doNotMix";
+
 export interface VideoCapabilities extends BaseMediaCapabilities {
   canFullscreen: boolean;
   canPictureInPicture: boolean;
@@ -158,6 +204,14 @@ export interface VideoCapabilities extends BaseMediaCapabilities {
   canAirPlay: boolean;
   /** `generateThumbnails` (native-only). */
   canGenerateThumbnails: boolean;
+  /** Cap the resolution an adaptive stream may select (`maxResolution`). */
+  canLimitResolution: boolean;
+  /** Hold the screen awake during playback (`keepAwake`). */
+  canKeepAwake: boolean;
+  /** Continue playing with the app in the background (`backgroundPlayback`). */
+  canPlayInBackground: boolean;
+  /** Tune buffering (`buffer`). */
+  canTuneBuffer: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -215,7 +269,7 @@ export type VideoEventType = keyof VideoControllerEventMap;
  * Initial / declarative player configuration shared by the hook and the
  * `<Video>` component. These map to settable controller properties.
  */
-export interface VideoPlayerConfig extends BaseMediaPlayerConfig {
+export interface VideoPlayerConfig extends BaseMediaPlayerConfig, VideoPlaybackOptions {
   /**
    * Seconds the controller waits between `timeUpdate` emissions (native).
    * @deprecated Use {@link BaseMediaPlayerConfig.updateInterval}. Folded in Phase 6.

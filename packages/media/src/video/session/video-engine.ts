@@ -10,8 +10,9 @@
  */
 import "../../shared/expo-globals";
 
-import { createVideoPlayer } from "expo-video";
 import * as React from "react";
+
+import { createVideoPlayer } from "@knitui/media/native/video";
 
 import { MediaContext } from "../../provider/context";
 import { ExpoVideoController } from "../controller/expo-controller";

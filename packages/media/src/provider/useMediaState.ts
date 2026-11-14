@@ -9,6 +9,7 @@ import * as React from "react";
 import type { AudioControllerState } from "../audio/types";
 import type { VideoControllerState } from "../video/types";
 import { MediaContext } from "./context";
+import type { MediaKind } from "./media-hub";
 
 export interface MediaState {
   /** Id of the player that currently owns the shared `<audio>` (or `null`). */
@@ -19,9 +20,17 @@ export interface MediaState {
   audio: AudioControllerState | null;
   /** Live snapshot of the active video player (or `null` when none is active). */
   video: VideoControllerState | null;
+  /** The domain that started playing last: what a global control should drive. */
+  focus: MediaKind | null;
 }
 
-const EMPTY: MediaState = { activeAudioId: null, activeVideoId: null, audio: null, video: null };
+const EMPTY: MediaState = {
+  activeAudioId: null,
+  activeVideoId: null,
+  audio: null,
+  video: null,
+  focus: null,
+};
 
 /**
  * Subscribe to the current media state. Must be called under a
@@ -35,9 +44,11 @@ export function useMediaState(): MediaState {
       if (!engines) return () => {};
       const a = engines.audio.session.subscribe(listener);
       const v = engines.video.session.subscribe(listener);
+      const h = engines.hub.subscribe(listener);
       return () => {
         a();
         v();
+        h();
       };
     },
     [engines],
@@ -48,7 +59,8 @@ export function useMediaState(): MediaState {
   const lastRef = React.useRef<MediaState>(EMPTY);
   const getSnapshot = React.useCallback((): MediaState => {
     if (!engines) return EMPTY;
-    const { audio, video } = engines;
+    const { audio, video, hub } = engines;
+    const focus = hub.focus;
     const activeAudioId = audio.session.activeId;
     const activeVideoId = video.session.activeId;
     const audioState = activeAudioId ? audio.session.snapshotFor(activeAudioId) : null;
@@ -59,7 +71,8 @@ export function useMediaState(): MediaState {
       prev.activeAudioId === activeAudioId &&
       prev.activeVideoId === activeVideoId &&
       prev.audio === audioState &&
-      prev.video === videoState
+      prev.video === videoState &&
+      prev.focus === focus
     ) {
       return prev;
     }
@@ -68,6 +81,7 @@ export function useMediaState(): MediaState {
       activeVideoId,
       audio: audioState,
       video: videoState,
+      focus,
     };
     lastRef.current = next;
     return next;

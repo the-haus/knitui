@@ -42,6 +42,7 @@ export interface FacadeController<S> {
   setMuted(muted: boolean): void;
   setPlaybackRate(rate: number, pitchCorrection?: any): void;
   setLoop(loop: boolean): void;
+  setSamplingEnabled(enabled: boolean): void;
   replace(source: any): void | Promise<void>;
   retry(): void | Promise<void>;
   dispose(): void;
@@ -79,6 +80,7 @@ interface CommonSettable {
   setMuted(muted: boolean): void;
   setLoop(loop: boolean): void;
   setPlaybackRate(rate: number): void;
+  setSamplingEnabled(enabled: boolean): void;
 }
 
 /**
@@ -104,14 +106,15 @@ export function commonIdleFields<Src>(
 
 /**
  * Re-apply the declarative config fields common to every media controller
- * (volume / muted / loop / playbackRate) on activation. Domains call this, then
- * apply their own extras (audio: sampling).
+ * (volume / muted / loop / playbackRate / sampling) on activation. Domains call
+ * this, then apply their own extras.
  */
 export function applyCommonConfig<Src>(c: CommonSettable, d: MediaDescriptor<Src>): void {
   if (typeof d.config.volume === "number") c.setVolume(d.config.volume);
   if (typeof d.config.muted === "boolean") c.setMuted(d.config.muted);
   if (typeof d.config.loop === "boolean") c.setLoop(d.config.loop);
   if (typeof d.config.playbackRate === "number") c.setPlaybackRate(d.config.playbackRate);
+  if (typeof d.config.sampling === "boolean") c.setSamplingEnabled(d.config.sampling);
 }
 
 export interface MediaSessionOptions<

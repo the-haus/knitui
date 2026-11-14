@@ -18,6 +18,8 @@ export interface VideoSurfaceProps {
   allowsPictureInPicture?: boolean;
   /** Sidecar subtitle/caption files (fetched + rendered by the controller). */
   textTracks?: VideoTextTrack[];
+  /** WEB: forwarded to the `<video>` element. */
+  crossOrigin?: "anonymous" | "use-credentials";
   /** Style overrides for the surface frame. */
   frameProps?: GetProps<typeof VideoSurfaceFrame>;
 }

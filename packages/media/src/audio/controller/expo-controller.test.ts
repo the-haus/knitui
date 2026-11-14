@@ -5,7 +5,7 @@
  * stamped with a DIFFERENT player's `id` must be ignored, so two players loaded
  * from the same audio file can't drive each other's state.
  */
-import type { AudioPlayer, AudioStatus } from "expo-audio";
+import type { AudioPlayer, AudioStatus } from "@knitui/media/native/audio";
 
 import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import { ExpoAudioController } from "./expo-controller";
