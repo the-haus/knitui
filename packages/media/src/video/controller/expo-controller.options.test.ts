@@ -28,6 +28,8 @@ class FakeVideoPlayer {
   maxResolution: { width: number; height: number } | null = null;
   bufferOptions: Record<string, unknown> = { preferredForwardBufferDuration: 20 };
 
+  audioMixingMode = "auto";
+
   samplingEnabled = false;
   reads = 0;
   next: number[] | null = null;
@@ -129,6 +131,36 @@ describe("playback options across players that share one engine", () => {
 
     b.play();
     expect(player.maxResolution).toEqual({ width: 640, height: 360 });
+    engine.dispose();
+  });
+});
+
+describe("buffer and mixing across players that share one engine", () => {
+  it("does not hand one player's buffer or mixing mode to the next", () => {
+    const { player, controller } = make();
+    const engine = buildVideoEngine(controller);
+    engine.session.register("a", { source: "a.mp4", config: {} });
+    engine.session.register("b", { source: "b.mp4", config: {} });
+    const a = engine.getFacade("a");
+    const b = engine.getFacade("b");
+    engine.setDefaultAudioMixingMode("auto");
+
+    a.setPlaybackOptions({ buffer: { forwardDuration: 60 }, audioMixingMode: "duckOthers" });
+    a.play();
+    expect(player.bufferOptions).toEqual({ preferredForwardBufferDuration: 60 });
+    expect(player.audioMixingMode).toBe("duckOthers");
+
+    b.play();
+    expect(player.bufferOptions).toEqual({ preferredForwardBufferDuration: 20 });
+    expect(player.audioMixingMode).toBe("auto");
+
+    // The hub's default reaches the active player only when it chose none.
+    engine.setDefaultAudioMixingMode("mixWithOthers");
+    expect(player.audioMixingMode).toBe("mixWithOthers");
+    a.play();
+    expect(player.audioMixingMode).toBe("duckOthers");
+    engine.setDefaultAudioMixingMode("auto");
+    expect(player.audioMixingMode).toBe("duckOthers");
     engine.dispose();
   });
 });

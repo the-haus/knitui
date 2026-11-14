@@ -7,12 +7,24 @@ class FakeController {
   state = { playing: false, muted: false, volume: 1 };
   pauseCalls = 0;
   private listeners: Array<(event: { playing: boolean }) => void> = [];
+  private levelListeners: Array<(event: { muted: boolean; volume: number }) => void> = [];
 
-  on(_type: string, listener: (event: { playing: boolean }) => void): () => void {
-    this.listeners.push(listener);
+  on(type: string, listener: (event: never) => void): () => void {
+    if (type === "volumeChange") {
+      this.levelListeners.push(listener as (event: { muted: boolean; volume: number }) => void);
+      return () => {
+        this.levelListeners = this.levelListeners.filter((l) => l !== listener);
+      };
+    }
+    this.listeners.push(listener as (event: { playing: boolean }) => void);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
     };
+  }
+
+  setMuted(muted: boolean): void {
+    this.state = { ...this.state, muted };
+    for (const listener of [...this.levelListeners]) listener(this.state);
   }
 
   setPlaying(playing: boolean): void {
@@ -42,6 +54,8 @@ function make(): { hub: MediaHub; audio: FakeController; video: FakeController }
   const engine = (controller: FakeController, id: string) => ({
     session: { controller, activeId: id },
     getFacade: (facadeId: string) => ({ id: facadeId, togglePlay: () => controller.pause() }),
+    setDefaultAudioMixingMode: (mode: string) =>
+      controller.setPlaybackOptions({ audioMixingMode: mode }),
   });
   const hub = new MediaHub({
     audio: engine(audio, "a1") as unknown as AudioEngine,
@@ -92,6 +106,18 @@ describe("MediaHub", () => {
     video.state = { ...video.state, muted: false, volume: 0 };
     video.setPlaying(true);
     expect(audio.state.playing).toBe(true);
+  });
+
+  it("takes over when a video that started muted is unmuted", () => {
+    const { hub, audio, video } = make();
+    audio.setPlaying(true);
+    video.setMuted(true);
+    video.setPlaying(true);
+    expect(audio.state.playing).toBe(true);
+
+    video.setMuted(false);
+    expect(audio.state.playing).toBe(false);
+    expect(hub.focus).toBe("video");
   });
 
   it("mixes both when exclusive is off", () => {

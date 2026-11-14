@@ -65385,9 +65385,9 @@
         {
           "name": "buffer",
           "bucket": "own",
-          "type": "VideoBufferOptions | undefined",
+          "type": "VideoBufferOptions | null | undefined",
           "required": false,
-          "description": "Buffer tuning. (`canTuneBuffer`)",
+          "description": "Buffer tuning; `null` goes back to the player's own buffering. (`canTuneBuffer`)",
           "declaredIn": "packages/media/src/video/types.ts"
         },
         {

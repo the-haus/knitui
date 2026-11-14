@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type VideoPlayer from "./VideoPlayer.web";
@@ -43,6 +43,17 @@ export const VideoView = forwardRef((props: { player?: VideoPlayer } & VideoView
   const fullscreenChangeListeners = useRef<null | FullscreenChangeListeners>(null);
   const isWaitingForFirstFrame = useRef(false);
   const mountedPlayerRef = useRef<null | VideoPlayer>(null);
+  /**
+   * Bumped when the player says this view's element cannot play its source any
+   * more; it keys the `<video>`, so React renders a new one.
+   */
+  const [elementEpoch, setElementEpoch] = useState(0);
+
+  useEffect(() => {
+    return props.player?._onElementReset((video) => {
+      if (video === videoRef.current) setElementEpoch((epoch) => epoch + 1);
+    });
+  }, [props.player]);
 
   /**
    * Audio context is used to mute all but one video when multiple video views are playing from one player simultaneously.
@@ -125,7 +136,7 @@ export const VideoView = forwardRef((props: { player?: VideoPlayer } & VideoView
       videoRef.current?.removeEventListener("loadstart", onLoadStart);
       videoRef.current?.removeEventListener("loadeddata", onCanPlay);
     };
-  }, [videoRef, props.onPictureInPictureStop, props.onPictureInPictureStart]);
+  }, [videoRef, elementEpoch, props.onPictureInPictureStop, props.onPictureInPictureStart]);
 
   // Adds the video view as a candidate for being the audio source for the player (when multiple views play from one
   // player only one will emit audio).
@@ -234,8 +245,11 @@ export const VideoView = forwardRef((props: { player?: VideoPlayer } & VideoView
   useEffect(() => {
     if (videoRef.current) mountedPlayerRef.current?.unmountVideoView(videoRef.current);
 
-    if (videoRef.current) {
-      props.player?.mountVideoView(videoRef.current);
+    // The element this effect mounted. `videoRef` may point at its successor by
+    // the time the cleanup runs.
+    const mounted = videoRef.current;
+    if (mounted) {
+      props.player?.mountVideoView(mounted);
     }
     setupFullscreenListener();
     attachAudioNodes();
@@ -248,17 +262,18 @@ export const VideoView = forwardRef((props: { player?: VideoPlayer } & VideoView
     }
 
     return () => {
-      if (videoRef.current) {
-        props.player?.unmountVideoView(videoRef.current);
+      if (mounted) {
+        props.player?.unmountVideoView(mounted);
       }
       mountedPlayerRef.current = null;
       cleanupFullscreenListener();
       detachAudioNodes();
     };
-  }, [props.player]);
+  }, [props.player, elementEpoch]);
 
   return (
     <video
+      key={elementEpoch}
       controls={props.nativeControls ?? true}
       controlsList={props.fullscreenOptions?.enable ? undefined : "nofullscreen"}
       crossOrigin={props.crossOrigin}
@@ -276,7 +291,9 @@ export const VideoView = forwardRef((props: { player?: VideoPlayer } & VideoView
       ref={(newRef) => {
         // This is called with a null value before `player.unmountVideoView` is called,
         // we can't assign null to videoRef if we want to unmount it from the player.
-        if (newRef && !newRef.isEqualNode(videoRef.current)) {
+        // By identity: a replacement element has the same attributes as the one
+        // it replaces, so `isEqualNode` would take the two for one.
+        if (newRef && newRef !== videoRef.current) {
           videoRef.current = newRef;
           hasToSetupAudioContext.current = props.useAudioNodePlayback ?? false;
           maybeSetupAudioContext();
