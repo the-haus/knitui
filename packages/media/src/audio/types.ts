@@ -25,6 +25,7 @@ import type {
   BaseMediaSourceObject,
   BaseMediaState,
   MediaError,
+  MediaSampleData,
   MediaStatus,
 } from "../shared";
 
@@ -36,17 +37,6 @@ import type {
 export interface AudioSourceObject extends BaseMediaSourceObject {
   /** Display name for track queues / playlist UI. */
   name?: string;
-  /**
-   * WEB ONLY: the `crossOrigin` attribute for the underlying media element. Set
-   * this to `"anonymous"` for a CORS-enabled remote source you want to VISUALIZE —
-   * Web Audio (the audio-visualizer sampler) can't read a cross-origin source
-   * otherwise (the browser taints it and sampling reports unsupported). Requires
-   * the server to send `Access-Control-Allow-Origin`; if it doesn't, the element
-   * won't load, so leave this unset for plain (non-visualized) playback. Per
-   * source and self-clearing — switching to a source without it resets the element
-   * to no `crossOrigin`. Ignored on native.
-   */
-  crossOrigin?: "anonymous" | "use-credentials";
 }
 
 /**
@@ -106,8 +96,6 @@ export interface AudioLockScreenOptions {
 export interface AudioCapabilities extends BaseMediaCapabilities {
   /** Pitch-corrected rate changes (`preservesPitch` / `shouldCorrectPitch`). */
   canCorrectPitch: boolean;
-  /** Real-time waveform sampling (`useAudioSampleListener` / Web Audio analyser). */
-  canSample: boolean;
   /** Lock-screen / now-playing controls (native lock screen / web `MediaSession`). */
   canLockScreen: boolean;
 }
@@ -136,60 +124,15 @@ export interface AudioControllerState extends BaseMediaState {
 /* Sampling                                                                   */
 /* -------------------------------------------------------------------------- */
 
-/**
- * A normalized audio sample for visualization. `channels` holds the raw PCM
- * frame values (-1..1) per channel; `peak`/`rms` are the precomputed envelope of
- * the mixed signal so a meter doesn't have to walk the frames itself.
- */
-export interface AudioSampleData {
-  /**
-   * Per-channel time-domain PCM windows, values in `[-1, 1]`. Typed as
-   * `ArrayLike<number>` so backends can hand over a `Float32Array` directly
-   * (the web sampler's transferred window, expo-audio's `frames`) with no
-   * per-frame copy — reducers like `mixChannels` already read it as
-   * `ArrayLike`.
-   *
-   * READ SYNCHRONOUSLY, NEVER RETAIN: both the frame buffers AND this list are
-   * recycled between frames. The backend reuses the buffers, and the player
-   * controller reuses the list itself so a 60 Hz sampler allocates nothing per
-   * frame. Copy anything you need to keep (`useAudioSpectrum` copies into a ring
-   * buffer inside the callback).
-   */
-  channels: ReadonlyArray<ArrayLike<number>>;
-  /** Peak absolute amplitude across all channels, 0..1. */
-  peak: number;
-  /** Root-mean-square (loudness) across all channels, 0..1. */
-  rms: number;
-  /** Seconds relative to the audio timeline. */
-  timestamp: number;
-  /**
-   * Optional precomputed magnitude spectrum — the seam for an OFF-THREAD FFT.
-   * Linear magnitude per bin for bins `0..N/2-1` (the same scale
-   * `@knitui/media/dsp`'s `SpectrumAnalyzer` works in, so it can be binned with
-   * `bandsFromSpectrum` without re-running the transform). A backend that can
-   * compute the FFT more cheaply than the JS path — a web `AudioWorklet`, or a
-   * native vDSP/Oboe FFT — fills this; `useAudioSpectrum` then bins it directly
-   * and skips its own FFT.
-   *
-   * NOTE: the built-in backends do NOT currently populate this. Both the player's
-   * `expo-audio` sampler (web + native) and our `web-audio-sampler` emit
-   * time-domain PCM only, so `useAudioSpectrum` runs the shared JS FFT over
-   * `channels` (cheap, off the UI thread). The field is the integration point for
-   * the native/worklet producers. The array may be reused across frames — read it
-   * synchronously, don't retain.
-   */
-  frequency?: ArrayLike<number>;
-}
+/** A normalized sample for visualization (see {@link MediaSampleData}). */
+export type AudioSampleData = MediaSampleData;
 
 /* -------------------------------------------------------------------------- */
 /* Events                                                                     */
 /* -------------------------------------------------------------------------- */
 
 /** Typed event payloads emitted by a player controller. */
-export interface AudioControllerEventMap extends BaseMediaEventMap<AudioControllerState> {
-  /** A new waveform sample (only while sampling is enabled). */
-  sampleUpdate: AudioSampleData;
-}
+export interface AudioControllerEventMap extends BaseMediaEventMap<AudioControllerState> {}
 
 export type AudioEventType = keyof AudioControllerEventMap;
 

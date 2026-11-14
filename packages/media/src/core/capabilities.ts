@@ -33,3 +33,11 @@ export function detectVolumeControllable(): boolean {
   const isIOS = /iP(hone|od|ad)/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
   return !isIOS;
 }
+
+/** Whether the Web Audio API (`AudioContext`) is available, which sampling needs. */
+export function detectWebAudio(): boolean {
+  return (
+    typeof globalThis !== "undefined" &&
+    typeof (globalThis as { AudioContext?: unknown }).AudioContext !== "undefined"
+  );
+}

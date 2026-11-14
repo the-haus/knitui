@@ -17,7 +17,7 @@ import type {
   RecorderState,
   RecordingInput,
   RecordingStatus,
-} from "expo-audio";
+} from "@knitui/media/native/audio";
 
 import { meteringToLevel } from "../engine";
 import type { RecordingOptions } from "../engine/recording-presets";

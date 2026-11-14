@@ -1,3 +1,4 @@
+import { isWeb } from "@knitui/core";
 /**
  * The {@link VideoController} backend over an `expo-video` `VideoPlayer`. This is
  * cross-platform: `expo-video` resolves to its native module on device and to its
@@ -16,18 +17,21 @@ import type {
   SubtitleTrack as ExpoSubtitleTrack,
   VideoSource as ExpoVideoSource,
   VideoPlayer,
-} from "expo-video";
+} from "@knitui/media/native/video";
 
-import { isWeb } from "@knitui/core";
-
+import { clampSeekTarget, clampVolume, StallWatch } from "../../core/playback";
+import { SamplePump } from "../../core/sample-pump";
+import { ScreenWakeLock } from "../../core/wake-lock";
 import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
 import { type Cue, NATIVE_CAPABILITIES, resolveWebRuntimeCapabilities } from "../engine";
+import { withPreloadCache } from "../session/preload";
 import type {
   AudioTrack,
   SubtitleTrack,
   VideoCapabilities,
   VideoControllerState,
   VideoEventType,
+  VideoPlaybackOptions,
   VideoPlayerConfig,
   VideoSource,
   VideoTextTrack,
@@ -90,6 +94,19 @@ export class ExpoVideoController extends BaseVideoController {
 
   /** The last source loaded, for `retry()`. */
   private lastSource: VideoSource;
+  /** WEB: the screen wake lock behind `keepAwake` (native players hold their own). */
+  private readonly wakeLock = isWeb ? new ScreenWakeLock() : null;
+  /**
+   * The sampling loop over the video's audio, the same one the audio controller
+   * runs: it pulls the newest window from the player's tap once per display frame,
+   * and only while a `sampleUpdate` listener is attached.
+   */
+  private readonly samplePump = new SamplePump(
+    (target) => this.player.readAudioSamples(target),
+    () => this.hasListeners("sampleUpdate"),
+    () => this._state.currentTime,
+    (sample) => this.emitSample(sample),
+  );
 
   /**
    * The standing PLAY INTENT: whether playback has been asked for, independent of
@@ -106,7 +123,10 @@ export class ExpoVideoController extends BaseVideoController {
    * intent, which is what makes those two cases work at all.
    */
   private wantsPlay = false;
-  private stallTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly stallWatch = new StallWatch(STREAM_STALL_TIMEOUT_MS, () => {
+    if (this._state.status !== "loading") return;
+    this.setState({ status: "error", error: { message: STREAM_STALL_MESSAGE }, playing: false });
+  });
   private offStallWatch: (() => void) | null = null;
 
   constructor(
@@ -376,19 +396,10 @@ export class ExpoVideoController extends BaseVideoController {
   private syncStallWatch(): void {
     if (!isWeb) return;
     if (!this.wantsPlay || this._state.status !== "loading") {
-      this.clearStallTimer();
+      this.stallWatch.clear();
       return;
     }
-    this.stallTimer ??= setTimeout(() => {
-      this.stallTimer = null;
-      if (this._state.status !== "loading") return;
-      this.setState({ status: "error", error: { message: STREAM_STALL_MESSAGE }, playing: false });
-    }, STREAM_STALL_TIMEOUT_MS);
-  }
-
-  private clearStallTimer(): void {
-    if (this.stallTimer !== null) clearTimeout(this.stallTimer);
-    this.stallTimer = null;
+    this.stallWatch.arm();
   }
 
   /**
@@ -415,7 +426,7 @@ export class ExpoVideoController extends BaseVideoController {
 
   pause(): void {
     this.wantsPlay = false;
-    this.clearStallTimer();
+    this.stallWatch.clear();
     this.player.pause();
   }
 
@@ -431,11 +442,7 @@ export class ExpoVideoController extends BaseVideoController {
   }
 
   seekTo(seconds: number): void {
-    const duration = this.player.duration;
-    const target =
-      Number.isFinite(duration) && duration > 0
-        ? Math.min(Math.max(0, seconds), duration)
-        : Math.max(0, seconds);
+    const target = clampSeekTarget(seconds, this.player.duration);
     this.player.currentTime = target;
     this.setState({ currentTime: target });
   }
@@ -445,7 +452,7 @@ export class ExpoVideoController extends BaseVideoController {
   // raw `player.seekBy`, which skipped the [0, duration] clamp + state update.)
 
   setVolume(volume: number): void {
-    const v = Math.max(0, Math.min(1, volume));
+    const v = clampVolume(volume);
     this.player.volume = v;
     this.setState({ volume: v });
   }
@@ -463,6 +470,48 @@ export class ExpoVideoController extends BaseVideoController {
   setLoop(loop: boolean): void {
     this.player.loop = loop;
     this.setState({ loop });
+  }
+
+  protected override deriveEvents(prev: VideoControllerState, next: VideoControllerState): void {
+    super.deriveEvents(prev, next);
+    if (next.playing !== prev.playing) this.wakeLock?.setPlaying(next.playing);
+  }
+
+  setPlaybackOptions(options: VideoPlaybackOptions): void {
+    const player = this.player;
+    if (options.maxResolution !== undefined) player.maxResolution = options.maxResolution;
+    if (options.backgroundPlayback !== undefined) {
+      player.staysActiveInBackground = options.backgroundPlayback;
+    }
+    if (options.keepAwake !== undefined) {
+      player.keepScreenOnWhilePlaying = options.keepAwake;
+      this.wakeLock?.setWanted(options.keepAwake);
+    }
+    if (options.audioMixingMode !== undefined) player.audioMixingMode = options.audioMixingMode;
+    const buffer = options.buffer;
+    if (buffer) {
+      // The player replaces the whole record, so start from what it has.
+      player.bufferOptions = {
+        ...player.bufferOptions,
+        ...(buffer.forwardDuration !== undefined && {
+          preferredForwardBufferDuration: buffer.forwardDuration,
+        }),
+        ...(buffer.minForPlayback !== undefined && { minBufferForPlayback: buffer.minForPlayback }),
+        ...(buffer.maxBytes !== undefined && { maxBufferBytes: buffer.maxBytes }),
+        ...(buffer.prioritizeTime !== undefined && {
+          prioritizeTimeOverSizeThreshold: buffer.prioritizeTime,
+        }),
+        ...(buffer.waitToMinimizeStalling !== undefined && {
+          waitsToMinimizeStalling: buffer.waitToMinimizeStalling,
+        }),
+      };
+    }
+  }
+
+  setSamplingEnabled(enabled: boolean): void {
+    this.player.setAudioSamplingEnabled(enabled);
+    if (enabled) this.samplePump.start();
+    else this.samplePump.stop();
   }
 
   setNowPlayingEnabled(enabled: boolean): void {
@@ -543,7 +592,8 @@ export class ExpoVideoController extends BaseVideoController {
    */
   private async loadAsync(source: VideoSource): Promise<void> {
     try {
-      await this.player.replaceAsync(source as ExpoVideoSource);
+      // A preloaded source is read back from the cache its preload filled.
+      await this.player.replaceAsync(withPreloadCache(source) as ExpoVideoSource);
     } catch (err) {
       // The `error` + `statusChange` events fan out from the diff in
       // BaseMediaController.deriveEvents — just set the error status.
@@ -552,7 +602,9 @@ export class ExpoVideoController extends BaseVideoController {
   }
 
   override dispose(): void {
-    this.clearStallTimer();
+    this.samplePump.stop();
+    this.wakeLock?.dispose();
+    this.stallWatch.clear();
     this.offStallWatch?.();
     this.offStallWatch = null;
     for (const subscription of this.subscriptions) subscription.remove();

@@ -3,7 +3,10 @@
   "compilerOptions": {
     "outDir": "lib/typescript",
     "declaration": false,
-    "types": ["jest", "@testing-library/jest-dom", "node"]
+    "types": ["jest", "@testing-library/jest-dom", "node"],
+    "paths": {
+      "@knitui/media/native/*": ["./src/native/*"]
+    }
   },
   "include": ["src/**/*", ".storybook/**/*"],
   "exclude": ["node_modules", "lib"]

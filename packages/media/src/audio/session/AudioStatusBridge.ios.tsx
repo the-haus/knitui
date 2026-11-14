@@ -1,4 +1,3 @@
-import { useAudioPlayerStatus } from "expo-audio";
 /**
  * Drives the shared audio engine's playback status from a React COMMIT-phase
  * hook, instead of relying solely on the controller's constructor-attached
@@ -18,6 +17,8 @@ import { useAudioPlayerStatus } from "expo-audio";
  * no-op rather than a double update.
  */
 import * as React from "react";
+
+import { useAudioPlayerStatus } from "@knitui/media/native/audio";
 
 import type { ExpoAudioController } from "../controller/expo-controller";
 

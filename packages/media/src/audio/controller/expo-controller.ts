@@ -1,10 +1,3 @@
-import type {
-  AudioPlayer,
-  AudioStatus,
-  AudioSample as ExpoAudioSample,
-  AudioSource as ExpoAudioSource,
-} from "expo-audio";
-
 /**
  * The {@link AudioController} backend over an `expo-audio` `AudioPlayer`. This is
  * cross-platform: `expo-audio` resolves to its native module on device and to its
@@ -15,19 +8,21 @@ import type {
  * The player is created and disposed by the engine / hook; this controller only
  * wraps it, binds its events, and maps them onto the shared snapshot. All status
  * flows through a single `playbackStatusUpdate` event carrying an `AudioStatus`;
- * waveform data flows through `audioSampleUpdate` (expo's built-in sampler — the
- * higher-fidelity AudioWorklet sampler is reserved for the mic-sourced meter /
- * live-stream sites, which never touch this player element).
+ * waveform data is pulled from the player's tap by a {@link SamplePump} (the
+ * AudioWorklet sampler is reserved for the mic-sourced meter / live-stream sites,
+ * which never touch this player element).
  */
 import { isWeb } from "@knitui/core";
+import type {
+  AudioPlayer,
+  AudioStatus,
+  AudioSource as ExpoAudioSource,
+} from "@knitui/media/native/audio";
 
+import { clampSeekTarget, clampVolume, StallWatch } from "../../core/playback";
+import { SamplePump } from "../../core/sample-pump";
 import { STREAM_STALL_MESSAGE, STREAM_STALL_TIMEOUT_MS } from "../../shared";
-import {
-  mixChannels,
-  type MixedLevels,
-  NATIVE_CAPABILITIES,
-  resolveWebRuntimeCapabilities,
-} from "../engine";
+import { NATIVE_CAPABILITIES, resolveWebRuntimeCapabilities } from "../engine";
 import type {
   AudioCapabilities,
   AudioError,
@@ -99,15 +94,18 @@ export class ExpoAudioController extends BaseAudioController {
   /** The wrapped expo-audio player. */
   readonly player: AudioPlayer;
   private subscriptions: ExpoSubscription[] = [];
-  private sampleSub: ExpoSubscription | null = null;
   /**
-   * Per-frame sampling scratch, reused across `audioSampleUpdate` callbacks so the
-   * 60 Hz path allocates nothing: the channel-frames list and the mixed envelope.
-   * Safe because `AudioSampleData` is documented as read-synchronously (the backend
-   * itself recycles the frame buffers between frames).
+   * The sampling loop. It pulls the newest window from the player once per display
+   * frame, straight into a reused `Float32Array`, and only while a `sampleUpdate`
+   * listener is attached: `setSamplingEnabled` is driven by mount effects that can
+   * outlive the visualizer, and an armed sampler nobody reads must cost nothing.
    */
-  private readonly sampleChannels: ArrayLike<number>[] = [];
-  private readonly sampleLevels: MixedLevels = { peak: 0, rms: 0 };
+  private readonly samplePump = new SamplePump(
+    (target) => this.player.readAudioSamples(target),
+    () => this.hasListeners("sampleUpdate"),
+    () => this._state.currentTime,
+    (sample) => this.emitSample(sample),
+  );
   private lastSource: AudioSource;
   /** The id this player's own status updates carry — adopted from its first event. */
   private ownStatusId: string | null = null;
@@ -152,7 +150,9 @@ export class ExpoAudioController extends BaseAudioController {
   /** WEB: expo's backend never sets `isBuffering`, so the element's events do. */
   private elementBuffering = false;
   private detachElement: (() => void) | null = null;
-  private stallTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly stallWatch = new StallWatch(STREAM_STALL_TIMEOUT_MS, () =>
+    this.failStalledStream(),
+  );
 
   constructor(
     player: AudioPlayer,
@@ -207,7 +207,7 @@ export class ExpoAudioController extends BaseAudioController {
    * the re-bind from {@link load}.
    */
   private bindElementBuffering(): void {
-    this.clearStallTimer();
+    this.stallWatch.clear();
     this.detachElement?.();
     this.detachElement = null;
     this.elementBuffering = false;
@@ -215,10 +215,8 @@ export class ExpoAudioController extends BaseAudioController {
     if (!isWeb || !media?.addEventListener) return;
     const update = (buffering: boolean): void => {
       this.elementBuffering = buffering;
-      this.clearStallTimer();
-      if (buffering && this.wantsPlay) {
-        this.stallTimer = setTimeout(() => this.failStalledStream(), STREAM_STALL_TIMEOUT_MS);
-      }
+      this.stallWatch.clear();
+      if (buffering && this.wantsPlay) this.stallWatch.arm();
       this.setState({ isBuffering: buffering });
     };
     const onWaiting = (): void => update(true);
@@ -231,13 +229,7 @@ export class ExpoAudioController extends BaseAudioController {
     };
   }
 
-  private clearStallTimer(): void {
-    if (this.stallTimer !== null) clearTimeout(this.stallTimer);
-    this.stallTimer = null;
-  }
-
   private failStalledStream(): void {
-    this.stallTimer = null;
     this.elementBuffering = false;
     this.streamFailure = { message: STREAM_STALL_MESSAGE };
     this.player.pause();
@@ -403,17 +395,13 @@ export class ExpoAudioController extends BaseAudioController {
       this.setState({ currentTime: this.pendingSeek });
       return;
     }
-    const duration = this.player.duration;
-    const target =
-      Number.isFinite(duration) && duration > 0
-        ? Math.min(Math.max(0, seconds), duration)
-        : Math.max(0, seconds);
+    const target = clampSeekTarget(seconds, this.player.duration);
     this.setState({ currentTime: target });
     await this.player.seekTo(target);
   }
 
   setVolume(volume: number): void {
-    const v = Math.max(0, Math.min(1, volume));
+    const v = clampVolume(volume);
     this.player.volume = v;
     this.setState({ volume: v });
   }
@@ -506,59 +494,27 @@ export class ExpoAudioController extends BaseAudioController {
   /* sampling ---------------------------------------------------------------- */
 
   setSamplingEnabled(enabled: boolean): void {
-    if (enabled) {
-      // Ask the backend to turn sampling on, THEN check whether it took. We can't
-      // pre-gate on `isAudioSamplingSupported`: the web backend initializes it to
-      // `false` and only flips it to `true` *inside* `setAudioSamplingEnabled`
-      // (after lazily building the Web-Audio analyser graph and clearing the
-      // cross-origin check). Reading it first therefore always short-circuited on
-      // web — the analyser was never created, so the waveform/spectrum stayed flat.
-      // Native reports support synchronously, so calling first is safe there too.
-      this.player.setAudioSamplingEnabled(true);
-      if (!this.player.isAudioSamplingSupported) return; // backend declined (e.g. tainted cross-origin source)
-      if (this.sampleSub) return;
-      this.sampleSub = this.player.addListener("audioSampleUpdate", (sample: ExpoAudioSample) => {
-        // The single hottest callback in the package: the backend posts a ~2048-frame
-        // window per display frame (≈60 Hz). So do NOTHING before establishing that
-        // the work will be used:
-        //   1. Nobody subscribed to `sampleUpdate` (sampling was enabled but no
-        //      visualizer/meter is mounted) ⇒ return immediately. `setSamplingEnabled`
-        //      is driven by mount effects that can outlive the listeners, and this
-        //      used to walk every frame twice and allocate per frame regardless.
-        //      `timeUpdate` is gated the same way in `BaseMediaController`.
-        //   2. The channel list is written into a REUSED array and the envelope into a
-        //      reused `{ peak, rms }` — the emitted payload is documented as valid only
-        //      for the duration of the callback (the backend already recycles the
-        //      underlying frame buffers), so no consumer may retain either.
-        //   3. `mixChannels` fuses the peak + RMS passes into one walk of the frames.
-        if (!this.hasListeners("sampleUpdate")) return;
-        const source = sample.channels;
-        const channels = this.sampleChannels;
-        channels.length = source.length;
-        for (let i = 0; i < source.length; i++) channels[i] = source[i].frames;
-        const levels = mixChannels(channels, this.sampleLevels);
-        this.emitSample({
-          channels,
-          peak: levels.peak,
-          rms: levels.rms,
-          timestamp: sample.timestamp,
-        });
-      });
-    } else {
+    if (!enabled) {
+      this.samplePump.stop();
       this.player.setAudioSamplingEnabled(false);
-      this.sampleSub?.remove();
-      this.sampleSub = null;
+      return;
     }
+    // Ask the backend to turn sampling on, THEN check whether it took. The web
+    // backend only reports support from inside `setAudioSamplingEnabled`, once it
+    // has built the analyser graph and cleared the cross-origin check, so reading
+    // `isAudioSamplingSupported` first would always decline on web.
+    this.player.setAudioSamplingEnabled(true);
+    if (!this.player.isAudioSamplingSupported) return; // e.g. a tainted cross-origin source
+    this.samplePump.start();
   }
 
   override dispose(): void {
-    this.clearStallTimer();
+    this.stallWatch.clear();
     this.detachElement?.();
     this.detachElement = null;
     for (const subscription of this.subscriptions) subscription.remove();
     this.subscriptions = [];
-    this.sampleSub?.remove();
-    this.sampleSub = null;
+    this.samplePump.stop();
     // The player itself is owned/released by the useAudioPlayer hook.
     super.dispose();
   }

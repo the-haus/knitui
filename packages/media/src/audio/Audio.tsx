@@ -18,7 +18,7 @@ import { isWeb, slotStyles, type TamaguiElement, withStaticProperties } from "@k
 
 import { useMediaCallbacks } from "../core/react/useMediaCallbacks";
 import { audioHostName, useRequireMediaProvider } from "../provider/context";
-import { applyMediaKeyAction } from "../shared";
+import { applyMediaKeyAction, sourceUriOf } from "../shared";
 import {
   BufferingIndicator,
   ControlBar,
@@ -49,6 +49,7 @@ import {
 } from "./Audio.shared";
 import { resolveKeyAction } from "./engine";
 import { useAudioController } from "./hooks/useAudioController";
+import { preload as preloadAudio } from "./session/preload";
 import type { AudioMetadata } from "./types";
 
 /** Resolve the lock-screen metadata from the prop + the display metadata. */
@@ -124,6 +125,7 @@ function AudioRoot(props: AudioProps): React.ReactElement {
     id: idProp,
     keyboard = true,
     label = "Audio player",
+    preload = false,
     getController,
     onReady,
     onStatusChange,
@@ -154,6 +156,14 @@ function AudioRoot(props: AudioProps): React.ReactElement {
     updateInterval,
     id: playerId,
   });
+
+  // Warm the start of the source for a first play without a wait.
+  const preloadUri = preload ? sourceUriOf(source) : null;
+  React.useEffect(() => {
+    if (preloadUri !== null) void preloadAudio(source);
+    // Keyed on the URI: an inline source object is a new identity every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preloadUri]);
 
   /* Forward declarative callbacks. ----------------------------------------- */
   React.useEffect(() => {

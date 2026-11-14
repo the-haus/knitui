@@ -10,9 +10,10 @@
  */
 import "../../shared/expo-globals";
 
-import type { RecordingOptions as ExpoRecordingOptions } from "expo-audio";
-import { useAudioRecorder } from "expo-audio";
 import * as React from "react";
+
+import type { RecordingOptions as ExpoRecordingOptions } from "@knitui/media/native/audio";
+import { useAudioRecorder } from "@knitui/media/native/audio";
 
 import type { MediaStore } from "../../core/react/useMediaSelector";
 import { ExpoAudioRecorderController } from "../controller/expo-recorder-controller";

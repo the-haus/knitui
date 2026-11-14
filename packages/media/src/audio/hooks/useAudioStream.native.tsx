@@ -1,5 +1,3 @@
-import { requestRecordingPermissionsAsync, useAudioStream as useExpoAudioStream } from "expo-audio";
-import type { AudioStreamBuffer } from "expo-audio";
 /**
  * Native implementation of the live microphone PCM stream hook. Wraps
  * `expo-audio`'s `useAudioStream`, decodes each captured PCM buffer with the
@@ -17,6 +15,12 @@ import type { AudioStreamBuffer } from "expo-audio";
  */
 import * as React from "react";
 import { type SharedValue, useSharedValue } from "react-native-reanimated";
+
+import {
+  requestRecordingPermissionsAsync,
+  useAudioStream as useExpoAudioStream,
+} from "@knitui/media/native/audio";
+import type { AudioStreamBuffer } from "@knitui/media/native/audio";
 
 import { mixChannels } from "../engine";
 import { decodePcm } from "../stream/decode";

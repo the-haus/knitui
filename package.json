@@ -119,7 +119,6 @@
     ],
     "patchedDependencies": {
       "expo-modules-core@58.0.22": "patches/expo-modules-core@58.0.22.patch",
-      "expo-audio@58.0.9": "patches/expo-audio@58.0.9.patch",
       "@tamagui/static@3.0.18": "patches/@tamagui__static@3.0.18.patch",
       "react-native-teleport@1.2.2": "patches/react-native-teleport@1.2.2.patch",
       "@maplibre/maplibre-react-native@11.5.0": "patches/@maplibre__maplibre-react-native@11.5.0.patch",

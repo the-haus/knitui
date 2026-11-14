@@ -17,16 +17,21 @@ import * as React from "react";
 import { Box, Portal } from "@knitui/components";
 
 import type { ExpoAudioController } from "../audio/controller/expo-controller";
-import { getSharedAudioSession } from "../audio/session/audio-engine";
 import { AudioStatusBridge } from "../audio/session/AudioStatusBridge";
 import { AudioSurface } from "../audio/surface/AudioSurface";
 import type { VideoSurfaceConfig } from "../video/hooks/useVideoController.shared";
-import { getSharedVideoSession } from "../video/session/video-engine";
 import { SURFACE_FILL, VideoSurface } from "../video/surface/VideoSurface";
 import { audioHostName, MediaContext, type MediaEngines, videoHostName } from "./context";
+import { getSharedMediaEngines } from "./shared-engines";
 
 export interface MediaProviderProps {
   children: React.ReactNode;
+  /**
+   * Let only one thing be heard at a time: audible playback starting in audio
+   * pauses video, and the other way round. A muted video never takes over. Turn
+   * it off to mix the two yourself. Default `true`.
+   */
+  exclusive?: boolean;
 }
 
 /** The slice of a session this provider tracks: its active player id, reactively. */
@@ -44,7 +49,10 @@ function useActiveId(session: ActiveIdSession): string | null {
   );
 }
 
-export function MediaProvider({ children }: MediaProviderProps): React.ReactElement {
+export function MediaProvider({
+  children,
+  exclusive = true,
+}: MediaProviderProps): React.ReactElement {
   // Resolve the PROCESS-WIDE engines, never per-provider instances. There is one
   // real `<audio>` / one real `<video>` per process, period — so the engines are
   // module singletons and the provider only PUBLISHES them, it does not own their
@@ -65,10 +73,13 @@ export function MediaProvider({ children }: MediaProviderProps): React.ReactElem
   // Because the engines are process-global, the provider does NOT dispose them on
   // unmount — tearing them down on a StrictMode unmount left the controllers deaf
   // (subscriptions gone) and froze the chrome at 0:00 across the remount.
-  const engines = React.useMemo<MediaEngines>(
-    () => ({ audio: getSharedAudioSession(), video: getSharedVideoSession() }),
-    [],
-  );
+  const engines = React.useMemo<MediaEngines>(() => getSharedMediaEngines(), []);
+
+  // The hub is process-wide like the engines, so the last provider to render
+  // decides. Assigned in an effect: a render must not write to shared state.
+  React.useEffect(() => {
+    engines.hub.exclusive = exclusive;
+  }, [engines, exclusive]);
 
   // Track each session's active player so we know which host to teleport into.
   const audioActiveId = useActiveId(engines.audio.session);
@@ -113,6 +124,7 @@ export function MediaProvider({ children }: MediaProviderProps): React.ReactElem
                 nativeControls={videoSurface?.nativeControls}
                 allowsPictureInPicture={videoSurface?.allowsPictureInPicture}
                 textTracks={videoSurface?.textTracks}
+                crossOrigin={videoSurface?.crossOrigin}
                 frameProps={SURFACE_FILL}
               />
             </Portal>

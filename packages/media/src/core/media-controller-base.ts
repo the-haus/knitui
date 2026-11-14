@@ -12,7 +12,7 @@
  * extend the domain base and implement the abstract imperative surface against
  * their backend.
  */
-import type { BaseMediaEventMap, BaseMediaState } from "../shared";
+import type { BaseMediaEventMap, BaseMediaState, MediaSampleData } from "../shared";
 import { StatefulEmitter } from "./stateful-emitter";
 
 /**
@@ -52,6 +52,12 @@ export interface MediaController<
   setPlaybackRate(rate: number, pitchCorrection?: unknown): void;
   setLoop(loop: boolean): void;
 
+  /**
+   * Turn real-time waveform sampling on or off (see the `sampleUpdate` event).
+   * No-op where `capabilities.canSample` is false.
+   */
+  setSamplingEnabled(enabled: boolean): void;
+
   /* source */
   replace(source: Source): void | Promise<void>;
   /** Reload the current source — used by the error overlay's retry button. */
@@ -59,6 +65,21 @@ export interface MediaController<
 
   /** Release platform resources and drop all listeners. */
   dispose(): void;
+}
+
+/*
+ * Waveform-sample emission gate. It gates on a silence FLOOR, not a peak/rms
+ * dead-band: peak and rms are aggregates over a large, overlapping analysis window
+ * (about 2048 samples), so they barely move frame to frame during sustained
+ * playback even though the waveform a visualizer draws keeps changing. A dead-band
+ * suppressed frames the visualizers needed and made playback choppy.
+ */
+const SAMPLE_SILENCE_FLOOR = 0.01; // about -40 dBFS peak/rms; below this is "silence"
+const SAMPLE_SILENCE_TAIL_MS = 400; // keep emitting this long after the last audible frame
+
+function sampleClock(): number {
+  const perf = (globalThis as { performance?: { now(): number } }).performance;
+  return perf && typeof perf.now === "function" ? perf.now() : Date.now();
 }
 
 /**
@@ -161,6 +182,26 @@ export abstract class BaseMediaController<
     }
   }
 
+  /* sampling ---------------------------------------------------------------- */
+
+  private _lastAudibleSampleMs = 0;
+
+  /**
+   * Emit a `sampleUpdate`, gated on audibility. A paused or silent track keeps
+   * producing all-zero windows; forwarding each one would wake every subscribed
+   * visualizer at the display rate to redraw nothing. Audible windows always pass,
+   * and silence passes only for a short tail so subscribers can settle to rest.
+   */
+  protected emitSample(sample: MediaSampleData): void {
+    const t = sampleClock();
+    if (sample.peak >= SAMPLE_SILENCE_FLOOR || sample.rms >= SAMPLE_SILENCE_FLOOR) {
+      this._lastAudibleSampleMs = t;
+    } else if (t - this._lastAudibleSampleMs > SAMPLE_SILENCE_TAIL_MS) {
+      return;
+    }
+    this.emitEvent("sampleUpdate" as keyof Events, sample as Events[keyof Events]);
+  }
+
   togglePlay(): void {
     if (this._state.playing) this.pause();
     else this.play();
@@ -186,6 +227,7 @@ export abstract class BaseMediaController<
   abstract setMuted(muted: boolean): void;
   abstract setPlaybackRate(rate: number, pitchCorrection?: unknown): void;
   abstract setLoop(loop: boolean): void;
+  abstract setSamplingEnabled(enabled: boolean): void;
   abstract replace(source: Source): void | Promise<void>;
   abstract retry(): void | Promise<void>;
 }

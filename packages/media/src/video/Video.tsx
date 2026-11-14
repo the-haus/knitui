@@ -18,11 +18,12 @@ import { isWeb, slotStyles, type TamaguiElement, withStaticProperties } from "@k
 
 import { useMediaCallbacks } from "../core/react/useMediaCallbacks";
 import { useRequireMediaProvider, videoHostName } from "../provider/context";
-import { applyMediaKeyAction } from "../shared";
+import { applyMediaKeyAction, sourceUriOf } from "../shared";
 import { hoverProps } from "../shared/chrome";
 import type { VideoController } from "./controller/video-controller-base";
 import { resolveKeyAction, type VideoKeyAction } from "./engine";
 import { useVideoController } from "./hooks/useVideoController";
+import { preload as preloadVideo } from "./session/preload";
 import type { VideoControllerState, VideoMetadata, VideoSource, VideoSourceObject } from "./types";
 import {
   BigPlayButton,
@@ -128,6 +129,11 @@ function VideoRoot(props: VideoProps): React.ReactElement {
     playbackRate,
     updateInterval,
     timeUpdateInterval,
+    maxResolution,
+    keepAwake,
+    backgroundPlayback,
+    buffer,
+    audioMixingMode,
     contentFit = "contain",
     aspectRatio,
     size = "md",
@@ -141,6 +147,7 @@ function VideoRoot(props: VideoProps): React.ReactElement {
     keyboard = true,
     doubleClickToFullscreen = true,
     label = "Video player",
+    preload = false,
     getController,
     onReady,
     onStatusChange,
@@ -160,14 +167,16 @@ function VideoRoot(props: VideoProps): React.ReactElement {
 
   useRequireMediaProvider("Video");
 
+  const crossOrigin = typeof source === "object" && source ? source.crossOrigin : undefined;
   const surface = React.useMemo(
     () => ({
       contentFit,
       nativeControls,
       allowsPictureInPicture,
       textTracks,
+      crossOrigin,
     }),
-    [contentFit, nativeControls, allowsPictureInPicture, textTracks],
+    [contentFit, nativeControls, allowsPictureInPicture, textTracks, crossOrigin],
   );
 
   // Now-playing metadata rides on the source (expo-video reads it from there);
@@ -189,10 +198,23 @@ function VideoRoot(props: VideoProps): React.ReactElement {
     playbackRate,
     updateInterval,
     timeUpdateInterval,
+    maxResolution,
+    keepAwake,
+    backgroundPlayback,
+    buffer,
+    audioMixingMode,
     textTracks,
     id: playerId,
     surface,
   });
+
+  // Warm the start of the source for a first play without a wait.
+  const preloadUri = preload ? sourceUriOf(source) : null;
+  React.useEffect(() => {
+    if (preloadUri !== null) void preloadVideo(source);
+    // Keyed on the URI: an inline source object is a new identity every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preloadUri]);
 
   // The chrome's auto-hide fade — an in-place opacity transition, cross-platform
   // and reduced-motion-safe (collapses to no transition under reduced motion).

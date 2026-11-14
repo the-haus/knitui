@@ -9,8 +9,8 @@ import { act, render, screen } from "@testing-library/react";
 
 import { Provider } from "@knitui/core";
 
-import { Audio } from "../audio/Audio";
 import { styleTextOf } from "../__tests__/css-rules.test.helper";
+import { Audio } from "../audio/Audio";
 import { getSharedVideoSession } from "../video/session/video-engine";
 import { Video } from "../video/Video";
 import { MediaProvider } from "./MediaProvider";

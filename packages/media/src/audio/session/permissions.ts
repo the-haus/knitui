@@ -8,7 +8,11 @@
 import "../../shared/expo-globals";
 
 import type { PermissionResponse } from "expo";
-import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from "expo-audio";
+
+import {
+  getRecordingPermissionsAsync,
+  requestRecordingPermissionsAsync,
+} from "@knitui/media/native/audio";
 
 import { type AudioPermissionResponse, type AudioPermissionStatus } from "./permissions.shared";
 

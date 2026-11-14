@@ -253,11 +253,11 @@
         "@knitui/components",
         "@knitui/core",
         "@knitui/hooks",
-        "@knitui/icons",
-        "expo-audio",
-        "expo-video"
+        "@knitui/icons"
       ],
       "peerDependencies": [
+        "expo",
+        "expo-asset",
         "expo-modules-core",
         "react",
         "react-native",
@@ -272,9 +272,12 @@
         "./audio",
         "./video",
         "./dsp",
+        "./native/audio",
+        "./native/video",
+        "./app.plugin.js",
         "./package.json"
       ],
-      "exportCount": 8,
+      "exportCount": 14,
       "hasStories": true
     },
     {
@@ -3084,6 +3087,12 @@
       "packageSlug": "core"
     },
     {
+      "name": "getSharedMediaHub",
+      "kind": "function",
+      "package": "@knitui/media",
+      "packageSlug": "media"
+    },
+    {
       "name": "getStartOfWeek",
       "kind": "function",
       "package": "@knitui/dates",
@@ -4120,6 +4129,24 @@
       "kind": "type",
       "package": "@knitui/mediaquery",
       "packageSlug": "mediaquery"
+    },
+    {
+      "name": "MediaHub",
+      "kind": "component",
+      "package": "@knitui/media",
+      "packageSlug": "media"
+    },
+    {
+      "name": "MediaKind",
+      "kind": "type",
+      "package": "@knitui/media",
+      "packageSlug": "media"
+    },
+    {
+      "name": "MediaPreloadOptions",
+      "kind": "type",
+      "package": "@knitui/media",
+      "packageSlug": "media"
     },
     {
       "name": "MediaProvider",
@@ -5301,6 +5328,12 @@
       "kind": "type",
       "package": "@knitui/components",
       "packageSlug": "components"
+    },
+    {
+      "name": "preloadMedia",
+      "kind": "function",
+      "package": "@knitui/media",
+      "packageSlug": "media"
     },
     {
       "name": "PressableSourceProps",
@@ -7896,6 +7929,12 @@
     },
     {
       "name": "useMediaEngines",
+      "kind": "hook",
+      "package": "@knitui/media",
+      "packageSlug": "media"
+    },
+    {
+      "name": "useMediaHub",
       "kind": "hook",
       "package": "@knitui/media",
       "packageSlug": "media"

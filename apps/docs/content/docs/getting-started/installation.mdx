@@ -357,7 +357,10 @@ native modules with them.
 
 On Expo, install a satellite package's native module through `expo install` too:
 
-<InstallCommand expo packages="@knitui/media expo-audio expo-video" />
+<InstallCommand expo packages="@knitui/map @maplibre/maplibre-react-native" />
+
+`@knitui/media` is the exception: it ships its own native module, so there is
+nothing to install next to it. Add its [config plugin](/docs/media#setup) instead.
 
 Which package needs which peer, straight from each `package.json`:
 

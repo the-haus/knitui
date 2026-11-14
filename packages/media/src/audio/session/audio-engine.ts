@@ -9,8 +9,9 @@
  */
 import "../../shared/expo-globals";
 
-import { createAudioPlayer } from "expo-audio";
 import * as React from "react";
+
+import { createAudioPlayer } from "@knitui/media/native/audio";
 
 import { MediaContext } from "../../provider/context";
 import { ExpoAudioController } from "../controller/expo-controller";

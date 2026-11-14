@@ -16,6 +16,11 @@
  *   - the store contract (MediaStore) + selector hooks for custom chrome
  */
 
+export {
+  type SpectrumSource,
+  useAudioSpectrum,
+  type UseAudioSpectrumOptions,
+} from "../audio/hooks/useAudioSpectrum";
 export { type MediaStore, shallowEqual, useMediaSelector } from "../core/react/useMediaSelector";
 export { videoHostName } from "../provider/context";
 export type { VideoController } from "./controller/video-controller-base";
@@ -35,11 +40,20 @@ export type {
   UseVideoControllerResult,
   VideoSurfaceConfig,
 } from "./hooks/useVideoController.shared";
+export {
+  clearAllPreloadedSources,
+  clearPreloadedSource,
+  getPreloadedSources,
+  preload,
+  type VideoPreloadOptions,
+} from "./session/preload";
 export { createVideoEngine, getSharedVideoSession, useVideoEngine } from "./session/video-engine";
 export type { VideoEngine } from "./session/video-engine.shared";
 export type {
   AudioTrack,
   SubtitleTrack,
+  VideoAudioMixingMode,
+  VideoBufferOptions,
   VideoCapabilities,
   VideoContentFit,
   VideoContentType,
@@ -50,6 +64,7 @@ export type {
   VideoError,
   VideoEventType,
   VideoMetadata,
+  VideoPlaybackOptions,
   VideoPlayerConfig,
   VideoRange,
   VideoSource,

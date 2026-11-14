@@ -18,7 +18,7 @@ module.exports = {
   // the SAME build, so exactly one @tamagui/web (one config registry) loads.
   testEnvironmentOptions: { customExportConditions: ["browser", "require", "default"] },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-  testMatch: ["<rootDir>/src/**/*.test.{ts,tsx}"],
+  testMatch: ["<rootDir>/src/**/*.test.{ts,tsx}", "<rootDir>/plugin/**/*.test.js"],
   // Resolve react-native to react-native-web so components render as web nodes.
   moduleNameMapper: {
     "^react-native$": "react-native-web",

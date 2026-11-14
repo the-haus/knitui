@@ -32,7 +32,9 @@ export type {
   BaseMediaSourceObject,
   BaseMediaState,
   MediaError,
+  MediaSampleData,
   MediaSessionState,
   MediaStatus,
   MediaTimeUpdate,
 } from "./media-types";
+export { sourceUriOf } from "./source";

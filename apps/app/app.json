@@ -28,17 +28,11 @@
         }
       ],
       [
-        "expo-video",
-        {
-          "supportsBackgroundPlayback": true,
-          "supportsPictureInPicture": true
-        }
-      ],
-      [
-        "expo-audio",
+        "@knitui/media",
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
-          "enableBackgroundPlayback": true
+          "backgroundPlayback": true,
+          "pictureInPicture": true
         }
       ],
       "@maplibre/maplibre-react-native",

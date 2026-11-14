@@ -31,13 +31,24 @@
 import * as React from "react";
 
 import { type BandOptions, SpectrumAnalyzer } from "../../dsp";
-import type { AudioController } from "../controller/audio-controller-base";
-import type { AudioSampleData } from "../types";
+import type { MediaSampleData } from "../../shared";
 
 /** Suspend the rAF loop after this long without a fresh sample (ms). */
 const REST_AFTER_MS = 250;
 
 /** Options for {@link useAudioSpectrum}. Only `onFrame` is required. */
+/**
+ * Anything whose audio can be sampled: an audio controller or a video controller.
+ * Both expose the same `sampleUpdate` stream, so one hook drives a visualizer from
+ * either.
+ */
+export interface SpectrumSource {
+  readonly state?: { playing: boolean };
+  setSamplingEnabled(enabled: boolean): void;
+  on(type: "sampleUpdate", listener: (sample: MediaSampleData) => void): () => void;
+  on(type: "playingChange", listener: (event: { playing: boolean }) => void): () => void;
+}
+
 export interface UseAudioSpectrumOptions {
   /**
    * Called once per painted frame with the latest per-bar levels (`0..1`). The
@@ -83,7 +94,7 @@ export interface UseAudioSpectrumOptions {
  * disabled on cleanup.
  */
 export function useAudioSpectrum(
-  controller: AudioController | null | undefined,
+  controller: SpectrumSource | null | undefined,
   options: UseAudioSpectrumOptions,
 ): void {
   const {
@@ -182,7 +193,7 @@ export function useAudioSpectrum(
       if (!playing) enterRest();
     });
 
-    const unsubscribe = controller.on("sampleUpdate", (sample: AudioSampleData) => {
+    const unsubscribe = controller.on("sampleUpdate", (sample: MediaSampleData) => {
       // Drop any sample that trails a stop — the buffer captured just before pause
       // can arrive just after it, which would wake the loop for one stale frame.
       if (!playing) return;

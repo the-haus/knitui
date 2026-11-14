@@ -30,7 +30,9 @@ const KNIT_CONFIG = "@knitui/core/config";
  *    Carousel, drag-dismiss);
  *  - expo / expo-modules-core / expo-image: expo's winter runtime and
  *    `react-native/Libraries/...` subpaths (components' Image);
- *  - expo-audio / expo-video: native views and modules (media).
+ *  - @knitui/media/native/audio and /video: the media kit's native players and
+ *    views. Media imports them through these package subpaths, not relative
+ *    paths, precisely so they can be named here.
  *
  * None of their exports create Tamagui config or `styled()` components, so the
  * compiler stubs them as `{}` during static evaluation only; the app bundle is
@@ -42,8 +44,8 @@ const STATIC_EVALUATION_IGNORED_MODULES = [
   "expo",
   "expo-modules-core",
   "expo-image",
-  "expo-audio",
-  "expo-video",
+  "@knitui/media/native/audio",
+  "@knitui/media/native/video",
 ];
 
 /**

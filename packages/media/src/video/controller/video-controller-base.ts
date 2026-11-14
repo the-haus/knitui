@@ -19,6 +19,7 @@ import type {
   VideoCapabilities,
   VideoControllerEventMap,
   VideoControllerState,
+  VideoPlaybackOptions,
   VideoSource,
 } from "../types";
 
@@ -42,6 +43,12 @@ export interface VideoController extends MediaController<
    * `supportsBackgroundPlayback: true`.
    */
   setNowPlayingEnabled(enabled: boolean): void;
+
+  /**
+   * Change playback behaviour: quality cap, keep-awake, background playback,
+   * buffering. Only the fields passed change (see {@link VideoPlaybackOptions}).
+   */
+  setPlaybackOptions(options: VideoPlaybackOptions): void;
 
   /* presentation */
   enterFullscreen(): Promise<void>;
@@ -114,6 +121,7 @@ export abstract class BaseVideoController
 
   /* Abstract video surface --------------------------------------------------- */
   abstract setNowPlayingEnabled(enabled: boolean): void;
+  abstract setPlaybackOptions(options: VideoPlaybackOptions): void;
   abstract selectAudioTrack(id: string | null): void;
   abstract selectSubtitleTrack(id: string | null): void;
   abstract enterFullscreen(): Promise<void>;

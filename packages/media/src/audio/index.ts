@@ -108,7 +108,11 @@ export {
   type UseAudioRecorderOptions,
   type UseAudioRecorderResult,
 } from "./hooks/useAudioRecorderController.shared";
-export { useAudioSpectrum, type UseAudioSpectrumOptions } from "./hooks/useAudioSpectrum";
+export {
+  type SpectrumSource,
+  useAudioSpectrum,
+  type UseAudioSpectrumOptions,
+} from "./hooks/useAudioSpectrum";
 export { useAudioStream } from "./hooks/useAudioStream";
 export type {
   AudioStreamBufferData,
