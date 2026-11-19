@@ -123,8 +123,10 @@
       "slug": "use-focus-trap",
       "name": "useFocusTrap",
       "route": "/docs/hooks/use-focus-trap",
-      "signature": "export function useFocusTrap(active = true): (node: TamaguiElement | null) => void",
-      "types": [],
+      "signature": "export function useFocusTrap( active = true, options: UseFocusTrapOptions = {}, ): (node: TamaguiElement | null) => void",
+      "types": [
+        "UseFocusTrapOptions"
+      ],
       "sourcePath": "packages/hooks/src/use-focus-trap.ts",
       "githubUrl": "https://github.com/the-haus/knitui/blob/main/packages/hooks/src/use-focus-trap.ts",
       "nativePath": "packages/hooks/src/use-focus-trap.native.ts"

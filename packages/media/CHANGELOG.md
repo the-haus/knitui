@@ -1,5 +1,22 @@
 # @knitui/media
 
+## 2.0.2
+
+### Patch Changes
+
+- e992532: A playlist no longer goes deaf in React StrictMode. `useAudioPlaylistController` keeps its controller across an effect that React cleans up and runs again (StrictMode in development, a tree hidden and shown again), and the cleanup disposed it for good: the tracks played, while `playing` stayed false, the clock stayed at 0:00 and the queue did not advance. The controller now reconnects when the effect runs again.
+- e992532: `<Video>` with its controls no longer fails hydration on a server-rendered page. What the browser can do (Picture in Picture, fullscreen) is read off `document`, so the server rendered the chrome without those buttons and the client rendered it with them. The first client frame now takes the server's answer and the browser's follows in the next render.
+- e992532: Web: pressing play on a second `<Video>` now starts it. Two players share one engine, so playing the second swaps the source and plays in the same step; the load cut that play short ("The play() request was interrupted by a new load request") and nothing started it again, and after that neither player would play. A play asked for while a source is loading now starts when the source has loaded.
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+  - @knitui/components@1.3.0
+  - @knitui/hooks@1.3.0
+  - @knitui/core@1.3.0
+  - @knitui/icons@1.3.0
+
 ## 2.0.1
 
 ### Patch Changes

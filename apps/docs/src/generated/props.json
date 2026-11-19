@@ -7165,6 +7165,14 @@
           "declaredIn": "node_modules/@tamagui/web/types/types.d.ts"
         },
         {
+          "name": "fallbackSrc",
+          "bucket": "own",
+          "type": "string | null | undefined",
+          "required": false,
+          "description": "Image tried when `src` fails to load, before falling back to the initials or placeholder (e.g. a second copy of the same photo on another host).",
+          "declaredIn": "packages/components/src/Avatar/Avatar.tsx"
+        },
+        {
           "name": "gradient",
           "bucket": "system",
           "type": "GradientValue | undefined",
@@ -7269,7 +7277,7 @@
       ],
       "counts": {
         "style": 806,
-        "own": 5,
+        "own": 6,
         "system": 8
       }
     },
@@ -62046,6 +62054,14 @@
           "declaredIn": "packages/graphics/src/components/AudioViz/AudioMesh.tsx"
         },
         {
+          "name": "transparent",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Paint the field as LIGHT on a transparent canvas instead of filling it: alpha follows the blobs (louder = more of it) and fades to nothing toward the canvas edges. For a glow behind a picture or under a video, on whatever the page paints there. Default `false` (an opaque, edge-to-edge field).",
+          "declaredIn": "packages/graphics/src/components/AudioViz/AudioMesh.tsx"
+        },
+        {
           "name": "width",
           "bucket": "own",
           "type": "number | undefined",
@@ -62056,7 +62072,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 22,
+        "own": 23,
         "react": 2
       }
     },
@@ -65777,6 +65793,15 @@
           "declaredIn": "packages/sheet/src/types.ts"
         },
         {
+          "name": "closeOnBrowserBack",
+          "bucket": "own",
+          "type": "boolean | undefined",
+          "required": false,
+          "description": "Web: the browser's Back button (or back gesture) closes the open sheet, as Android's hardware back does. The sheet adds one history entry while open, without changing the URL, and removes it when it closes any other way. Off by default because it touches the page's history. No effect on native.",
+          "default": "false",
+          "declaredIn": "packages/sheet/src/types.ts"
+        },
+        {
           "name": "closeOnEscape",
           "bucket": "own",
           "type": "boolean | undefined",
@@ -65826,7 +65851,7 @@
           "bucket": "own",
           "type": "boolean | undefined",
           "required": false,
-          "description": "Tapping the scrim closes the sheet.",
+          "description": "Tapping the scrim closes the sheet. A tap within the first moments after opening is ignored, so the second tap of a double tap on the opener can't close it again.",
           "default": "true",
           "declaredIn": "packages/sheet/src/types.ts"
         },
@@ -66043,7 +66068,7 @@
       ],
       "counts": {
         "style": 0,
-        "own": 34,
+        "own": 35,
         "react": 2,
         "system": 2
       }

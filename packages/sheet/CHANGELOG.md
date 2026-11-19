@@ -1,5 +1,27 @@
 # @knitui/sheet
 
+## 1.3.0
+
+### Minor Changes
+
+- e992532: - New `closeOnBrowserBack` (web, off by default): the browser's Back closes the open sheet, as Android's hardware back does. While open, the sheet owns one history entry and leaves the URL alone. It removes that entry when it closes any other way, and copies the router's own history state into it.
+  - On touch web, a drag down in a `Sheet.ScrollView` or `Sheet.FlatList` whose list is at its top now moves the sheet. So does any vertical drag while the sheet isn't at its most-open snap. Before, the browser scrolled the list and the sheet never moved.
+  - A double tap on a sheet's opener leaves the sheet open: a scrim tap in the first 400 ms after opening is ignored.
+  - Opening a sheet by tap or click focuses the panel rather than ✕, so no focus ring shows on ✕. Opened from the keyboard, ✕ still takes focus.
+
+### Patch Changes
+
+- e992532: Escape now closes only the topmost overlay, and focus returns to that layer's own opener. This covers a stack of `Modal`s and `Drawer`s, and a modal `Sheet` stacked with either of them; previously every open layer closed on one press. A top layer with `closeOnEscape={false}` swallows Escape instead of letting it close the layer beneath. New exports: `useEscapeLayer` puts a custom modal layer on the same stack, and `hasOpenEscapeLayer` reports whether one is open.
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+  - @knitui/components@1.3.0
+  - @knitui/hooks@1.3.0
+  - @knitui/core@1.3.0
+  - @knitui/icons@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes

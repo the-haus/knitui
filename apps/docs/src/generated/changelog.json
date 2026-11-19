@@ -148,6 +148,31 @@
       "slug": "components",
       "releases": [
         {
+          "version": "1.3.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`Avatar` takes a `fallbackSrc`: an image tried when `src` fails to load, before the initials or placeholder. Changing either source starts over from `src`."
+            },
+            {
+              "kind": "minor",
+              "text": "Escape now closes only the topmost overlay, and focus returns to that layer's own opener. This covers a stack of `Modal`s and `Drawer`s, and a modal `Sheet` stacked with either of them; previously every open layer closed on one press. A top layer with `closeOnEscape={false}` swallows Escape instead of letting it close the layer beneath. New exports: `useEscapeLayer` puts a custom modal layer on the same stack, and `hasOpenEscapeLayer` reports whether one is open."
+            },
+            {
+              "kind": "minor",
+              "text": "With the keyboard up on native, the first tap on a control in a teleported layer (a `Sheet`, `Modal`, `Drawer` or dropdown) now presses it, even when that layer was rendered inside a `ScrollArea`, `VirtualList` or native-scroll `Carousel`. While such a layer is open, those scrollers use `keyboardShouldPersistTaps=\"handled\"` unless you set the prop yourself; before, they captured the tap only to dismiss the keyboard. New exports: `useTeleportedLayerScope` and `resolvePersistTaps` give a raw `ScrollView` of your own the same behaviour, and `useRegisterTeleportedLayer` marks a custom portal layer."
+            },
+            {
+              "kind": "patch",
+              "text": "`ScrollArea` (web) no longer turns Space, Home, End, Page Up/Down or the arrow keys into a scroll when they come from a field or widget inside it (inputs, textareas, selects, buttons, contenteditable, ARIA widgets such as sliders and listboxes). Plain content and the focused viewport still scroll."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        },
+        {
           "version": "1.2.2",
           "changes": [
             {
@@ -601,6 +626,19 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "1.3.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`useFocusTrap` takes an options object. With `containerOnPointer: true`, a trap activated right after a pointer or touch input focuses its container instead of its first control, so the browser draws no focus ring on a control the user never reached by keyboard. Tab still lands on that first control, and `[data-autofocus]` still wins."
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
           "version": "1.2.2",
           "changes": [
             {
@@ -985,6 +1023,31 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "1.3.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
           "version": "1.2.2",
           "changes": [
             {
@@ -1325,6 +1388,35 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "1.3.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "With the keyboard up on native, the first tap on a control in a teleported layer (a `Sheet`, `Modal`, `Drawer` or dropdown) now presses it, even when that layer was rendered inside a `ScrollArea`, `VirtualList` or native-scroll `Carousel`. While such a layer is open, those scrollers use `keyboardShouldPersistTaps=\"handled\"` unless you set the prop yourself; before, they captured the tap only to dismiss the keyboard. New exports: `useTeleportedLayerScope` and `resolvePersistTaps` give a raw `ScrollView` of your own the same behaviour, and `useRegisterTeleportedLayer` marks a custom portal layer."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        },
         {
           "version": "1.3.2",
           "changes": [
@@ -1745,6 +1837,15 @@
       "slug": "map",
       "releases": [
         {
+          "version": "0.6.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "- `ShapeSource` now passes `clusterProperties` to the native `GeoJSONSource`, so native clusters aggregate point properties as web clusters do. The style spec's shorthand form, such as `[\"+\", [\"get\", \"count\"]]`, is expanded to the explicit reduce form the native SDKs read; on iOS the bare operator previously came through as the string `\"+\"`. An inline object no longer reaches the native source as a change on every render. - `SvgImage` no longer stalls on a capture the native side never answers, e.g. when the map's screen is left mid-rasterization on iOS. Each attempt now has a watchdog and is retried. A late answer is still used, and a capture that throws is retried too."
+            }
+          ]
+        },
+        {
           "version": "0.6.2",
           "changes": [
             {
@@ -1889,6 +1990,43 @@
       "name": "@knitui/media",
       "slug": "media",
       "releases": [
+        {
+          "version": "2.0.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "A playlist no longer goes deaf in React StrictMode. `useAudioPlaylistController` keeps its controller across an effect that React cleans up and runs again (StrictMode in development, a tree hidden and shown again), and the cleanup disposed it for good: the tracks played, while `playing` stayed false, the clock stayed at 0:00 and the queue did not advance. The controller now reconnects when the effect runs again."
+            },
+            {
+              "kind": "patch",
+              "text": "`<Video>` with its controls no longer fails hydration on a server-rendered page. What the browser can do (Picture in Picture, fullscreen) is read off `document`, so the server rendered the chrome without those buttons and the client rendered it with them. The first client frame now takes the server's answer and the browser's follows in the next render."
+            },
+            {
+              "kind": "patch",
+              "text": "Web: pressing play on a second `<Video>` now starts it. Two players share one engine, so playing the second swaps the source and plays in the same step; the load cut that play short (\"The play() request was interrupted by a new load request\") and nothing started it again, and after that neither player would play. A play asked for while a source is loading now starts when the source has loaded."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        },
         {
           "version": "2.0.1",
           "changes": [
@@ -2315,6 +2453,31 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "1.3.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`AudioMesh` takes `transparent`. The field is then painted as light on a transparent canvas: its alpha follows the blobs (louder is more of it) and fades to nothing toward the canvas edges. Use it for a glow behind a picture or under a video. Without the prop the mesh fills its canvas as before. `AudioMesh` and `AudioMeshProps` are exported from the package entry. They were only reachable through an internal path."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
           "version": "1.2.2",
           "changes": [
             {
@@ -2651,6 +2814,39 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "1.3.0",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "- New `closeOnBrowserBack` (web, off by default): the browser's Back closes the open sheet, as Android's hardware back does. While open, the sheet owns one history entry and leaves the URL alone. It removes that entry when it closes any other way, and copies the router's own history state into it. - On touch web, a drag down in a `Sheet.ScrollView` or `Sheet.FlatList` whose list is at its top now moves the sheet. So does any vertical drag while the sheet isn't at its most-open snap. Before, the browser scrolled the list and the sheet never moved. - A double tap on a sheet's opener leaves the sheet open: a scrim tap in the first 400 ms after opening is ignored. - Opening a sheet by tap or click focuses the panel rather than ✕, so no focus ring shows on ✕. Opened from the keyboard, ✕ still takes focus."
+            },
+            {
+              "kind": "patch",
+              "text": "Escape now closes only the topmost overlay, and focus returns to that layer's own opener. This covers a stack of `Modal`s and `Drawer`s, and a modal `Sheet` stacked with either of them; previously every open layer closed on one press. A top layer with `closeOnEscape={false}` swallows Escape instead of letting it close the layer beneath. New exports: `useEscapeLayer` puts a custom modal layer on the same stack, and `hasOpenEscapeLayer` reports whether one is open."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        },
         {
           "version": "1.2.1",
           "changes": [
@@ -3065,6 +3261,15 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "1.3.0",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/hooks@1.3.0 - @knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
           "version": "1.2.2",
           "changes": [
             {
@@ -3369,6 +3574,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "1.1.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
           "version": "1.1.0",
           "changes": [
             {
@@ -3663,6 +3877,48 @@
   ],
   "timeline": [
     {
+      "version": "2.0.2",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "A playlist no longer goes deaf in React StrictMode. `useAudioPlaylistController` keeps its controller across an effect that React cleans up and runs again (StrictMode in development, a tree hidden and shown again), and the cleanup disposed it for good: the tracks played, while `playing` stayed false, the clock stayed at 0:00 and the queue did not advance. The controller now reconnects when the effect runs again."
+            },
+            {
+              "kind": "patch",
+              "text": "`<Video>` with its controls no longer fails hydration on a server-rendered page. What the browser can do (Picture in Picture, fullscreen) is read off `document`, so the server rendered the chrome without those buttons and the client rendered it with them. The first client frame now takes the server's answer and the browser's follows in the next render."
+            },
+            {
+              "kind": "patch",
+              "text": "Web: pressing play on a second `<Video>` now starts it. Two players share one engine, so playing the second swaps the source and plays in the same step; the load cut that play short (\"The play() request was interrupted by a new load request\") and nothing started it again, and after that neither player would play. A play asked for while a source is loading now starts when the source has loaded."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "2.0.1",
       "entries": [
         {
@@ -3689,6 +3945,40 @@
             {
               "kind": "patch",
               "text": "@knitui/components@1.2.2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.3",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "With the keyboard up on native, the first tap on a control in a teleported layer (a `Sheet`, `Modal`, `Drawer` or dropdown) now presses it, even when that layer was rendered inside a `ScrollArea`, `VirtualList` or native-scroll `Carousel`. While such a layer is open, those scrollers use `keyboardShouldPersistTaps=\"handled\"` unless you set the prop yourself; before, they captured the tap only to dismiss the keyboard. New exports: `useTeleportedLayerScope` and `resolvePersistTaps` give a raw `ScrollView` of your own the same behaviour, and `useRegisterTeleportedLayer` marks a custom portal layer."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
             }
           ]
         }
@@ -3730,11 +4020,141 @@
       "version": "1.3.0",
       "entries": [
         {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`Avatar` takes a `fallbackSrc`: an image tried when `src` fails to load, before the initials or placeholder. Changing either source starts over from `src`."
+            },
+            {
+              "kind": "minor",
+              "text": "Escape now closes only the topmost overlay, and focus returns to that layer's own opener. This covers a stack of `Modal`s and `Drawer`s, and a modal `Sheet` stacked with either of them; previously every open layer closed on one press. A top layer with `closeOnEscape={false}` swallows Escape instead of letting it close the layer beneath. New exports: `useEscapeLayer` puts a custom modal layer on the same stack, and `hasOpenEscapeLayer` reports whether one is open."
+            },
+            {
+              "kind": "minor",
+              "text": "With the keyboard up on native, the first tap on a control in a teleported layer (a `Sheet`, `Modal`, `Drawer` or dropdown) now presses it, even when that layer was rendered inside a `ScrollArea`, `VirtualList` or native-scroll `Carousel`. While such a layer is open, those scrollers use `keyboardShouldPersistTaps=\"handled\"` unless you set the prop yourself; before, they captured the tap only to dismiss the keyboard. New exports: `useTeleportedLayerScope` and `resolvePersistTaps` give a raw `ScrollView` of your own the same behaviour, and `useRegisterTeleportedLayer` marks a custom portal layer."
+            },
+            {
+              "kind": "patch",
+              "text": "`ScrollArea` (web) no longer turns Space, Home, End, Page Up/Down or the arrow keys into a scroll when they come from a field or widget inside it (inputs, textareas, selects, buttons, contenteditable, ARIA widgets such as sliders and listboxes). Plain content and the focused viewport still scroll."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`useFocusTrap` takes an options object. With `containerOnPointer: true`, a trap activated right after a pointer or touch input focuses its container instead of its first control, so the browser draws no focus ring on a control the user never reached by keyboard. Tab still lands on that first control, and `[data-autofocus]` still wins."
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
           "package": "@knitui/carousel",
           "changes": [
             {
               "kind": "minor",
               "text": "New `invertDrag` prop: the carousel runs the other way round under a drag. A drag down (vertical) or right (horizontal) steps toward the end, and a fling likewise. Use it for a deck whose next card sits behind or above, pulled down like a pile. Only the main-axis drag flips: the `crossAxis` drag, the wheel, the arrow keys and the ref keep their directions. `scrollMode=\"native\"` ignores it."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "`AudioMesh` takes `transparent`. The field is then painted as light on a transparent canvas: its alpha follows the blobs (louder is more of it) and fades to nothing toward the canvas edges. Use it for a glow behind a picture or under a video. Without the prop the mesh fills its canvas as before. `AudioMesh` and `AudioMeshProps` are exported from the package entry. They were only reachable through an internal path."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/core@1.3.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "minor",
+              "text": "- New `closeOnBrowserBack` (web, off by default): the browser's Back closes the open sheet, as Android's hardware back does. While open, the sheet owns one history entry and leaves the URL alone. It removes that entry when it closes any other way, and copies the router's own history state into it. - On touch web, a drag down in a `Sheet.ScrollView` or `Sheet.FlatList` whose list is at its top now moves the sheet. So does any vertical drag while the sheet isn't at its most-open snap. Before, the browser scrolled the list and the sheet never moved. - A double tap on a sheet's opener leaves the sheet open: a scrim tap in the first 400 ms after opening is ignored. - Opening a sheet by tap or click focuses the panel rather than ✕, so no focus ring shows on ✕. Opened from the keyboard, ✕ still takes focus."
+            },
+            {
+              "kind": "patch",
+              "text": "Escape now closes only the topmost overlay, and focus returns to that layer's own opener. This covers a stack of `Modal`s and `Drawer`s, and a modal `Sheet` stacked with either of them; previously every open layer closed on one press. A top layer with `closeOnEscape={false}` swallows Escape instead of letting it close the layer beneath. New exports: `useEscapeLayer` puts a custom modal layer on the same stack, and `hasOpenEscapeLayer` reports whether one is open."
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532]"
+            },
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/components@1.3.0 - @knitui/hooks@1.3.0 - @knitui/core@1.3.0 - @knitui/icons@1.3.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[e992532] - @knitui/hooks@1.3.0 - @knitui/core@1.3.0"
             }
           ]
         }
@@ -4110,6 +4530,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[1cb50bc] - @knitui/components@1.2.0 - @knitui/core@1.2.0 - @knitui/hooks@1.2.0 - @knitui/icons@1.2.0"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.0"
             }
           ]
         }
@@ -5413,6 +5842,20 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[59d065b] - @knitui/core@0.7.0 - @knitui/hooks@0.7.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.6.3",
+      "entries": [
+        {
+          "package": "@knitui/map",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "- `ShapeSource` now passes `clusterProperties` to the native `GeoJSONSource`, so native clusters aggregate point properties as web clusters do. The style spec's shorthand form, such as `[\"+\", [\"get\", \"count\"]]`, is expanded to the explicit reduce form the native SDKs read; on iOS the bare operator previously came through as the string `\"+\"`. An inline object no longer reaches the native source as a change on every render. - `SvgImage` no longer stalls on a capture the native side never answers, e.g. when the map's screen is left mid-rasterization on iOS. Each attempt now has a watchdog and is retried. A late answer is still used, and a capture that throws is retried too."
             }
           ]
         }

@@ -1,5 +1,21 @@
 # @knitui/components
 
+## 1.3.0
+
+### Minor Changes
+
+- e992532: `Avatar` takes a `fallbackSrc`: an image tried when `src` fails to load, before the initials or placeholder. Changing either source starts over from `src`.
+- e992532: Escape now closes only the topmost overlay, and focus returns to that layer's own opener. This covers a stack of `Modal`s and `Drawer`s, and a modal `Sheet` stacked with either of them; previously every open layer closed on one press. A top layer with `closeOnEscape={false}` swallows Escape instead of letting it close the layer beneath. New exports: `useEscapeLayer` puts a custom modal layer on the same stack, and `hasOpenEscapeLayer` reports whether one is open.
+- e992532: With the keyboard up on native, the first tap on a control in a teleported layer (a `Sheet`, `Modal`, `Drawer` or dropdown) now presses it, even when that layer was rendered inside a `ScrollArea`, `VirtualList` or native-scroll `Carousel`. While such a layer is open, those scrollers use `keyboardShouldPersistTaps="handled"` unless you set the prop yourself; before, they captured the tap only to dismiss the keyboard. New exports: `useTeleportedLayerScope` and `resolvePersistTaps` give a raw `ScrollView` of your own the same behaviour, and `useRegisterTeleportedLayer` marks a custom portal layer.
+
+### Patch Changes
+
+- e992532: `ScrollArea` (web) no longer turns Space, Home, End, Page Up/Down or the arrow keys into a scroll when they come from a field or widget inside it (inputs, textareas, selects, buttons, contenteditable, ARIA widgets such as sliders and listboxes). Plain content and the focused viewport still scroll.
+- Updated dependencies [e992532]
+  - @knitui/hooks@1.3.0
+  - @knitui/core@1.3.0
+  - @knitui/icons@1.3.0
+
 ## 1.2.2
 
 ### Patch Changes
