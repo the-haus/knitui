@@ -30,6 +30,7 @@ import { useReducedTransition } from "../internal/motion";
 import { resolveThemeColor } from "../internal/resolve-theme-color";
 import { scopeTransition } from "../internal/style-props";
 import { slotStyles } from "../internal/styles";
+import { resolvePersistTaps, useTeleportedLayerScope } from "../Portal/teleported-layer-scope";
 import {
   DEFAULT_HIDE_DELAY,
   DEFAULT_IDLE_SCROLLBAR_SIZE,
@@ -894,6 +895,11 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const padRight = shouldOffsetAxis(offsetScrollbars, "y") ? scrollbarSize : 0;
     const padBottom = shouldOffsetAxis(offsetScrollbars, "x") ? scrollbarSize : 0;
 
+    // A sheet/modal teleported from inside this area still has the ScrollView as
+    // its React ancestor; while one is open, step back to `"handled"` so its
+    // controls get the first tap with the keyboard up (`teleported-layer-scope`).
+    const layerScope = useTeleportedLayerScope();
+
     // Shared native-ScrollView props (single-axis + Autosize). `viewportRef` lands on
     // the scroller. `nestedScrollEnabled` is what makes a vertical area scroll when it
     // sits inside another vertical ScrollView on Android (inner consumes first, then
@@ -909,7 +915,10 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
       showsHorizontalScrollIndicator: false,
       scrollEventThrottle: 16,
       nestedScrollEnabled: true,
-      keyboardShouldPersistTaps: keyboardShouldPersistTaps as never,
+      keyboardShouldPersistTaps: resolvePersistTaps(
+        keyboardShouldPersistTaps,
+        layerScope.hasOpenLayer,
+      ) as never,
       ...(onRefresh
         ? {
             refreshControl: (
@@ -1004,81 +1013,83 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     };
 
     return (
-      <ScrollAreaFrame onLayout={handleFrameLayout} {...rest}>
-        {content}
+      <layerScope.Provider value={layerScope.register}>
+        <ScrollAreaFrame onLayout={handleFrameLayout} {...rest}>
+          {content}
 
-        {anyShadow && (
-          <>
-            {renderEdgeShadow("top")}
-            {renderEdgeShadow("bottom")}
-            {renderEdgeShadow("left")}
-            {renderEdgeShadow("right")}
-          </>
-        )}
+          {anyShadow && (
+            <>
+              {renderEdgeShadow("top")}
+              {renderEdgeShadow("bottom")}
+              {renderEdgeShadow("left")}
+              {renderEdgeShadow("right")}
+            </>
+          )}
 
-        {axes.y && (
-          <ScrollAreaScrollbar
-            ref={yMove.ref}
-            {...yMove.rootProps}
-            top={0}
-            right={0}
-            bottom={hasCorner ? scrollbarSize : 0}
-            width={scrollbarSize}
-            opacity={showY ? 1 : 0}
-            pointerEvents={showY ? "auto" : "none"}
-            {...scopeTransition(fade, ANIMATE_OPACITY)}
-            {...mergedScrollbarProps}
-          >
-            {/* Plain Animated.View carries the per-frame geometry (height/offset/
-                inset); the inner Tamagui Thumb fills it and supplies colour/radius/
-                `thumbProps`. Keeps reanimated off the styled component. */}
-            <Animated.View
-              style={[
-                { position: "absolute", top: 0, height: yBar.size },
-                yThumbInsetStyle,
-                yThumbStyle,
-              ]}
+          {axes.y && (
+            <ScrollAreaScrollbar
+              ref={yMove.ref}
+              {...yMove.rootProps}
+              top={0}
+              right={0}
+              bottom={hasCorner ? scrollbarSize : 0}
+              width={scrollbarSize}
+              opacity={showY ? 1 : 0}
+              pointerEvents={showY ? "auto" : "none"}
+              {...scopeTransition(fade, ANIMATE_OPACITY)}
+              {...mergedScrollbarProps}
             >
-              <ScrollAreaThumb top={0} left={0} right={0} bottom={0} {...mergedThumbProps} />
-            </Animated.View>
-          </ScrollAreaScrollbar>
-        )}
+              {/* Plain Animated.View carries the per-frame geometry (height/offset/
+                  inset); the inner Tamagui Thumb fills it and supplies colour/radius/
+                  `thumbProps`. Keeps reanimated off the styled component. */}
+              <Animated.View
+                style={[
+                  { position: "absolute", top: 0, height: yBar.size },
+                  yThumbInsetStyle,
+                  yThumbStyle,
+                ]}
+              >
+                <ScrollAreaThumb top={0} left={0} right={0} bottom={0} {...mergedThumbProps} />
+              </Animated.View>
+            </ScrollAreaScrollbar>
+          )}
 
-        {axes.x && (
-          <ScrollAreaScrollbar
-            ref={xMove.ref}
-            {...xMove.rootProps}
-            left={0}
-            right={hasCorner ? scrollbarSize : 0}
-            bottom={0}
-            height={scrollbarSize}
-            opacity={showX ? 1 : 0}
-            pointerEvents={showX ? "auto" : "none"}
-            {...scopeTransition(fade, ANIMATE_OPACITY)}
-            {...mergedScrollbarProps}
-          >
-            <Animated.View
-              style={[
-                { position: "absolute", left: 0, width: xBar.size },
-                xThumbInsetStyle,
-                xThumbStyle,
-              ]}
+          {axes.x && (
+            <ScrollAreaScrollbar
+              ref={xMove.ref}
+              {...xMove.rootProps}
+              left={0}
+              right={hasCorner ? scrollbarSize : 0}
+              bottom={0}
+              height={scrollbarSize}
+              opacity={showX ? 1 : 0}
+              pointerEvents={showX ? "auto" : "none"}
+              {...scopeTransition(fade, ANIMATE_OPACITY)}
+              {...mergedScrollbarProps}
             >
-              <ScrollAreaThumb top={0} left={0} right={0} bottom={0} {...mergedThumbProps} />
-            </Animated.View>
-          </ScrollAreaScrollbar>
-        )}
+              <Animated.View
+                style={[
+                  { position: "absolute", left: 0, width: xBar.size },
+                  xThumbInsetStyle,
+                  xThumbStyle,
+                ]}
+              >
+                <ScrollAreaThumb top={0} left={0} right={0} bottom={0} {...mergedThumbProps} />
+              </Animated.View>
+            </ScrollAreaScrollbar>
+          )}
 
-        {hasCorner && (
-          <ScrollAreaCorner
-            width={scrollbarSize}
-            height={scrollbarSize}
-            opacity={showX && showY ? 1 : 0}
-            {...scopeTransition(fade, ANIMATE_OPACITY)}
-            {...mergedCornerProps}
-          />
-        )}
-      </ScrollAreaFrame>
+          {hasCorner && (
+            <ScrollAreaCorner
+              width={scrollbarSize}
+              height={scrollbarSize}
+              opacity={showX && showY ? 1 : 0}
+              {...scopeTransition(fade, ANIMATE_OPACITY)}
+              {...mergedCornerProps}
+            />
+          )}
+        </ScrollAreaFrame>
+      </layerScope.Provider>
     );
   },
 );

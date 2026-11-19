@@ -61,7 +61,13 @@ export function useAudioPlaylistController(
     config: configBag(options),
   }));
 
-  React.useEffect(() => () => controller.dispose(), [controller]);
+  // Attach in the effect, not only in the constructor: the controller is memoised,
+  // so an effect that React cleans up and runs again (StrictMode, a re-shown tree)
+  // gets the SAME controller back, already disposed.
+  React.useEffect(() => {
+    controller.attach();
+    return () => controller.dispose();
+  }, [controller]);
 
   // Snapshot store bound to this controller. `subscribeKeys` gives the chrome
   // state-level isolation: a per-frame `currentTime` tick wakes only the Scrubber

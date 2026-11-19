@@ -2,7 +2,7 @@ import * as React from "react";
 import type { ScrollViewInstance as RNScrollView } from "react-native";
 import Animated, { useAnimatedScrollHandler, useDerivedValue } from "react-native-reanimated";
 
-import { Box } from "@knitui/components";
+import { Box, resolvePersistTaps, useTeleportedLayerScope } from "@knitui/components";
 import { isWeb } from "@knitui/core";
 
 import { itemProgress, mod, rawIndex } from "../engine";
@@ -185,59 +185,67 @@ function NativeTrackInner<T>({
     [vertical, startPos],
   );
 
+  // A sheet opened from a slide is teleported on screen but stays a React child
+  // of this ScrollView; while one is open, leave its first tap to its controls
+  // instead of capturing it to dismiss the keyboard (`useTeleportedLayerScope`).
+  const layerScope = useTeleportedLayerScope();
+
   return (
-    <Animated.ScrollView
-      ref={ref as never}
-      testID={testID}
-      style={{ flex: 1 }}
-      horizontal={!vertical}
-      scrollEnabled={enabled}
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      bounces={overscrollEnabled}
-      overScrollMode={overscrollEnabled ? "auto" : "never"}
-      decelerationRate={snapEnabled ? "fast" : "normal"}
-      snapToInterval={snapEnabled ? pageSize : undefined}
-      snapToAlignment="start"
-      disableIntervalMomentum={pagingEnabled}
-      scrollsToTop={scrollsToTop}
-      contentOffset={contentOffset}
-      scrollEventThrottle={16}
-      onScroll={scrollHandler}
-      onScrollBeginDrag={onScrollBeginDrag}
-      onScrollEndDrag={onScrollEndDrag}
-      onMomentumScrollBegin={onMomentumScrollBegin}
-      onMomentumScrollEnd={onMomentumScrollEnd}
-      // `@knitui/core`'s style type carries the web CSS union; the RN ScrollView
-      // wants the plain RN style — the runtime shape is identical.
-      contentContainerStyle={contentContainerStyle as never}
-    >
-      {Array.from({ length: slideCount }, (_, rendered) => {
-        // `getItem` already maps rendered → real via `mod`; derive the real
-        // index for a stable key and suffix the copy so cloned slides stay
-        // uniquely keyed (a consumer keying by item id would otherwise clash).
-        const real = loop ? mod(rendered, count) : rendered;
-        const item = getItem(rendered);
-        const base = item !== undefined && keyExtractor ? keyExtractor(item, real) : String(real);
-        const key = loop ? `${base}#${Math.floor(rendered / count)}` : base;
-        return (
-          <NativeSlide
-            key={key}
-            item={item}
-            index={real}
-            slot={rendered}
-            slotCount={slideCount}
-            vertical={vertical}
-            pageSize={pageSize}
-            offset={offset}
-            size={size}
-            renderItem={renderItem}
-            renderPlaceholder={renderPlaceholder}
-            slideStyle={slideStyle}
-          />
-        );
-      })}
-    </Animated.ScrollView>
+    <layerScope.Provider value={layerScope.register}>
+      <Animated.ScrollView
+        ref={ref as never}
+        keyboardShouldPersistTaps={resolvePersistTaps(undefined, layerScope.hasOpenLayer)}
+        testID={testID}
+        style={{ flex: 1 }}
+        horizontal={!vertical}
+        scrollEnabled={enabled}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        bounces={overscrollEnabled}
+        overScrollMode={overscrollEnabled ? "auto" : "never"}
+        decelerationRate={snapEnabled ? "fast" : "normal"}
+        snapToInterval={snapEnabled ? pageSize : undefined}
+        snapToAlignment="start"
+        disableIntervalMomentum={pagingEnabled}
+        scrollsToTop={scrollsToTop}
+        contentOffset={contentOffset}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        // `@knitui/core`'s style type carries the web CSS union; the RN ScrollView
+        // wants the plain RN style — the runtime shape is identical.
+        contentContainerStyle={contentContainerStyle as never}
+      >
+        {Array.from({ length: slideCount }, (_, rendered) => {
+          // `getItem` already maps rendered → real via `mod`; derive the real
+          // index for a stable key and suffix the copy so cloned slides stay
+          // uniquely keyed (a consumer keying by item id would otherwise clash).
+          const real = loop ? mod(rendered, count) : rendered;
+          const item = getItem(rendered);
+          const base = item !== undefined && keyExtractor ? keyExtractor(item, real) : String(real);
+          const key = loop ? `${base}#${Math.floor(rendered / count)}` : base;
+          return (
+            <NativeSlide
+              key={key}
+              item={item}
+              index={real}
+              slot={rendered}
+              slotCount={slideCount}
+              vertical={vertical}
+              pageSize={pageSize}
+              offset={offset}
+              size={size}
+              renderItem={renderItem}
+              renderPlaceholder={renderPlaceholder}
+              slideStyle={slideStyle}
+            />
+          );
+        })}
+      </Animated.ScrollView>
+    </layerScope.Provider>
   );
 }
 

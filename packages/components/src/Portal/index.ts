@@ -5,6 +5,12 @@ export {
   useTopmostOverlayHost,
 } from "./OverlayHost";
 export { OverlayPortal, type OverlayPortalProps } from "./OverlayPortal";
+export {
+  resolvePersistTaps,
+  type TeleportedLayerScope,
+  useRegisterTeleportedLayer,
+  useTeleportedLayerScope,
+} from "./teleported-layer-scope";
 export type { OverlayHostProps, PortalHostProps, PortalProps, PortalProviderProps } from "./types";
 /**
  * Portal system — a thin re-export of `react-native-teleport`.

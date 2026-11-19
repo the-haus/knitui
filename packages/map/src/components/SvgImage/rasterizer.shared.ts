@@ -304,6 +304,22 @@ const CAPTURE_BACKOFF_LIMIT_FRAMES = 8;
 const CAPTURE_IDLE_INTERVAL_FRAMES = 60;
 
 /**
+ * Frames an attempt waits for `toDataURL` to answer before counting it as
+ * dropped and retrying.
+ *
+ * The native capture is asynchronous, and it does not always answer: when the
+ * surface is not in a window at the moment the snapshot runs (its screen just
+ * left, e.g. a tab switch mid-rasterization on iOS), react-native-svg logs and
+ * never calls back. Without this the job waited forever for that callback, kept
+ * its concurrency slot, and never retried, so the icon stayed unresolved and its
+ * pins fell back to whatever the layer draws without it. A late answer still
+ * counts (see `runCapture`), so a slow capture is never thrown away.
+ *
+ * ~0.5 s at 60 fps: an answering capture lands within a frame or two.
+ */
+const CAPTURE_TIMEOUT_FRAMES = 30;
+
+/**
  * How many captures may be in flight at once.
  *
  * `toDataURL` is a synchronous native view snapshot. Retrying every icon once per
@@ -337,6 +353,9 @@ function pumpCaptureQueue(): void {
  * surface that is not being drawn *yet*. It does not give up — read
  * {@link CAPTURE_IDLE_INTERVAL_FRAMES} before adding a failure path, because the
  * one this replaced lost every pin on a map warmed offscreen.
+ *
+ * An attempt the native side never answers counts as failed after
+ * {@link CAPTURE_TIMEOUT_FRAMES}; a late success is still taken.
  *
  * Concurrency-capped — see {@link MAX_CONCURRENT_CAPTURES}; a job holds its slot
  * only for the eager window. Returns a cleanup that cancels any pending frame (and
@@ -416,8 +435,18 @@ export function runCapture(
     scheduleIn(backoff);
   };
 
+  // Every attempt gets an id; only the CURRENT one may turn an empty answer or a
+  // timeout into a retry. A success is accepted from any attempt, however late.
+  let attemptId = 0;
+  let done = false;
+  let watchdog = 0;
+  const clearWatchdog = (): void => {
+    if (watchdog) cancelAnimationFrame(watchdog);
+    watchdog = 0;
+  };
+
   const attempt = (): void => {
-    if (cancelled) return;
+    if (cancelled || done) return;
 
     const node = ref.current;
     if (!node) {
@@ -425,20 +454,52 @@ export function runCapture(
       return;
     }
 
-    node.toDataURL(
-      (base64) => {
-        if (cancelled) return;
-        if (base64) {
+    const id = ++attemptId;
+    let settled = false;
+    /** The current attempt failed (empty bytes, a throw, or no answer in time). */
+    const fail = (): void => {
+      if (settled || id !== attemptId || cancelled || done) return;
+      settled = true;
+      clearWatchdog();
+      retry();
+    };
+
+    // Watchdog for a dropped capture — see CAPTURE_TIMEOUT_FRAMES.
+    let remaining = CAPTURE_TIMEOUT_FRAMES;
+    const watch = (): void => {
+      if (--remaining > 0) {
+        watchdog = requestAnimationFrame(watch);
+        return;
+      }
+      watchdog = 0;
+      fail();
+    };
+    watchdog = requestAnimationFrame(watch);
+
+    try {
+      node.toDataURL(
+        (base64) => {
+          if (cancelled || done) return;
+          if (!base64) {
+            fail();
+            return;
+          }
+          done = true;
+          settled = true;
+          clearWatchdog();
+          if (raf) cancelAnimationFrame(raf);
+          raf = 0;
           onCapture(`data:image/png;base64,${base64}`, pngPixelWidth(base64));
           // Success is the one place the job really is over: nothing is
           // rescheduled after this, so releasing the slot ends it.
           releaseSlot();
-        } else {
-          retry();
-        }
-      },
-      { width: size.width, height: size.height },
-    );
+        },
+        { width: size.width, height: size.height },
+      );
+    } catch {
+      // A native snapshot of a detached view can throw instead of answering.
+      fail();
+    }
   };
 
   const start = (): void => {
@@ -452,6 +513,7 @@ export function runCapture(
   return () => {
     cancelled = true;
     if (raf) cancelAnimationFrame(raf);
+    clearWatchdog();
     releaseSlot();
   };
 }

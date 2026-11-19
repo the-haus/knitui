@@ -1,7 +1,9 @@
 import * as React from "react";
 import { Portal } from "react-native-teleport";
 
-import { useScreenFocused } from "@knitui/core";
+import { isWeb, useScreenFocused } from "@knitui/core";
+
+import { useRegisterTeleportedLayer } from "./teleported-layer-scope";
 
 export interface OverlayPortalProps {
   /** Host to teleport into (usually `useOverlayHost()`); omit to render inline. */
@@ -22,5 +24,10 @@ export interface OverlayPortalProps {
  */
 export function OverlayPortal({ hostName, children }: OverlayPortalProps) {
   const focused = useScreenFocused();
-  return <Portal hostName={focused ? hostName : undefined}>{children}</Portal>;
+  const target = focused ? hostName : undefined;
+  // Native: while teleported, tell the scrollers this layer sits inside (in
+  // React) to stop capturing its first tap to dismiss the keyboard (see
+  // `teleported-layer-scope.tsx`). Web has no such capture.
+  useRegisterTeleportedLayer(!isWeb && target !== undefined);
+  return <Portal hostName={target}>{children}</Portal>;
 }

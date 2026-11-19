@@ -39,11 +39,18 @@ export const DEFAULT_MESH_PALETTE = ["#22d3ee", "#6366f1", "#ec4899"] as const;
  * the field is a smooth blend (a "mesh gradient"). `u_count` masks the inactive
  * tail, and the x distance is aspect-corrected so blobs stay round on wide
  * canvases.
+ *
+ * `u_alpha` (0 or 1) picks what the field is painted ON. At 0 the canvas is
+ * filled edge to edge (opaque). At 1 the field is LIGHT: its alpha follows how
+ * much blob there is at a pixel and how loud that blob is, and it is feathered
+ * to nothing toward the canvas edges, so the mesh can sit behind a picture or a
+ * video as a glow on whatever the page paints underneath. Output is premultiplied.
  */
 export const MESH_GRADIENT_SKSL = `
 uniform float2 u_resolution;
 uniform float  u_count;
 uniform float  u_softness;
+uniform float  u_alpha;
 uniform float2 u_points[${MAX_MESH_POINTS}];
 uniform float  u_intensity[${MAX_MESH_POINTS}];
 uniform float3 u_colors[${MAX_MESH_POINTS}];
@@ -53,6 +60,7 @@ half4 main(float2 fragcoord) {
   float aspect = u_resolution.x / max(u_resolution.y, 1.0);
   float3 acc = float3(0.0);
   float wsum = 0.0;
+  float glow = 0.0;
   for (int i = 0; i < ${MAX_MESH_POINTS}; i++) {
     float active = step(float(i) + 0.5, u_count);
     float2 d = uv - u_points[i];
@@ -62,9 +70,17 @@ half4 main(float2 fragcoord) {
     float w = exp(-dist2 / (radius * radius)) * active;
     acc += u_colors[i] * w * (0.35 + u_intensity[i]);
     wsum += w;
+    glow += w * (0.35 + u_intensity[i]);
   }
-  acc = acc / max(wsum, 0.0001);
-  return half4(acc, 1.0);
+  // Opaque: the blend dims with the level, down to a dark field. As light the
+  // level is carried by alpha alone and the colour stays whole: a dim colour on a
+  // partly opaque pixel would darken what is behind it.
+  acc = acc / max(mix(wsum, glow, u_alpha), 0.0001);
+  float2 edge = smoothstep(float2(0.0), float2(0.3), uv) *
+                smoothstep(float2(0.0), float2(0.3), float2(1.0) - uv);
+  float light = (1.0 - exp(-glow * 1.6)) * edge.x * edge.y;
+  float a = mix(1.0, light, u_alpha);
+  return half4(acc * a, a);
 }
 `;
 
@@ -77,6 +93,8 @@ export type MeshUniforms = {
   u_resolution: [number, number];
   u_count: number;
   u_softness: number;
+  /** `1` = the field is light on a transparent canvas, `0` = an opaque fill. */
+  u_alpha: number;
   /** `MAX_MESH_POINTS` × `[x, y]` flattened, normalized 0..1. */
   u_points: number[];
   /** `MAX_MESH_POINTS` intensities, 0..1. */
@@ -97,6 +115,11 @@ export interface MeshOptions {
    * in a worklet), then padded out in the worklet.
    */
   colors: number[];
+  /**
+   * Paint the field as light on a transparent canvas (alpha follows the blobs and
+   * fades out toward the edges) instead of an opaque fill. Default `false`.
+   */
+  transparent?: boolean;
 }
 
 /**
@@ -110,6 +133,7 @@ export type MeshUniformsFlat = {
   u_resolution: number[];
   u_count: number;
   u_softness: number;
+  u_alpha: number;
   u_points: number[];
   u_intensity: number[];
   u_colors: number[];
@@ -231,6 +255,7 @@ export function buildMeshUniforms(
     u_resolution: [Math.max(width, 1), Math.max(height, 1)],
     u_count: points,
     u_softness: opts.softness,
+    u_alpha: opts.transparent ? 1 : 0,
     u_points,
     u_intensity,
     u_colors,
@@ -272,6 +297,7 @@ export function buildMeshUniformsInto(
     u_resolution: scratch.u_resolution,
     u_count: points,
     u_softness: opts.softness,
+    u_alpha: opts.transparent ? 1 : 0,
     u_points: scratch.u_points,
     u_intensity: scratch.u_intensity,
     u_colors: scratch.u_colors,

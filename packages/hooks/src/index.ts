@@ -25,7 +25,7 @@ export type {
   ElementSizeRootProps,
   UseElementSizeReturn,
 } from "./use-element-size.shared";
-export { useFocusTrap } from "./use-focus-trap";
+export { useFocusTrap, type UseFocusTrapOptions } from "./use-focus-trap";
 export { useForceUpdate } from "./use-force-update";
 export { useId } from "./use-id";
 export { useInterval, type UseIntervalOptions, type UseIntervalReturn } from "./use-interval";

@@ -8,6 +8,14 @@ import type { TamaguiElement } from "@knitui/core";
  */
 const noop = (_node: TamaguiElement | null): void => {};
 
-export function useFocusTrap(_active = true): (node: TamaguiElement | null) => void {
+export interface UseFocusTrapOptions {
+  /** Web only. */
+  containerOnPointer?: boolean;
+}
+
+export function useFocusTrap(
+  _active = true,
+  _options: UseFocusTrapOptions = {},
+): (node: TamaguiElement | null) => void {
   return noop;
 }

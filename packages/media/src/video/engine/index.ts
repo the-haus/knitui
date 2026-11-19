@@ -12,6 +12,7 @@ export {
   resolveWebCapabilities,
   resolveWebRuntimeCapabilities,
   WEB_CAPABILITIES,
+  WEB_SERVER_CAPABILITIES,
   type WebRuntimeProbes,
 } from "./capabilities";
 export {

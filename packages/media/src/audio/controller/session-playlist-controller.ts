@@ -51,8 +51,8 @@ export class SessionAudioPlaylistController
   /** The shared-engine slot facade this playlist drives (one per `<AudioPlaylist>`). */
   private readonly player: AudioController;
   private sources: AudioSource[];
-  private readonly offSnapshot: () => void;
-  private readonly offEnd: () => void;
+  private offSnapshot: (() => void) | null = null;
+  private offEnd: (() => void) | null = null;
   private disposed = false;
 
   constructor(player: AudioController, init: SessionPlaylistInit = {}) {
@@ -65,15 +65,31 @@ export class SessionAudioPlaylistController
     });
     this.player = player;
     this.sources = sources;
+    this.attach();
+  }
+
+  /**
+   * Connect to the slot, or connect again after {@link dispose}. The constructor
+   * calls it; a hook calls it from the effect whose cleanup disposes.
+   *
+   * It exists because the controller outlives its effect: a hook keeps it in a
+   * `useMemo`, and React runs every effect's cleanup and then the effect again on
+   * the SAME component (StrictMode in development, a hidden and re-shown tree).
+   * A controller that could only be disposed stayed deaf after that: the slot
+   * played, and the playlist's `playing` stayed false and its clock at 0:00.
+   */
+  attach(): void {
+    if (this.offSnapshot) return;
+    this.disposed = false;
     // Mirror the slot's playback fields into our snapshot. Coarse (fires on any
     // session change) but cheap: `mergeState` no-ops when nothing this playlist
     // reads actually moved, so an inactive playlist (stable idle snapshot) never
     // re-emits.
-    this.offSnapshot = player.subscribe((s) => this.mirror(s));
+    this.offSnapshot = this.player.subscribe((s) => this.mirror(s));
     // Auto-advance when the shared player finishes the current track. The facade's
     // `on` only fires while THIS slot is active, so an inactive playlist is inert.
-    this.offEnd = player.on("playToEnd", () => this.advanceOnEnd());
-    this.mirror(player.state);
+    this.offEnd = this.player.on("playToEnd", () => this.advanceOnEnd());
+    this.mirror(this.player.state);
   }
 
   /**
@@ -243,8 +259,10 @@ export class SessionAudioPlaylistController
 
   override dispose(): void {
     this.disposed = true;
-    this.offSnapshot();
-    this.offEnd();
+    this.offSnapshot?.();
+    this.offEnd?.();
+    this.offSnapshot = null;
+    this.offEnd = null;
     super.dispose();
   }
 }

@@ -1,7 +1,14 @@
 import * as React from "react";
 import { useSharedValue } from "react-native-reanimated";
 
-import { CloseButton, OverlayPortal, UnstyledButton, useOverlayHost } from "@knitui/components";
+import {
+  CloseButton,
+  hasOpenEscapeLayer,
+  OverlayPortal,
+  UnstyledButton,
+  useEscapeLayer,
+  useOverlayHost,
+} from "@knitui/components";
 import { type GetProps, isWeb, type LayoutChangeEvent, Theme, useThemeName } from "@knitui/core";
 import { useFocusTrap, useId } from "@knitui/hooks";
 
@@ -31,6 +38,7 @@ import { hasOpenSheet, isTopSheet, lockBodyScroll, pushSheet } from "./engine/st
 import { useSharedValueListener } from "./hooks/useSharedValueListener";
 import { useStableRecord } from "./hooks/useStableRecord";
 import { useBackPress } from "./input/useBackPress";
+import { useBrowserBack } from "./input/useBrowserBack";
 import { useSheetDrag } from "./input/useSheetDrag";
 import { useSheetMotion } from "./motion/useSheetMotion";
 import type { SheetProps } from "./types";
@@ -56,6 +64,12 @@ const HANDLE_A11Y = isWeb
 export interface SheetPanelHandle {
   snapTo: (index: number) => void;
 }
+
+/**
+ * How long after opening a scrim press is ignored (ms): longer than the gap between
+ * the two taps of a double tap, shorter than a deliberate tap on the scrim.
+ */
+const OPENING_TAP_GUARD_MS = 400;
 
 export interface SheetPanelProps extends SheetProps {
   isOpen: boolean;
@@ -89,6 +103,7 @@ export const SheetPanel = React.forwardRef<SheetPanelHandle, SheetPanelProps>(
       dismissOnSnapToBottom = false,
       closeOnEscape = true,
       closeOnBackPress = true,
+      closeOnBrowserBack = false,
       disableDrag = false,
       modal = true,
       withOverlay = true,
@@ -478,15 +493,22 @@ export const SheetPanel = React.forwardRef<SheetPanelHandle, SheetPanelProps>(
       return true;
     });
 
+    // Web, opt-in: the browser's Back closes the sheet (its own history entry).
+    useBrowserBack(isOpen && closeOnBrowserBack, requestClose);
+
+    // Escape: a modal sheet joins the kit's shared Escape stack, so a sheet over a
+    // `Modal` (or a `Modal` over a sheet) closes alone, topmost first. A persistent
+    // sheet closes only when no modal layer is open to take the key.
+    useEscapeLayer(isOpen && modal, { closeOnEscape, onClose: requestClose });
     React.useEffect(() => {
-      if (typeof document === "undefined") return undefined;
+      if (modal || typeof document === "undefined") return undefined;
       const onKeyDown = (e: KeyboardEvent) => {
         if (!closeOnEscape || e.key !== "Escape" || e.defaultPrevented) return;
-        if (modal ? isTopSheet(stackId) : !hasOpenSheet()) requestClose();
+        if (!hasOpenSheet() && !hasOpenEscapeLayer()) requestClose();
       };
       document.addEventListener("keydown", onKeyDown);
       return () => document.removeEventListener("keydown", onKeyDown);
-    }, [closeOnEscape, modal, requestClose, stackId]);
+    }, [closeOnEscape, modal, requestClose]);
 
     // A persistent sheet sits beside the page, so the page keeps scrolling behind it.
     React.useEffect(() => {
@@ -494,7 +516,10 @@ export const SheetPanel = React.forwardRef<SheetPanelHandle, SheetPanelProps>(
       return lockBodyScroll();
     }, [isOpen, modal, disableRemoveScroll]);
 
-    const trapRef = useFocusTrap(isOpen && trapFocus);
+    // Opened by a tap or click: focus the panel, not ✕, so no focus ring shows on ✕
+    // (browsers may draw `:focus-visible` on a control focused by script after a
+    // tap). Tab still reaches ✕ first; opened from the keyboard, ✕ takes focus.
+    const trapRef = useFocusTrap(isOpen && trapFocus, { containerOnPointer: true });
     const themeName = useThemeName();
     // The nearest scoped `OverlayHost` (a native modal screen), else "root".
     const overlayHost = useOverlayHost();
@@ -631,7 +656,17 @@ export const SheetPanel = React.forwardRef<SheetPanelHandle, SheetPanelProps>(
           : null),
     };
 
-    const onOverlayPress = dismissOnOverlayPress ? requestClose : undefined;
+    // The second tap of a double tap on the opener lands on the scrim the first one
+    // just raised. A scrim press that soon after opening is that tap, not a dismiss.
+    const openedAtRef = React.useRef(0);
+    React.useEffect(() => {
+      if (isOpen) openedAtRef.current = Date.now();
+    }, [isOpen]);
+    const onScrimPress = React.useCallback(() => {
+      if (Date.now() - openedAtRef.current < OPENING_TAP_GUARD_MS) return;
+      requestClose();
+    }, [requestClose]);
+    const onOverlayPress = dismissOnOverlayPress ? onScrimPress : undefined;
     const overlaySlot = s.get("overlay");
     const resolvedOverlayProps = React.useMemo(
       () => ({ ...overlaySlot, ...overlayProps }),

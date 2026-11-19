@@ -87,6 +87,13 @@ export interface AudioMeshProps {
   speed?: number;
   /** Canvas background (shows through where the field is dark/translucent). */
   backgroundColor?: string;
+  /**
+   * Paint the field as LIGHT on a transparent canvas instead of filling it: alpha
+   * follows the blobs (louder = more of it) and fades to nothing toward the canvas
+   * edges. For a glow behind a picture or under a video, on whatever the page
+   * paints there. Default `false` (an opaque, edge-to-edge field).
+   */
+  transparent?: boolean;
   /** Overall opacity `0..1`. Default 1. */
   opacity?: number;
   /**
@@ -133,6 +140,7 @@ function AudioMeshImpl(
     softness = DEFAULT_MESH_SOFTNESS,
     speed = DEFAULT_MESH_SPEED,
     backgroundColor,
+    transparent = false,
     opacity = 1,
     smoothing = DEFAULT_MESH_SMOOTHING,
     attack,
@@ -174,8 +182,8 @@ function AudioMeshImpl(
     [colors, activePoints],
   );
   const meshOpts = React.useMemo<MeshOptions>(
-    () => ({ points: activePoints, softness, colors: meshColors }),
-    [activePoints, softness, meshColors],
+    () => ({ points: activePoints, softness, colors: meshColors, transparent }),
+    [activePoints, softness, meshColors, transparent],
   );
 
   // The drift clock (elapsed ms). Reduced motion freezes drift at t=0 (blobs still

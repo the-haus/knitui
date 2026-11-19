@@ -16,6 +16,30 @@ type NativeGeoJSONSourceRef = {
   getClusterChildren?(clusterId: number): Promise<Feature[]>;
 };
 
+type ClusterProperties = NonNullable<GeoJSONSourceProps["clusterProperties"]>;
+
+/**
+ * Expand the style spec's shorthand cluster property, `[operator, map]` with the
+ * operator as a bare name (`["+", ["get", "count"]]`), into its explicit reduce
+ * form, `[[operator, ["accumulated"], ["get", name]], map]`.
+ *
+ * MapLibre GL JS accepts both. The native SDKs do not: iOS parses each item as
+ * an expression, so the bare `"+"` becomes the constant string "+" and every
+ * cluster reports that instead of the sum, and Android wraps it in a literal.
+ * The explicit form means the same thing everywhere.
+ */
+export function toNativeClusterProperties(properties: ClusterProperties): ClusterProperties {
+  const out: Record<string, unknown> = {};
+  for (const [name, entry] of Object.entries(properties)) {
+    const [operator, map] = entry as unknown as [unknown, unknown];
+    out[name] =
+      typeof operator === "string"
+        ? [[operator, ["accumulated"], ["get", name]], map]
+        : [operator, map];
+  }
+  return out as ClusterProperties;
+}
+
 export const ShapeSource = memo(
   forwardRef<GeoJSONSourceRef, GeoJSONSourceProps>(function ShapeSource(props, ref) {
     const nativeRef = useRef<NativeGeoJSONSourceRef | null>(null);
@@ -42,6 +66,26 @@ export const ShapeSource = memo(
     const data = useMemo(
       () => (typeof props.data === "string" ? props.data : JSON.stringify(props.data)),
       [props.data],
+    );
+
+    /**
+     * `clusterProperties`, in the form the native SDKs read, at one identity per
+     * CONTENT. Consumers usually pass an inline object, and a fresh object each
+     * render would reach the native source as a changed prop and make it
+     * re-cluster, for the same reason as `data` above.
+     */
+    const clusterPropertiesKey =
+      props.clusterProperties === undefined ? undefined : JSON.stringify(props.clusterProperties);
+    const clusterProperties = useMemo(
+      () =>
+        clusterPropertiesKey === undefined
+          ? undefined
+          : toNativeClusterProperties(
+              JSON.parse(clusterPropertiesKey) as NonNullable<
+                GeoJSONSourceProps["clusterProperties"]
+              >,
+            ),
+      [clusterPropertiesKey],
     );
 
     /**
@@ -91,6 +135,7 @@ export const ShapeSource = memo(
         clusterRadius={props.clusterRadius}
         clusterMinPoints={props.clusterMinPoints}
         clusterMaxZoom={props.clusterMaxZoom}
+        clusterProperties={clusterProperties}
         maxzoom={props.maxzoom}
         buffer={props.buffer}
         tolerance={props.tolerance}

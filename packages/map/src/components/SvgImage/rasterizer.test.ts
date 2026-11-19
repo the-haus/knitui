@@ -363,4 +363,73 @@ describe("runCapture", () => {
     expect(onCapture).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
+
+  it("retries an attempt the native side never answers", () => {
+    // A capture taken while the surface is out of the window (its screen just
+    // left) is dropped: no callback, ever. The job used to wait on it forever.
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+    let answers = false;
+    const toDataURL = vi.fn((cb: (b64: string) => void) => {
+      if (answers) cb(pngBase64(24));
+    });
+    const onCapture = vi.fn();
+
+    const cancel = runCapture({ current: { toDataURL } }, { width: 24, height: 24 }, onCapture);
+    clock.tick(2);
+    expect(toDataURL).toHaveBeenCalledTimes(1);
+
+    // The screen is back: the next attempt, after the watchdog, answers.
+    answers = true;
+    clock.tick(PAST_EAGER_WINDOW);
+    expect(toDataURL.mock.calls.length).toBeGreaterThan(1);
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    cancel();
+    vi.unstubAllGlobals();
+  });
+
+  it("takes a late answer from an attempt it already gave up on, once", () => {
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+    const pending: Array<(b64: string) => void> = [];
+    const toDataURL = vi.fn((cb: (b64: string) => void) => {
+      pending.push(cb);
+    });
+    const onCapture = vi.fn();
+
+    const cancel = runCapture({ current: { toDataURL } }, { width: 24, height: 24 }, onCapture);
+    clock.tick(40); // past the first watchdog: a second attempt is out
+    expect(pending.length).toBeGreaterThan(1);
+
+    pending[0](pngBase64(24)); // the first one answers after all
+    pending[1](pngBase64(24));
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    const calls = toDataURL.mock.calls.length;
+    clock.tick(PAST_EAGER_WINDOW);
+    expect(toDataURL.mock.calls.length).toBe(calls);
+    cancel();
+    vi.unstubAllGlobals();
+  });
+
+  it("retries when the native capture throws", () => {
+    const clock = fakeRaf();
+    vi.stubGlobal("requestAnimationFrame", clock.raf);
+    vi.stubGlobal("cancelAnimationFrame", clock.caf);
+    let throws = true;
+    const toDataURL = vi.fn((cb: (b64: string) => void) => {
+      if (throws) throw new Error("view not found");
+      cb(pngBase64(24));
+    });
+    const onCapture = vi.fn();
+
+    const cancel = runCapture({ current: { toDataURL } }, { width: 24, height: 24 }, onCapture);
+    clock.tick(2);
+    throws = false;
+    clock.tick(20);
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    cancel();
+    vi.unstubAllGlobals();
+  });
 });

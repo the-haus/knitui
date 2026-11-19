@@ -161,6 +161,30 @@ describe("ScrollArea", () => {
     expect(viewport).not.toHaveAttribute("tabindex");
   });
 
+  it("scrolls on keys aimed at the viewport but leaves them to a field inside it", () => {
+    render(
+      <ScrollArea scrollbars="y">
+        <span data-testid="body">Body</span>
+        <input data-testid="field" />
+        <div data-testid="widget" role="slider" tabIndex={0} />
+      </ScrollArea>,
+    );
+    const viewport = screen.getByTestId("body").parentElement as HTMLElement;
+    const scrollBy = jest.fn();
+    viewport.scrollBy = scrollBy;
+
+    for (const key of [" ", "Home", "End", "ArrowDown", "ArrowLeft"]) {
+      expect(fireEvent.keyDown(screen.getByTestId("field"), { key })).toBe(true);
+      expect(fireEvent.keyDown(screen.getByTestId("widget"), { key })).toBe(true);
+    }
+    expect(scrollBy).not.toHaveBeenCalled();
+
+    // Plain content still scrolls, as does the focused viewport itself.
+    expect(fireEvent.keyDown(screen.getByTestId("body"), { key: "End" })).toBe(false);
+    expect(fireEvent.keyDown(viewport, { key: " " })).toBe(false);
+    expect(scrollBy).toHaveBeenCalledTimes(2);
+  });
+
   it("imperative scrollToTop / scrollTo write to the viewport node", () => {
     const ref = React.createRef<ScrollAreaHandle>();
     render(
