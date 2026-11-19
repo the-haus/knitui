@@ -1,5 +1,18 @@
 # @knitui/dates
 
+## 1.3.0
+
+### Patch Changes
+
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+  - @knitui/components@1.3.0
+  - @knitui/hooks@1.3.0
+  - @knitui/core@1.3.0
+
 ## 1.2.2
 
 ### Patch Changes

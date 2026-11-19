@@ -1,5 +1,20 @@
 # @knitui/carousel
 
+## 1.3.3
+
+### Patch Changes
+
+- e992532: With the keyboard up on native, the first tap on a control in a teleported layer (a `Sheet`, `Modal`, `Drawer` or dropdown) now presses it, even when that layer was rendered inside a `ScrollArea`, `VirtualList` or native-scroll `Carousel`. While such a layer is open, those scrollers use `keyboardShouldPersistTaps="handled"` unless you set the prop yourself; before, they captured the tap only to dismiss the keyboard. New exports: `useTeleportedLayerScope` and `resolvePersistTaps` give a raw `ScrollView` of your own the same behaviour, and `useRegisterTeleportedLayer` marks a custom portal layer.
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+- Updated dependencies [e992532]
+  - @knitui/components@1.3.0
+  - @knitui/hooks@1.3.0
+  - @knitui/core@1.3.0
+  - @knitui/icons@1.3.0
+
 ## 1.3.2
 
 ### Patch Changes
