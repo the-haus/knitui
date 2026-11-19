@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Text } from "@knitui/components";
+import { Modal, Text } from "@knitui/components";
 
 import { Sheet } from "./Sheet";
 import { act, fireEvent, render, screen } from "./test-utils";
@@ -49,8 +49,24 @@ describe("Sheet", () => {
         <Text>panel body</Text>
       </Sheet>,
     );
+    // Past the opening-tap guard (see the double-tap test below).
+    const now = jest.spyOn(Date, "now").mockReturnValue(Date.now() + 1000);
     fireEvent.click(screen.getByTestId("scrim"));
     expect(onClose).toHaveBeenCalledTimes(1);
+    now.mockRestore();
+  });
+
+  it("ignores the second tap of a double tap on the opener", () => {
+    // The first tap opens the sheet and raises the scrim under the finger; the
+    // second tap lands on it and used to close the sheet again at once.
+    const onClose = jest.fn();
+    render(
+      <Sheet opened onClose={onClose} overlayProps={{ testID: "scrim" }}>
+        <Text>panel body</Text>
+      </Sheet>,
+    );
+    fireEvent.click(screen.getByTestId("scrim"));
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("does not close on overlay press when dismissOnOverlayPress is false", () => {
@@ -67,6 +83,21 @@ describe("Sheet", () => {
     );
     fireEvent.click(screen.getByTestId("scrim"));
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("shares the Escape stack with Modal: only the topmost layer closes", () => {
+    const modalClose = jest.fn();
+    const sheetClose = jest.fn();
+    render(
+      <Modal opened onClose={modalClose} title="Modal">
+        <Sheet opened onClose={sheetClose}>
+          <Text>sheet over modal</Text>
+        </Sheet>
+      </Modal>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(sheetClose).toHaveBeenCalledTimes(1);
+    expect(modalClose).not.toHaveBeenCalled();
   });
 
   it("calls onClose on Escape, and respects closeOnEscape={false}", () => {

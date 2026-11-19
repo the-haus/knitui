@@ -54,7 +54,11 @@ export interface SheetProps {
   /** Cap the panel's width and centre it, for tablets and wide windows. */
   maxWidth?: number;
 
-  /** Tapping the scrim closes the sheet. @default true */
+  /**
+   * Tapping the scrim closes the sheet. A tap within the first moments after
+   * opening is ignored, so the second tap of a double tap on the opener can't
+   * close it again. @default true
+   */
   dismissOnOverlayPress?: boolean;
   /** Dragging past the lowest snap closes the sheet. @default false */
   dismissOnSnapToBottom?: boolean;
@@ -62,6 +66,14 @@ export interface SheetProps {
   closeOnEscape?: boolean;
   /** Android hardware back closes a modal sheet, topmost first. @default true */
   closeOnBackPress?: boolean;
+  /**
+   * Web: the browser's Back button (or back gesture) closes the open sheet, as
+   * Android's hardware back does. The sheet adds one history entry while open,
+   * without changing the URL, and removes it when it closes any other way. Off by
+   * default because it touches the page's history. No effect on native.
+   * @default false
+   */
+  closeOnBrowserBack?: boolean;
 
   /** Disable all drag handling. @default false */
   disableDrag?: boolean;

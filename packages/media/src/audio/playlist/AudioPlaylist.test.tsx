@@ -105,6 +105,22 @@ describe("SessionAudioPlaylistController (queue over the shared audio engine)", 
     expect(ctrl.state.trackCount).toBe(3);
   });
 
+  it("reconnects after a dispose (an effect React cleaned up and ran again)", () => {
+    const { ctrl, facade } = makeController();
+    ctrl.dispose();
+    expect(facade.subCount()).toBe(0);
+    act(() => facade.emitState({ playing: true }));
+    expect(ctrl.state.playing).toBe(false);
+
+    ctrl.attach();
+    // Attaching twice is one connection, and it reads what the slot holds now.
+    ctrl.attach();
+    expect(facade.subCount()).toBe(1);
+    expect(ctrl.state.playing).toBe(true);
+    act(() => facade.emitState({ currentTime: 7 }));
+    expect(ctrl.state.currentTime).toBe(7);
+  });
+
   it("skips to a track: moves the index, swaps the slot source, emits trackChange", () => {
     const { ctrl, facade } = makeController();
     const onTrack = jest.fn();

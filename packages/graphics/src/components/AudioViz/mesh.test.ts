@@ -99,6 +99,15 @@ describe("buildMeshUniforms", () => {
     // No levels → zero intensity everywhere.
     expect(u.u_intensity.every((v) => v === 0)).toBe(true);
   });
+
+  it("is an opaque field unless asked to be light on a transparent canvas", () => {
+    const scratch = createMeshUniformScratch();
+    expect(buildMeshUniforms([0.5], 100, 100, 0, opts(3)).u_alpha).toBe(0);
+    expect(buildMeshUniforms([0.5], 100, 100, 0, opts(3, { transparent: true })).u_alpha).toBe(1);
+    expect(
+      buildMeshUniformsInto([0.5], 100, 100, 0, opts(3, { transparent: true }), scratch).u_alpha,
+    ).toBe(1);
+  });
 });
 
 describe("buildMeshUniformsInto", () => {

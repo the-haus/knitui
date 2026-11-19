@@ -10,6 +10,7 @@ import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Overlay, type OverlayProps } from "../Overlay";
 import { OverlayPortal, useOverlayHost } from "../Portal";
 import { ModalBaseInner } from "./modal-base-inner";
+import { useEscapeLayer } from "./modal-stack";
 
 /**
  * Shared scaffolding for `Modal` and `Drawer` — mirrors Mantine's `ModalBase`.
@@ -21,8 +22,8 @@ import { ModalBaseInner } from "./modal-base-inner";
  *  - paints a full-cover `Overlay` scrim BEHIND the content (content frames carry
  *    `position:"relative", zIndex:1`; the scrim sits at `zIndex:0`), so a click on
  *    the empty area around the content hits the scrim and closes,
- *  - wires the web-only side effects: Escape to close, body scroll-lock, and
- *    return-focus on close.
+ *  - wires the web-only side effects: Escape to close (top layer of a stack
+ *    only, see `modal-stack.ts`), body scroll-lock, and return-focus on close.
  *
  * `trapFocus` traps keyboard focus within the content on web via the shared
  * `useFocusTrap` hook (no-op on native — there is no DOM focus model, the same
@@ -242,26 +243,24 @@ export function ModalBase(props: ModalBaseProps) {
     };
   }, [opened]);
 
-  // The remaining web-only overlay side effects — Escape-to-close and body
-  // scroll-lock. Inert on native (no keydown stream or body element). Escape is
-  // ignored when a descendant already handled it (`defaultPrevented`), e.g. a
-  // nested Select closing its own dropdown.
+  // Escape: every open layer registers on the shared modal stack, which routes
+  // the key to the TOP layer only — a stack of modals unwinds one per press, and
+  // focus returns to each layer's own opener via the effect above. Registered
+  // regardless of `closeOnEscape` so a non-dismissable top layer swallows Escape
+  // rather than letting it close the layer beneath. A descendant that already
+  // handled Escape (`defaultPrevented`, e.g. a nested Select closing its own
+  // dropdown) is respected. The latest `closeOnEscape` is read at keydown time.
+  useEscapeLayer(opened, { closeOnEscape, onClose: () => onCloseRef.current() });
+
+  // Body scroll-lock (web; inert on native — no body element).
   React.useEffect(() => {
-    if (!opened || typeof document === "undefined") return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !event.defaultPrevented) onCloseRef.current();
-    };
-    if (closeOnEscape) document.addEventListener("keydown", onKeyDown);
-
+    if (!opened || !lockScroll || typeof document === "undefined") return;
     const previousOverflow = document.body.style.overflow;
-    if (lockScroll) document.body.style.overflow = "hidden";
-
+    document.body.style.overflow = "hidden";
     return () => {
-      if (closeOnEscape) document.removeEventListener("keydown", onKeyDown);
-      if (lockScroll) document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousOverflow;
     };
-  }, [opened, closeOnEscape, lockScroll]);
+  }, [opened, lockScroll]);
 
   // The full-cover positioning layer: scrim + the consumer's content frame. The
   // `display` toggle only matters on the `keepMounted` path (where the node never

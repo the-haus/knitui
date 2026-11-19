@@ -519,6 +519,58 @@ describe("Modal", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  // A stack of modals unwinds one layer per Escape, and each layer returns focus
+  // to its own opener (each layer used to own a document listener, so a single
+  // press closed every open layer).
+  it("closes only the top modal of a stack on Escape and refocuses its opener", async () => {
+    function Stack() {
+      const [outer, setOuter] = React.useState(false);
+      const [inner, setInner] = React.useState(false);
+      return (
+        <>
+          <button onClick={() => setOuter(true)}>open outer</button>
+          <Modal opened={outer} onClose={() => setOuter(false)} animation={false} title="Outer">
+            <button onClick={() => setInner(true)}>open inner</button>
+            <Modal opened={inner} onClose={() => setInner(false)} animation={false} title="Inner">
+              Inner body
+            </Modal>
+          </Modal>
+        </>
+      );
+    }
+    render(<Stack />);
+
+    const outerOpener = screen.getByText("open outer");
+    outerOpener.focus();
+    fireEvent.click(outerOpener);
+    const innerOpener = screen.getByText("open inner");
+    innerOpener.focus();
+    fireEvent.click(innerOpener);
+    expect(screen.getByText("Inner body")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByText("Inner body")).not.toBeInTheDocument());
+    expect(screen.getByText("open inner")).toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByText("open inner"));
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByText("open inner")).not.toBeInTheDocument());
+    expect(document.activeElement).toBe(screen.getByText("open outer"));
+  });
+
+  it("swallows Escape when the top modal has closeOnEscape={false}", () => {
+    const outerClose = jest.fn();
+    render(
+      <Modal opened onClose={outerClose} title="Outer">
+        <Modal opened onClose={() => {}} closeOnEscape={false} title="Inner">
+          Inner
+        </Modal>
+      </Modal>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(outerClose).not.toHaveBeenCalled();
+  });
+
   it("leaves focus where it was when trapFocus is false", () => {
     const trigger = document.createElement("button");
     document.body.appendChild(trigger);

@@ -3,7 +3,7 @@ import * as React from "react";
 import type { GetRef } from "@knitui/core";
 
 import { baseValue } from "../__tests__/css-rules.test.helper";
-import { render, screen } from "../test-utils";
+import { fireEvent, render, screen } from "../test-utils";
 import { Avatar, getAvatarSize } from "./Avatar";
 
 describe("Avatar", () => {
@@ -71,6 +71,37 @@ describe("Avatar", () => {
     expect(img).toHaveAttribute("alt", "");
     // The one accessible image is the labelled frame.
     expect(screen.getByRole("img", { name: "Jane Doe" })).toBeInTheDocument();
+  });
+
+  it("tries fallbackSrc before the initials", () => {
+    const { container } = render(
+      <Avatar
+        src="https://cdn.example.com/a.png"
+        fallbackSrc="https://origin.example.com/a.png"
+        name="Jane Doe"
+      />,
+    );
+    const first = container.querySelector("img") as HTMLImageElement;
+    expect(first.getAttribute("src")).toBe("https://cdn.example.com/a.png");
+
+    fireEvent.error(first);
+    const second = container.querySelector("img") as HTMLImageElement;
+    expect(second.getAttribute("src")).toBe("https://origin.example.com/a.png");
+    expect(screen.queryByText("JD")).not.toBeInTheDocument();
+
+    fireEvent.error(second);
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByText("JD")).toBeInTheDocument();
+  });
+
+  it("starts over from src when the sources change", () => {
+    const { container, rerender } = render(
+      <Avatar src="https://a.example/1.png" name="Jane Doe" />,
+    );
+    fireEvent.error(container.querySelector("img") as HTMLImageElement);
+    expect(screen.getByText("JD")).toBeInTheDocument();
+    rerender(<Avatar src="https://a.example/2.png" name="Jane Doe" />);
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("https://a.example/2.png");
   });
 
   it("forwards a group ref", () => {

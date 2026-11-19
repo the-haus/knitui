@@ -5,6 +5,8 @@ export {
   AudioBars,
   AudioDots,
   AudioLine,
+  AudioMesh,
+  type AudioMeshProps,
   AudioRadial,
   AudioVisualizer,
   type AudioVisualizerHandle,

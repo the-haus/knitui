@@ -159,6 +159,25 @@ describe("ExpoVideoController play intent across a surface swap", () => {
     expect(player.playing).toBe(true);
   });
 
+  it("starts a play() that was asked for while a new source was still loading", async () => {
+    const { player, controller } = make();
+    attachSurface(player, controller);
+    // Two players on one engine: activating the second swaps the source and plays
+    // in the same breath, and the load cuts that play short.
+    const swap = controller.replace("https://example.com/next.mp4");
+    controller.play();
+    const before = player.playCalls;
+    await swap;
+    expect(player.playCalls).toBe(before + 1);
+  });
+
+  it("leaves a source alone that was replaced with no play asked for", async () => {
+    const { player, controller } = make();
+    attachSurface(player, controller);
+    await controller.replace("https://example.com/next.mp4");
+    expect(player.playCalls).toBe(0);
+  });
+
   it("carries a constructor autoPlay through to a late attach", () => {
     const { player, controller } = make({ autoPlay: true });
     expect(player.playing).toBe(false);

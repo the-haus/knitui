@@ -1,9 +1,12 @@
 import * as React from "react";
 
 import { ScrollArea, type ScrollAreaHandle } from "@knitui/components";
+import type { TamaguiElement } from "@knitui/core";
+import { useMergedRef } from "@knitui/hooks";
 
 import { useSheetScrollContext } from "./scrollContext";
 import type { SheetScrollViewProps } from "./ScrollView.shared";
+import { useWebTouchHandoff } from "./useWebTouchHandoff";
 
 export type { SheetScrollViewProps } from "./ScrollView.shared";
 
@@ -14,12 +17,23 @@ const HUG = { flexGrow: 0, flexShrink: 1, minHeight: 0 } as const;
 
 /**
  * Scrollable content region of a `Sheet` (web / default build). A thin wrapper over
- * the kit's `ScrollArea`. The scroll↔drag handoff lives in `ScrollView.native.tsx`;
- * on web the browser handles nested scrolling, so this stays a plain wrapper.
+ * the kit's `ScrollArea`. The frame-by-frame scroll↔drag handoff lives in
+ * `ScrollView.native.tsx`; on web the browser scrolls the list, and
+ * `useWebTouchHandoff` gives a touch the list can't use to the sheet's drag.
  */
 export const SheetScrollView = React.forwardRef<ScrollAreaHandle, SheetScrollViewProps>(
   function SheetScrollView(props, ref) {
     const ctx = useSheetScrollContext();
-    return <ScrollArea ref={ref} style={ctx?.fit ? HUG : FILL} {...(props as object)} />;
+    const viewportNodeRef = React.useRef<TamaguiElement | null>(null);
+    const viewportRef = useMergedRef(viewportNodeRef, props.viewportRef);
+    useWebTouchHandoff(ctx, () => viewportNodeRef.current as HTMLElement | null);
+    return (
+      <ScrollArea
+        ref={ref}
+        style={ctx?.fit ? HUG : FILL}
+        {...(props as object)}
+        viewportRef={viewportRef}
+      />
+    );
   },
 );

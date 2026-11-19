@@ -82,6 +82,20 @@ export function resolveWebCapabilities(probes: WebRuntimeProbes = {}): VideoCapa
 }
 
 /**
+ * What {@link resolveWebRuntimeCapabilities} answers where there is no browser: a
+ * server render. A component that draws from capabilities renders its FIRST client
+ * frame from these too, so the hydrated tree matches the server's HTML, and only
+ * then switches to what the browser really has.
+ */
+export const WEB_SERVER_CAPABILITIES: VideoCapabilities = resolveWebCapabilities({
+  pictureInPictureEnabled: false,
+  fullscreenEnabled: false,
+  volumeControllable: true,
+  webAudioAvailable: false,
+  wakeLockAvailable: false,
+});
+
+/**
  * Gather the live browser probes and refine {@link WEB_CAPABILITIES}. Called by
  * the controller on web (where `expo-video` resolves to its `.web` backend); the
  * `typeof` guards keep it inert if ever evaluated off the browser.

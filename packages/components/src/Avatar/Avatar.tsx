@@ -11,6 +11,7 @@ import {
 
 import { Box } from "../Box";
 import { Image, type ImageProps } from "../Image";
+import { resolveSizePx } from "../internal/control-metrics";
 import { gradientForVariant, type GradientValue, useGradient } from "../internal/gradient";
 import {
   controlTextColorVariant,
@@ -23,7 +24,6 @@ import {
   surfaceColorVariant,
   tableVariant,
 } from "../internal/style-props";
-import { resolveSizePx } from "../internal/control-metrics";
 import { slotStyles, type SlotStyles } from "../internal/styles";
 import { Text } from "../Text";
 
@@ -194,6 +194,11 @@ export interface AvatarProps extends Omit<GetProps<typeof AvatarFrame>, "radius"
    * avatar; on load error (or when unset) the themed placeholder is shown.
    */
   src?: string | null;
+  /**
+   * Image tried when `src` fails to load, before falling back to the initials or
+   * placeholder (e.g. a second copy of the same photo on another host).
+   */
+  fallbackSrc?: string | null;
   /** Accessible label; also used as the `aria-label` of the placeholder. */
   alt?: string;
   /**
@@ -221,6 +226,7 @@ const AvatarComponent = styleable<AvatarProps>(AvatarFrame, function Avatar(prop
     children,
     name,
     src,
+    fallbackSrc,
     alt,
     size = "md",
     variant = "light",
@@ -240,14 +246,22 @@ const AvatarComponent = styleable<AvatarProps>(AvatarFrame, function Avatar(prop
   // `backgroundImage`; native renders the `layer` behind the placeholder.
   const grad = useGradient(gradientForVariant(variant, gradient));
 
-  // Reset the load-error state whenever the source changes.
-  const [errored, setErrored] = React.useState(false);
-  React.useEffect(() => setErrored(false), [src]);
-
-  const handleImageError = React.useCallback(() => setErrored(true), []);
+  // The images to try, in order: `src`, then `fallbackSrc`; after both fail, the
+  // placeholder. The failure count belongs to one pair of sources and resets the
+  // moment either changes (during render, so a new `src` never flashes the
+  // initials for a frame the way an effect-based reset would).
+  const sourceKey = `${src ?? ""}\n${fallbackSrc ?? ""}`;
+  const [failures, setFailures] = React.useState({ key: sourceKey, count: 0 });
+  const failed = failures.key === sourceKey ? failures.count : 0;
+  const handleImageError = React.useCallback(
+    () => setFailures((f) => ({ key: sourceKey, count: (f.key === sourceKey ? f.count : 0) + 1 })),
+    [sourceKey],
+  );
+  const candidates = [src, fallbackSrc].filter((u): u is string => !!u);
+  const currentSrc = candidates[failed];
 
   const placeholder = children ?? (name ? getInitials(name) : null);
-  const showImage = !!src && !errored;
+  const showImage = currentSrc !== undefined;
 
   const inner = (
     <AvatarFrame
@@ -266,10 +280,12 @@ const AvatarComponent = styleable<AvatarProps>(AvatarFrame, function Avatar(prop
       {grad.layer}
       {showImage ? (
         <Image
+          // A new element per source, so a failed image's state never carries over.
+          key={currentSrc}
           // The slot sugar spreads UNDER the explicit per-part props (src, the
           // load-error handler) so the engine's own wiring always wins.
           {...s.merge("image", {
-            src,
+            src: currentSrc,
             // The frame already carries role="img" + aria-label; an empty alt
             // keeps the photo itself out of the accessibility tree (WCAG 1.1.1:
             // without one some screen readers announce the file name).

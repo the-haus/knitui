@@ -144,13 +144,13 @@ describe("focus", () => {
     const trap = useFocusTrap as jest.Mock;
     const { rerender } = render(<Sheet opened>body</Sheet>);
     await flush();
-    expect(trap).toHaveBeenLastCalledWith(true);
+    expect(trap).toHaveBeenLastCalledWith(true, { containerOnPointer: true });
     jest
       .spyOn(jest.requireMock("./motion/animate"), "animateOffset")
       .mockImplementationOnce(() => undefined);
     rerender(<Sheet opened={false}>body</Sheet>);
     await flush();
-    expect(trap).toHaveBeenLastCalledWith(false);
+    expect(trap).toHaveBeenLastCalledWith(false, { containerOnPointer: true });
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   });
 });

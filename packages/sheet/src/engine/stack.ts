@@ -1,5 +1,6 @@
 /**
- * Open modal sheets, oldest first, so Escape and Android back reach only the topmost.
+ * Open modal sheets, oldest first, so Android back reaches only the topmost (Escape
+ * goes through the kit's shared `useEscapeLayer` stack instead).
  * Modal sheets open in the order the user sees them stack, whichever mounted first.
  */
 const stack: symbol[] = [];

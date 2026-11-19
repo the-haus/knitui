@@ -37,10 +37,10 @@ export { Autocomplete, type AutocompleteProps, type AutocompleteRef } from "./Au
 export {
   Avatar,
   type AvatarGroupProps,
-  getAvatarSize,
   type AvatarProps,
   type AvatarSize,
   type AvatarVariant,
+  getAvatarSize,
 } from "./Avatar";
 // Media
 export {
@@ -325,6 +325,8 @@ export {
   type MenuTrigger,
 } from "./Menu";
 export {
+  type EscapeLayerOptions,
+  hasOpenEscapeLayer,
   Modal,
   type ModalBodyProps,
   type ModalContentProps,
@@ -332,6 +334,7 @@ export {
   type ModalProps,
   type ModalSize,
   type ModalTitleProps,
+  useEscapeLayer,
 } from "./Modal";
 
 export {
@@ -431,9 +434,13 @@ export {
   type PortalProps,
   PortalProvider,
   type PortalProviderProps,
+  resolvePersistTaps,
   ROOT_OVERLAY_HOST,
+  type TeleportedLayerScope,
   useOverlayHost,
   usePortal,
+  useRegisterTeleportedLayer,
+  useTeleportedLayerScope,
   useTopmostOverlayHost,
 } from "./Portal";
 export {

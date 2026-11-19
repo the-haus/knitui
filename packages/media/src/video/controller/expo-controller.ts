@@ -579,6 +579,16 @@ export class ExpoVideoController extends BaseVideoController {
       error: null,
     });
     await this.loadAsync(source);
+    // A play asked for while this source was still loading has been cut short by
+    // the load itself: on web `video.play()` rejects ("interrupted by a new load
+    // request") and nothing starts it again. That is every switch between two
+    // players that share the engine: activating one swaps the source and plays in
+    // the same breath. The intent still stands, so start it now that there is
+    // something to play. A newer `replace()` or a pause has changed the intent or
+    // the source, and then this one stays out of it.
+    if (this.wantsPlay && this.lastSource === source && this._state.status !== "error") {
+      this.startPlayback();
+    }
   }
 
   async retry(): Promise<void> {

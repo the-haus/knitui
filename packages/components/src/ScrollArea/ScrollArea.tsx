@@ -175,6 +175,48 @@ type ScrollAreaFrameProps = Omit<GetProps<typeof ScrollAreaFrame>, "type" | "sha
 
 export interface ScrollAreaProps extends ScrollAreaFrameProps, ScrollAreaOwnProps {}
 
+/** ARIA roles whose widgets consume Space, Home/End or the arrow keys themselves. */
+const KEY_OWNING_ROLES = new Set([
+  "button",
+  "checkbox",
+  "combobox",
+  "grid",
+  "listbox",
+  "menu",
+  "menubar",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "option",
+  "radio",
+  "radiogroup",
+  "scrollbar",
+  "searchbox",
+  "slider",
+  "spinbutton",
+  "switch",
+  "tab",
+  "tablist",
+  "textbox",
+  "tree",
+  "treegrid",
+]);
+
+/**
+ * Whether a keydown target handles the scroll keys itself, so the viewport must
+ * not turn them into a scroll: native form controls, editable content, and ARIA
+ * widgets. The browser still applies its own default for these keys.
+ */
+function ownsScrollKeys(target: EventTarget | null): boolean {
+  if (!target || typeof (target as Element).closest !== "function") return false;
+  const el = target as HTMLElement;
+  if (el.isContentEditable) return true;
+  const tag = el.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return true;
+  const role = el.getAttribute("role");
+  return role !== null && KEY_OWNING_ROLES.has(role);
+}
+
 /* Local style narrowing for the web-only CSS props on the viewport element. */
 type ViewportStyle = NonNullable<BoxProps["style"]> & {
   overflowX?: "auto" | "hidden" | "scroll" | "visible";
@@ -771,7 +813,11 @@ const ScrollAreaComponent = React.forwardRef<ScrollAreaHandle, ScrollAreaProps>(
     const handleKeyDown = React.useCallback(
       (event: React.KeyboardEvent<HTMLElement>) => {
         const node = viewportNodeRef.current as HTMLElement | null;
-        if (!node) return;
+        if (!node || event.defaultPrevented) return;
+        // Keys bubbling up from a field or widget inside the viewport belong to
+        // it (Space types a space, Home/End/arrows move the caret or the widget's
+        // selection). Leave them alone; a non-interactive descendant still scrolls.
+        if (event.target !== event.currentTarget && ownsScrollKeys(event.target)) return;
         const delta = keyToScrollDelta(
           event.key,
           keyStep,

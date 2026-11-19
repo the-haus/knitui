@@ -21,7 +21,7 @@ import { useRequireMediaProvider, videoHostName } from "../provider/context";
 import { applyMediaKeyAction, sourceUriOf } from "../shared";
 import { hoverProps } from "../shared/chrome";
 import type { VideoController } from "./controller/video-controller-base";
-import { resolveKeyAction, type VideoKeyAction } from "./engine";
+import { resolveKeyAction, type VideoKeyAction, WEB_SERVER_CAPABILITIES } from "./engine";
 import { useVideoController } from "./hooks/useVideoController";
 import { preload as preloadVideo } from "./session/preload";
 import type { VideoControllerState, VideoMetadata, VideoSource, VideoSourceObject } from "./types";
@@ -117,6 +117,9 @@ const SURFACE_HOST_STYLE = {
 
 /** Window (ms) a single tap waits for a double-click before toggling play (web). */
 const DOUBLE_CLICK_GRACE_MS = 250;
+
+/** A store that never changes: capabilities are fixed for a controller's life. */
+const subscribeNever = (): (() => void) => () => {};
 
 function VideoRoot(props: VideoProps): React.ReactElement {
   const {
@@ -387,11 +390,22 @@ function VideoRoot(props: VideoProps): React.ReactElement {
 
   const accessor = React.useMemo(() => slotStyles(styles, VIDEO_SLOT_KEYS), [styles]);
 
+  // WEB: what the browser can do is read off `document`, which a server render does
+  // not have. Drawn straight from the controller, the chrome hydrated with buttons
+  // the server's HTML lacked (Picture in Picture, fullscreen) and React threw the
+  // page's HTML away. The first client frame takes the server's answer; the real
+  // one follows in the next render. Native has no server and reads the controller.
+  const capabilities = React.useSyncExternalStore(
+    subscribeNever,
+    () => controller.capabilities,
+    () => (isWeb ? WEB_SERVER_CAPABILITIES : controller.capabilities),
+  );
+
   const ctx: VideoContextValue = React.useMemo(
     () => ({
       controller,
       store,
-      capabilities: controller.capabilities,
+      capabilities,
       size,
       contentFit,
       controlsVisible: chromeVisible,
@@ -399,7 +413,17 @@ function VideoRoot(props: VideoProps): React.ReactElement {
       holdControls,
       styles: accessor,
     }),
-    [controller, store, size, contentFit, chromeVisible, keepAlive, holdControls, accessor],
+    [
+      controller,
+      store,
+      capabilities,
+      size,
+      contentFit,
+      chromeVisible,
+      keepAlive,
+      holdControls,
+      accessor,
+    ],
   );
 
   const showChrome = controls !== false && !nativeControls;
