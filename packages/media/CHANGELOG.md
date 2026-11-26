@@ -1,5 +1,15 @@
 # @knitui/media
 
+## 2.0.3
+
+### Patch Changes
+
+- Updated dependencies [f473a94]
+  - @knitui/components@1.3.1
+  - @knitui/core@1.3.1
+  - @knitui/hooks@1.3.1
+  - @knitui/icons@1.3.1
+
 ## 2.0.2
 
 ### Patch Changes

@@ -148,6 +148,15 @@
       "slug": "components",
       "releases": [
         {
+          "version": "1.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "The `expo-image` dependency is now `~58.0.19`, the version Expo SDK 58.1 expects. Apps on SDK 58.1 no longer get an `expo-image` mismatch from `expo doctor`. The kit is now developed and tested against Expo 58.1 and React Native 0.88.1. - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "1.3.0",
           "changes": [
             {
@@ -626,6 +635,15 @@
       "slug": "hooks",
       "releases": [
         {
+          "version": "1.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "1.3.0",
           "changes": [
             {
@@ -1023,6 +1041,15 @@
       "slug": "dates",
       "releases": [
         {
+          "version": "1.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "1.3.0",
           "changes": [
             {
@@ -1388,6 +1415,15 @@
       "name": "@knitui/carousel",
       "slug": "carousel",
       "releases": [
+        {
+          "version": "1.3.4",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        },
         {
           "version": "1.3.3",
           "changes": [
@@ -1991,6 +2027,15 @@
       "slug": "media",
       "releases": [
         {
+          "version": "2.0.3",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "2.0.2",
           "changes": [
             {
@@ -2453,6 +2498,15 @@
       "slug": "graphics",
       "releases": [
         {
+          "version": "1.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "1.3.0",
           "changes": [
             {
@@ -2814,6 +2868,15 @@
       "name": "@knitui/sheet",
       "slug": "sheet",
       "releases": [
+        {
+          "version": "1.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        },
         {
           "version": "1.3.0",
           "changes": [
@@ -3261,6 +3324,19 @@
       "slug": "mediaquery",
       "releases": [
         {
+          "version": "1.3.1",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "1.3.0",
           "changes": [
             {
@@ -3574,6 +3650,15 @@
       "slug": "plugins",
       "releases": [
         {
+          "version": "1.1.2",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.1"
+            }
+          ]
+        },
+        {
           "version": "1.1.1",
           "changes": [
             {
@@ -3877,6 +3962,20 @@
   ],
   "timeline": [
     {
+      "version": "2.0.3",
+      "entries": [
+        {
+          "package": "@knitui/media",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "2.0.2",
       "entries": [
         {
@@ -3951,6 +4050,20 @@
       ]
     },
     {
+      "version": "1.3.4",
+      "entries": [
+        {
+          "package": "@knitui/carousel",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.3",
       "entries": [
         {
@@ -4006,11 +4119,69 @@
       "version": "1.3.1",
       "entries": [
         {
+          "package": "@knitui/components",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "The `expo-image` dependency is now `~58.0.19`, the version Expo SDK 58.1 expects. Apps on SDK 58.1 no longer get an `expo-image` mismatch from `expo doctor`. The kit is now developed and tested against Expo 58.1 and React Native 0.88.1. - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/hooks",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/dates",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1"
+            }
+          ]
+        },
+        {
           "package": "@knitui/carousel",
           "changes": [
             {
               "kind": "patch",
               "text": "Appending items no longer interrupts a drag or settle. Without `loop`, a data-length change that leaves the active item in range moves nothing: an item's offset doesn't depend on the count. Before, the carousel re-seated the offset anyway, which cancelled a settle in flight and snapped the card back. Shrinking the data under the active item still clamps to the last one."
+            }
+          ]
+        },
+        {
+          "package": "@knitui/graphics",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/sheet",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "Updated dependencies[f473a94] - @knitui/components@1.3.1 - @knitui/core@1.3.1 - @knitui/hooks@1.3.1 - @knitui/icons@1.3.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/mediaquery",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.1"
+            },
+            {
+              "kind": "patch",
+              "text": "@knitui/hooks@1.3.1"
             }
           ]
         }
@@ -4486,6 +4657,15 @@
             {
               "kind": "patch",
               "text": "Updated dependencies[c40136a] - @knitui/components@1.2.1 - @knitui/core@1.2.1 - @knitui/hooks@1.2.1 - @knitui/icons@1.2.1"
+            }
+          ]
+        },
+        {
+          "package": "@knitui/plugins",
+          "changes": [
+            {
+              "kind": "patch",
+              "text": "@knitui/core@1.3.1"
             }
           ]
         }
